@@ -395,18 +395,18 @@ NOT_FOUND = """
 
 PAGES = [
     ("/", "index.html", "Best peptides by goal, compared | Peptide Chooser",
-     "FDA status, real prices and evidence for each goal, checked and dated. Peptide products next to the approved alternatives, from an independent site that never sells.",
+     "FDA status, real prices and evidence for each goal, checked and dated. Peptides next to the approved alternatives, from a site that never sells.",
      HOME, ORG_SCHEMA, None),
     ("/about/", "about/index.html", "About Peptide Chooser",
      "Peptide Chooser is an independent site that compares peptide products and sellers for people in the United States.", ABOUT, "", [("/about/", "About")]),
     ("/how-we-rate/", "how-we-rate/index.html", "How we rate peptide products and sellers | Peptide Chooser",
      "The five criteria Peptide Chooser uses to rate every peptide product and seller: evidence, FDA status, lab testing, real price and transparency.", HOW, "", [("/how-we-rate/", "How we rate")]),
     ("/contact/", "contact/index.html", "Contact | Peptide Chooser",
-     "Contact Peptide Chooser by email for corrections, listings, press and partnerships.", CONTACT, "", [("/contact/", "Contact")]),
+     "Email Peptide Chooser for corrections with a source, questions about a listing, press and partnerships. We cannot answer personal medical questions.", CONTACT, "", [("/contact/", "Contact")]),
     ("/disclosure/", "disclosure/index.html", "Affiliate and medical disclosure | Peptide Chooser",
-     "How Peptide Chooser earns money through paid links, and why nothing on the site is medical advice.", DISCLOSURE, "", [("/disclosure/", "Disclosure")]),
+     "How Peptide Chooser earns money through labeled paid links, why commissions never change a rating, and why nothing on the site is medical advice.", DISCLOSURE, "", [("/disclosure/", "Disclosure")]),
     ("/privacy/", "privacy/index.html", "Privacy policy | Peptide Chooser",
-     "What information Peptide Chooser collects, how it is used and how to contact us about your data.", PRIVACY, "", [("/privacy/", "Privacy")]),
+     "What information Peptide Chooser collects when you visit or email us, how long we keep it, your rights, and how to contact us about your data.", PRIVACY, "", [("/privacy/", "Privacy")]),
 ]
 
 for _g in LIVE_GOALS:
@@ -433,7 +433,7 @@ def main():
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_text(page(path, title, desc, body, schema, crumb), encoding="utf-8")
     (DIST / "404.html").write_text(page("/404", "Page not found | Peptide Chooser",
-                                        "This page does not exist.", NOT_FOUND), encoding="utf-8")
+                                        "This page does not exist on Peptide Chooser. Go to the home page or compare peptide options by goal; the link may be old or mistyped.", NOT_FOUND), encoding="utf-8")
     (DIST / "CNAME").write_text("peptidechooser.com\n")
     (DIST / ".nojekyll").write_text("")
     (DIST / "robots.txt").write_text(f"User-agent: *\nAllow: /\nDisallow: /out/\nSitemap: {SITE}/sitemap.xml\n")

@@ -14,9 +14,9 @@
       "fda_chip": "ok",
       "options_checked": 3,
       "page": true,
-      "title": "Hair loss treatment options, compared | Peptide Chooser",
-      "h1": "Hair loss treatment options, compared honestly.",
-      "description": "Finasteride and minoxidil next to copper peptide serums and research-labeled peptides: FDA status, evidence in people and price per month, checked and dated.",
+      "title": "Peptides for hair loss vs proven options | Peptide Chooser",
+      "h1": "Peptides for hair loss, compared with the proven options.",
+      "description": "Peptides for hair loss next to finasteride and minoxidil: FDA status, evidence in people and price per month for each option, checked and dated.",
       "short_answer": "Finasteride and minoxidil are the only treatments on this page the FDA has approved for hair loss, and generic finasteride starts at about $10 a month. Copper peptide serums are cosmetics: the evidence is from lab and follicle-culture studies, not from large trials in people. Injectable peptides sold for hair are not approved for any use, and we found no human evidence for hair.",
       "options": [
         {
@@ -86,7 +86,8 @@
           "text": "Divi, Scalp Serum product page, price checked 30 Oct 2026",
           "url": "https://diviofficial.com/products/scalp-serum"
         }
-      ]
+      ],
+      "main_query": "peptides for hair loss"
     }
   ]
 }
