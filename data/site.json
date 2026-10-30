@@ -88,7 +88,349 @@
           "url": "https://diviofficial.com/products/scalp-serum"
         }
       ],
-      "main_query": "peptides for hair loss"
+      "main_query": "peptides for hair loss",
+      "label": "Hair",
+      "map": {
+        "x": 50,
+        "y": 4
+      },
+      "intro": "Finasteride and minoxidil are the only FDA-approved options. Copper peptide serums are cosmetics; injectable peptides sold for hair are not approved for any use.",
+      "peptides": [
+        {
+          "name": "Finasteride 1 mg (proven alternative)",
+          "status": "FDA approved",
+          "chip": "ok"
+        },
+        {
+          "name": "Minoxidil (proven alternative)",
+          "status": "FDA approved",
+          "chip": "ok"
+        },
+        {
+          "name": "GHK-Cu copper peptide serum",
+          "status": "Cosmetic, no approval needed",
+          "chip": "info"
+        },
+        {
+          "name": "Injectable peptides sold for hair",
+          "status": "Not approved for any use",
+          "chip": "neutral"
+        }
+      ]
+    },
+    {
+      "slug": "skin",
+      "name": "Skin",
+      "label": "Skin",
+      "map": {
+        "x": 50,
+        "y": 11
+      },
+      "main_query": "peptides for skin",
+      "intro": "Peptide creams and serums are cosmetics: legal to sell without approval, and judged on their own studies, which are small. The proven prescription option for wrinkles is tretinoin.",
+      "peptides": [
+        {
+          "name": "Tretinoin cream (proven alternative)",
+          "status": "FDA approved, prescription",
+          "chip": "ok"
+        },
+        {
+          "name": "GHK-Cu copper peptide",
+          "status": "Cosmetic, no approval needed",
+          "chip": "info"
+        },
+        {
+          "name": "Palmitoyl pentapeptide-4 (Matrixyl)",
+          "status": "Cosmetic, no approval needed",
+          "chip": "info"
+        },
+        {
+          "name": "Acetyl hexapeptide-8 (Argireline)",
+          "status": "Cosmetic, no approval needed",
+          "chip": "info"
+        }
+      ]
+    },
+    {
+      "slug": "weight-loss",
+      "name": "Weight loss",
+      "label": "Weight loss",
+      "map": {
+        "x": 50,
+        "y": 40
+      },
+      "main_query": "peptides for weight loss",
+      "intro": "Two peptide drugs are FDA approved for weight management and need a prescription. Compounded copies and newer molecules sold online are not approved.",
+      "peptides": [
+        {
+          "name": "Semaglutide (Wegovy)",
+          "status": "FDA approved, prescription",
+          "chip": "ok"
+        },
+        {
+          "name": "Tirzepatide (Zepbound)",
+          "status": "FDA approved, prescription",
+          "chip": "ok"
+        },
+        {
+          "name": "Compounded semaglutide or tirzepatide",
+          "status": "Not FDA approved; pharmacy-made",
+          "chip": "warn"
+        },
+        {
+          "name": "Retatrutide",
+          "status": "Not approved; still in trials",
+          "chip": "neutral"
+        }
+      ]
+    },
+    {
+      "slug": "muscle",
+      "name": "Muscle and hormones",
+      "label": "Muscle and hormones",
+      "map": {
+        "x": 10.5,
+        "y": 32
+      },
+      "main_query": "peptides for muscle growth",
+      "intro": "No peptide is FDA approved for building muscle. Tesamorelin is approved for one specific use in people with HIV; growth hormone peptides sold for muscle are not approved.",
+      "peptides": [
+        {
+          "name": "Tesamorelin (Egrifta)",
+          "status": "FDA approved for HIV-related belly fat only",
+          "chip": "ok"
+        },
+        {
+          "name": "Sermorelin",
+          "status": "No FDA-approved product on the market",
+          "chip": "neutral"
+        },
+        {
+          "name": "CJC-1295 / ipamorelin",
+          "status": "Not approved for any use",
+          "chip": "neutral"
+        }
+      ]
+    },
+    {
+      "slug": "recovery",
+      "name": "Recovery and joints",
+      "label": "Recovery and joints",
+      "map": {
+        "x": 61.5,
+        "y": 72
+      },
+      "main_query": "peptides for healing",
+      "intro": "Nothing is approved for injury recovery. In July 2026 an FDA advisory committee reviewed BPC-157 and TB-500 for pharmacy compounding, and the FDA proposed keeping both off the list.",
+      "peptides": [
+        {
+          "name": "BPC-157",
+          "status": "Not approved; FDA proposed excluding it from compounding (Jul 2026)",
+          "chip": "neutral"
+        },
+        {
+          "name": "TB-500",
+          "status": "Not approved; FDA proposed excluding it from compounding (Jul 2026)",
+          "chip": "neutral"
+        }
+      ]
+    },
+    {
+      "slug": "libido",
+      "name": "Sexual health",
+      "label": "Sexual health",
+      "map": {
+        "x": 50,
+        "y": 51
+      },
+      "main_query": "pt 141",
+      "intro": "One peptide is FDA approved, for low sexual desire in premenopausal women, and needs a prescription. The same molecule sold as PT-141 by online shops is not an approved product.",
+      "peptides": [
+        {
+          "name": "Bremelanotide (Vyleesi)",
+          "status": "FDA approved, prescription",
+          "chip": "ok"
+        },
+        {
+          "name": "PT-141 from online shops",
+          "status": "Not an approved product",
+          "chip": "neutral"
+        },
+        {
+          "name": "Melanotan II",
+          "status": "Not approved for any use",
+          "chip": "neutral"
+        }
+      ]
+    },
+    {
+      "slug": "longevity",
+      "name": "Longevity and energy",
+      "label": "Longevity and energy",
+      "map": {
+        "x": 89.5,
+        "y": 32
+      },
+      "main_query": "nad injections",
+      "intro": "No peptide is approved for aging or energy. The ones sold for it were reviewed by an FDA advisory committee in July 2026, and the FDA proposed keeping them off the compounding list.",
+      "peptides": [
+        {
+          "name": "Epitalon",
+          "status": "Not approved; FDA proposed excluding it from compounding (Jul 2026)",
+          "chip": "neutral"
+        },
+        {
+          "name": "MOTS-c",
+          "status": "Not approved; FDA proposed excluding it from compounding (Jul 2026)",
+          "chip": "neutral"
+        },
+        {
+          "name": "NAD+ injections",
+          "status": "Not a peptide; compounded, not FDA approved",
+          "chip": "warn"
+        }
+      ]
     }
-  ]
+  ],
+  "legal": {
+    "checked": "2026-10-30",
+    "rows": [
+      {
+        "peptide": "Semaglutide (Ozempic, Wegovy)",
+        "status": "FDA approved",
+        "chip": "ok",
+        "note": "weight management and type 2 diabetes, prescription",
+        "src": 1
+      },
+      {
+        "peptide": "Tirzepatide (Zepbound, Mounjaro)",
+        "status": "FDA approved",
+        "chip": "ok",
+        "note": "weight management and type 2 diabetes, prescription",
+        "src": 2
+      },
+      {
+        "peptide": "Bremelanotide (Vyleesi)",
+        "status": "FDA approved",
+        "chip": "ok",
+        "note": "low sexual desire in premenopausal women, prescription",
+        "src": 3
+      },
+      {
+        "peptide": "Tesamorelin (Egrifta)",
+        "status": "FDA approved",
+        "chip": "ok",
+        "note": "excess belly fat in HIV, prescription; not approved for muscle or aging",
+        "src": 4
+      },
+      {
+        "peptide": "GHK-Cu, Matrixyl, Argireline (creams and serums)",
+        "status": "Cosmetic",
+        "chip": "info",
+        "note": "cosmetics are regulated but do not need FDA approval to be sold",
+        "src": 5
+      },
+      {
+        "peptide": "BPC-157",
+        "status": "Not approved",
+        "chip": "neutral",
+        "note": "FDA advisory committee reviewed it for compounding on 23 Jul 2026; FDA proposed not to allow it",
+        "src": 6
+      },
+      {
+        "peptide": "TB-500",
+        "status": "Not approved",
+        "chip": "neutral",
+        "note": "same July 2026 review; FDA proposed not to allow it",
+        "src": 6
+      },
+      {
+        "peptide": "MOTS-c, Epitalon",
+        "status": "Not approved",
+        "chip": "neutral",
+        "note": "same July 2026 review; FDA proposed not to allow them",
+        "src": 6
+      },
+      {
+        "peptide": "Retatrutide",
+        "status": "Not approved",
+        "chip": "neutral",
+        "note": "in clinical trials; no approved product",
+        "src": 7
+      }
+    ],
+    "sources": [
+      {
+        "n": 1,
+        "text": "FDA press release, 4 Jun 2021: FDA Approves New Drug Treatment for Chronic Weight Management, First Since 2014 (Wegovy)",
+        "url": "https://www.fda.gov/news-events/press-announcements/fda-approves-new-drug-treatment-chronic-weight-management-first-2014"
+      },
+      {
+        "n": 2,
+        "text": "FDA press release, 8 Nov 2023: FDA Approves New Medication for Chronic Weight Management (Zepbound)",
+        "url": "https://www.fda.gov/news-events/press-announcements/fda-approves-new-medication-chronic-weight-management"
+      },
+      {
+        "n": 3,
+        "text": "FDA press release, 21 Jun 2019: FDA approves new treatment for hypoactive sexual desire disorder in premenopausal women (Vyleesi)",
+        "url": "https://www.fda.gov/news-events/press-announcements/fda-approves-new-treatment-hypoactive-sexual-desire-disorder-premenopausal-women"
+      },
+      {
+        "n": 4,
+        "text": "DailyMed, Egrifta (tesamorelin) prescribing information",
+        "url": "https://dailymed.nlm.nih.gov/dailymed/search.cfm?query=egrifta"
+      },
+      {
+        "n": 5,
+        "text": "FDA, FDA Authority Over Cosmetics: How Cosmetics Are Not FDA-Approved, but Are FDA-Regulated",
+        "url": "https://www.fda.gov/cosmetics/laws-regulations/fda-authority-over-cosmetics-how-cosmetics-are-not-fda-approved-are-fda-regulated"
+      },
+      {
+        "n": 6,
+        "text": "FDA Briefing Document, Pharmacy Compounding Advisory Committee meeting, 23 and 24 Jul 2026 (BPC-157, TB-500, MOTS-c, epitalon)",
+        "url": "https://www.fda.gov/media/193342/download"
+      },
+      {
+        "n": 7,
+        "text": "Drugs@FDA database (no approved product for retatrutide, PT-141 shop versions, Melanotan II, CJC-1295, ipamorelin or sermorelin on 30 Oct 2026)",
+        "url": "https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm"
+      }
+    ]
+  },
+  "creators": {
+    "checked": "2026-10-25",
+    "note": "Nobody on this list pays us and we do not link to any seller through them. Picked from our review of 50 channels for being accurate, clear about conflicts, or a useful second opinion.",
+    "rows": [
+      {
+        "name": "Quinn Stillson, MD",
+        "what": "Doctor. Evidence-based explainers, no seller ties",
+        "url": "https://www.youtube.com/@quinnstillsonmd"
+      },
+      {
+        "name": "Dr. Thomas O'Connor",
+        "what": "Men's health doctor. Cautious, evidence-based",
+        "url": "https://youtube.com/@theanabolicdoc"
+      },
+      {
+        "name": "Chris Williamson",
+        "what": "Podcast. Warns about grey-market quality",
+        "url": "https://www.youtube.com/@chriswillx"
+      },
+      {
+        "name": "Thomas DeLauer",
+        "what": "Fitness. Beginner-friendly overviews",
+        "url": "https://www.youtube.com/@thomasdelauerofficial"
+      },
+      {
+        "name": "Peter Attia, MD",
+        "what": "Second opinion: separates evidence from hype",
+        "url": "https://www.youtube.com/@peterattiamd"
+      },
+      {
+        "name": "Andrew Huberman",
+        "what": "Second opinion: risks of unregulated peptides",
+        "url": "https://www.youtube.com/@hubermanlab"
+      }
+    ]
+  }
 }

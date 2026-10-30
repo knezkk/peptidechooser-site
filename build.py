@@ -78,8 +78,10 @@ def tokens_css():
 
 
 def nav_items(path):
-    items = [(f"/{g['slug']}/", g["name"].split()[0]) for g in LIVE_GOALS if g.get("page")]
-    items += [("/how-we-rate/", "How we rate"), ("/about/", "About")]
+    # Design book, Pages and buttons: one item per section of the site. An item appears only when
+    # its section exists; Where to buy and Compare prices join once vendor and compare pages are live.
+    items = [("/#goals", "Peptides"), ("/#legal", "Safety and legal"), ("/#learn", "Learn"),
+             ("/how-we-rate/", "How we rate"), ("/about/", "About")]
     return "".join(
         f'<a href="{href}"{" aria-current=\"page\"" if href == path else ""}>{label}</a>' for href, label in items
     )
@@ -206,9 +208,55 @@ def board_rows():
 
 COMPARE_TH = '<th scope="col"></th>' if any(g.get("page") for g in LIVE_GOALS) else ""
 TOTAL_OPTIONS = sum(g["options_checked"] for g in LIVE_GOALS)
-PICKER = "".join(f'<a class="btn btn-line" href="#goals">{g["name"]}</a>' for g in LIVE_GOALS)
+ALL_GOALS = DATA["goals"]
+LEGAL = DATA["legal"]
+CREATORS = DATA["creators"]
+PICKER = "".join(f'<a class="btn btn-line" href="/{g["slug"]}/">Compare {g["label"].lower()} options</a>' for g in LIVE_GOALS if g.get("page"))
 SOURCES_HOME = "".join(
-    f'<li>{g["price_source_name"]}: <a href="{g["price_source"]}" rel="nofollow">{g["price_source"]}</a></li>' for g in LIVE_GOALS)
+    f'<li id="src-{s["n"]}">{s["text"]}: <a href="{s["url"]}" rel="nofollow">{s["url"]}</a></li>' for s in LEGAL["sources"]
+) + "".join(f'<li>{g["price_source_name"]}: <a href="{g["price_source"]}" rel="nofollow">{g["price_source"]}</a></li>' for g in LIVE_GOALS)
+
+# The body figure is our own drawing (design book: no stock art). Dots are placed by percentages from
+# data/site.json so a goal moves without touching the SVG.
+FIGURE_SVG = """<svg viewBox="0 0 200 460" aria-hidden="true" focusable="false">
+<circle cx="100" cy="40" r="31"/>
+<rect x="86" y="68" width="28" height="18"/>
+<path d="M58 86h84a14 14 0 0 1 14 14v112a10 10 0 0 1-10 10H54a10 10 0 0 1-10-10V100a14 14 0 0 1 14-14z"/>
+<rect x="6" y="96" width="30" height="150" rx="15"/>
+<rect x="164" y="96" width="30" height="150" rx="15"/>
+<rect x="58" y="228" width="38" height="212" rx="19"/>
+<rect x="104" y="228" width="38" height="212" rx="19"/>
+</svg>"""
+
+
+def body_map():
+    dots, items, panels = [], [], []
+    for i, g in enumerate(ALL_GOALS):
+        on = ' aria-pressed="true"' if i == 0 else ' aria-pressed="false"'
+        dots.append(f'<button type="button" class="map-dot" data-goal="{g["slug"]}" style="left:{g["map"]["x"]}%;top:{g["map"]["y"]}%"{on}><span class="sr">{g["label"]}</span></button>')
+        items.append(f'<button type="button" class="goal-item" data-goal="{g["slug"]}"{on}><span>{g["label"]}</span><span class="small">{len(g["peptides"])} options</span></button>')
+        peps = "".join(f'<li><span class="name">{p["name"]}</span><span class="chip chip-{p["chip"]}">{p["status"]}</span></li>' for p in g["peptides"])
+        link = f'<div class="btn-row"><a class="btn btn-ink" href="/{g["slug"]}/">Compare {g["label"].lower()} options</a><a class="btn btn-line" href="#legal">Legal status</a></div>' if g.get("page") else '<p class="small">Full comparison for this goal is not published yet. The legal status above is current as of ' + CHECKED + '.</p>'
+        panels.append(f'<div class="goal-panel" id="goal-{g["slug"]}" data-goal="{g["slug"]}"{"" if i == 0 else " hidden"}><h3>Peptides for {g["label"].lower()}</h3><p>{g["intro"]}</p><ul class="pep-list">{peps}</ul>{link}</div>')
+    return "".join(dots), "".join(items), "".join(panels)
+
+
+DOTS, GOAL_ITEMS, GOAL_PANELS = body_map()
+
+LEGAL_ROWS = "".join(
+    f'<tr><td><span class="name">{r["peptide"]}</span></td><td><span class="chip chip-{r["chip"]}">{r["status"]}</span></td>'
+    f'<td>{r["note"]} <a class="ref" href="#src-{r["src"]}" aria-label="Source {r["src"]}"><sup>{r["src"]}</sup></a></td></tr>'
+    for r in LEGAL["rows"])
+
+CREATOR_ROWS = "".join(
+    f'<li><a href="{c["url"]}" rel="nofollow noopener">{c["name"]}</a><span class="small">{c["what"]}</span></li>' for c in CREATORS["rows"])
+
+MAP_JS = """<script>
+(function(){var root=document.getElementById('goals');if(!root)return;
+root.addEventListener('click',function(e){var b=e.target.closest('[data-goal]');if(!b||b.tagName!=='BUTTON')return;var k=b.getAttribute('data-goal');
+root.querySelectorAll('button[data-goal]').forEach(function(x){x.setAttribute('aria-pressed',x.getAttribute('data-goal')===k?'true':'false');});
+root.querySelectorAll('.goal-panel').forEach(function(p){p.hidden=p.getAttribute('data-goal')!==k;});});})();
+</script>"""
 
 HOME = f"""
 <section class="hero">
@@ -229,7 +277,18 @@ HOME = f"""
 
 <section class="section" id="goals">
   <div class="wrap">
-    <div class="sec-hd"><div><h2>Compare by goal</h2><p>One row per goal. The best proven option is the cheapest one the FDA has approved for that use.</p></div></div>
+    <div class="sec-hd"><div><h2>Start with what you want to change</h2><p>Tap the body or pick from the list. Every goal shows what is approved, what is not, and the proven alternative.</p></div></div>
+    <div class="map-grid">
+      <div class="figure">{FIGURE_SVG}{DOTS}</div>
+      <div class="goal-list" role="group" aria-label="Goals">{GOAL_ITEMS}</div>
+      <div class="goal-panels">{GOAL_PANELS}</div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="compare">
+  <div class="wrap">
+    <div class="sec-hd"><div><h2>Compare by goal</h2><p>One row per published goal. The best proven option is the cheapest one the FDA has approved for that use.</p></div></div>
     <div class="tbl-wrap"><table class="tbl">
       <thead><tr><th scope="col">Goal</th><th scope="col">Best proven option</th><th scope="col">Price from</th><th scope="col">FDA status</th>{COMPARE_TH}</tr></thead>
       <tbody>{goal_rows()}</tbody>
@@ -238,7 +297,18 @@ HOME = f"""
   </div>
 </section>
 
-<section class="band-2">
+<section class="band-2" id="legal">
+  <div class="wrap">
+    <div class="sec-hd"><div><h2>Is it legal today?</h2><p>FDA status of the peptides people ask about most, each with its source. Checked {nice_date(LEGAL["checked"])}.</p></div></div>
+    <div class="tbl-wrap"><table class="tbl">
+      <thead><tr><th scope="col">Peptide</th><th scope="col">Status</th><th scope="col">What that means</th></tr></thead>
+      <tbody>{LEGAL_ROWS}</tbody>
+    </table></div>
+    <p class="small" style="margin-top:16px">Approved means the FDA approved a product containing it for a stated use. Not approved means no approved product exists; buying it for yourself is not a crime in the US, but nobody has checked what is in the vial.</p>
+  </div>
+</section>
+
+<section class="section">
   <div class="wrap">
     <div class="sec-hd"><div><h2>How we rate</h2><p>Every product and seller is judged on the same five criteria. We publish them so you can check our work.</p><a href="/how-we-rate/">Read the full method</a></div></div>
     <ul class="criteria">
@@ -251,12 +321,41 @@ HOME = f"""
   </div>
 </section>
 
+<section class="section" id="learn">
+  <div class="wrap">
+    <div class="sec-hd"><div><h2>Who to follow</h2><p>{CREATORS["note"]}</p></div></div>
+    <ul class="creators">{CREATOR_ROWS}</ul>
+    <p class="small" style="margin-top:16px">Reviewed {nice_date(CREATORS["checked"])}. Links open YouTube; we earn nothing from them.</p>
+  </div>
+</section>
+
+<section class="section">
+  <div class="wrap">
+    <ul class="trust-row">
+      <li><a href="/how-we-rate/">How we rate</a><span>Five public criteria, the same for every product and seller.</span></li>
+      <li><a href="/disclosure/">How we make money</a><span>Some links pay us when you buy. It never changes a rating.</span></li>
+      <li><a href="/about/">Who checks our facts</a><span>Every medical claim links to the FDA page, label or study it comes from.</span></li>
+      <li><a href="/corrections/">Mistakes we fixed</a><span>Every correction, dated and public.</span></li>
+    </ul>
+  </div>
+</section>
+
 <section class="section">
   <div class="wrap">
     <h2 class="h-sources">Sources</h2>
     <ol class="small" style="padding-left:1.2em">{SOURCES_HOME}</ol>
   </div>
 </section>
+{MAP_JS}
+"""
+
+CORRECTIONS = f"""
+<section class="page"><div class="wrap prose">
+<h1>Mistakes we fixed</h1>
+<p class="lede">Every factual error we correct is listed here with the date, what was wrong and what we changed.</p>
+<p>No corrections have been needed yet. The site went live in October 2026. If you find an error, email <a href="mailto:{EMAIL}">{EMAIL}</a> with a source; we check within a few days and list the fix here.</p>
+<p class="small">Last checked {CHECKED}.</p>
+</div></section>
 """
 
 ABOUT = f"""
@@ -438,6 +537,8 @@ PAGES = [
      "How Peptide Chooser earns money through labeled paid links, why commissions never change a rating, and why nothing on the site is medical advice.", DISCLOSURE, "", [("/disclosure/", "Disclosure")]),
     ("/privacy/", "privacy/index.html", "Privacy policy | Peptide Chooser",
      "What information Peptide Chooser collects when you visit or email us, how long we keep it, your rights, and how to contact us about your data.", PRIVACY, "", [("/privacy/", "Privacy")]),
+    ("/corrections/", "corrections/index.html", "Mistakes we fixed | Peptide Chooser",
+     "Every factual error Peptide Chooser has corrected, with the date, what was wrong and what changed. Send corrections with a source and we list the fix here.", CORRECTIONS, "", [("/corrections/", "Corrections")]),
 ]
 
 for _g in LIVE_GOALS:
