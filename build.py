@@ -54,6 +54,15 @@ b.hidden=true;});})();
 </script>""" if GA4_ID else ""
 STANDING_LINE = f"Every claim links to its source. Prices checked {CHECKED}."
 
+# Design book, Motion: section headings rise in once when scrolled into view. Only this script hides them,
+# so with JavaScript off or reduced motion on, nothing is ever hidden.
+REVEAL_JS = """<script>
+(function(){if(!('IntersectionObserver' in window)||matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+var hs=document.querySelectorAll('.sec-hd');if(!hs.length)return;document.documentElement.classList.add('js-reveal');
+var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}});},{rootMargin:'0px 0px -8% 0px'});
+hs.forEach(function(h){io.observe(h);});})();
+</script>"""
+
 FONTS = ('<link rel="preconnect" href="https://fonts.googleapis.com">'
          '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>'
          '<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800'
@@ -82,8 +91,9 @@ def nav_items(path):
     # its section exists; Where to buy and Compare prices join once vendor and compare pages are live.
     items = [("/#goals", "Peptides"), ("/#legal", "Safety and legal"), ("/#learn", "Learn"),
              ("/how-we-rate/", "How we rate"), ("/about/", "About")]
+    current = ' aria-current="page"'
     return "".join(
-        f'<a href="{href}"{" aria-current=\"page\"" if href == path else ""}>{label}</a>' for href, label in items
+        f'<a href="{href}"{current if href == path else ""}>{label}</a>' for href, label in items
     )
 
 
@@ -161,6 +171,7 @@ def page(path, title, description, body, schema="", crumb=None):
   </div>
 </footer>
 {COOKIE_BAR}
+{REVEAL_JS}
 </body>
 </html>
 """
@@ -200,14 +211,15 @@ def goal_rows():
 
 
 def board_rows():
+    # The first published goal is the pad's hero number (design book, pages.md, Home), so it is not repeated as a row.
     rows = []
-    for g in LIVE_GOALS:
+    for g in LIVE_GOALS[1:]:
         rows.append(f'<div class="ledger"><span>{g["name"]}</span><span><span class="num-unit">from </span><strong>${g["price_from_usd"]}</strong><span class="num-unit">/mo</span></span></div>')
     return "\n".join(rows)
 
 
 COMPARE_TH = '<th scope="col"></th>' if any(g.get("page") for g in LIVE_GOALS) else ""
-TOTAL_OPTIONS = sum(g["options_checked"] for g in LIVE_GOALS)
+LEAD = LIVE_GOALS[0]
 ALL_GOALS = DATA["goals"]
 LEGAL = DATA["legal"]
 CREATORS = DATA["creators"]
@@ -254,23 +266,25 @@ CREATOR_ROWS = "".join(
 MAP_JS = """<script>
 (function(){var root=document.getElementById('goals');if(!root)return;
 root.addEventListener('click',function(e){var b=e.target.closest('[data-goal]');if(!b||b.tagName!=='BUTTON')return;var k=b.getAttribute('data-goal');
-root.querySelectorAll('button[data-goal]').forEach(function(x){x.setAttribute('aria-pressed',x.getAttribute('data-goal')===k?'true':'false');});
+root.querySelectorAll('button[data-goal]').forEach(function(x){var on=x.getAttribute('data-goal')===k;x.setAttribute('aria-pressed',on?'true':'false');
+if(x.classList.contains('map-dot')){x.classList.remove('pulse');if(on){void x.offsetWidth;x.classList.add('pulse');}}});
 root.querySelectorAll('.goal-panel').forEach(function(p){p.hidden=p.getAttribute('data-goal')!==k;});});})();
 </script>"""
 
 HOME = f"""
 <section class="hero">
-  <div class="wrap hero-grid">
-    <div>
-      <h1>The best peptides for your goal, compared honestly.</h1>
+  <div class="wrap hero-grid hero-home">
+    <h1 class="hero-h1">The best peptides for your goal, compared honestly.</h1>
+    <div class="board rx" aria-label="Price pad">
+      <div class="rx-head"><span class="rx-mark" aria-hidden="true">&#8478;</span><h2>Cheapest proven option, per month</h2></div>
+      <p class="hero-num"><span class="num-xl">${LEAD["price_from_usd"]}</span> <span class="num-unit">/mo</span></p>
+      <p class="hero-what"><strong>{LEAD["name"]}:</strong> {LEAD["best_option"]}<span class="small">{LEAD["options_checked"]} options checked</span></p>
+      {board_rows()}
+      <div class="rx-foot"><span class="stamp">Checked {CHECKED}</span><span class="fine">Proven means FDA approved for that use. Not a prescription.</span></div>
+    </div>
+    <div class="hero-copy">
       <p class="lede">For each goal we put peptide products next to the FDA-approved alternatives and show what the evidence says, what it costs per month and how you would get it. We compare; we never sell.</p>
       <div class="goal-picker">{PICKER}</div>
-    </div>
-    <div class="board">
-      <h2>Cheapest proven option, per month</h2>
-      <p class="hero-num"><span class="num-xl">{TOTAL_OPTIONS}</span> <span class="num-unit">options checked</span></p>
-      {board_rows()}
-      <p class="fine" style="margin:16px 0 0">Prices checked {CHECKED}. Proven means FDA approved for that use.</p>
     </div>
   </div>
 </section>
@@ -343,7 +357,7 @@ HOME = f"""
 <section class="section">
   <div class="wrap">
     <h2 class="h-sources">Sources</h2>
-    <ol class="small" style="padding-left:1.2em">{SOURCES_HOME}</ol>
+    <ol class="small sources" style="padding-left:1.2em">{SOURCES_HOME}</ol>
   </div>
 </section>
 {MAP_JS}
@@ -489,10 +503,11 @@ def category_page(g):
       <p class="small meta">{AUTHOR}. Last updated {CHECKED}. {STANDING_LINE}</p>
       <p class="intro">{g["short_answer"]}</p>
     </div>
-    <div class="board">
-      <h2>Cheapest proven option, per month</h2>
+    <div class="board rx" aria-label="Price pad">
+      <div class="rx-head"><span class="rx-mark" aria-hidden="true">&#8478;</span><h2>Cheapest proven option, per month</h2></div>
       <p class="hero-num"><span class="num-xl">${g["price_from_usd"]}</span> <span class="num-unit">/mo from</span></p>
-      <p class="fine">{g["best_option"]}, {g["price_note"]}. Prices checked {CHECKED}.</p>
+      <div class="ledger"><span>{g["best_option"]}</span></div>
+      <div class="rx-foot"><span class="stamp">Checked {CHECKED}</span><span class="fine">{g["price_note"]}. Not a prescription.</span></div>
     </div>
   </div>
 </section>
