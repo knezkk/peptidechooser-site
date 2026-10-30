@@ -99,6 +99,14 @@ p { margin: 0 0 1em; }
 .site-foot p { max-width: 62ch; }
 .site-foot .trust { border-top: 1px solid var(--line-dark); margin-top: 24px; padding-top: 16px; display: flex; flex-wrap: wrap; gap: 8px 24px; }
 
+/* Cookie notice (design book: Pages and buttons, item 6) */
+.cookie { position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; background: var(--paper); border-top: 1px solid var(--line); box-shadow: 0 -8px 24px var(--neutral-tint); }
+.cookie .wrap { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 24px; padding-top: 14px; padding-bottom: 14px; }
+.cookie p { margin: 0; font-size: 14px; color: var(--ink-2); flex: 1 1 320px; }
+.cookie p a { color: var(--ink); }
+.cookie-btns { display: flex; gap: 8px; }
+.cookie-btns .btn { min-height: 40px; padding: 0 18px; font-size: 15px; width: auto; }
+
 @media (min-width: 640px) {
   .board .ledger { padding: 16px 0; }
 }

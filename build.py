@@ -25,6 +25,33 @@ def nice_date(iso):
 
 
 CHECKED = nice_date(DATA["checked"])
+GA4_ID = DATA.get("ga4_id", "")
+
+# Google Analytics 4 with Consent Mode v2. Everything starts denied; the cookie notice (design book,
+# Pages and buttons, item 6) flips analytics_storage to granted only after "Accept". The choice is kept
+# in localStorage under "pc-consent" so the bar is shown once.
+ANALYTICS = f"""<script>
+window.dataLayer=window.dataLayer||[];function gtag(){{dataLayer.push(arguments);}}
+gtag('consent','default',{{ad_storage:'denied',ad_user_data:'denied',ad_personalization:'denied',analytics_storage:'denied',wait_for_update:500}});
+try{{if(localStorage.getItem('pc-consent')==='yes'){{gtag('consent','update',{{analytics_storage:'granted'}});}}}}catch(e){{}}
+gtag('js',new Date());gtag('config','{GA4_ID}',{{anonymize_ip:true}});
+</script>
+<script async src="https://www.googletagmanager.com/gtag/js?id={GA4_ID}"></script>""" if GA4_ID else ""
+
+COOKIE_BAR = """<div class="cookie" id="cookie" hidden role="region" aria-label="Cookie notice">
+  <div class="wrap">
+    <p>We use Google Analytics to count visits and see which pages help. No ads, no selling of data. <a href="/privacy/">Privacy policy</a></p>
+    <div class="cookie-btns"><button class="btn btn-ink" type="button" data-consent="yes">Accept</button><button class="btn btn-line" type="button" data-consent="no">Reject</button></div>
+  </div>
+</div>
+<script>
+(function(){var b=document.getElementById('cookie'),s=null;try{s=localStorage.getItem('pc-consent');}catch(e){}
+if(!s){b.hidden=false;}
+b.addEventListener('click',function(e){var v=e.target.getAttribute('data-consent');if(!v)return;
+try{localStorage.setItem('pc-consent',v);}catch(e){}
+if(v==='yes'&&window.gtag){gtag('consent','update',{analytics_storage:'granted'});}
+b.hidden=true;});})();
+</script>""" if GA4_ID else ""
 STANDING_LINE = f"Every claim links to its source. Prices checked {CHECKED}."
 
 FONTS = ('<link rel="preconnect" href="https://fonts.googleapis.com">'
@@ -97,6 +124,7 @@ def page(path, title, description, body, schema="", crumb=None):
 <link rel="stylesheet" href="/assets/bundle.css">
 <link rel="stylesheet" href="/assets/site.css">
 {schema}
+{ANALYTICS}
 </head>
 <body>
 <a class="skip" href="#main">Skip to content</a>
@@ -130,6 +158,7 @@ def page(path, title, description, body, schema="", crumb=None):
     <div class="trust"><span>&copy; 2026 Peptide Chooser</span><a href="/disclosure/">How we make money</a><span>{EMAIL}</span></div>
   </div>
 </footer>
+{COOKIE_BAR}
 </body>
 </html>
 """
@@ -322,8 +351,10 @@ PRIVACY = f"""
 <ul>
 <li><strong>Email you send us.</strong> If you contact us, we receive your email address and whatever you include in your message. We use it only to reply.</li>
 <li><strong>Server logs.</strong> Our hosting provider (GitHub Pages) may record technical data such as IP address, browser type and the pages requested, for security and to operate the service. We do not use this data to identify you.</li>
+<li><strong>Analytics, only if you accept.</strong> We use Google Analytics 4 to count visits and see which pages people find useful. It runs only after you press "Accept" on the cookie notice. If you press "Reject", no analytics cookie is set and nothing is sent to Google. Google processes this data under its own <a href="https://policies.google.com/privacy" rel="nofollow noopener">privacy policy</a>. We do not use advertising trackers, and we do not sell or share visitor data.</li>
 </ul>
-<p>We do not currently use analytics, advertising trackers or our own cookies. If that changes, we will update this policy before it takes effect.</p>
+<h2>Cookies</h2>
+<p>The site sets one small value in your browser to remember your cookie choice. Google Analytics sets its own cookies (named _ga and similar) only after you accept. You can change your mind by clearing the site's data in your browser; the notice will then appear again.</p>
 <h2>Paid links</h2>
 <p>When you click a paid link, you leave our site. The seller or affiliate network may set cookies to record that you came from us. Their own privacy policies apply to that data.</p>
 <h2>How long we keep information</h2>

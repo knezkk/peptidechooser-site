@@ -20,6 +20,13 @@
 <link rel="stylesheet" href="/assets/bundle.css">
 <link rel="stylesheet" href="/assets/site.css">
 <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://peptidechooser.com/"}, {"@type": "ListItem", "position": 2, "name": "About", "item": "https://peptidechooser.com/about/"}]}</script>
+<script>
+window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}
+gtag('consent','default',{ad_storage:'denied',ad_user_data:'denied',ad_personalization:'denied',analytics_storage:'denied',wait_for_update:500});
+try{if(localStorage.getItem('pc-consent')==='yes'){gtag('consent','update',{analytics_storage:'granted'});}}catch(e){}
+gtag('js',new Date());gtag('config','G-12CV2HEYW6',{anonymize_ip:true});
+</script>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-12CV2HEYW6"></script>
 </head>
 <body>
 <a class="skip" href="#main">Skip to content</a>
@@ -79,5 +86,19 @@
     <div class="trust"><span>&copy; 2026 Peptide Chooser</span><a href="/disclosure/">How we make money</a><span>hello@peptidechooser.com</span></div>
   </div>
 </footer>
+<div class="cookie" id="cookie" hidden role="region" aria-label="Cookie notice">
+  <div class="wrap">
+    <p>We use Google Analytics to count visits and see which pages help. No ads, no selling of data. <a href="/privacy/">Privacy policy</a></p>
+    <div class="cookie-btns"><button class="btn btn-ink" type="button" data-consent="yes">Accept</button><button class="btn btn-line" type="button" data-consent="no">Reject</button></div>
+  </div>
+</div>
+<script>
+(function(){var b=document.getElementById('cookie'),s=null;try{s=localStorage.getItem('pc-consent');}catch(e){}
+if(!s){b.hidden=false;}
+b.addEventListener('click',function(e){var v=e.target.getAttribute('data-consent');if(!v)return;
+try{localStorage.setItem('pc-consent',v);}catch(e){}
+if(v==='yes'&&window.gtag){gtag('consent','update',{analytics_storage:'granted'});}
+b.hidden=true;});})();
+</script>
 </body>
 </html>
