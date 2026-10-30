@@ -19,6 +19,11 @@ jobs:
         with: { python-version: "3.12" }
       - uses: actions/setup-node@v4
         with: { node-version: "22" }
+      - name: pull numbers from the peptide-data database (skipped until SITE_DATABASE_URL exists)
+        env: { SITE_DATABASE_URL: "${{ secrets.SITE_DATABASE_URL }}" }
+        run: |
+          if [ -n "$SITE_DATABASE_URL" ]; then pip install -q "psycopg[binary]==3.2.3"; fi
+          python3 tools/pull_data.py
       - run: python3 build.py
       - name: check-words, check-seo, check-schema, check-parts
         run: python3 tools/check.py
