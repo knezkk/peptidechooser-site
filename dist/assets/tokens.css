@@ -1,0 +1,40 @@
+/* Generated from design/tokens.json (Master 1). Do not edit. */
+:root {
+  --paper: #fbfbf8;
+  --paper-2: #f3f5f2;
+  --white: #ffffff;
+  --ink: #1a2330;
+  --ink-2: #4c5a6b;
+  --ink-on-dark: #c9d1dc;
+  --line: #dfe3e8;
+  --line-dark: #34404f;
+  --action: #0e7c4f;
+  --action-hover: #0a5c3a;
+  --action-tint: #e6f4ec;
+  --action-text: #0a5c3a;
+  --mark: #ffe66d;
+  --warn-tint: #fff1e3;
+  --warn-text: #8a3e05;
+  --warn: #b4540a;
+  --info-tint: #e8eef8;
+  --info-text: #2a4b8d;
+  --neutral-tint: #eef1ee;
+  --danger: #b3261e;
+  --font-display: "Bricolage Grotesque", "Helvetica Neue", Arial, sans-serif;
+  --font-text: "Atkinson Hyperlegible", "Helvetica Neue", Arial, sans-serif;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 72px;
+  --space-9: 88px;
+  --radius-chip: 2px;
+  --radius-control: 4px;
+  --radius-panel: 4px;
+  --container: 1180px;
+  --columns: 12;
+  --touch: 48px;
+}

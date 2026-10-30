@@ -1,0 +1,60 @@
+/* Master 1 components. Depends on tokens.css custom properties. */
+
+body{font-family:var(--font-text);color:var(--ink);background:var(--paper);font-size:16px;line-height:1.5;margin:0}
+a{color:var(--action)}a:hover{color:var(--action-hover)}
+
+/* Buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;padding:0 22px;border-radius:var(--radius-control);font:700 16px var(--font-text);text-decoration:none;cursor:pointer;border:2px solid transparent;box-sizing:border-box;white-space:nowrap}
+.btn-ink{background:var(--ink);color:var(--paper)}
+.btn-ink:hover{background:#0f1620;color:var(--paper)}
+.btn-action{background:var(--action);color:#fff}
+.btn-action:hover{background:var(--action-hover);color:#fff}
+.btn-line{background:transparent;color:var(--ink);border-color:var(--ink)}
+.btn-line:hover{background:var(--ink);color:var(--paper)}
+.btn-mark{background:var(--mark);color:var(--ink)}
+.btn-sm{min-height:40px;padding:0 16px;font-size:15px}
+.btn:focus-visible{outline:3px solid var(--mark);outline-offset:2px}
+.paid{font:400 13px var(--font-text);color:var(--ink-2)}
+
+/* Chips */
+.chip{display:inline-block;padding:4px 9px;border-radius:var(--radius-chip);font:700 13px var(--font-text);line-height:1.2}
+.chip-ok{background:var(--action-tint);color:var(--action-text)}
+.chip-warn{background:var(--warn-tint);color:var(--warn-text)}
+.chip-info{background:var(--info-tint);color:var(--info-text)}
+.chip-neutral{background:var(--neutral-tint);color:var(--ink-2)}
+
+/* Numbers */
+.mark{background:linear-gradient(transparent 55%,var(--mark) 55%);padding:0 3px}
+.num-xl{font:800 56px/1 var(--font-display);letter-spacing:-0.03em}
+.num-l{font:800 26px/1 var(--font-display);letter-spacing:-0.02em}
+.num-unit{font:500 20px var(--font-display);color:var(--ink-2);letter-spacing:0}
+.num-l .num-unit{font-size:14px;font-weight:400;font-family:var(--font-text)}
+
+/* Section heading */
+.sec-hd{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:16px 32px;padding-bottom:24px;border-bottom:2px solid var(--ink);margin-bottom:32px}
+.sec-hd h2{font:800 40px/1.05 var(--font-display);letter-spacing:-0.02em;margin:0 0 8px;color:var(--ink)}
+.sec-hd p{margin:0;font-size:18px;color:var(--ink-2);max-width:620px}
+.sec-hd a{font-weight:700;white-space:nowrap}
+.art-h2{font:800 32px/1.1 var(--font-display);letter-spacing:-0.02em;margin:72px 0 20px;padding-top:24px;border-top:2px solid var(--ink)}
+
+/* Data table */
+.tbl{width:100%;border-collapse:collapse;font:16px var(--font-text);color:var(--ink)}
+.tbl th{text-align:left;font-weight:700;font-size:14px;color:var(--ink-2);padding:0 16px 12px;border-bottom:1px solid var(--ink)}
+.tbl td{padding:18px 16px;border-bottom:1px solid var(--line);vertical-align:middle}
+.tbl tr:last-child td{border-bottom:0}
+.tbl-wrap{overflow-x:auto}
+
+/* Ledger rows */
+.ledger{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:14px 0;border-bottom:1px solid var(--line);font-size:16px}
+.ledger:last-child{border-bottom:0}
+
+/* Panels */
+.panel-ink{background:var(--ink);color:var(--paper);border-radius:var(--radius-panel);padding:28px}
+.panel-line{border:2px solid var(--ink);border-radius:var(--radius-panel);padding:24px}
+.panel-mark{background:var(--mark);border-radius:var(--radius-panel);padding:40px}
+
+/* Inputs */
+.input{min-height:52px;padding:0 16px;border:2px solid var(--ink);border-radius:var(--radius-control);font:17px var(--font-text);color:var(--ink);background:#fff;box-sizing:border-box}
+.input:focus-visible{outline:3px solid var(--mark);outline-offset:2px}
+
+@media (max-width:640px){.btn{width:100%}.btn-sm{width:auto}.sec-hd h2{font-size:30px}.art-h2{font-size:26px;margin-top:48px}}

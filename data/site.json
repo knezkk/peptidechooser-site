@@ -1,0 +1,18 @@
+{
+  "checked": "2026-10-30",
+  "goals": [
+    {
+      "slug": "hair",
+      "name": "Hair growth",
+      "live": true,
+      "best_option": "Finasteride 1 mg (generic, prescription)",
+      "price_from_usd": 10,
+      "price_note": "with a pharmacy coupon; average cash price $45.80",
+      "price_source": "https://www.goodrx.com/finasteride/how-much-is-finasteride-without-insurance",
+      "price_source_name": "GoodRx, 3 Aug 2026",
+      "fda": "FDA approved",
+      "fda_chip": "ok",
+      "options_checked": 3
+    }
+  ]
+}
