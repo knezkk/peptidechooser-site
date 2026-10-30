@@ -11,20 +11,31 @@ concurrency:
   group: pages
   cancel-in-progress: true
 jobs:
+  check-and-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - uses: actions/setup-node@v4
+        with: { node-version: "22" }
+      - run: python3 build.py
+      - name: check-words, check-seo, check-schema, check-parts
+        run: python3 tools/check.py
+      - name: check-layout
+        run: |
+          npm i --no-save playwright@1.49.1 >/dev/null
+          npx playwright install --with-deps chromium >/dev/null
+          node tools/check_layout.js
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with: { path: dist }
   deploy:
+    needs: check-and-build
     runs-on: ubuntu-latest
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-      - run: python3 build.py
-      - uses: actions/configure-pages@v5
-      - uses: actions/upload-pages-artifact@v3
-        with:
-          path: dist
       - id: deployment
         uses: actions/deploy-pages@v4

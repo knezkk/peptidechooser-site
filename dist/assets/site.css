@@ -73,6 +73,8 @@ p { margin: 0 0 1em; }
 .tbl .name { font: 700 16px var(--font-text); }
 .tbl .note { display: block; font-size: 14px; color: var(--ink-2); }
 
+.h-sources { font-size: 22px; line-height: 1.25; }
+
 /* Article / prose pages */
 .page { padding: 56px 0 96px; }
 .prose { max-width: var(--container); }

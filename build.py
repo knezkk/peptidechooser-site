@@ -224,7 +224,7 @@ HOME = f"""
 
 <section class="section">
   <div class="wrap">
-    <h2 style="font-size:22px">Sources</h2>
+    <h2 class="h-sources">Sources</h2>
     <ol class="small" style="padding-left:1.2em">{SOURCES_HOME}</ol>
   </div>
 </section>
@@ -377,7 +377,7 @@ def category_page(g):
 </section>
 <section class="section">
   <div class="wrap">
-    <h2 style="font-size:22px">Sources</h2>
+    <h2 class="h-sources">Sources</h2>
     <ol class="small" style="padding-left:1.2em">{srcs}</ol>
   </div>
 </section>
