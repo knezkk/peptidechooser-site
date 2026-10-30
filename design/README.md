@@ -41,6 +41,21 @@ The site is about medicine, so its paper looks like a clinic's paper, not like a
 
 Not allowed: fake documents (anything that could pass as a real prescription, lab report or letter), stock doctors, pills or syringes as decoration, caduceus or cross icons, handwriting fonts, script signatures. The two typefaces and the colour tokens do not change.
 
+## Motion (decided 30 Oct 2026)
+
+Motion confirms; it never entertains. Everything plays once on arrival and then the page is still. CSS only, no animation library; the page reads the same with JavaScript off.
+
+| What | Trigger | Move | Time |
+|---|---|---|---|
+| Price pad | page load | ledger rows and hero number rise 8px and fade in, 60ms apart | 280ms ease-out |
+| Highlighter under the hero number | page load, after the number | the `mark` bar draws from left to right | 420ms, 200ms delay |
+| "Checked" stamp | page load, last | lands from 1.15 scale to its -2° resting angle | 320ms, 650ms delay |
+| Active body dot | on choosing a goal | one ring pulse in `mark`, then still | 600ms, twice |
+| Goal panel | on choosing a goal | cross-fade in | 160ms |
+| Section headings | scrolled into view (JavaScript adds the class; without it nothing is hidden) | rise 12px and fade in | 360ms ease-out |
+
+`prefers-reduced-motion: reduce` turns all of it off and shows the final state at once. Nothing loops, nothing moves on hover except colour, nothing delays reading by more than 0.7s.
+
 ## Page anatomy
 
 - **Notice bar** (`paper-2`, 40px, `small`): one sentence on what we are and how we earn, with a link.
@@ -98,3 +113,4 @@ Built and previewed: Button, Chip, DataTable, Price, SectionHeading. Built on th
 | 30 Oct 2026 | Logo added; `layout.md` (margins, no overflow) and `pages.md` (page types, which button where) added; audience widened to goal categories, hair first | ODOBRENO DIZAJN - Karlo - 30. 10. 2026. |
 | 30 Oct 2026 | Home rebuilt from the 26 Oct mockup (body map, legal table, creators, trust row); nav by section | Karlo: „ajmo sve 4” |
 | 30 Oct 2026 | Wide screens: two frame steps (1480px from 1600px, 1720px from 2200px) with scaled type; checks at 1920 and 2560. Clinical paper: the dark board becomes the ℞ price pad, medical cues listed, fake documents and clip art banned | waiting for Karlo |
+| 30 Oct 2026 | Direction A, "Clinical paper, finished": Home hero number is the price (pages.md), pad under the H1 on phones, motion budget, tap targets 44px on phones (dots, nav, header button), shadows removed from the active dot and cookie bar, stamp in sentence case (no uppercase labels) | waiting for Karlo |
