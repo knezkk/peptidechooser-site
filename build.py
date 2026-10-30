@@ -54,19 +54,38 @@ b.hidden=true;});})();
 </script>""" if GA4_ID else ""
 STANDING_LINE = f"Every claim links to its source. Prices checked {CHECKED}."
 
-# Design book, Motion: section headings rise in once when scrolled into view. Only this script hides them,
-# so with JavaScript off or reduced motion on, nothing is ever hidden.
-REVEAL_JS = """<script>
-(function(){if(!('IntersectionObserver' in window)||matchMedia('(prefers-reduced-motion: reduce)').matches)return;
-var hs=document.querySelectorAll('.sec-hd');if(!hs.length)return;document.documentElement.classList.add('js-reveal');
-var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}});},{rootMargin:'0px 0px -8% 0px'});
-hs.forEach(function(h){io.observe(h);});})();
+# Design book, Motion. The head script marks the page for motion only when the visitor allows it; CSS then
+# pre-hides what will be revealed. If GSAP has not started within 3 s, the mark is removed and everything shows.
+# With JavaScript off or reduced motion on, nothing is ever hidden.
+MOTION_HEAD = """<script>
+(function(d){if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;d.classList.add('motion');
+setTimeout(function(){if(!window.pcMotion)d.classList.remove('motion');},3000);})(document.documentElement);
+</script>"""
+GSAP = "https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5"
+MOTION_JS = f"""<script defer src="{GSAP}/gsap.min.js"></script>
+<script defer src="{GSAP}/ScrollTrigger.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded',function(){{
+var d=document.documentElement;if(!d.classList.contains('motion')||!window.gsap||!window.ScrollTrigger)return;
+window.pcMotion=true;gsap.registerPlugin(ScrollTrigger);
+var css=getComputedStyle(d),ms=function(n){{return parseFloat(css.getPropertyValue('--motion-'+n))/1000;}};
+var rise=parseFloat(css.getPropertyValue('--motion-rise'));
+var fig=document.querySelector('.figure');
+if(fig){{var tl=gsap.timeline({{paused:true}});
+tl.to(fig.querySelectorAll('.fig-line > *'),{{strokeDashoffset:0,duration:ms('draw'),ease:'power1.inOut'}})
+.to(fig.querySelector('.fig-fill'),{{opacity:1,duration:ms('reveal')*2,ease:'power1.out'}},ms('draw')*0.45);
+ScrollTrigger.create({{trigger:fig,start:'top 85%',once:true,onEnter:function(){{tl.play();}}}});}}
+ScrollTrigger.batch('.sec-hd, .tbl tbody tr, .criteria li, .creators li, .trust-row li',{{start:'top 92%',once:true,
+onEnter:function(els){{gsap.fromTo(els,{{opacity:0,y:rise}},{{opacity:1,y:0,duration:ms('reveal'),ease:'power2.out',stagger:ms('stagger'),overwrite:true}});}}}});
+}});
 </script>"""
 
 FONTS = ('<link rel="preconnect" href="https://fonts.googleapis.com">'
          '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>'
-         '<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800'
-         '&family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">')
+         '<link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,500;6..72,600'
+         '&family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">'
+         # The wordmark is the only Bricolage text left (design book, Logo): load just its letters.
+         '<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@800&text=Peptide%20Chooser&display=swap" rel="stylesheet">')
 
 
 def tokens_css():
@@ -76,12 +95,16 @@ def tokens_css():
         out.append(f"  --{t['name']}: {t['value']};")
     for fam, stack in TOKENS["type"]["families"].items():
         out.append(f"  --font-{fam}: {stack};")
-    for fam in ("spacing", "radius", "layout"):
+    for g in TOKENS["type"]["groups"]:
+        for s in g["styles"]:
+            out.append(f"  --{s['name']}-size: {s['fontSize']};")
+            out.append(f"  --{s['name']}-lh: {s['lineHeight']};")
+            out.append(f"  --{s['name']}-weight: {s['fontWeight']};")
+            if "letterSpacing" in s:
+                out.append(f"  --{s['name']}-ls: {s['letterSpacing']};")
+    for fam in ("spacing", "radius", "layout", "motion"):
         for t in TOKENS.get(fam, {}).get("tokens", []):
-            v = t["value"]
-            if fam == "layout" and not v.endswith("px"):
-                v = v
-            out.append(f"  --{t['name']}: {v};")
+            out.append(f"  --{t['name']}: {t['value']};")
     out.append("}")
     return "\n".join(out) + "\n"
 
@@ -136,6 +159,7 @@ def page(path, title, description, body, schema="", crumb=None):
 <link rel="stylesheet" href="/assets/bundle.css">
 <link rel="stylesheet" href="/assets/site.css">
 {schema}
+{MOTION_HEAD}
 {ANALYTICS}
 </head>
 <body>
@@ -171,7 +195,7 @@ def page(path, title, description, body, schema="", crumb=None):
   </div>
 </footer>
 {COOKIE_BAR}
-{REVEAL_JS}
+{MOTION_JS}
 </body>
 </html>
 """
@@ -230,14 +254,16 @@ SOURCES_HOME = "".join(
 
 # The body figure is our own drawing (design book: no stock art). Dots are placed by percentages from
 # data/site.json so a goal moves without touching the SVG.
-FIGURE_SVG = """<svg viewBox="0 0 200 460" aria-hidden="true" focusable="false">
-<circle cx="100" cy="40" r="31"/>
-<rect x="86" y="68" width="28" height="18"/>
-<path d="M58 86h84a14 14 0 0 1 14 14v112a10 10 0 0 1-10 10H54a10 10 0 0 1-10-10V100a14 14 0 0 1 14-14z"/>
-<rect x="6" y="96" width="30" height="150" rx="15"/>
-<rect x="164" y="96" width="30" height="150" rx="15"/>
-<rect x="58" y="228" width="38" height="212" rx="19"/>
-<rect x="104" y="228" width="38" height="212" rx="19"/>
+FIGURE_D = "M111 70 C113.1 71.3 111.8 84.2 114 86 C116.2 87.8 134.8 90.5 138 92 C141.2 93.5 150.4 100.5 152 104 C153.6 107.5 156.2 127.5 157 134 C157.8 140.5 160.3 173.8 161 182 C161.7 190.2 164.8 226.2 165 232 C165.2 237.8 164.1 250.1 163 252 C161.9 253.9 153.2 256.7 152 255 C150.8 253.3 148.8 237.9 148 232 C147.2 226.1 143.9 191.7 143 184 C142.1 176.3 137.8 139.3 137 140 C136.2 140.7 132.9 184.7 133 192 C133.1 199.3 137.7 219 138 228 C138.3 237 137.6 289.7 137 300 C136.4 310.3 131.8 342.2 131 352 C130.2 361.8 126.9 410.8 127 418 C127.1 425.2 132.2 435.7 132 438 C131.8 440.3 126 445.5 124 446 C122 446.5 109.5 446.2 108 444 C106.5 441.8 106 427.7 106 420 C106 412.3 108.2 365.2 108 352 C107.8 338.8 103.7 270 103 262 C102.3 254 100.5 256 100 256 C99.5 256 97.7 254 97 262 C96.3 270 92.2 338.8 92 352 C91.8 365.2 94 412.3 94 420 C94 427.7 93.5 441.8 92 444 C90.5 446.2 78 446.5 76 446 C74 445.5 68.2 440.3 68 438 C67.8 435.7 72.9 425.2 73 418 C73.1 410.8 69.8 361.8 69 352 C68.2 342.2 63.6 310.3 63 300 C62.4 289.7 61.7 237 62 228 C62.3 219 66.9 199.3 67 192 C67.1 184.7 63.8 140.7 63 140 C62.2 139.3 57.9 176.3 57 184 C56.1 191.7 52.8 226.1 52 232 C51.2 237.9 49.2 253.3 48 255 C46.8 256.7 38.1 253.9 37 252 C35.9 250.1 34.8 237.8 35 232 C35.2 226.2 38.3 190.2 39 182 C39.7 173.8 42.2 140.5 43 134 C43.8 127.5 46.4 107.5 48 104 C49.6 100.5 58.8 93.5 62 92 C65.2 90.5 83.8 87.8 86 86 C88.2 84.2 86.9 71.3 89 70 C91.1 68.7 108.9 68.7 111 70Z"
+FIGURE_SVG = f"""<svg viewBox="0 0 200 460" aria-hidden="true" focusable="false">
+<g class="fig-fill">
+<circle cx="100" cy="42" r="27"/>
+<path d="{FIGURE_D}"/>
+</g>
+<g class="fig-line">
+<circle cx="100" cy="42" r="27" pathLength="1"/>
+<path pathLength="1" d="{FIGURE_D}"/>
+</g>
 </svg>"""
 
 
@@ -265,10 +291,18 @@ CREATOR_ROWS = "".join(
 
 MAP_JS = """<script>
 (function(){var root=document.getElementById('goals');if(!root)return;
+function show(k){var old=root.querySelector('.goal-panel:not([hidden])'),next=root.querySelector('.goal-panel[data-goal="'+k+'"]');
+if(!next||old===next)return;
+function swap(){if(old)old.hidden=true;next.hidden=false;
+if(window.pcMotion){gsap.fromTo(next,{opacity:0},{opacity:1,duration:0.2,ease:'power1.out'});}}
+if(window.pcMotion&&old){gsap.to(old,{opacity:0,duration:0.12,ease:'power1.in',onComplete:function(){gsap.set(old,{opacity:1});swap();}});}else{swap();}}
 root.addEventListener('click',function(e){var b=e.target.closest('[data-goal]');if(!b||b.tagName!=='BUTTON')return;var k=b.getAttribute('data-goal');
 root.querySelectorAll('button[data-goal]').forEach(function(x){var on=x.getAttribute('data-goal')===k;x.setAttribute('aria-pressed',on?'true':'false');
 if(x.classList.contains('map-dot')){x.classList.remove('pulse');if(on){void x.offsetWidth;x.classList.add('pulse');}}});
-root.querySelectorAll('.goal-panel').forEach(function(p){p.hidden=p.getAttribute('data-goal')!==k;});});})();
+show(k);});
+// Arrow keys move through the goal list (Tab, Enter and Space work as on any button).
+root.addEventListener('keydown',function(e){if(e.key!=='ArrowDown'&&e.key!=='ArrowUp')return;var items=[].slice.call(root.querySelectorAll('.goal-item')),i=items.indexOf(document.activeElement);
+if(i<0)return;e.preventDefault();items[(i+(e.key==='ArrowDown'?1:items.length-1))%items.length].focus();});})();
 </script>"""
 
 HOME = f"""

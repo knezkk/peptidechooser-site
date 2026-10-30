@@ -15,11 +15,15 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="theme-color" content="#1a2330">
 <link rel="icon" href="/assets/mark.svg" type="image/svg+xml">
-<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,500;6..72,600&family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet"><link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@800&text=Peptide%20Chooser&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/assets/tokens.css">
 <link rel="stylesheet" href="/assets/bundle.css">
 <link rel="stylesheet" href="/assets/site.css">
 <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://peptidechooser.com/"}, {"@type": "ListItem", "position": 2, "name": "Disclosure", "item": "https://peptidechooser.com/disclosure/"}]}</script>
+<script>
+(function(d){if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;d.classList.add('motion');
+setTimeout(function(){if(!window.pcMotion)d.classList.remove('motion');},3000);})(document.documentElement);
+</script>
 <script>
 window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}
 gtag('consent','default',{ad_storage:'denied',ad_user_data:'denied',ad_personalization:'denied',analytics_storage:'denied',wait_for_update:500});
@@ -90,11 +94,22 @@ try{localStorage.setItem('pc-consent',v);}catch(e){}
 if(v==='yes'&&window.gtag){gtag('consent','update',{analytics_storage:'granted'});}
 b.hidden=true;});})();
 </script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
 <script>
-(function(){if(!('IntersectionObserver' in window)||matchMedia('(prefers-reduced-motion: reduce)').matches)return;
-var hs=document.querySelectorAll('.sec-hd');if(!hs.length)return;document.documentElement.classList.add('js-reveal');
-var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}});},{rootMargin:'0px 0px -8% 0px'});
-hs.forEach(function(h){io.observe(h);});})();
+document.addEventListener('DOMContentLoaded',function(){
+var d=document.documentElement;if(!d.classList.contains('motion')||!window.gsap||!window.ScrollTrigger)return;
+window.pcMotion=true;gsap.registerPlugin(ScrollTrigger);
+var css=getComputedStyle(d),ms=function(n){return parseFloat(css.getPropertyValue('--motion-'+n))/1000;};
+var rise=parseFloat(css.getPropertyValue('--motion-rise'));
+var fig=document.querySelector('.figure');
+if(fig){var tl=gsap.timeline({paused:true});
+tl.to(fig.querySelectorAll('.fig-line > *'),{strokeDashoffset:0,duration:ms('draw'),ease:'power1.inOut'})
+.to(fig.querySelector('.fig-fill'),{opacity:1,duration:ms('reveal')*2,ease:'power1.out'},ms('draw')*0.45);
+ScrollTrigger.create({trigger:fig,start:'top 85%',once:true,onEnter:function(){tl.play();}});}
+ScrollTrigger.batch('.sec-hd, .tbl tbody tr, .criteria li, .creators li, .trust-row li',{start:'top 92%',once:true,
+onEnter:function(els){gsap.fromTo(els,{opacity:0,y:rise},{opacity:1,y:0,duration:ms('reveal'),ease:'power2.out',stagger:ms('stagger'),overwrite:true});}});
+});
 </script>
 </body>
 </html>

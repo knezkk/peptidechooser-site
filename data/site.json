@@ -189,7 +189,7 @@
       "name": "Muscle and hormones",
       "label": "Muscle and hormones",
       "map": {
-        "x": 10.5,
+        "x": 26,
         "y": 32
       },
       "main_query": "peptides for muscle growth",
@@ -268,7 +268,7 @@
       "name": "Longevity and energy",
       "label": "Longevity and energy",
       "map": {
-        "x": 89.5,
+        "x": 74,
         "y": 32
       },
       "main_query": "nad injections",

@@ -6,7 +6,7 @@ The design system for Peptide Chooser (peptidechooser.com), the human peptide co
 
 ## Logo
 
-The mark is a peptide chain: three `action` green links ending in one `mark` yellow link, the one that is highlighted, on an `ink` square with 4px corners (`assets/Logos`). Next to it the name "Peptide Chooser" in Bricolage Grotesque 800, in `ink` (on paper) or `paper` (on ink). The mark is never redrawn, recoloured, rotated, shadowed or animated.
+The mark is a peptide chain: three `action` green links ending in one `mark` yellow link, the one that is highlighted, on an `ink` square with 4px corners (`assets/Logos`). Next to it the name "Peptide Chooser" in Bricolage Grotesque 800 (`font-brand`, loaded for those letters only), in `ink` (on paper) or `paper` (on ink). The wordmark is the only Bricolage text on the site. The mark is never redrawn, recoloured, rotated, shadowed or animated.
 
 - `peptide-chooser-mark.svg`: on light backgrounds (header, favicon, social image).
 - `peptide-chooser-mark-on-dark.svg`: paper square, for the ink footer and dark panels.
@@ -24,8 +24,8 @@ US adults, mostly 30 to 55, comparing peptide and prescription treatments by goa
 ## Principles
 
 1. **The number is the hero.** Every page has one big number (price or score) set in `number-xl` with the `mark` highlighter under it. Everything else is quieter.
-2. **Borders, not shadows.** Hierarchy comes from 2px ink rules and 1px line dividers. No drop shadows, no gradients, no decorative cards. A thing has a border only when the border tells you something.
-3. **Two typefaces, clear roles.** Bricolage Grotesque for everything that shouts (headings, numbers). Atkinson Hyperlegible for everything that is read, because it was designed for readers with low vision and this is a health site.
+2. **Borders, not shadows.** Hierarchy comes from 2px ink rules, 1px warm `line` hairlines and, on the price pad and goal panel, a 4px double rule under the title. No drop shadows, no gradients, no decorative cards. A thing has a border only when the border tells you something.
+3. **Two typefaces, clear roles.** Newsreader, an editorial serif with optical sizes, for everything that shouts (headings, the price pad, numbers in lining figures), so the site reads like a medical journal, not an app. Atkinson Hyperlegible for everything that is read, because it was designed for readers with low vision and this is a health site.
 4. **Green means go, yellow means look here.** `action` green is only on links and the Visit button. `mark` yellow is only under the key number, on the compare band and the alert button. Nothing else is coloured.
 5. **Honesty is visible.** "Paid link" sits under every paid button in `fine`. Sponsored rows carry a chip and never move up. A seller without a named pharmacy gets a grey chip, not a green one.
 6. **Plain words.** Labels use the words people type into Google: "Where to buy", not "Providers". "Is it legal?", not "Regulatory status". No all-caps labels, no abbreviations without the plain name next to them.
@@ -34,34 +34,36 @@ US adults, mostly 30 to 55, comparing peptide and prescription treatments by goa
 
 The site is about medicine, so its paper looks like a clinic's paper, not like a software dashboard. The cues, and only these:
 
-- **The price pad.** The hero board is drawn as a prescription pad: `paper` card with a 2px `ink` border, an ℞ mark in `display` 800 next to the title, a 2px rule under the head, ledger rows on 1px lines, a rotated "Checked <date>" stamp in `action-text` outline, a dashed tear line at the bottom. It always says "Not a prescription." in `fine`. It replaces the dark ink board everywhere (Home hero, category hero).
-- **The body figure.** Our own flat silhouette in `neutral-tint` with dots, like an intake form's "where does it hurt". Never a stock photo, never an anatomical illustration with organs.
+- **The price pad.** The hero board is drawn as a clinic notepad: a `white` sheet on journal paper with a 2px `ink` border, an ℞ mark in `display` 600 next to the title, a 4px double rule under the head, the price in `number-xl` with the `mark` bar under it, ledger rows on 1px lines, a rotated "Checked <date>" stamp in `action-text` outline, a dashed tear line at the bottom. It always says "Not a prescription." in `fine`. It replaces the dark ink board everywhere (Home hero, category hero).
+- **The body figure.** Our own flat silhouette, one continuous outline in `ink-2` (1.5px) over a `neutral-tint` fill, with dots: `paper` with a 2px `ink` border, the active one `mark` with a `mark` ring. Like an intake form's "where does it hurt". Never a stock photo, never an anatomical illustration with organs.
 - **Chips as lab labels.** Status chips stay small, square-cornered and factual, like labels on a sample.
 - **Stamps for dates.** A date the site checked something may be shown as the stamp above; everywhere else dates are plain `small` text.
 
-Not allowed: fake documents (anything that could pass as a real prescription, lab report or letter), stock doctors, pills or syringes as decoration, caduceus or cross icons, handwriting fonts, script signatures. The two typefaces and the colour tokens do not change.
+Not allowed: fake documents (anything that could pass as a real prescription, lab report or letter), stock doctors, pills or syringes as decoration, caduceus or cross icons, handwriting fonts, script signatures. The two typefaces and the colour tokens change only through this book.
 
-## Motion (decided 30 Oct 2026)
+## Motion (decided 30 Oct 2026, medical journal direction)
 
-Motion confirms; it never entertains. Everything plays once on arrival and then the page is still. CSS only, no animation library; the page reads the same with JavaScript off.
+Motion confirms; it never entertains. Everything plays once and then the page is still. GSAP 3.12.5 from cdnjs (with ScrollTrigger) runs the figure and the scroll reveals; the price pad plays in CSS so the price never waits for a script. Durations are the `motion-*` tokens.
 
 | What | Trigger | Move | Time |
 |---|---|---|---|
-| Price pad | page load | ledger rows and hero number rise 8px and fade in, 60ms apart | 280ms ease-out |
-| Highlighter under the hero number | page load, after the number | the `mark` bar draws from left to right | 420ms, 200ms delay |
-| "Checked" stamp | page load, last | lands from 1.15 scale to its -2° resting angle | 320ms, 650ms delay |
-| Active body dot | on choosing a goal | one ring pulse in `mark`, then still | 600ms, twice |
-| Goal panel | on choosing a goal | cross-fade in | 160ms |
-| Section headings | scrolled into view (JavaScript adds the class; without it nothing is hidden) | rise 12px and fade in | 360ms ease-out |
+| Price pad (CSS) | page load | rows and hero number rise 8px and fade in, 60ms apart | `motion-base` (280ms) |
+| Highlighter under the hero number (CSS) | page load, after the number | the `mark` bar draws from left to right | `motion-reveal`, 260ms delay |
+| "Checked" stamp (CSS) | page load, last | lands from 1.15 scale to its -2° resting angle | 320ms, 650ms delay |
+| Body figure (GSAP) | first time it scrolls into view (at once if already visible) | the outline draws itself, then the fill fades in under it | `motion-draw` (1.5s) |
+| Active body dot (CSS) | on choosing a goal | a `mark` ring pulses outward, twice, then still | 600ms |
+| Goal panel (GSAP) | on choosing a goal | old panel fades out, new one fades in | 120ms out, 200ms in |
+| Section headings, table rows, criteria, creators, trust row (GSAP) | scrolled into view, once | rise `motion-rise` (12px) and fade in, `motion-stagger` (50ms) apart | `motion-reveal` (420ms) |
 
-`prefers-reduced-motion: reduce` turns all of it off and shows the final state at once. Nothing loops, nothing moves on hover except colour, nothing delays reading by more than 0.7s.
+Fallbacks: things are pre-hidden only while `html.motion` is set, which a small head script sets when reduced motion is off. If GSAP has not started within 3s (blocked or slow), the class is removed and everything shows. With `prefers-reduced-motion: reduce` or JavaScript off, the page shows its final state at once. Nothing loops, nothing moves on hover except colour, nothing shifts layout (transforms and opacity only). Not used: Three.js, WebGL, video, parallax.
 
 ## Page anatomy
 
 - **Notice bar** (`paper-2`, 40px, `small`): one sentence on what we are and how we earn, with a link.
-- **Header** (76px): wordmark in `display-4` weight 800, five nav items, one primary button. Nav never wraps; on phones it scrolls.
+- **Header** (76px, 2px `ink` rule under it): wordmark in `font-brand` 800, five nav items (44px tall), one primary button. Nav never wraps; on phones it scrolls.
 - **Hero**: H1 in `display-1`, lede, the category buttons. Landing: 7 + 5 columns with the price pad on the right. Article pages: title left, hero number right, 2px rule under both.
-- **Sections** on landing pages: `space-9` apart, each opened by a section heading (H2 + one-sentence lede, 2px rule, "All X" link on the right).
+- **Sections** on landing pages: `space-9` apart, each opened by a section heading like a journal's running head: 2px `ink` rule above, H2 in `display-2`, one-sentence lede, 1px `line` under it, "All X" link on the right.
+- **Tables**: journal tables, 2px `ink` rule above the header row and under the last row, 1px `ink` under the header, `line` between rows; prices in `number-l` with even-width figures.
 - **Article pages**: 8-column body with `body` text at 64ch, H2 in `display-3` above a 2px rule, 4-column sticky sidebar with the decision card first.
 - **Footer** (`ink`): wordmark and the one-line disclaimer.
 
@@ -70,7 +72,7 @@ Motion confirms; it never entertains. Everything plays once on arrival and then 
 | Need | Token |
 |---|---|
 | Text | `ink`; secondary `ink-2`; on dark `ink-on-dark` |
-| Backgrounds | `paper`; alternate bands `paper-2`; dark panels `ink` (footer only since 30 Oct 2026) |
+| Backgrounds | `paper` (warm journal paper); alternate bands `paper-2`; sheets on paper (price pad, goal panel) `white`; dark panels `ink` (footer only since 30 Oct 2026) |
 | Approved, named, verified | `action-tint` + `action-text` |
 | Waiting, sponsored, partial | `warn-tint` + `warn-text` |
 | Prescription, compounding | `info-tint` + `info-text` |
@@ -80,7 +82,7 @@ Motion confirms; it never entertains. Everything plays once on arrival and then 
 ## Shape (decided 28 Oct 2026)
 
 - **Near-sharp.** 4px on buttons, inputs, the price pad, the yellow compare band and the alert band; 2px on chips. No 8–16px rounding anywhere.
-- Hierarchy still comes from the highlighter mark, 2px ink rules and the price pad's border, not from rounding or shadows. Master 2 goes fully square (0px) with sharp white panels, which keeps the two sites apart.
+- Hierarchy still comes from the highlighter mark, 2px ink rules, double rules and the price pad's border, not from rounding or shadows. Master 2 goes fully square (0px) with sharp white panels, which keeps the two sites apart.
 
 ## What not to do
 
@@ -114,3 +116,4 @@ Built and previewed: Button, Chip, DataTable, Price, SectionHeading. Built on th
 | 30 Oct 2026 | Home rebuilt from the 26 Oct mockup (body map, legal table, creators, trust row); nav by section | Karlo: „ajmo sve 4” |
 | 30 Oct 2026 | Wide screens: two frame steps (1480px from 1600px, 1720px from 2200px) with scaled type; checks at 1920 and 2560. Clinical paper: the dark board becomes the ℞ price pad, medical cues listed, fake documents and clip art banned | ODOBRENO DIZAJN - Karlo - 30. 10. 2026. |
 | 30 Oct 2026 | Direction A, "Clinical paper, finished": Home hero number is the price (pages.md), pad under the H1 on phones, motion budget, tap targets 44px on phones (dots, nav, header button), shadows removed from the active dot and cookie bar, stamp in sentence case (no uppercase labels) | ODOBRENO DIZAJN - Karlo - 30. 10. 2026. |
+| 30 Oct 2026 | Medical journal direction: display face Newsreader (wordmark stays Bricolage), warmer palette (paper, ink, hairlines; green deepened, all text 6:1 or better), type scale and motion tokens, journal section heads and tables, notepad price pad with double rule, body figure redrawn as one outline, GSAP motion with fallbacks, in-table buttons 44px | waiting for Karlo |
