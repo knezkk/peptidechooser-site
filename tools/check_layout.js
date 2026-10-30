@@ -6,7 +6,7 @@ const fs = require('fs');
 const path = require('path');
 
 const DIST = path.resolve(__dirname, '..', 'dist');
-const WIDTHS = [320, 390, 768, 1024, 1440, 1920];
+const WIDTHS = [320, 390, 768, 1024, 1440, 1920, 2560];
 const MIME = { '.html': 'text/html', '.css': 'text/css', '.svg': 'image/svg+xml', '.png': 'image/png', '.js': 'text/javascript' };
 
 function serve() {

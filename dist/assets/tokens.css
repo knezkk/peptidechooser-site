@@ -35,6 +35,8 @@
   --radius-control: 4px;
   --radius-panel: 4px;
   --container: 1180px;
+  --container-wide: 1480px;
+  --container-max: 1720px;
   --columns: 12;
   --touch: 48px;
 }

@@ -266,11 +266,11 @@ HOME = f"""
       <p class="lede">For each goal we put peptide products next to the FDA-approved alternatives and show what the evidence says, what it costs per month and how you would get it. We compare; we never sell.</p>
       <div class="goal-picker">{PICKER}</div>
     </div>
-    <div class="board">
-      <h2>Cheapest proven option, per month</h2>
+    <div class="board rx" aria-label="Price pad">
+      <div class="rx-head"><span class="rx-mark" aria-hidden="true">&#8478;</span><h2>Cheapest proven option, per month</h2></div>
       <p class="hero-num"><span class="num-xl">{TOTAL_OPTIONS}</span> <span class="num-unit">options checked</span></p>
       {board_rows()}
-      <p class="fine" style="margin:16px 0 0">Prices checked {CHECKED}. Proven means FDA approved for that use.</p>
+      <div class="rx-foot"><span class="stamp">Checked {CHECKED}</span><span class="fine">Proven means FDA approved for that use. Not a prescription.</span></div>
     </div>
   </div>
 </section>
@@ -489,10 +489,11 @@ def category_page(g):
       <p class="small meta">{AUTHOR}. Last updated {CHECKED}. {STANDING_LINE}</p>
       <p class="intro">{g["short_answer"]}</p>
     </div>
-    <div class="board">
-      <h2>Cheapest proven option, per month</h2>
+    <div class="board rx" aria-label="Price pad">
+      <div class="rx-head"><span class="rx-mark" aria-hidden="true">&#8478;</span><h2>Cheapest proven option, per month</h2></div>
       <p class="hero-num"><span class="num-xl">${g["price_from_usd"]}</span> <span class="num-unit">/mo from</span></p>
-      <p class="fine">{g["best_option"]}, {g["price_note"]}. Prices checked {CHECKED}.</p>
+      <div class="ledger"><span>{g["best_option"]}</span></div>
+      <div class="rx-foot"><span class="stamp">Checked {CHECKED}</span><span class="fine">{g["price_note"]}. Not a prescription.</span></div>
     </div>
   </div>
 </section>
