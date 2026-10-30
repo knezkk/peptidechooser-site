@@ -15,7 +15,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="theme-color" content="#1a2330">
 <link rel="icon" href="/assets/mark.svg" type="image/svg+xml">
-<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,500;6..72,600&family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet"><link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@800&text=Peptide%20Chooser&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/assets/tokens.css">
 <link rel="stylesheet" href="/assets/bundle.css">
 <link rel="stylesheet" href="/assets/site.css">
@@ -137,8 +137,8 @@ var css=getComputedStyle(d),ms=function(n){return parseFloat(css.getPropertyValu
 var rise=parseFloat(css.getPropertyValue('--motion-rise'));
 var fig=document.querySelector('.figure');
 if(fig){var tl=gsap.timeline({paused:true});
-tl.to(fig.querySelectorAll('.fig-line > *'),{strokeDashoffset:0,duration:ms('draw'),ease:'power1.inOut'})
-.to(fig.querySelector('.fig-fill'),{opacity:1,duration:ms('reveal')*2,ease:'power1.out'},ms('draw')*0.45);
+tl.to(fig.querySelectorAll('.contour > *'),{strokeDashoffset:0,duration:ms('draw'),ease:'power1.inOut'})
+.to(fig.querySelector('.body'),{opacity:1,duration:ms('reveal')*2,ease:'power1.out'},ms('draw')*0.45);
 ScrollTrigger.create({trigger:fig,start:'top 85%',once:true,onEnter:function(){tl.play();}});}
 ScrollTrigger.batch('.sec-hd, .tbl tbody tr, .criteria li, .creators li, .trust-row li',{start:'top 92%',once:true,
 onEnter:function(els){gsap.fromTo(els,{opacity:0,y:rise},{opacity:1,y:0,duration:ms('reveal'),ease:'power2.out',stagger:ms('stagger'),overwrite:true});}});

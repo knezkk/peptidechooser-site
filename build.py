@@ -72,8 +72,8 @@ var css=getComputedStyle(d),ms=function(n){{return parseFloat(css.getPropertyVal
 var rise=parseFloat(css.getPropertyValue('--motion-rise'));
 var fig=document.querySelector('.figure');
 if(fig){{var tl=gsap.timeline({{paused:true}});
-tl.to(fig.querySelectorAll('.fig-line > *'),{{strokeDashoffset:0,duration:ms('draw'),ease:'power1.inOut'}})
-.to(fig.querySelector('.fig-fill'),{{opacity:1,duration:ms('reveal')*2,ease:'power1.out'}},ms('draw')*0.45);
+tl.to(fig.querySelectorAll('.contour > *'),{{strokeDashoffset:0,duration:ms('draw'),ease:'power1.inOut'}})
+.to(fig.querySelector('.body'),{{opacity:1,duration:ms('reveal')*2,ease:'power1.out'}},ms('draw')*0.45);
 ScrollTrigger.create({{trigger:fig,start:'top 85%',once:true,onEnter:function(){{tl.play();}}}});}}
 ScrollTrigger.batch('.sec-hd, .tbl tbody tr, .criteria li, .creators li, .trust-row li',{{start:'top 92%',once:true,
 onEnter:function(els){{gsap.fromTo(els,{{opacity:0,y:rise}},{{opacity:1,y:0,duration:ms('reveal'),ease:'power2.out',stagger:ms('stagger'),overwrite:true}});}}}});
@@ -82,10 +82,7 @@ onEnter:function(els){{gsap.fromTo(els,{{opacity:0,y:rise}},{{opacity:1,y:0,dura
 
 FONTS = ('<link rel="preconnect" href="https://fonts.googleapis.com">'
          '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>'
-         '<link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,500;6..72,600'
-         '&family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">'
-         # The wordmark is the only Bricolage text left (design book, Logo): load just its letters.
-         '<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@800&text=Peptide%20Chooser&display=swap" rel="stylesheet">')
+         '<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">')
 
 
 def tokens_css():
@@ -102,7 +99,7 @@ def tokens_css():
             out.append(f"  --{s['name']}-weight: {s['fontWeight']};")
             if "letterSpacing" in s:
                 out.append(f"  --{s['name']}-ls: {s['letterSpacing']};")
-    for fam in ("spacing", "radius", "layout", "motion"):
+    for fam in ("spacing", "radius", "border", "layout", "motion"):
         for t in TOKENS.get(fam, {}).get("tokens", []):
             out.append(f"  --{t['name']}: {t['value']};")
     out.append("}")
@@ -234,52 +231,87 @@ def goal_rows():
     return "\n".join(rows)
 
 
-def board_rows():
-    # The first published goal is the pad's hero number (design book, pages.md, Home), so it is not repeated as a row.
-    rows = []
-    for g in LIVE_GOALS[1:]:
-        rows.append(f'<div class="ledger"><span>{g["name"]}</span><span><span class="num-unit">from </span><strong>${g["price_from_usd"]}</strong><span class="num-unit">/mo</span></span></div>')
-    return "\n".join(rows)
-
-
 COMPARE_TH = '<th scope="col"></th>' if any(g.get("page") for g in LIVE_GOALS) else ""
-LEAD = LIVE_GOALS[0]
 ALL_GOALS = DATA["goals"]
 LEGAL = DATA["legal"]
 CREATORS = DATA["creators"]
-PICKER = "".join(f'<a class="btn btn-line" href="/{g["slug"]}/">Compare {g["label"].lower()} options</a>' for g in LIVE_GOALS if g.get("page"))
 SOURCES_HOME = "".join(
     f'<li id="src-{s["n"]}">{s["text"]}: <a href="{s["url"]}" rel="nofollow">{s["url"]}</a></li>' for s in LEGAL["sources"]
 ) + "".join(f'<li>{g["price_source_name"]}: <a href="{g["price_source"]}" rel="nofollow">{g["price_source"]}</a></li>' for g in LIVE_GOALS)
 
-# The body figure is our own drawing (design book: no stock art). Dots are placed by percentages from
-# data/site.json so a goal moves without touching the SVG.
-FIGURE_D = "M111 70 C113.1 71.3 111.8 84.2 114 86 C116.2 87.8 134.8 90.5 138 92 C141.2 93.5 150.4 100.5 152 104 C153.6 107.5 156.2 127.5 157 134 C157.8 140.5 160.3 173.8 161 182 C161.7 190.2 164.8 226.2 165 232 C165.2 237.8 164.1 250.1 163 252 C161.9 253.9 153.2 256.7 152 255 C150.8 253.3 148.8 237.9 148 232 C147.2 226.1 143.9 191.7 143 184 C142.1 176.3 137.8 139.3 137 140 C136.2 140.7 132.9 184.7 133 192 C133.1 199.3 137.7 219 138 228 C138.3 237 137.6 289.7 137 300 C136.4 310.3 131.8 342.2 131 352 C130.2 361.8 126.9 410.8 127 418 C127.1 425.2 132.2 435.7 132 438 C131.8 440.3 126 445.5 124 446 C122 446.5 109.5 446.2 108 444 C106.5 441.8 106 427.7 106 420 C106 412.3 108.2 365.2 108 352 C107.8 338.8 103.7 270 103 262 C102.3 254 100.5 256 100 256 C99.5 256 97.7 254 97 262 C96.3 270 92.2 338.8 92 352 C91.8 365.2 94 412.3 94 420 C94 427.7 93.5 441.8 92 444 C90.5 446.2 78 446.5 76 446 C74 445.5 68.2 440.3 68 438 C67.8 435.7 72.9 425.2 73 418 C73.1 410.8 69.8 361.8 69 352 C68.2 342.2 63.6 310.3 63 300 C62.4 289.7 61.7 237 62 228 C62.3 219 66.9 199.3 67 192 C67.1 184.7 63.8 140.7 63 140 C62.2 139.3 57.9 176.3 57 184 C56.1 191.7 52.8 226.1 52 232 C51.2 237.9 49.2 253.3 48 255 C46.8 256.7 38.1 253.9 37 252 C35.9 250.1 34.8 237.8 35 232 C35.2 226.2 38.3 190.2 39 182 C39.7 173.8 42.2 140.5 43 134 C43.8 127.5 46.4 107.5 48 104 C49.6 100.5 58.8 93.5 62 92 C65.2 90.5 83.8 87.8 86 86 C88.2 84.2 86.9 71.3 89 70 C91.1 68.7 108.9 68.7 111 70Z"
-FIGURE_SVG = f"""<svg viewBox="0 0 200 460" aria-hidden="true" focusable="false">
-<g class="fig-fill">
-<circle cx="100" cy="42" r="27"/>
-<path d="{FIGURE_D}"/>
-</g>
-<g class="fig-line">
-<circle cx="100" cy="42" r="27" pathLength="1"/>
-<path pathLength="1" d="{FIGURE_D}"/>
-</g>
-</svg>"""
+# The body figure is our own drawing (design book: no stock art): a front view, eight heads tall, in a 240 x 480
+# box. The right half is listed and mirrored, then smoothed. Each goal shades its body area and has a pin.
+def body_path():
+    r = [(128, 52), (130, 74), (146, 80), (164, 88), (175, 100), (178, 118), (179, 150), (181, 182), (185, 214), (188, 244),
+         (192, 262), (191, 280), (185, 288), (179, 284), (176, 266), (172, 248), (167, 216), (162, 184), (158, 150), (154, 128),
+         (151, 150), (146, 192), (150, 224), (155, 250), (155, 284), (150, 322), (145, 348), (147, 378), (142, 416), (138, 446),
+         (146, 462), (142, 472), (126, 472), (124, 458), (125, 440), (124, 404), (126, 378), (125, 350), (126, 316), (122, 276)]
+    pts = r + [(120, 270)] + [(240 - x, y) for x, y in reversed(r)]
+    f = lambda v: ("%.1f" % v).rstrip("0").rstrip(".")
+    d = "M%s %s" % (f(pts[0][0]), f(pts[0][1]))
+    for i in range(len(pts)):
+        p0, p1, p2, p3 = pts[i - 1], pts[i], pts[(i + 1) % len(pts)], pts[(i + 2) % len(pts)]
+        c = (p1[0] + (p2[0] - p0[0]) / 6, p1[1] + (p2[1] - p0[1]) / 6, p2[0] - (p3[0] - p1[0]) / 6, p2[1] - (p3[1] - p1[1]) / 6, *p2)
+        d += " C%s %s %s %s %s %s" % tuple(map(f, c))
+    return d + "Z"
+
+
+BODY_D = body_path()
+HEAD = '<ellipse cx="120" cy="34" rx="21" ry="27"'
+# Body area per goal: shaded ellipses (cx, cy, rx, ry), clipped to the body, and where its pin sits.
+REGIONS = {
+    "hair": ([(120, 14, 24, 12)], (120, 13)),
+    "skin": ([(120, 40, 17, 15)], (120, 42)),
+    "muscle": ([(168, 128, 13, 26), (72, 128, 13, 26)], (72, 126)),
+    "longevity": ([(131, 134, 13, 12)], (131, 134)),
+    "weight-loss": ([(120, 204, 28, 24)], (120, 204)),
+    "libido": ([(120, 258, 22, 12)], (120, 258)),
+    "recovery": ([(136, 352, 13, 14), (104, 352, 13, 14)], (136, 352)),
+}
+
+
+def figure_svg():
+    regions, pins = [], []
+    for i, g in enumerate(ALL_GOALS):
+        shapes, (px, py) = REGIONS[g["slug"]]
+        on = "true" if i == 0 else "false"
+        regions += [f'<ellipse class="region" data-goal="{g["slug"]}" cx="{cx}" cy="{cy}" rx="{rx}" ry="{ry}"/>' for cx, cy, rx, ry in shapes]
+        pins.append(f'<g class="pin" data-goal="{g["slug"]}" role="button" tabindex="0" aria-pressed="{on}" aria-label="{g["label"]}">'
+                    f'<circle class="pin-hit" cx="{px}" cy="{py}" r="24"/><circle class="pin-ring" cx="{px}" cy="{py}" r="9"/>'
+                    f'<circle class="pin-dot" cx="{px}" cy="{py}" r="4.5"/></g>')
+    # The neck's top edge sits inside the head; the mask keeps it from drawing a line across the chin.
+    return (f'<svg class="fig" viewBox="0 0 240 480" role="group" aria-label="Choose a goal on the body">'
+            f'<defs><clipPath id="body-clip"><path d="{BODY_D}"/>{HEAD}/></clipPath>'
+            f'<mask id="no-head"><rect x="-10" y="-10" width="260" height="500" fill="#fff"/>{HEAD} fill="#000"/></mask></defs>'
+            f'<g class="body"><path d="{BODY_D}"/>{HEAD}/></g>'
+            f'<g clip-path="url(#body-clip)">{"".join(regions)}</g>'
+            f'<g class="contour"><path pathLength="1" mask="url(#no-head)" d="{BODY_D}"/>{HEAD} pathLength="1"/></g>'
+            f'{"".join(pins)}</svg>')
 
 
 def body_map():
-    dots, items, panels = [], [], []
+    items, panels = [], []
     for i, g in enumerate(ALL_GOALS):
         on = ' aria-pressed="true"' if i == 0 else ' aria-pressed="false"'
-        dots.append(f'<button type="button" class="map-dot" data-goal="{g["slug"]}" style="left:{g["map"]["x"]}%;top:{g["map"]["y"]}%"{on}><span class="sr">{g["label"]}</span></button>')
         items.append(f'<button type="button" class="goal-item" data-goal="{g["slug"]}"{on}><span>{g["label"]}</span><span class="small">{len(g["peptides"])} options</span></button>')
         peps = "".join(f'<li><span class="name">{p["name"]}</span><span class="chip chip-{p["chip"]}">{p["status"]}</span></li>' for p in g["peptides"])
+        if g.get("live"):
+            # The answer: the price pad's words, now inside the goal's panel (design book, pages.md, Home).
+            answer = (f'<div class="answer"><p class="answer-k">Cheapest proven option, per month</p>'
+                      f'<p class="hero-num"><span class="num-xl">${g["price_from_usd"]}</span> <span class="num-unit">/mo</span></p>'
+                      f'<p class="hero-what"><strong>{g["name"]}:</strong> {g["best_option"]}'
+                      f'<span class="small">{g["options_checked"]} options checked <span class="stamp">Checked {CHECKED}</span></span></p></div>')
+            foot = '<p class="fine">Proven means FDA approved for that use. Not a prescription.</p>'
+        else:
+            answer, foot = "", ""
         link = f'<div class="btn-row"><a class="btn btn-ink" href="/{g["slug"]}/">Compare {g["label"].lower()} options</a><a class="btn btn-line" href="#legal">Legal status</a></div>' if g.get("page") else '<p class="small">Full comparison for this goal is not published yet. The legal status above is current as of ' + CHECKED + '.</p>'
-        panels.append(f'<div class="goal-panel" id="goal-{g["slug"]}" data-goal="{g["slug"]}"{"" if i == 0 else " hidden"}><h3>Peptides for {g["label"].lower()}</h3><p>{g["intro"]}</p><ul class="pep-list">{peps}</ul>{link}</div>')
-    return "".join(dots), "".join(items), "".join(panels)
+        panels.append(f'<div class="goal-panel" id="goal-{g["slug"]}" data-goal="{g["slug"]}"{"" if i == 0 else " hidden"}>'
+                      f'<span class="rx-mark" aria-hidden="true">&#8478;</span><h3>Peptides for {g["label"].lower()}</h3>{answer}'
+                      f'<p class="goal-intro">{g["intro"]}</p><ul class="pep-list">{peps}</ul>{link}{foot}</div>')
+    return figure_svg(), "".join(items), "".join(panels)
 
 
-DOTS, GOAL_ITEMS, GOAL_PANELS = body_map()
+FIGURE, GOAL_ITEMS, GOAL_PANELS = body_map()
 
 LEGAL_ROWS = "".join(
     f'<tr><td><span class="name">{r["peptide"]}</span></td><td><span class="chip chip-{r["chip"]}">{r["status"]}</span></td>'
@@ -294,43 +326,36 @@ MAP_JS = """<script>
 function show(k){var old=root.querySelector('.goal-panel:not([hidden])'),next=root.querySelector('.goal-panel[data-goal="'+k+'"]');
 if(!next||old===next)return;
 function swap(){if(old)old.hidden=true;next.hidden=false;
-if(window.pcMotion){gsap.fromTo(next,{opacity:0},{opacity:1,duration:0.2,ease:'power1.out'});}}
+if(window.pcMotion){gsap.fromTo(next,{opacity:0,y:6},{opacity:1,y:0,duration:0.22,ease:'power1.out'});}}
 if(window.pcMotion&&old){gsap.to(old,{opacity:0,duration:0.12,ease:'power1.in',onComplete:function(){gsap.set(old,{opacity:1});swap();}});}else{swap();}}
-root.addEventListener('click',function(e){var b=e.target.closest('[data-goal]');if(!b||b.tagName!=='BUTTON')return;var k=b.getAttribute('data-goal');
-root.querySelectorAll('button[data-goal]').forEach(function(x){var on=x.getAttribute('data-goal')===k;x.setAttribute('aria-pressed',on?'true':'false');
-if(x.classList.contains('map-dot')){x.classList.remove('pulse');if(on){void x.offsetWidth;x.classList.add('pulse');}}});
-show(k);});
+function pick(k){root.querySelectorAll('[data-goal]').forEach(function(x){var on=x.getAttribute('data-goal')===k;
+if(x.hasAttribute('aria-pressed'))x.setAttribute('aria-pressed',on?'true':'false');x.classList.toggle('on',on);
+if(x.classList.contains('pin')){x.classList.remove('pulse');if(on){void x.getBoundingClientRect();x.classList.add('pulse');}}});show(k);}
+function hover(k){root.querySelectorAll('.region,.pin').forEach(function(x){x.classList.toggle('hov',x.getAttribute('data-goal')===k);});}
+root.addEventListener('click',function(e){var b=e.target.closest('.goal-item,.pin');if(b)pick(b.getAttribute('data-goal'));});
+root.addEventListener('mouseover',function(e){var b=e.target.closest('.goal-item,.pin');hover(b?b.getAttribute('data-goal'):null);});
+root.addEventListener('mouseleave',function(){hover(null);});
+root.addEventListener('keydown',function(e){var t=e.target;
+if(t.classList&&t.classList.contains('pin')&&(e.key==='Enter'||e.key===' ')){e.preventDefault();pick(t.getAttribute('data-goal'));return;}
 // Arrow keys move through the goal list (Tab, Enter and Space work as on any button).
-root.addEventListener('keydown',function(e){if(e.key!=='ArrowDown'&&e.key!=='ArrowUp')return;var items=[].slice.call(root.querySelectorAll('.goal-item')),i=items.indexOf(document.activeElement);
-if(i<0)return;e.preventDefault();items[(i+(e.key==='ArrowDown'?1:items.length-1))%items.length].focus();});})();
+if(e.key!=='ArrowDown'&&e.key!=='ArrowUp')return;var items=[].slice.call(root.querySelectorAll('.goal-item')),i=items.indexOf(t);
+if(i<0)return;e.preventDefault();items[(i+(e.key==='ArrowDown'?1:items.length-1))%items.length].focus();});
+pick(root.querySelector('.goal-item[aria-pressed="true"]').getAttribute('data-goal'));})();
 </script>"""
 
 HOME = f"""
-<section class="hero">
-  <div class="wrap hero-grid hero-home">
-    <h1 class="hero-h1">The best peptides for your goal, compared honestly.</h1>
-    <div class="board rx" aria-label="Price pad">
-      <div class="rx-head"><span class="rx-mark" aria-hidden="true">&#8478;</span><h2>Cheapest proven option, per month</h2></div>
-      <p class="hero-num"><span class="num-xl">${LEAD["price_from_usd"]}</span> <span class="num-unit">/mo</span></p>
-      <p class="hero-what"><strong>{LEAD["name"]}:</strong> {LEAD["best_option"]}<span class="small">{LEAD["options_checked"]} options checked</span></p>
-      {board_rows()}
-      <div class="rx-foot"><span class="stamp">Checked {CHECKED}</span><span class="fine">Proven means FDA approved for that use. Not a prescription.</span></div>
-    </div>
-    <div class="hero-copy">
-      <p class="lede">For each goal we put peptide products next to the FDA-approved alternatives and show what the evidence says, what it costs per month and how you would get it. We compare; we never sell.</p>
-      <div class="goal-picker">{PICKER}</div>
-    </div>
-  </div>
-</section>
-
-<section class="section" id="goals">
+<section class="hero hero-clinic">
   <div class="wrap">
-    <div class="sec-hd"><div><h2>Start with what you want to change</h2><p>Tap the body or pick from the list. Every goal shows what is approved, what is not, and the proven alternative.</p></div></div>
-    <div class="map-grid">
-      <div class="figure">{FIGURE_SVG}{DOTS}</div>
-      <div class="goal-list" role="group" aria-label="Goals">{GOAL_ITEMS}</div>
-      <div class="goal-panels">{GOAL_PANELS}</div>
+    <div class="hero-intro">
+      <h1>The best peptides for your goal, compared honestly.</h1>
+      <p class="lede">For each goal we put peptide products next to the FDA-approved alternatives and show what the evidence says, what it costs per month and how you would get it. We compare; we never sell.</p>
     </div>
+    <section class="chooser" id="goals" aria-labelledby="goals-h">
+      <div class="chooser-hd"><h2 id="goals-h">Start with what you want to change</h2><p>Tap the body or pick from the list. Every goal shows what is approved, what is not, and the proven alternative.</p></div>
+      <div class="figure">{FIGURE}</div>
+      <div class="goal-list" role="group" aria-label="Goals">{GOAL_ITEMS}</div>
+      <div class="goal-panels" aria-live="polite">{GOAL_PANELS}</div>
+    </section>
   </div>
 </section>
 
