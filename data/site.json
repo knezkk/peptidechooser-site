@@ -12,7 +12,81 @@
       "price_source_name": "GoodRx, 3 Aug 2026",
       "fda": "FDA approved",
       "fda_chip": "ok",
-      "options_checked": 3
+      "options_checked": 3,
+      "page": true,
+      "title": "Hair loss treatment options, compared | Peptide Chooser",
+      "h1": "Hair loss treatment options, compared honestly.",
+      "description": "Finasteride and minoxidil next to copper peptide serums and research-labeled peptides: FDA status, evidence in people and price per month, checked and dated.",
+      "short_answer": "Finasteride and minoxidil are the only treatments on this page the FDA has approved for hair loss, and generic finasteride starts at about $10 a month. Copper peptide serums are cosmetics: the evidence is from lab and follicle-culture studies, not from large trials in people. Injectable peptides sold for hair are not approved for any use, and we found no human evidence for hair.",
+      "options": [
+        {
+          "name": "Finasteride 1 mg and minoxidil",
+          "kind": "Prescription pill (men) and over-the-counter liquid or foam",
+          "fda": "FDA approved",
+          "fda_chip": "ok",
+          "evidence": "Strong: many trials in people",
+          "evidence_chip": "ok",
+          "price": "$10",
+          "price_unit": "/mo",
+          "price_note": "generic finasteride with a pharmacy coupon; average cash price $45.80",
+          "how": "Prescription for finasteride; minoxidil over the counter",
+          "sources": [
+            1,
+            2
+          ]
+        },
+        {
+          "name": "Copper peptide serums (GHK-Cu)",
+          "kind": "Sold as cosmetics for the scalp",
+          "fda": "Not approved for hair loss",
+          "fda_chip": "neutral",
+          "evidence": "Limited: lab and follicle-culture studies",
+          "evidence_chip": "warn",
+          "price": "$48",
+          "price_unit": "/30 mL",
+          "price_note": "Divi Scalp Serum, one-time price",
+          "how": "Over the counter, no prescription",
+          "sources": [
+            3,
+            4
+          ]
+        },
+        {
+          "name": "Injectable peptides sold for hair",
+          "kind": "Research-labeled vials",
+          "fda": "Not approved",
+          "fda_chip": "neutral",
+          "evidence": "None found in people",
+          "evidence_chip": "neutral",
+          "price": null,
+          "price_unit": "",
+          "price_note": "We do not list prices or sellers for products that are not approved for human use",
+          "how": "Not for human use",
+          "sources": []
+        }
+      ],
+      "sources": [
+        {
+          "n": 1,
+          "text": "MedlinePlus, Finasteride, revised 15 Jun 2026",
+          "url": "https://medlineplus.gov/druginfo/meds/a698016.html"
+        },
+        {
+          "n": 2,
+          "text": "GoodRx, How much is finasteride without insurance, 3 Aug 2026",
+          "url": "https://www.goodrx.com/finasteride/how-much-is-finasteride-without-insurance"
+        },
+        {
+          "n": 3,
+          "text": "Pyo HK et al., The effect of tripeptide-copper complex on human hair growth in vitro, Archives of Pharmacal Research 30(7), 2007",
+          "url": "https://agris.fao.org/search/fr/records/65de423b63b8185d9ca7d5b9"
+        },
+        {
+          "n": 4,
+          "text": "Divi, Scalp Serum product page, price checked 30 Oct 2026",
+          "url": "https://diviofficial.com/products/scalp-serum"
+        }
+      ]
     }
   ]
 }

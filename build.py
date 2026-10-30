@@ -51,7 +51,7 @@ def tokens_css():
 
 
 def nav_items(path):
-    items = [(f"/{g['slug']}/", g["name"].split()[0]) for g in LIVE_GOALS if (ROOT / "pages" / g["slug"]).exists()]
+    items = [(f"/{g['slug']}/", g["name"].split()[0]) for g in LIVE_GOALS if g.get("page")]
     items += [("/how-we-rate/", "How we rate"), ("/about/", "About")]
     return "".join(
         f'<a href="{href}"{" aria-current=\"page\"" if href == path else ""}>{label}</a>' for href, label in items
@@ -156,8 +156,8 @@ def goal_rows():
     rows = []
     for g in LIVE_GOALS:
         chip = f'<span class="chip chip-{g["fda_chip"]}">{g["fda"]}</span>'
-        has_page = (ROOT / "pages" / g["slug"]).exists()
-        compare = f'<td><a class="btn btn-ink btn-sm" href="/{g["slug"]}/">Compare</a></td>' if has_page else ""
+        has_page = bool(g.get("page"))
+        compare = f'<td class="act"><a class="btn btn-ink btn-sm" href="/{g["slug"]}/">Compare</a></td>' if has_page else ""
         rows.append(f"""<tr>
   <td><span class="name">{g["name"]}</span></td>
   <td><span class="name">{g["best_option"]}</span><span class="note">{g["options_checked"]} options checked</span></td>
@@ -175,7 +175,7 @@ def board_rows():
     return "\n".join(rows)
 
 
-COMPARE_TH = '<th scope="col"></th>' if any((ROOT / "pages" / g["slug"]).exists() for g in LIVE_GOALS) else ""
+COMPARE_TH = '<th scope="col"></th>' if any(g.get("page") for g in LIVE_GOALS) else ""
 TOTAL_OPTIONS = sum(g["options_checked"] for g in LIVE_GOALS)
 PICKER = "".join(f'<a class="btn btn-line" href="#goals">{g["name"]}</a>' for g in LIVE_GOALS)
 SOURCES_HOME = "".join(
@@ -337,6 +337,53 @@ PRIVACY = f"""
 </div></section>
 """
 
+def category_page(g):
+    rows = []
+    for o in g["options"]:
+        refs = (" <sup>" + ", ".join(f'<a href="#src-{n}">{n}</a>' for n in o["sources"]) + "</sup>") if o["sources"] else ""
+        price = (f'<span class="num-l">{o["price"]}<span class="num-unit">{o["price_unit"]}</span></span><span class="note">{o["price_note"]}</span>'
+                 if o["price"] else f'<span class="note">{o["price_note"]}</span>')
+        rows.append(f"""<tr>
+  <td><span class="name">{o["name"]}{refs}</span><span class="note">{o["kind"]}</span></td>
+  <td><span class="chip chip-{o["fda_chip"]}">{o["fda"]}</span></td>
+  <td><span class="chip chip-{o["evidence_chip"]}">{o["evidence"]}</span></td>
+  <td>{price}</td>
+  <td>{o["how"]}</td>
+</tr>""")
+    srcs = "".join(f'<li id="src-{s["n"]}">{s["text"]}: <a href="{s["url"]}" rel="nofollow">{s["url"]}</a></li>' for s in g["sources"])
+    return f"""
+<section class="hero">
+  <div class="wrap hero-grid">
+    <div>
+      <h1>{g["h1"]}</h1>
+      <p class="small meta">{AUTHOR}. Last updated {CHECKED}. {STANDING_LINE}</p>
+      <p class="intro">{g["short_answer"]}</p>
+    </div>
+    <div class="board">
+      <h2>Cheapest proven option, per month</h2>
+      <p class="hero-num"><span class="num-xl">${g["price_from_usd"]}</span> <span class="num-unit">/mo from</span></p>
+      <p class="fine">{g["best_option"]}, {g["price_note"]}. Prices checked {CHECKED}.</p>
+    </div>
+  </div>
+</section>
+<section class="section" id="options">
+  <div class="wrap">
+    <div class="sec-hd"><div><h2>Every option, side by side</h2><p>{g["options_checked"]} options checked on the same five criteria. Rows that are not approved for human use carry no price and no seller.</p></div></div>
+    <div class="tbl-wrap"><table class="tbl">
+      <thead><tr><th scope="col">Option</th><th scope="col">FDA status for hair loss</th><th scope="col">Evidence in people</th><th scope="col">Price from</th><th scope="col">How you get it</th></tr></thead>
+      <tbody>{"".join(rows)}</tbody>
+    </table></div>
+  </div>
+</section>
+<section class="section">
+  <div class="wrap">
+    <h2 style="font-size:22px">Sources</h2>
+    <ol class="small" style="padding-left:1.2em">{srcs}</ol>
+  </div>
+</section>
+"""
+
+
 NOT_FOUND = """
 <section class="page"><div class="wrap prose">
 <h1>This page doesn't exist</h1>
@@ -361,6 +408,11 @@ PAGES = [
     ("/privacy/", "privacy/index.html", "Privacy policy | Peptide Chooser",
      "What information Peptide Chooser collects, how it is used and how to contact us about your data.", PRIVACY, "", [("/privacy/", "Privacy")]),
 ]
+
+for _g in LIVE_GOALS:
+    if _g.get("page"):
+        PAGES.append((f"/{_g['slug']}/", f"{_g['slug']}/index.html", _g["title"], _g["description"],
+                      category_page(_g), "", [(f"/{_g['slug']}/", _g["name"])]))
 
 
 def main():

@@ -68,7 +68,8 @@ p { margin: 0 0 1em; }
 
 /* Tables */
 .tbl th:first-child, .tbl td:first-child { padding-left: 0; }
-.tbl th:last-child, .tbl td:last-child { padding-right: 0; text-align: right; }
+.tbl th:last-child, .tbl td:last-child { padding-right: 0; }
+.tbl .act { text-align: right; }
 .tbl .name { font: 700 16px var(--font-text); }
 .tbl .note { display: block; font-size: 14px; color: var(--ink-2); }
 
