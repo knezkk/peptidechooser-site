@@ -6,7 +6,7 @@ Read this before any design task. It is the working method; `CLAUDE.md` holds th
 
 - Three design skills are installed as project skills in `.claude/skills/`: `impeccable` (review, audit, critique, polish, typeset, animate), `ui-ux-pro-max` (searchable data: palettes, font pairings, UX guidelines, GSAP presets; with `design-system` and `ui-styling`) and `frontend-design` (account-level Anthropic plugin). Use them, do not reinvent what they already know.
 - One project folder per session: this repo. Everything you make lives here.
-- The video also adds two MCPs (Magic UI, React Bits) for React components. We do not use them: this site is static HTML rendered by `build.py`, no framework. If you need a component, write it into `design/bundle.css` as ours.
+- No React, no component MCPs, no framework (owner decision, 30 Oct 2026): this site is static HTML rendered by `build.py`, which is what SEO and affiliate links need (content and `rel="sponsored"` in the HTML, fast first paint, free hosting). If you need a component, write it into `design/bundle.css` as ours.
 
 ## 2. What separates a bad site from a premium one (the video's point, which we agree with)
 
