@@ -6,11 +6,11 @@ The design system for Peptide Chooser (peptidechooser.com), the human peptide co
 
 ## Logo
 
-The mark is a peptide chain: three `action` green links ending in one `mark` yellow link, the one that is highlighted, on an `ink` square with 4px corners (`assets/Logos`). Next to it the name "Peptide Chooser" in Bricolage Grotesque 800 (`font-brand`, loaded for those letters only), in `ink` (on paper) or `paper` (on ink). The wordmark is the only Bricolage text on the site. The mark is never redrawn, recoloured, rotated, shadowed or animated.
+The mark is a peptide chain: three green links ending in one yellow link, on an `ink` square with 4px corners (`assets/Logos`); it keeps its own colours. Next to it the name "Peptide Chooser" in Public Sans 800 (`font-brand`), in `ink` (on white) or `white` (on the ink footer). The mark is never redrawn, recoloured, rotated, shadowed or animated.
 
 - `peptide-chooser-mark.svg`: on light backgrounds (header, favicon, social image).
 - `peptide-chooser-mark-on-dark.svg`: paper square, for the ink footer and dark panels.
-- Header: mark 32px tall, 10px gap to the name at 22px. Footer: mark 28px. Favicon: the mark alone. Smallest use 16px.
+- Header: mark 30px tall, 10px gap to the name at 20px. Footer: mark 28px. Favicon: the mark alone. Smallest use 16px.
 - Clear space around the mark and name: at least half the mark's height. Nothing else on that line except the nav.
 
 ## The job
@@ -21,50 +21,53 @@ The site compares; it never sells. Every visual choice serves one job: let a wor
 
 US adults, mostly 30 to 55, comparing peptide and prescription treatments by goal: hair first (from October 2026), then skin, muscle, recovery, libido, energy and weight loss. They are price-anxious and legitimacy-anxious. They scan, they do not read. Most arrive from Google on a phone with one question: what does this cost, is it legal, where do I get it.
 
+## The look: clinic intake (chosen 30 Oct 2026, "Option 1")
+
+The site looks like a good clinic's online intake: clean white, calm clinical blue, plain type, and one chart where you point at the body and get the answer. Not a wellness brand, not a SaaS dashboard, not a journal.
+
 ## Principles
 
-1. **The number is the hero.** Every page has one big number (price or score) set in `number-xl` with the `mark` highlighter under it. Everything else is quieter.
-2. **Borders, not shadows.** Hierarchy comes from 2px ink rules, 1px warm `line` hairlines and, on the price pad and goal panel, a 4px double rule under the title. No drop shadows, no gradients, no decorative cards. A thing has a border only when the border tells you something.
-3. **Two typefaces, clear roles.** Newsreader, an editorial serif with optical sizes, for everything that shouts (headings, the price pad, numbers in lining figures), so the site reads like a medical journal, not an app. Atkinson Hyperlegible for everything that is read, because it was designed for readers with low vision and this is a health site.
-4. **Green means go, yellow means look here.** `action` green is only on links and the Visit button. `mark` yellow is only under the key number, on the compare band and the alert button. Nothing else is coloured.
+1. **The answer comes first.** Home opens on the chooser: the body, the goal list and the answer panel, all in the first screen on a laptop. The answer panel carries the one big number (the cheapest proven price per month, `number-xl`).
+2. **White cards on a pale band.** Hierarchy comes from white cards with 1px `line` borders on `paper` or `paper-2`, one 1.5px `ink` border on the answer panel and the price pad, and a 2px `ink` rule above the price. One soft shadow only, on the chooser card (`shadow-card`). One gradient only: the Home hero fades from `paper` to `paper-2`.
+3. **One typeface.** Public Sans, the US government's open typeface: plain, clinical and very legible. Weight does the work: 800 for headings and numbers, 600 to 700 for labels, 400 for reading.
+4. **Blue is ours, green is paid.** `clinic` blue marks the site's own things: links, the selected goal, the body areas, focus rings. `action` green appears only on the paid Visit button (`btn-action`, with "Paid link" under it). Chips keep their status colours. Nothing else is coloured.
 5. **Honesty is visible.** "Paid link" sits under every paid button in `fine`. Sponsored rows carry a chip and never move up. A seller without a named pharmacy gets a grey chip, not a green one.
 6. **Plain words.** Labels use the words people type into Google: "Where to buy", not "Providers". "Is it legal?", not "Regulatory status". No all-caps labels, no abbreviations without the plain name next to them.
 
-## Clinical paper (the medical look, decided 30 Oct 2026)
+## Medical cues (only these)
 
-The site is about medicine, so its paper looks like a clinic's paper, not like a software dashboard. The cues, and only these:
+- **The body chart.** Our own front-view figure, eight heads tall: a `neutral-tint` fill with an `ink-2` outline. Each goal has a body area that shades in `clinic` blue (light on hover, stronger when chosen) and a pin: a white ring with a blue dot, filled blue when chosen. Pins, list rows and the answer panel are one control: choosing any of them updates the others. Like a clinic's "where does it hurt" chart. Never a stock photo, never organs. The figure's shape and the body areas live in `build.py` (`body_path`, `REGIONS`).
+- **The answer panel as a prescription pad.** White card, 1.5px `ink` border, 12px corners, an ℞ mark top right, the title, then a 2px `ink` rule and the price. It always says "Not a prescription." in `fine`. Category pages use the same look for their price pad.
+- **Chips as lab labels.** Small, 4px corners, factual.
+- **The Checked stamp.** "Checked <date>" in a small `action-text` outline next to "options checked"; everywhere else dates are plain `small` text.
 
-- **The price pad.** The hero board is drawn as a clinic notepad: a `white` sheet on journal paper with a 2px `ink` border, an ℞ mark in `display` 600 next to the title, a 4px double rule under the head, the price in `number-xl` with the `mark` bar under it, ledger rows on 1px lines, a rotated "Checked <date>" stamp in `action-text` outline, a dashed tear line at the bottom. It always says "Not a prescription." in `fine`. It replaces the dark ink board everywhere (Home hero, category hero).
-- **The body figure.** Our own flat silhouette, one continuous outline in `ink-2` (1.5px) over a `neutral-tint` fill, with dots: `paper` with a 2px `ink` border, the active one `mark` with a `mark` ring. Like an intake form's "where does it hurt". Never a stock photo, never an anatomical illustration with organs.
-- **Chips as lab labels.** Status chips stay small, square-cornered and factual, like labels on a sample.
-- **Stamps for dates.** A date the site checked something may be shown as the stamp above; everywhere else dates are plain `small` text.
+Not allowed: fake documents (anything that could pass as a real prescription, lab report or letter), stock doctors, pills or syringes as decoration, caduceus or cross icons, handwriting fonts, script signatures.
 
-Not allowed: fake documents (anything that could pass as a real prescription, lab report or letter), stock doctors, pills or syringes as decoration, caduceus or cross icons, handwriting fonts, script signatures. The two typefaces and the colour tokens change only through this book.
+## Motion (updated 30 Oct 2026, clinic intake)
 
-## Motion (decided 30 Oct 2026, medical journal direction)
-
-Motion confirms; it never entertains. Everything plays once and then the page is still. GSAP 3.12.5 from cdnjs (with ScrollTrigger) runs the figure and the scroll reveals; the price pad plays in CSS so the price never waits for a script. Durations are the `motion-*` tokens.
+Motion confirms; it never entertains. Everything plays once and then the page is still. GSAP 3.12.5 from cdnjs (with ScrollTrigger) runs the figure, the panel change and the scroll reveals. Durations are the `motion-*` tokens.
 
 | What | Trigger | Move | Time |
 |---|---|---|---|
-| Price pad (CSS) | page load | rows and hero number rise 8px and fade in, 60ms apart | `motion-base` (280ms) |
-| Highlighter under the hero number (CSS) | page load, after the number | the `mark` bar draws from left to right | `motion-reveal`, 260ms delay |
-| "Checked" stamp (CSS) | page load, last | lands from 1.15 scale to its -2° resting angle | 320ms, 650ms delay |
-| Body figure (GSAP) | first time it scrolls into view (at once if already visible) | the outline draws itself, then the fill fades in under it | `motion-draw` (1.5s) |
-| Active body dot (CSS) | on choosing a goal | a `mark` ring pulses outward, twice, then still | 600ms |
-| Goal panel (GSAP) | on choosing a goal | old panel fades out, new one fades in | 120ms out, 200ms in |
+| Body figure (GSAP) | page load (it is in the first screen) | the outline draws itself, then the fill fades in under it | `motion-draw` (1.5s) |
+| Chosen pin (CSS) | on choosing a goal | the ring pulses twice, then still | 600ms |
+| Body areas (CSS) | hover on a pin or a goal row | the area shades lightly | `motion-quick` |
+| Answer panel (GSAP) | on choosing a goal | old panel fades out, new one fades in and rises 6px | 120ms out, 220ms in |
+| Category price pad (CSS) | page load | rows rise 8px and fade in, 60ms apart | `motion-base` |
 | Section headings, table rows, criteria, creators, trust row (GSAP) | scrolled into view, once | rise `motion-rise` (12px) and fade in, `motion-stagger` (50ms) apart | `motion-reveal` (420ms) |
 
-Fallbacks: things are pre-hidden only while `html.motion` is set, which a small head script sets when reduced motion is off. If GSAP has not started within 3s (blocked or slow), the class is removed and everything shows. With `prefers-reduced-motion: reduce` or JavaScript off, the page shows its final state at once. Nothing loops, nothing moves on hover except colour, nothing shifts layout (transforms and opacity only). Not used: Three.js, WebGL, video, parallax.
+Fallbacks: things are pre-hidden only while `html.motion` is set, which a small head script sets when reduced motion is off. If GSAP has not started within 3s, the class is removed and everything shows. With `prefers-reduced-motion: reduce` or JavaScript off, the page shows its final state at once. Not used: Three.js, WebGL, video, parallax.
 
 ## Page anatomy
 
-- **Notice bar** (`paper-2`, 40px, `small`): one sentence on what we are and how we earn, with a link.
-- **Header** (76px, 2px `ink` rule under it): wordmark in `font-brand` 800, five nav items (44px tall), one primary button. Nav never wraps; on phones it scrolls.
-- **Hero**: H1 in `display-1`, lede, the category buttons. Landing: 7 + 5 columns with the price pad on the right. Article pages: title left, hero number right, 2px rule under both.
-- **Sections** on landing pages: `space-9` apart, each opened by a section heading like a journal's running head: 2px `ink` rule above, H2 in `display-2`, one-sentence lede, 1px `line` under it, "All X" link on the right.
-- **Tables**: journal tables, 2px `ink` rule above the header row and under the last row, 1px `ink` under the header, `line` between rows; prices in `number-l` with even-width figures.
-- **Article pages**: 8-column body with `body` text at 64ch, H2 in `display-3` above a 2px rule, 4-column sticky sidebar with the decision card first.
+- **Notice bar** (`paper-2`, 36px, `small`): one sentence on what we are and how we earn, with a link.
+- **Header** (72px, white, 1px `line` under it): wordmark, five nav items (44px tall), one `btn-ink`. Nav never wraps; on phones it scrolls.
+- **Home hero**: H1 and lede side by side, then the chooser card (pages.md, Home).
+- **Category hero**: H1 and short answer left, price pad right (7 + 5).
+- **Sections** on landing pages: 72px apart, each opened by a section heading (H2 in `display-2`, one-sentence lede, 1px `line` under it, "All X" link on the right).
+- **Tables**: a white card with 12px corners and a 1px `line` frame, a `paper-2` header row in 13px `ink-2`, `line` between rows; prices in `number-l`.
+- **Lists of short items** (How we rate, trust row): white cards with 1px `line` borders in a grid.
+- **Article pages**: 8-column body with `body` text at 64ch, H2 in `display-3` with a 1px `line` above, 4-column sticky sidebar with the decision card first.
 - **Footer** (`ink`): wordmark and the one-line disclaimer.
 
 ## Colour usage rules
@@ -72,26 +75,29 @@ Fallbacks: things are pre-hidden only while `html.motion` is set, which a small 
 | Need | Token |
 |---|---|
 | Text | `ink`; secondary `ink-2`; on dark `ink-on-dark` |
-| Backgrounds | `paper` (warm journal paper); alternate bands `paper-2`; sheets on paper (price pad, goal panel) `white`; dark panels `ink` (footer only since 30 Oct 2026) |
+| Backgrounds | `paper` (white); bands and the Home hero's lower edge `paper-2`; cards `white`; the footer `ink` |
+| Links, chosen goal, body areas, focus | `clinic`; hover `clinic-hover`; chosen row `clinic-tint` + `clinic-text` |
+| Paid Visit button only | `action` |
 | Approved, named, verified | `action-tint` + `action-text` |
 | Waiting, sponsored, partial | `warn-tint` + `warn-text` |
-| Prescription, compounding | `info-tint` + `info-text` |
+| Prescription, cosmetic, compounding | `info-tint` + `info-text` |
 | Not shown, not approved, neutral | `neutral-tint` + `ink-2` |
-| The key number | `mark` behind it, `ink` text |
 
-## Shape (decided 28 Oct 2026)
+Every text pair is 6.4:1 or better (ink-2 on paper-2 7.2:1, clinic on paper 6.7:1).
 
-- **Near-sharp.** 4px on buttons, inputs, the price pad, the yellow compare band and the alert band; 2px on chips. No 8–16px rounding anywhere.
-- Hierarchy still comes from the highlighter mark, 2px ink rules, double rules and the price pad's border, not from rounding or shadows. Master 2 goes fully square (0px) with sharp white panels, which keeps the two sites apart.
+## Shape (updated 30 Oct 2026)
+
+- **Soft but firm.** 6px on buttons, inputs, nav items and goal rows; 12px on cards (chooser, answer panel, price pad, table frames, criteria, trust row); 4px on chips.
+- The answer panel sits inside the chooser card on purpose: it is the answer to the card's question. No other card holds a card.
 
 ## What not to do
 
 - No uppercase labels above headings. The heading is the label.
 - No middle dots between facts. Use commas or separate lines.
 - No icons in buttons. Words do the work.
-- No cards inside cards. A panel contains rows, not more panels.
+- No cards inside cards, except the answer panel in the chooser.
 - No "→" at the end of links.
-- No colour other than `action` for links.
+- No green except the paid button and approved chips.
 
 ## Content rules (added 28 Oct 2026)
 
@@ -117,3 +123,4 @@ Built and previewed: Button, Chip, DataTable, Price, SectionHeading. Built on th
 | 30 Oct 2026 | Wide screens: two frame steps (1480px from 1600px, 1720px from 2200px) with scaled type; checks at 1920 and 2560. Clinical paper: the dark board becomes the ℞ price pad, medical cues listed, fake documents and clip art banned | ODOBRENO DIZAJN - Karlo - 30. 10. 2026. |
 | 30 Oct 2026 | Direction A, "Clinical paper, finished": Home hero number is the price (pages.md), pad under the H1 on phones, motion budget, tap targets 44px on phones (dots, nav, header button), shadows removed from the active dot and cookie bar, stamp in sentence case (no uppercase labels) | ODOBRENO DIZAJN - Karlo - 30. 10. 2026. |
 | 30 Oct 2026 | Medical journal direction: display face Newsreader (wordmark stays Bricolage), warmer palette (paper, ink, hairlines; green deepened, all text 6:1 or better), type scale and motion tokens, journal section heads and tables, notepad price pad with double rule, body figure redrawn as one outline, GSAP motion with fallbacks, in-table buttons 44px | ODOBRENO DIZAJN - Karlo - 30. 10. 2026. |
+| 30 Oct 2026 | Look changed to "Clinic intake" (Option 1 of five mockups in `mockups/`, chosen by Karlo): white and clinical blue, Public Sans, the chooser (body chart, goal list, answer panel with the price) moved into the Home hero so the figure is never cut, new body chart with shaded areas and pins, cards for tables and lists, links blue, green only for the paid button | ODOBRENO DIZAJN - Karlo - 30. 10. 2026. |
