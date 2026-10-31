@@ -64,13 +64,12 @@ rows = []
 for i, s in enumerate(SELLERS):
     name, kind, usd, fee, n, letter, complaints, rating, link = s
     first = usd + fee
-    open_ = " open" if i == 0 else ""
     rows.append(f"""<li class="seller">
   <div class="s-name"><span class="rank">{i + 1}</span><span><span class="name">{name}</span><span class="note">{kind}</span></span></div>
   <div class="s-price"><span class="num-m">${usd}<span class="num-unit">/mo</span></span><span class="note">{"no visit fee" if not fee else f"plus ${fee} first visit"}; first month ${first}</span></div>
   <div class="s-rate"><strong>{rating:.1f}</strong> <span class="note">of 5</span></div>
   <div class="s-act">{action(link)}</div>
-  <details class="s-checks"{open_}><summary>{check_chip(n, letter)} <span class="see">See checks</span></summary>{details(s)}</details>
+  <details class="s-checks"><summary>{check_chip(n, letter)} <span class="see">See checks</span></summary>{details(s)}</details>
 </li>""")
 
 # The button sits on the option's row; the sellers open in a window over the page that closes with "Close", Esc or a
@@ -88,7 +87,7 @@ dialog = f"""<dialog class="sellers-dlg" id="sellers-fin" aria-labelledby="selle
 </dialog>"""
 
 # The finasteride row in the hair options: its Visit gives way to the seller list, which opens inside the row.
-start = html.index('<li class="opt"><div class="opt-main"><span class="name">Finasteride 1 mg')
+start = html.index('<li class="opt"><details class="opt-more"><summary class="opt-sum"><span class="name">Finasteride 1 mg')
 end = html.index("</li>", start)
 row = html[start:end]
 if '<span class="pick-act">' in row:
@@ -100,7 +99,7 @@ html = html.replace("</body>", dialog + "</body>", 1)
 css = """<style>
 .mock-note{background:var(--warn-tint);color:var(--warn-text);font:600 14px var(--font-text);padding:10px 16px;text-align:center}
 .flow .opt .sellers-open{grid-column:1/-1;width:max-content;margin-top:4px}
-.sellers-dlg{width:min(960px,calc(100% - 32px));max-height:calc(100vh - 48px);padding:0 24px 24px;border:1px solid var(--line-strong);border-radius:var(--radius-panel);background:var(--white);color:var(--ink);box-shadow:var(--shadow-card)}
+.sellers-dlg{width:min(1040px,calc(100% - 32px));max-height:calc(100vh - 48px);padding:0 24px 24px;border:1px solid var(--line-strong);border-radius:var(--radius-panel);background:var(--white);color:var(--ink);box-shadow:var(--shadow-card)}
 .sellers-dlg::backdrop{background:color-mix(in srgb,var(--ink) 55%,transparent)}
 .dlg-hd{position:sticky;top:0;z-index:1;display:flex;justify-content:space-between;align-items:center;gap:16px;padding:20px 0 12px;margin-bottom:12px;background:var(--white);border-bottom:1px solid var(--line)}
 .dlg-hd h2{font-size:20px;line-height:1.3;margin:0}
@@ -111,13 +110,14 @@ css = """<style>
 .seg{min-height:var(--touch);padding:0 12px;border:1px solid var(--line-strong);border-radius:var(--radius-control);background:var(--white);font:600 13px var(--font-text);color:var(--ink);cursor:pointer}
 .seg[aria-pressed="true"]{background:var(--clinic-tint);border-color:var(--clinic);color:var(--clinic-text)}
 .seller-list{list-style:none;margin:0;padding:0}
-.seller{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"name rate" "price price" "checks checks" "act act";gap:8px 16px;padding:12px 0;border-top:1px solid var(--line)}
+.seller{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"name rate" "price act" "checks act";gap:4px 12px;padding:10px 0;border-top:1px solid var(--line);align-items:start}
+.seller:has(.s-checks[open]) .s-checks{grid-column:1/-1;grid-row:4}
 .s-name{grid-area:name;display:flex;gap:10px}.s-price{grid-area:price}.s-rate{grid-area:rate;text-align:right}.s-act{grid-area:act}.s-checks{grid-area:checks}
 .seller .rank{font:800 15px var(--font-display);color:var(--ink-2);min-width:20px}
 .seller .name{display:block;font-weight:700}
 .seller .note{display:block;font-size:var(--small-size);line-height:1.4;color:var(--ink-2)}
 .s-rate .note{display:inline}
-.num-m{font:800 20px/1.2 var(--font-display);color:var(--ink)}
+.num-m{font:800 18px/1.2 var(--font-display);color:var(--ink)}
 .s-checks summary{cursor:pointer;list-style:none;display:flex;align-items:center;gap:8px}
 .s-checks summary::-webkit-details-marker{display:none}
 .see{font-size:var(--small-size);color:var(--clinic);text-decoration:underline}
@@ -128,7 +128,9 @@ css = """<style>
  .sellers-dlg{width:100%;max-width:100%;max-height:100%;height:100%;margin:0;border-radius:0;padding:0 16px 16px}
 }
 @media (min-width:900px){
- .seller{grid-template-columns:minmax(0,1.3fr) minmax(0,1.1fr) 56px 118px;grid-template-areas:"name price rate act" "checks checks checks checks";align-items:start}
+ .seller{grid-template-columns:minmax(0,1.25fr) minmax(0,1.15fr) minmax(0,.9fr) 64px 130px;grid-template-areas:"name price checks rate act";align-items:center;gap:4px 16px;padding:8px 0}
+ .seller:has(.s-checks[open]) .s-checks{grid-row:2}
+ .s-act .paid{white-space:nowrap}
  .s-act{justify-self:end}.s-act .pick-act{align-items:flex-end}
 }
 </style>"""

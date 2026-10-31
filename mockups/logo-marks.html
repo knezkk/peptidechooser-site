@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Logo marks</title>
+<style>
+  :root { --ink: #0f1d2b; --clinic: #0b5cad; --mark: #ffe066; --paper: #ffffff; --line: #e2e8ee; --ink-muted: #64748b; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--paper); color: var(--ink); font: 15px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  main { max-width: 1080px; margin: 0 auto; padding: 40px 16px 64px; }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  p.lede { margin: 0 0 32px; color: var(--ink-muted); }
+  .sheet { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+  @media (max-width: 760px) { .sheet { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 480px) { .sheet { grid-template-columns: 1fr; } }
+  figure { margin: 0; border: 1px solid var(--line); }
+  .box { aspect-ratio: 1 / 1; display: grid; place-items: center; border-bottom: 1px solid var(--line); }
+  .box svg { width: 56%; height: 56%; }
+  .sizes { display: flex; align-items: center; gap: 16px; padding: 12px 14px; border-bottom: 1px solid var(--line); }
+  .sizes svg { display: block; }
+  figcaption { padding: 10px 14px 14px; }
+  figcaption b { display: block; font-size: 15px; }
+  figcaption span { color: var(--ink-muted); font-size: 13px; }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <!-- 1 Bead chain: four linked residues, one chosen -->
+    <symbol id="m1" viewBox="0 0 64 64">
+      <path d="M11 40 L25 26 L39 40 L53 26" fill="none" stroke="#0f1d2b" stroke-width="5" stroke-linejoin="round"/>
+      <circle cx="11" cy="40" r="7" fill="#0f1d2b"/>
+      <circle cx="25" cy="26" r="7" fill="#0f1d2b"/>
+      <circle cx="39" cy="40" r="7.5" fill="#ffe066" stroke="#0f1d2b" stroke-width="4"/>
+      <circle cx="53" cy="26" r="7" fill="#0f1d2b"/>
+    </symbol>
+    <!-- 2 Fork in the path, one branch marked -->
+    <symbol id="m2" viewBox="0 0 64 64">
+      <path d="M32 58 V38 C32 28 18 26 16 11 M32 38 C32 28 46 26 47 19" fill="none" stroke="#0f1d2b" stroke-width="5" stroke-linecap="round"/>
+      <circle cx="47" cy="12" r="7.5" fill="#ffe066" stroke="#0f1d2b" stroke-width="4"/>
+    </symbol>
+    <!-- 3 Body chart point -->
+    <symbol id="m3" viewBox="0 0 64 64">
+      <circle cx="32" cy="32" r="21" fill="none" stroke="#0f1d2b" stroke-width="4"/>
+      <path d="M32 4 V13 M32 51 V60 M4 32 H13 M51 32 H60" stroke="#0f1d2b" stroke-width="4"/>
+      <circle cx="32" cy="32" r="11" fill="#ffe066"/>
+      <circle cx="32" cy="32" r="6" fill="#0b5cad"/>
+    </symbol>
+    <!-- 4 Verification seal with one tick -->
+    <symbol id="m4" viewBox="0 0 64 64">
+      <polygon points="32.0,4.0 36.8,8.0 42.7,6.1 45.6,11.6 51.8,12.2 52.4,18.4 57.9,21.3 56.0,27.2 60.0,32.0 56.0,36.8 57.9,42.7 52.4,45.6 51.8,51.8 45.6,52.4 42.7,57.9 36.8,56.0 32.0,60.0 27.2,56.0 21.3,57.9 18.4,52.4 12.2,51.8 11.6,45.6 6.1,42.7 8.0,36.8 4.0,32.0 8.0,27.2 6.1,21.3 11.6,18.4 12.2,12.2 18.4,11.6 21.3,6.1 27.2,8.0" fill="none" stroke="#0b5cad" stroke-width="4" stroke-linejoin="round"/>
+      <path d="M21 33 L29 41 L44 24" fill="none" stroke="#0f1d2b" stroke-width="6" stroke-linecap="square"/>
+    </symbol>
+    <!-- 5 PC monogram, one stroke: C runs into the P bowl, stem drops to the C -->
+    <symbol id="m5" viewBox="0 0 64 64">
+      <path d="M49 49 A24 24 0 1 1 32 8 A12 12 0 0 1 32 32 V56" fill="none" stroke="#0f1d2b" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="49" cy="49" r="4.5" fill="#ffe066" stroke="#0f1d2b" stroke-width="3"/>
+    </symbol>
+    <!-- 6 Lab label chip with one marked line -->
+    <symbol id="m6" viewBox="0 0 64 64">
+      <rect x="6" y="14" width="52" height="36" rx="6" fill="none" stroke="#0f1d2b" stroke-width="4"/>
+      <circle cx="15" cy="32" r="3.5" fill="#0f1d2b"/>
+      <rect x="22" y="20" width="29" height="11" fill="#ffe066"/>
+      <path d="M25 25.5 H48 M25 40 H40" stroke="#0f1d2b" stroke-width="4"/>
+    </symbol>
+    <!-- 7 Clinical index card with the chosen tab -->
+    <symbol id="m7" viewBox="0 0 64 64">
+      <path d="M34 22 V10 H54 V22" fill="#ffe066" stroke="#0f1d2b" stroke-width="4" stroke-linejoin="round"/>
+      <rect x="6" y="22" width="52" height="34" fill="none" stroke="#0f1d2b" stroke-width="4"/>
+      <path d="M14 33 H46 M14 44 H34" stroke="#0b5cad" stroke-width="4"/>
+    </symbol>
+    <!-- 8 The pick: two linked residues, one framed -->
+    <symbol id="m8" viewBox="0 0 64 64">
+      <path d="M17 32 H44" stroke="#0f1d2b" stroke-width="4"/>
+      <circle cx="17" cy="32" r="8" fill="#0f1d2b"/>
+      <circle cx="44" cy="32" r="8" fill="#ffe066" stroke="#0f1d2b" stroke-width="4"/>
+      <path d="M31 25 V19 H37 M51 19 H57 V25 M57 39 V45 H51 M37 45 H31 V39" fill="none" stroke="#0b5cad" stroke-width="4"/>
+    </symbol>
+    <!-- 9 Comparison grid, one cell checked -->
+    <symbol id="m9" viewBox="0 0 64 64">
+      <rect x="32" y="8" width="24" height="24" fill="#ffe066"/>
+      <rect x="8" y="8" width="48" height="48" fill="none" stroke="#0f1d2b" stroke-width="4"/>
+      <path d="M32 8 V56 M8 32 H56" stroke="#0f1d2b" stroke-width="4"/>
+      <path d="M37.5 20.5 L42 25 L51 15" fill="none" stroke="#0f1d2b" stroke-width="4"/>
+    </symbol>
+  </defs>
+</svg>
+
+<main>
+  <h1>Peptide Chooser: logo marks, first round</h1>
+  <p class="lede">Nine marks, icon only. Each shown large, then at 64, 32 and 16 px. Colours from the design book: ink #0f1d2b, clinic #0b5cad, mark #ffe066.</p>
+  <div class="sheet" id="sheet"></div>
+</main>
+
+<script>
+  const marks = [
+    ["1. Bead chain", "Four linked residues; the yellow one is the chosen product."],
+    ["2. Fork", "One path splits in two; the yellow dot marks the branch to take."],
+    ["3. Body chart point", "Target ring with registration ticks; reads as 'this spot'."],
+    ["4. Verification seal", "Notched stamp edge in clinic blue, one ink tick."],
+    ["5. PC monogram", "One stroke: the C turns into the P bowl, the stem drops back to the C."],
+    ["6. Lab label chip", "Label with a punch hole; one line under the marker."],
+    ["7. Index card tab", "Own idea: a clinical file card, the chosen tab in yellow."],
+    ["8. The pick", "Own idea: two linked residues, the chosen one framed like a viewfinder."],
+    ["9. Comparison grid", "Own idea: a two by two table, one cell checked and marked."]
+  ];
+  const use = (id, s) => `<svg width="${s}" height="${s}" viewBox="0 0 64 64"><use href="#${id}"/></svg>`;
+  document.getElementById("sheet").innerHTML = marks.map(([t, d], i) => `
+    <figure>
+      <div class="box"><svg viewBox="0 0 64 64"><use href="#m${i + 1}"/></svg></div>
+      <div class="sizes">${use("m" + (i + 1), 64)}${use("m" + (i + 1), 32)}${use("m" + (i + 1), 16)}</div>
+      <figcaption><b>${t}</b><span>${d}</span></figcaption>
+    </figure>`).join("");
+</script>
+</body>
+</html>
