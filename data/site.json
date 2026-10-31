@@ -273,7 +273,9 @@
           "does": "A daily shot approved only to reduce belly fat in people with HIV. Sold off-label by clinics for \"growth hormone\".",
           "how": "Prescription.",
           "status_plain": "FDA approved for HIV-related belly fat only.",
-          "substance": "tesamorelin"
+          "substance": "tesamorelin",
+          "top_pick": false,
+          "top_pick_why": "Approved only for HIV-related belly fat, not for muscle (owner, 31 Oct 2026)."
         },
         {
           "name": "Sermorelin",

@@ -231,9 +231,11 @@ def top_pick(g):
     """The goal's best proven option: the first FDA-approved one in its options (or its chooser options when it has
     no comparison page), else the one marked best. Returns (name, status chip html) or None."""
     if g.get("options"):
-        rows = [(o["name"], o["fda"], o.get("best"), status_chip(o, "fda_chip", "fda")) for o in g["options"]]
+        items = [(o, o["name"], o["fda"], status_chip(o, "fda_chip", "fda")) for o in g["options"]]
     else:
-        rows = [(p["name"].replace(" (proven alternative)", ""), p["status"], p.get("best"), status_chip(p)) for p in g["peptides"]]
+        items = [(p, p["name"].replace(" (proven alternative)", ""), p["status"], status_chip(p)) for p in g["peptides"]]
+    # top_pick: false keeps an option out (e.g. tesamorelin: approved, but not for the goal's use)
+    rows = [(name, status, item.get("best"), chip) for item, name, status, chip in items if item.get("top_pick", True)]
     pick = next((r for r in rows if r[1].startswith("FDA approved")), None) or next((r for r in rows if r[2]), None)
     return (pick[0], pick[3]) if pick else None
 
