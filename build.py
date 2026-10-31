@@ -445,6 +445,102 @@ def figure_svg():
             f'{"".join(pins)}</svg>')
 
 
+# Research-use sellers per substance (site.products and site.sellers, tools/pull_data.py keeps each seller's cheapest
+# listing, ten per substance). The seller window (pages.md, Home) shows them with their background check; seller names
+# are plain text and nothing in the window links to a seller (owner, 31 Oct 2026; tools/check.py enforces it).
+PRODUCTS = DATA.get("products") or []
+SELLERS = {r["seller_slug"]: r for r in DATA.get("sellers") or []}
+
+
+def clean(t):
+    """Sellers' product names as text the site may show: no em or en dashes, single spaces."""
+    return " ".join(str(t).replace("\u2014", "-").replace("\u2013", "-").split())
+
+
+def money(v):
+    return f"${v:,.2f}"
+
+
+def month_year(iso):
+    d = date.fromisoformat(iso)
+    return d.strftime("%b %Y")
+
+
+def substance_name(slug):
+    return next((r["canonical_name"] for r in LEGAL_DB or [] if r["substance_slug"] == slug), slug)
+
+
+def seller_rows(slug):
+    """The listings for one substance, one per seller, sorted by price per mg, blends and unknown amounts last."""
+    key = lambda r: (r.get("price_per_mg") is None, r.get("price_per_mg") or 0, r.get("price_usd") or 0, r["seller_slug"])
+    best = {}
+    for r in sorted((r for r in PRODUCTS if r["substance_slug"] == slug), key=key):
+        best.setdefault(r["seller_slug"], r)
+    return sorted(best.values(), key=key)
+
+
+def check_chips(r):
+    """The six-point background check of one seller row: a chip each, never a blank."""
+    s = SELLERS.get(r["seller_slug"], {})
+    chip = lambda k, t: f'<span class="chip chip-{k}">{t}</span>'
+    coa = chip("ok", f"COA: yes ({r.get('coa_count') or 0})") if r.get("has_coa") else chip("warn", "COA: no")
+    n = s.get("fda_letter_count")
+    letters = chip("neutral", "FDA warning letters: unknown") if n is None else (
+        chip("ok", "FDA warning letters: none") if n == 0 else chip("warn", f"FDA warning letters: {n}"))
+    company = (chip("ok", "Company: " + ", ".join(x for x in (s.get("legal_entity_name"), s.get("registry_state")) if x))
+               if s.get("legal_entity_name") else chip("neutral", "Company: not found"))
+    st = r.get("seller_status")
+    status = chip("ok" if st == "active" else "neutral", f"Status: {st or 'unknown'}")
+    first = chip("neutral", f"First seen: {month_year(s['first_seen']) if s.get('first_seen') else 'unknown'}")
+    seen = r.get("price_observed_at") or r.get("last_seen")
+    checked = chip("neutral", f"Price checked: {nice_date(seen) if seen else 'unknown'}")
+    return f'<span class="chips">{coa}{letters}{company}{status}{first}{checked}</span>'
+
+
+def seller_window(slug):
+    """One seller window (a dialog; a plain section with JavaScript off). No Visit, no link to a seller."""
+    rows = seller_rows(slug)
+    newest = max((r["last_seen"] for r in rows if r.get("last_seen")), default="")
+    trs, src = [], []
+    for r in rows:
+        name = clean(r["product_name"])
+        variant = clean(r["variant_title"]) if r.get("variant_title") and r["variant_title"] != "Default Title" else ""
+        if variant and variant.lower() not in name.lower():
+            name += f", {variant}"
+        size = f'{r["amount_mg"]:g} mg' if r.get("amount_mg") else "size unknown"
+        price = money(r["price_usd"]) if r.get("price_usd") is not None else "unknown"
+        ppm = (f'{money(r["price_per_mg"])}/mg' if r.get("price_per_mg") is not None else "blend" if r.get("is_blend") else "unknown")
+        seller = clean(SELLERS.get(r["seller_slug"], {}).get("seller_name") or r["seller_name"])
+        trs.append(f'<tr><td><span class="name">{seller}</span></td><td data-l="Product">{name}<span class="sub">{size}</span></td>'
+                   f'<td data-l="Price"><span class="num">{price}</span></td><td data-l="Per mg"><span class="num">{ppm}</span></td>'
+                   f'<td>{check_chips(r)}</td></tr>')
+        seen = r.get("price_observed_at") or r.get("last_seen")
+        src.append(f'<li>{seller}, {name}{", " + nice_date(seen) if seen else ""}: {r["product_url"]}</li>')
+    checked = f" Prices checked {nice_date(newest)}." if newest else ""
+    return f"""<dialog class="sellers-dlg" id="sellers-{slug}" aria-labelledby="sellers-{slug}-h"><div class="dlg-in">
+  <div class="dlg-hd"><h2 id="sellers-{slug}-h">{substance_name(slug)}</h2><form method="dialog"><button class="btn btn-line btn-sm" type="submit">Close</button></form></div>
+  <p class="dlg-lede">Research-use sellers. We do not link to them.{checked}</p>
+  <div class="tbl-wrap"><table class="tbl"><thead><tr><th scope="col">Seller</th><th scope="col">Product</th><th scope="col">Price</th><th scope="col">Per mg</th><th scope="col">Background check</th></tr></thead>
+  <tbody>{"".join(trs)}</tbody></table></div>
+  <p class="dlg-foot">Price per mg is price divided by the stated amount; blends have no per-mg price.</p>
+  <ol class="dlg-src">{"".join(src)}</ol>
+</div></dialog>"""
+
+
+SELLER_SLUGS = sorted({p["substance"] for g in ALL_GOALS for p in g["peptides"] if p.get("substance") and seller_rows(p["substance"])})
+SELLER_WINDOWS = "".join(seller_window(s) for s in SELLER_SLUGS)
+
+
+def sellers_button(p):
+    """"Compare N sellers" on an option row whose substance has research-use listings; a link to the window without JS."""
+    slug = p.get("substance")
+    if slug not in SELLER_SLUGS:
+        return ""
+    n = len(seller_rows(slug))
+    return (f'<a class="btn btn-line btn-sm sellers-open" href="#sellers-{slug}" data-dlg="sellers-{slug}">'
+            f'Compare {n} seller{"s" if n != 1 else ""}</a>')
+
+
 def opt_price(p, slug):
     """The price on an option row, only where its price has a source in data/site.json (the goal's price source for the
     option marked price, or the option's own price_source with price_from_usd), with its footnote. Returns html or ""."""
@@ -478,7 +574,9 @@ def rail():
             plan = GOAL_PLANS.get(slug)
             cell = (f'<span class="price-main">{pad}</span>' if pad else "") + (
                 plan_line(g, "plan-line") if plan and p.get("substance") == plan["substance_slug"] else "")
-            act = f'<span class="pick-act">{visit(g, small=True)}</span>' if p is pick else ""
+            sb = sellers_button(p)
+            act = (f'<span class="pick-act">{sb}{visit(g, small=True)}</span>' if p is pick else
+                   f'<span class="pick-act">{sb}</span>' if sb else "")
             rows.append(f'<li class="opt"><details class="opt-more"><summary class="opt-sum"><span class="name">{p["name"]}</span>'
                         f'{status_chip(p)}<span class="opt-price">{cell}</span></summary>'
                         f'<div class="opt-body"><p class="opt-does">{p["does"]}{refs(p, slug, price=not pad)}</p>'
@@ -525,6 +623,15 @@ GLOSSARY = "".join(f'<div><dt>{t["term"]}</dt><dd>{t["text"]}</dd></div>' for t 
 
 CREATOR_ROWS = "".join(
     f'<li><a href="{c["url"]}" rel="nofollow noopener">{c["name"]}</a><span class="small">{c["what"]}</span></li>' for c in CREATORS["rows"])
+
+# The seller window (pages.md, Home): with JavaScript the windows hide until "Compare N sellers" opens one as a modal
+# dialog (Esc and "Close" are the dialog's own; a click on the dimmed area outside closes it; focus returns to the button).
+SELLERS_JS = """<script>
+(function(){if(!window.HTMLDialogElement)return;document.documentElement.classList.add('sellers-js');
+document.addEventListener('click',function(e){var b=e.target.closest('.sellers-open');if(b){var d=document.getElementById(b.getAttribute('data-dlg'));
+if(d){e.preventDefault();d.showModal();}return;}
+var d=e.target.closest('.sellers-dlg');if(d&&e.target===d)d.close();});})();
+</script>"""
 
 # The goal switch (design book, pages.md, Home, the three steps): chips and pins are one control. Steps 2 and 3
 # cross-fade (GSAP, motion-swap) only while motion is on; otherwise they swap at once. The stamp lands once.
@@ -627,6 +734,8 @@ HOME = f"""
   </div>
 </section>
 
+<div class="wrap sellers-all">{SELLER_WINDOWS}</div>
+
 <section class="section" id="sources">
   <div class="wrap">
     <h2 class="h-sources">Sources</h2>
@@ -634,6 +743,7 @@ HOME = f"""
   </div>
 </section>
 {MAP_JS}
+{SELLERS_JS}
 """
 
 CORRECTIONS = f"""
