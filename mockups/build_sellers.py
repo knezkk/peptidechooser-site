@@ -74,8 +74,9 @@ for i, s in enumerate(SELLERS):
 
 # The button sits on the option's row; the sellers open in a window over the page that closes with "Close", Esc or a
 # click outside it (owner, 31 Oct 2026: not expanded inside the row).
-panel = ('<button type="button" class="btn btn-line btn-sm sellers-open" '
-         'onclick="document.getElementById(\'sellers-fin\').showModal()">Compare 10 sellers</button>')
+panel = ('<span class="pick-act sellers-act"><button type="button" class="btn btn-line btn-sm sellers-open" '
+         'onclick="document.getElementById(\'sellers-fin\').showModal()">Compare 10 sellers</button>'
+         f'<span class="paid">from ${min(x[2] for x in SELLERS)}/mo, all checked</span></span>')
 dialog = f"""<dialog class="sellers-dlg" id="sellers-fin" aria-labelledby="sellers-h" onclick="if(event.target===this)this.close()">
   <div class="dlg-hd"><h2 id="sellers-h">Finasteride 1 mg: 10 sellers compared</h2>
     <form method="dialog"><button class="btn btn-line btn-sm">Close</button></form></div>
@@ -86,7 +87,7 @@ dialog = f"""<dialog class="sellers-dlg" id="sellers-fin" aria-labelledby="selle
   <p class="small">The six checks: {"; ".join(c[0] for c in CHECKS)}. Each result links to its source with the date we checked it.</p>
 </dialog>"""
 
-# The finasteride row in the hair options: its Visit gives way to the seller list, which opens inside the row.
+# The finasteride row in the hair options: on the right, where Visit was, the button that opens its sellers.
 start = html.index('<li class="opt"><details class="opt-more"><summary class="opt-sum"><span class="name">Finasteride 1 mg')
 end = html.index("</li>", start)
 row = html[start:end]
@@ -98,7 +99,9 @@ html = html.replace("</body>", dialog + "</body>", 1)
 
 css = """<style>
 .mock-note{background:var(--warn-tint);color:var(--warn-text);font:600 14px var(--font-text);padding:10px 16px;text-align:center}
-.flow .opt .sellers-open{grid-column:1/-1;width:max-content;margin-top:4px}
+.flow .opt .sellers-open{border-color:var(--clinic);color:var(--clinic-text)}
+.flow .opt .sellers-open:hover{background:var(--clinic-tint)}
+.sellers-act{align-items:flex-end}
 .sellers-dlg{width:min(1040px,calc(100% - 32px));max-height:calc(100vh - 48px);padding:0 24px 24px;border:1px solid var(--line-strong);border-radius:var(--radius-panel);background:var(--white);color:var(--ink);box-shadow:var(--shadow-card)}
 .sellers-dlg::backdrop{background:color-mix(in srgb,var(--ink) 55%,transparent)}
 .dlg-hd{position:sticky;top:0;z-index:1;display:flex;justify-content:space-between;align-items:center;gap:16px;padding:20px 0 12px;margin-bottom:12px;background:var(--white);border-bottom:1px solid var(--line)}
