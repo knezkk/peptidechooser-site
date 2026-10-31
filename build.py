@@ -295,13 +295,15 @@ OPT_REF = {id(p): (len(LEGAL["sources"]) + len(LIVE_GOALS) + i + 1, f"opt-{i + 1
 
 # Online-clinic plans from the database (site.plan_prices, tools/pull_data.py). A goal's substances are the `substance`
 # of its options; its plan line shows the cheapest monthly plan among them, with the plan page as its footnote source and
-# the day we last saw that price. A goal with no plan row shows nothing (owner, 31 Oct 2026).
+# the day we last saw that price. A goal with no plan row shows nothing (owner, 31 Oct 2026). Compounded plans are left
+# out: the line sits under an FDA-approved option, and a pharmacy-made copy is not that product (owner, 31 Oct 2026).
 PLANS = DATA.get("plans") or []
 
 
 def cheapest_plan(g):
     subs = {p["substance"] for p in g["peptides"] if p.get("substance")}
-    found = [r for r in PLANS if r["substance_slug"] in subs and r.get("price_monthly") is not None]
+    found = [r for r in PLANS if r["substance_slug"] in subs and r.get("price_monthly") is not None
+             and r.get("product_kind") != "compounded"]
     return min(found, key=lambda r: (float(r["price_monthly"]), r["seller_name"])) if found else None
 
 
