@@ -10,6 +10,8 @@ a:hover{color:var(--clinic-hover)}
 .btn-ink:hover{background:var(--ink-hover);color:var(--white)}
 .btn-action{background:var(--action);color:var(--white)}
 .btn-action:hover{background:var(--action-hover);color:var(--white)}
+/* Disabled Visit: a span, not a link, until data/site.json has the goal's affiliate url. No hover, no pointer. */
+.btn-action[aria-disabled="true"],.btn-action[aria-disabled="true"]:hover{background:var(--ink-muted);color:var(--white);cursor:default}
 .btn-line{background:var(--white);color:var(--ink);border-color:var(--ink)}
 .btn-line:hover{background:var(--neutral-tint);color:var(--ink)}
 .btn-mark{background:var(--mark);color:var(--ink)}

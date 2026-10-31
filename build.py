@@ -216,6 +216,56 @@ def breadcrumb_schema(items):
             + "</script>")
 
 
+def visit(g, small=False):
+    """The paid Visit button for a goal: a sponsored /out/ link with "Paid link" under it once data/site.json has the
+    goal's affiliate url, until then a disabled span (no link, no rel) with "No paid link yet" under it."""
+    size = " btn-sm" if small else ""
+    a = g.get("affiliate") or {}
+    if a.get("url") and a.get("name"):
+        return (f'<a class="btn btn-action{size}" href="/out/{a["name"]}/" rel="sponsored">Visit</a>'
+                f'<span class="paid">Paid link</span>')
+    return f'<span class="btn btn-action{size}" role="button" aria-disabled="true">Visit</span><span class="paid">No paid link yet</span>'
+
+
+def top_pick(g):
+    """The goal's best proven option: the first FDA-approved one in its options (or its chooser options when it has
+    no comparison page), else the one marked best. Returns (name, status chip html) or None."""
+    if g.get("options"):
+        items = [(o, o["name"], o["fda"], status_chip(o, "fda_chip", "fda")) for o in g["options"]]
+    else:
+        items = [(p, p["name"].replace(" (proven alternative)", ""), p["status"], status_chip(p)) for p in g["peptides"]]
+    # top_pick: false keeps an option out (e.g. tesamorelin: approved, but not for the goal's use)
+    rows = [(name, status, item.get("best"), chip) for item, name, status, chip in items if item.get("top_pick", True)]
+    pick = next((r for r in rows if r[1].startswith("FDA approved")), None) or next((r for r in rows if r[2]), None)
+    return (pick[0], pick[3]) if pick else None
+
+
+def sold_peptide(g):
+    """For a goal with no top pick: its most asked-about peptide, the first not-approved option (database chip when
+    there is one) that research-use shops sell, since the card says so. Returns (name, status chip html) or None."""
+    for item in g.get("options") or g["peptides"]:
+        s = db_status(item["substance"]) if item.get("substance") else None
+        chip = s["chip"] if s else item.get("chip", item.get("fda_chip"))
+        if chip == "neutral" and "research-use" in (item.get("does", "") + " " + item.get("how", "")).lower():
+            return item["name"], status_chip(item) if "chip" in item else status_chip(item, "fda_chip", "fda")
+    return None
+
+
+def top_picks():
+    cards = []
+    for g in ALL_GOALS:
+        pick = top_pick(g)
+        if pick:
+            body = f'<span class="name">{pick[0]}</span>{pick[1]}<span class="pick-act">{visit(g)}</span>'
+        else:
+            sold = sold_peptide(g)
+            body = '<span class="note">No FDA-approved option</span>' + (
+                f'<span class="name">{sold[0]}</span>{sold[1]}<span class="note">Sold by research-use shops; we do not link to them.</span>'
+                if sold else "")
+        cards.append(f'<li><h3>{g["label"]}</h3>{body}</li>')
+    return "".join(cards)
+
+
 def goal_rows():
     rows = []
     for g in LIVE_GOALS:
@@ -228,11 +278,12 @@ def goal_rows():
   <td><span class="num-l">${g["price_from_usd"]}<span class="num-unit">/mo</span></span><span class="note">{g["price_note"]}</span></td>
   <td>{chip}</td>
   {compare}
+  <td class="act"><span class="pick-act">{visit(g, small=True)}</span></td>
 </tr>""")
     return "\n".join(rows)
 
 
-COMPARE_TH = '<th scope="col"></th>' if any(g.get("page") for g in LIVE_GOALS) else ""
+COMPARE_TH = ('<th scope="col"></th>' if any(g.get("page") for g in LIVE_GOALS) else "") + '<th scope="col"></th>'
 ALL_GOALS = DATA["goals"]
 LEGAL = DATA["legal"]
 CREATORS = DATA["creators"]
@@ -396,7 +447,8 @@ def legal_rows():
         for s in found:
             seen.append(s["seen"])
             # A row marked note_with_db keeps its hand-written note (e.g. the July 2026 PCAC proposal) as a second sentence.
-            note = (f'. {r["note"][0].upper() + r["note"][1:]}. <a class="ref" href="#src-{r["src"]}" aria-label="Source {r["src"]}">'
+            n = r.get("note_each", r["note"])  # the note for one substance when a grouped row splits ("them" -> "it")
+            note = (f'. {n[0].upper() + n[1:]}. <a class="ref" href="#src-{r["src"]}" aria-label="Source {r["src"]}">'
                     f'<sup>{r["src"]}</sup></a>') if r.get("note_with_db") else ""
             out.append(f'<tr><td><span class="name">{s["name"]}</span></td><td><span class="chip chip-{s["chip"]}">{s["label"]}</span></td>'
                        f'<td>{s["sentence"]} <a class="ref" href="{s["url"]}" rel="nofollow">FDA source</a>, {nice_date(s["seen"])}{note}</td></tr>')
@@ -474,6 +526,13 @@ HOME = f"""
       <tbody>{LEGAL_ROWS}</tbody>
     </table></div>
     <p class="small" style="margin-top:16px">Approved means the FDA approved a product containing it for a stated use. Not approved means no approved product exists; buying it for yourself is not a crime in the US, but nobody has checked what is in the vial.</p>
+  </div>
+</section>
+
+<section class="section" id="top-picks">
+  <div class="wrap">
+    <div class="sec-hd"><div><h2>Top pick per goal</h2></div></div>
+    <ul class="picks">{top_picks()}</ul>
   </div>
 </section>
 

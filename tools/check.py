@@ -18,6 +18,7 @@ BANNED_WORDS = [
     r"\brevolutionary\b", r"\bclinically proven\b", r"\bdoctor[- ]approved\b", r"\brisk[- ]free\b",
     r"\bunlock\b", r"\bsupercharge\b", r"\bgame[- ]changer\b", r"\bdelve\b", r"\bcrucial\b", r"\bleverage\b",
     r"\bcomprehensive\b", r"\bensure\b", r"\butili[sz]e\b", r"\bin order to\b", r"\baffiliate link\b",
+    r"\bcoming soon\b",
 ]
 BANNED_CHARS = {"—": "em dash", "–": "en dash"}
 
@@ -187,8 +188,20 @@ def check_parts(P):
             cls = m.group(1).split()
             if "btn" in cls and not any(c in cls for c in ("btn-ink", "btn-action", "btn-line", "btn-mark")):
                 errs.append(f"{name}: button without a design-book kind ({cls})")
-        if 'class="btn btn-action' in html and "Paid link" not in html:
-            errs.append(f"{name}: green button without 'Paid link'")
+        # The paid button: a live one is an <a> to /out/ with rel=sponsored and "Paid link" right under it; a disabled one
+        # (before the affiliate url exists) is a span with aria-disabled, no href or rel, and "No paid link yet" under it.
+        for m in re.finditer(r'<(\w+)([^>]*class="btn btn-action[^"]*"[^>]*)>[^<]*</\1>(<span class="paid">([^<]*)</span>)?', html):
+            tag, attrs, under = m.group(1), m.group(2), m.group(4)
+            if 'aria-disabled="true"' in attrs:
+                if tag != "span" or "href=" in attrs or "rel=" in attrs or 'role="button"' not in attrs:
+                    errs.append(f"{name}: disabled Visit must be a span role=button without href or rel")
+                if under != "No paid link yet":
+                    errs.append(f"{name}: disabled Visit without 'No paid link yet' under it")
+            else:
+                if tag != "a" or 'href="/out/' not in attrs or "sponsored" not in attrs:
+                    errs.append(f"{name}: green button not an /out/ link with rel=sponsored")
+                if under != "Paid link":
+                    errs.append(f"{name}: green button without 'Paid link' under it")
     return errs
 
 
