@@ -113,7 +113,8 @@
           "does": "A daily pill. Slows hair loss and regrows some hair in most men; not for women who may become pregnant.",
           "how": "Prescription, from an online clinic or your doctor.",
           "status_plain": "FDA approved for hair loss. From $10/mo (generic, pharmacy coupon).",
-          "price": "hair"
+          "price": "hair",
+          "substance": "finasteride"
         },
         {
           "name": "Minoxidil (proven alternative)",
@@ -127,7 +128,8 @@
             "name": "Keeps, home page comparison table (\"Minoxidil (OTC), generic Rogaine: $10/mo\")",
             "url": "https://www.keeps.com/",
             "checked": "2026-10-30"
-          }
+          },
+          "substance": "minoxidil"
         },
         {
           "name": "GHK-Cu copper peptide serum",
@@ -474,6 +476,22 @@
         "substances": [
           "tesamorelin"
         ]
+      },
+      {
+        "peptide": "Finasteride",
+        "substances": [
+          "finasteride"
+        ],
+        "db_only": true,
+        "use": "for hair loss"
+      },
+      {
+        "peptide": "Minoxidil",
+        "substances": [
+          "minoxidil"
+        ],
+        "db_only": true,
+        "use": "for hair loss"
       },
       {
         "peptide": "GHK-Cu, Matrixyl, Argireline (creams and serums)",
