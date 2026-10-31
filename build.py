@@ -237,7 +237,60 @@ LEGAL = DATA["legal"]
 CREATORS = DATA["creators"]
 SOURCES_HOME = "".join(
     f'<li id="src-{s["n"]}">{s["text"]}: <a href="{s["url"]}" rel="nofollow">{s["url"]}</a></li>' for s in LEGAL["sources"]
-) + "".join(f'<li>{g["price_source_name"]}: <a href="{g["price_source"]}" rel="nofollow">{g["price_source"]}</a></li>' for g in LIVE_GOALS)
+) + "".join(f'<li id="src-price-{g["slug"]}">{g["price_source_name"]}: <a href="{g["price_source"]}" rel="nofollow">{g["price_source"]}</a></li>' for g in LIVE_GOALS)
+# Price sources follow the legal ones in the same numbered list, so a price's footnote number is its place there.
+PRICE_REF = {g["slug"]: len(LEGAL["sources"]) + i + 1 for i, g in enumerate(LIVE_GOALS)}
+
+# Numbers from the database (tools/pull_data.py writes these keys when SITE_DATABASE_URL is set). Without them the
+# page renders the hand-written statuses and dates above, unchanged.
+DB = DATA.get("db")
+LEGAL_DB = DATA.get("legal_db")
+APPROVED_DB = DATA.get("approved_db") or []
+STAMP_CHECKED = nice_date(DB["prices_checked_on"]) if DB and DB.get("prices_checked_on") else CHECKED
+# The one lookup from a database status to what the page shows: (regime, status_value) -> (rank, chip, label, sentence).
+# Lower rank wins when a substance has several open statuses. Statuses not listed here (shortage, not_listed) are
+# not legal statuses and are skipped.
+DB_STATUS = {
+    ("fda_approval", "approved"): (0, "ok", "FDA approved", "an FDA-approved product exists; prescription"),
+    ("fda_cat2_safety", "category_2"): (1, "neutral", "Not approved", "on the FDA list of substances that may be unsafe to compound"),
+    ("fda_503a_category", "category_2"): (2, "neutral", "Not approved", "the FDA found safety concerns; pharmacies may not compound it"),
+    ("fda_503a_category", "category_3"): (3, "neutral", "Not approved", "nominated for compounding without enough data; pharmacies may not compound it"),
+    ("fda_nomination_withdrawn", "withdrawn"): (4, "neutral", "Not approved", "its nomination for pharmacy compounding was withdrawn"),
+    ("fda_503a_category", "category_1"): (5, "warn", "Pharmacy-made", "pharmacies may compound it while the FDA reviews it; no approved product"),
+}
+
+
+def db_status(slug):
+    """The substance's winning open status from the database, or None."""
+    rows = [(DB_STATUS[(r["regime"], r["status_value"])], r) for r in LEGAL_DB or []
+            if r["substance_slug"] == slug and (r["regime"], r["status_value"]) in DB_STATUS]
+    if not rows:
+        return None
+    (rank, chip, label, sentence), row = min(rows, key=lambda x: x[0][0])
+    brands = sorted({a["brand_name"].title() for a in APPROVED_DB if a["substance_slug"] == slug and a.get("brand_name")})
+    name = row["canonical_name"] + (f' ({", ".join(brands)})' if brands and chip == "ok" else "")
+    return {"chip": chip, "label": label, "sentence": sentence, "name": name, "url": row["source_url"],
+            "seen": row["first_seen_by_us"]}
+
+
+def status_chip(item, chip_key="chip", label_key="status"):
+    """An option's status chip: the database's when it has a row for the substance, else the hand-written one."""
+    s = db_status(item["substance"]) if item.get("substance") else None
+    return f'<span class="chip chip-{s["chip"]}">{s["label"]}</span>' if s else f'<span class="chip chip-{item[chip_key]}">{item[label_key]}</span>'
+
+
+def refs(item, goal):
+    """Footnote links for the numbers in an option's copy (rulebook: no number without its source)."""
+    ns = list(item.get("src", [])) + ([PRICE_REF[goal]] if item.get("price") in PRICE_REF else [])
+    return (" <sup>" + ", ".join(f'<a href="#src-{n if n <= len(LEGAL["sources"]) else "price-" + goal}">{n}</a>' for n in ns) + "</sup>") if ns else ""
+
+
+def plain_status(item):
+    """The plain status line. A price written in the copy is shown only when its source is on the page."""
+    s = item["status_plain"]
+    if "$" in s and not item.get("price"):
+        s = " ".join(part for part in s.replace(". ", ".\n").split("\n") if "$" not in part)
+    return s
 
 # The body figure is our own drawing (design book: no stock art): a front view, eight heads tall, in a 240 x 480
 # box. The right half is listed and mirrored, then smoothed. Each goal shades its body area and has a pin.
@@ -294,29 +347,50 @@ def body_map():
     for i, g in enumerate(ALL_GOALS):
         on = ' aria-pressed="true"' if i == 0 else ' aria-pressed="false"'
         items.append(f'<button type="button" class="goal-item" data-goal="{g["slug"]}"{on}><span>{g["label"]}</span><span class="small">{len(g["peptides"])} options</span></button>')
-        peps = "".join(f'<li><span class="name">{p["name"]}</span><span class="chip chip-{p["chip"]}">{p["status"]}</span></li>' for p in g["peptides"])
+        # Each option: name and status chip, then what it does, how you get it, and its status in plain words
+        # (docs/copy-home-2026-10-30.md): one line on wide screens, three short lines on phones.
+        peps = "".join(f'<li><div class="opt-hd"><span class="name">{p["name"]}</span>{status_chip(p)}</div>'
+                       f'<p class="opt-parts"><span class="opt-does">{p["does"]}</span> <span class="opt-how">{p["how"]}</span> '
+                       f'<span class="opt-status">{plain_status(p)}{refs(p, g["slug"])}</span></p></li>' for p in g["peptides"])
         if g.get("live"):
             # The answer: the price pad's words, now inside the goal's panel (design book, pages.md, Home).
             answer = (f'<div class="answer"><p class="answer-k">Cheapest proven option, per month</p>'
                       f'<p class="hero-num"><span class="num-xl">${g["price_from_usd"]}</span> <span class="num-unit">/mo</span></p>'
                       f'<p class="hero-what"><strong>{g["name"]}:</strong> {g["best_option"]}'
-                      f'<span class="small">{g["options_checked"]} options checked <span class="stamp">Checked {CHECKED}</span></span></p></div>')
+                      f'<span class="small">{g["options_checked"]} options checked <span class="stamp">Checked {STAMP_CHECKED}</span></span></p></div>')
             foot = '<p class="fine">Proven means FDA approved for that use. Not a prescription.</p>'
         else:
             answer, foot = "", ""
-        link = f'<div class="btn-row"><a class="btn btn-ink" href="/{g["slug"]}/">Compare {g["label"].lower()} options</a><a class="btn btn-line" href="#legal">Legal status</a></div>' if g.get("page") else '<p class="small">Full comparison for this goal is not published yet. The legal status above is current as of ' + CHECKED + '.</p>'
+        link = f'<div class="btn-row"><a class="btn btn-ink" href="/{g["slug"]}/">Compare {g["short"].lower()} options</a><a class="btn btn-line" href="#legal">Legal status</a></div>' if g.get("page") else '<p class="small">Full comparison for this goal is not published yet. The legal status above is current as of ' + CHECKED + '.</p>'
         panels.append(f'<div class="goal-panel" id="goal-{g["slug"]}" data-goal="{g["slug"]}"{"" if i == 0 else " hidden"}>'
-                      f'<span class="rx-mark" aria-hidden="true">&#8478;</span><h3>Peptides for {g["label"].lower()}</h3>{answer}'
+                      f'<span class="rx-mark" aria-hidden="true">&#8478;</span><h3>{g["panel_title"]}</h3><p class="goal-for">{g["for"]}</p>{answer}'
                       f'<p class="goal-intro">{g["intro"]}</p><ul class="pep-list">{peps}</ul>{link}{foot}</div>')
     return figure_svg(), "".join(items), "".join(panels)
 
 
 FIGURE, GOAL_ITEMS, GOAL_PANELS = body_map()
 
-LEGAL_ROWS = "".join(
-    f'<tr><td><span class="name">{r["peptide"]}</span></td><td><span class="chip chip-{r["chip"]}">{r["status"]}</span></td>'
-    f'<td>{r["note"]} <a class="ref" href="#src-{r["src"]}" aria-label="Source {r["src"]}"><sup>{r["src"]}</sup></a></td></tr>'
-    for r in LEGAL["rows"])
+def legal_rows():
+    """"Is it legal today?": each hand-written row, or, when the database has a status for its substances, one row per
+    substance from the database with its own source link and the date we first saw that status."""
+    hand = lambda r: (f'<tr><td><span class="name">{r["peptide"]}</span></td><td><span class="chip chip-{r["chip"]}">{r["status"]}</span></td>'
+                      f'<td>{r["note"]} <a class="ref" href="#src-{r["src"]}" aria-label="Source {r["src"]}"><sup>{r["src"]}</sup></a></td></tr>')
+    out, seen = [], []
+    for r in LEGAL["rows"]:
+        found = [db_status(slug) for slug in r.get("substances", [])] if LEGAL_DB else []
+        if not found or not all(found):
+            out.append(hand(r))  # a row switches to the database only when every substance in it has a status there
+            continue
+        for s in found:
+            seen.append(s["seen"])
+            out.append(f'<tr><td><span class="name">{s["name"]}</span></td><td><span class="chip chip-{s["chip"]}">{s["label"]}</span></td>'
+                       f'<td>{s["sentence"]} <a class="ref" href="{s["url"]}" rel="nofollow">FDA source</a>, {nice_date(s["seen"])}</td></tr>')
+    checked = nice_date(max(seen)) if seen else nice_date(LEGAL["checked"])
+    return "".join(out), checked
+
+
+LEGAL_ROWS, LEGAL_CHECKED = legal_rows()
+GLOSSARY = "".join(f'<div><dt>{t["term"]}</dt><dd>{t["text"]}</dd></div>' for t in DATA["glossary"])
 
 CREATOR_ROWS = "".join(
     f'<li><a href="{c["url"]}" rel="nofollow noopener">{c["name"]}</a><span class="small">{c["what"]}</span></li>' for c in CREATORS["rows"])
@@ -348,13 +422,20 @@ HOME = f"""
   <div class="wrap">
     <div class="hero-intro">
       <h1>The best peptides for your goal, compared honestly.</h1>
+      <div class="hero-copy">
       <p class="lede">For each goal we put peptide products next to the FDA-approved alternatives and show what the evidence says, what it costs per month and how you would get it. We compare; we never sell.</p>
+      <p class="what-is"><strong>What is a peptide?</strong> A short chain of amino acids. Some are approved medicines (semaglutide, bremelanotide), some are cosmetics in creams, and many are sold online with no approval and no testing. This site tells you which is which, what it costs, and what the proven alternative is.</p>
+      </div>
     </div>
     <section class="chooser" id="goals" aria-labelledby="goals-h">
       <div class="chooser-hd"><h2 id="goals-h">Start with what you want to change</h2><p>Tap the body or pick from the list. Every goal shows what is approved, what is not, and the proven alternative.</p></div>
       <div class="figure">{FIGURE}</div>
       <div class="goal-list" role="group" aria-label="Goals">{GOAL_ITEMS}</div>
       <div class="goal-panels" aria-live="polite">{GOAL_PANELS}</div>
+    </section>
+    <section class="glossary" aria-labelledby="glossary-h">
+      <h2 id="glossary-h">What the labels mean</h2>
+      <dl class="glossary-list">{GLOSSARY}</dl>
     </section>
   </div>
 </section>
@@ -372,7 +453,7 @@ HOME = f"""
 
 <section class="band-2" id="legal">
   <div class="wrap">
-    <div class="sec-hd"><div><h2>Is it legal today?</h2><p>FDA status of the peptides people ask about most, each with its source. Checked {nice_date(LEGAL["checked"])}.</p></div></div>
+    <div class="sec-hd"><div><h2>Is it legal today?</h2><p>FDA status of the peptides people ask about most, each with its source. Checked {LEGAL_CHECKED}.</p></div></div>
     <div class="tbl-wrap"><table class="tbl">
       <thead><tr><th scope="col">Peptide</th><th scope="col">Status</th><th scope="col">What that means</th></tr></thead>
       <tbody>{LEGAL_ROWS}</tbody>
@@ -543,15 +624,15 @@ PRIVACY = f"""
 def category_page(g):
     rows = []
     for o in g["options"]:
-        refs = (" <sup>" + ", ".join(f'<a href="#src-{n}">{n}</a>' for n in o["sources"]) + "</sup>") if o["sources"] else ""
+        src_refs = (" <sup>" + ", ".join(f'<a href="#src-{n}">{n}</a>' for n in o["sources"]) + "</sup>") if o["sources"] else ""
         price = (f'<span class="num-l">{o["price"]}<span class="num-unit">{o["price_unit"]}</span></span><span class="note">{o["price_note"]}</span>'
                  if o["price"] else f'<span class="note">{o["price_note"]}</span>')
         rows.append(f"""<tr>
-  <td><span class="name">{o["name"]}{refs}</span><span class="note">{o["kind"]}</span></td>
-  <td><span class="chip chip-{o["fda_chip"]}">{o["fda"]}</span></td>
+  <td><span class="name">{o["name"]}{src_refs}</span><span class="note">{o["kind"]}</span><span class="opt-does">{o["does"]}</span></td>
+  <td>{status_chip(o, "fda_chip", "fda")}<span class="opt-status">{o["status_plain"]}</span></td>
   <td><span class="chip chip-{o["evidence_chip"]}">{o["evidence"]}</span></td>
   <td>{price}</td>
-  <td>{o["how"]}</td>
+  <td>{o["how_plain"]}</td>
 </tr>""")
     srcs = "".join(f'<li id="src-{s["n"]}">{s["text"]}: <a href="{s["url"]}" rel="nofollow">{s["url"]}</a></li>' for s in g["sources"])
     return f"""

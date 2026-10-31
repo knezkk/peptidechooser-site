@@ -34,7 +34,10 @@
           "sources": [
             1,
             2
-          ]
+          ],
+          "does": "Finasteride 1 mg: A daily pill. Slows hair loss and regrows some hair in most men; not for women who may become pregnant. Minoxidil: A liquid or foam you put on the scalp twice a day. Regrows hair for men and women; works while you keep using it.",
+          "how_plain": "Finasteride 1 mg: Prescription, from an online clinic or your doctor. Minoxidil: No prescription, any pharmacy.",
+          "status_plain": "FDA approved for hair loss."
         },
         {
           "name": "Copper peptide serums (GHK-Cu)",
@@ -50,7 +53,11 @@
           "sources": [
             3,
             4
-          ]
+          ],
+          "does": "A cosmetic serum for the scalp. Small lab and follicle studies; no large trials in people.",
+          "how_plain": "Sold in shops, no prescription.",
+          "status_plain": "Cosmetic: legal to sell, nobody checked that it works.",
+          "substance": "ghk-cu"
         },
         {
           "name": "Injectable peptides sold for hair",
@@ -63,7 +70,10 @@
           "price_unit": "",
           "price_note": "We do not list prices or sellers for products that are not approved for human use",
           "how": "Not for human use",
-          "sources": []
+          "sources": [],
+          "does": "Vials from research-use shops, meant to be injected. No human evidence for hair.",
+          "how_plain": "We do not link to them.",
+          "status_plain": "Not approved for any use."
         }
       ],
       "sources": [
@@ -89,7 +99,7 @@
         }
       ],
       "main_query": "peptides for hair loss",
-      "label": "Hair",
+      "label": "Hair loss",
       "map": {
         "x": 50,
         "y": 4
@@ -99,24 +109,41 @@
         {
           "name": "Finasteride 1 mg (proven alternative)",
           "status": "FDA approved",
-          "chip": "ok"
+          "chip": "ok",
+          "does": "A daily pill. Slows hair loss and regrows some hair in most men; not for women who may become pregnant.",
+          "how": "Prescription, from an online clinic or your doctor.",
+          "status_plain": "FDA approved for hair loss. From $10/mo (generic, pharmacy coupon).",
+          "price": "hair"
         },
         {
           "name": "Minoxidil (proven alternative)",
           "status": "FDA approved",
-          "chip": "ok"
+          "chip": "ok",
+          "does": "A liquid or foam you put on the scalp twice a day. Regrows hair for men and women; works while you keep using it.",
+          "how": "No prescription, any pharmacy.",
+          "status_plain": "FDA approved for hair loss. From $10/mo."
         },
         {
           "name": "GHK-Cu copper peptide serum",
           "status": "Cosmetic, no approval needed",
-          "chip": "info"
+          "chip": "info",
+          "does": "A cosmetic serum for the scalp. Small lab and follicle studies; no large trials in people.",
+          "how": "Sold in shops, no prescription.",
+          "status_plain": "Cosmetic: legal to sell, nobody checked that it works.",
+          "substance": "ghk-cu"
         },
         {
           "name": "Injectable peptides sold for hair",
           "status": "Not approved for any use",
-          "chip": "neutral"
+          "chip": "neutral",
+          "does": "Vials from research-use shops, meant to be injected. No human evidence for hair.",
+          "how": "We do not link to them.",
+          "status_plain": "Not approved for any use."
         }
-      ]
+      ],
+      "short": "Hair",
+      "panel_title": "Hair growth and hair loss",
+      "for": "For thinning hair, a receding hairline or bald spots: what slows the loss, what regrows hair, and what is only marketing."
     },
     {
       "slug": "skin",
@@ -132,24 +159,42 @@
         {
           "name": "Tretinoin cream (proven alternative)",
           "status": "FDA approved, prescription",
-          "chip": "ok"
+          "chip": "ok",
+          "does": "A nightly prescription cream. Reduces fine wrinkles and evens skin over months; can irritate at first.",
+          "how": "Prescription (dermatologist or online clinic).",
+          "status_plain": "FDA approved for fine wrinkles."
         },
         {
           "name": "GHK-Cu copper peptide",
           "status": "Cosmetic, no approval needed",
-          "chip": "info"
+          "chip": "info",
+          "does": "A serum or cream. Small studies suggest firmer-looking skin; no large trials.",
+          "how": "Shops, no prescription.",
+          "status_plain": "Cosmetic.",
+          "substance": "ghk-cu"
         },
         {
           "name": "Palmitoyl pentapeptide-4 (Matrixyl)",
           "status": "Cosmetic, no approval needed",
-          "chip": "info"
+          "chip": "info",
+          "does": "The most common \"anti-wrinkle peptide\" in creams. Modest effect in small studies.",
+          "how": "Shops.",
+          "status_plain": "Cosmetic.",
+          "substance": "palmitoyl-pentapeptide-4"
         },
         {
           "name": "Acetyl hexapeptide-8 (Argireline)",
           "status": "Cosmetic, no approval needed",
-          "chip": "info"
+          "chip": "info",
+          "does": "Sold as \"Botox in a bottle\"; barely gets through the skin.",
+          "how": "Shops.",
+          "status_plain": "Cosmetic.",
+          "substance": "acetyl-hexapeptide-8"
         }
-      ]
+      ],
+      "short": "Skin",
+      "panel_title": "Skin: wrinkles and firmness",
+      "for": "For fine lines, loss of firmness and dull skin: what a prescription cream does, and what a peptide serum can and cannot do."
     },
     {
       "slug": "weight-loss",
@@ -165,29 +210,50 @@
         {
           "name": "Semaglutide (Wegovy)",
           "status": "FDA approved, prescription",
-          "chip": "ok"
+          "chip": "ok",
+          "does": "A weekly shot that cuts appetite; about 15 % body weight lost on average in trials.",
+          "how": "Prescription; online clinics prescribe after a visit.",
+          "status_plain": "FDA approved for weight management.",
+          "substance": "semaglutide",
+          "src": [
+            1
+          ]
         },
         {
           "name": "Tirzepatide (Zepbound)",
           "status": "FDA approved, prescription",
-          "chip": "ok"
+          "chip": "ok",
+          "does": "A weekly shot, same idea, larger average loss in trials.",
+          "how": "Prescription.",
+          "status_plain": "FDA approved for weight management.",
+          "substance": "tirzepatide"
         },
         {
           "name": "Compounded semaglutide or tirzepatide",
           "status": "Not FDA approved; pharmacy-made",
-          "chip": "warn"
+          "chip": "warn",
+          "does": "Pharmacy-made copies sold by online clinics, often cheaper. Not checked by the FDA batch by batch.",
+          "how": "Prescription through the clinic.",
+          "status_plain": "Not FDA approved; pharmacy-made."
         },
         {
           "name": "Retatrutide",
           "status": "Not approved; still in trials",
-          "chip": "neutral"
+          "chip": "neutral",
+          "does": "A newer three-hormone shot, still in trials. Sold online only from research-use shops.",
+          "how": "We do not link to them.",
+          "status_plain": "Not approved; in trials.",
+          "substance": "retatrutide"
         }
-      ]
+      ],
+      "short": "Weight loss",
+      "panel_title": "Weight loss",
+      "for": "For losing weight with medical help: the two approved weekly shots, what they cost, and the copies sold online."
     },
     {
       "slug": "muscle",
       "name": "Muscle and hormones",
-      "label": "Muscle and hormones",
+      "label": "Muscle growth",
       "map": {
         "x": 26,
         "y": 32
@@ -198,24 +264,38 @@
         {
           "name": "Tesamorelin (Egrifta)",
           "status": "FDA approved for HIV-related belly fat only",
-          "chip": "ok"
+          "chip": "ok",
+          "does": "A daily shot approved only to reduce belly fat in people with HIV. Sold off-label by clinics for \"growth hormone\".",
+          "how": "Prescription.",
+          "status_plain": "FDA approved for HIV-related belly fat only.",
+          "substance": "tesamorelin"
         },
         {
           "name": "Sermorelin",
           "status": "No FDA-approved product on the market",
-          "chip": "neutral"
+          "chip": "neutral",
+          "does": "A growth-hormone-releasing shot from compounding pharmacies; the approved brand was taken off the market years ago.",
+          "how": "Prescription through clinics.",
+          "status_plain": "No FDA-approved product on the market.",
+          "substance": "sermorelin"
         },
         {
           "name": "CJC-1295 / ipamorelin",
           "status": "Not approved for any use",
-          "chip": "neutral"
+          "chip": "neutral",
+          "does": "Growth-hormone-releasing peptides sold by research-use shops and some clinics. No approved product, no large human trials.",
+          "how": "We do not link to shops.",
+          "status_plain": "Not approved for any use."
         }
-      ]
+      ],
+      "short": "Muscle and hormones",
+      "panel_title": "Muscle growth and growth hormone",
+      "for": "For building muscle or \"boosting growth hormone\": no peptide is approved for that. Here is what the sold ones actually are."
     },
     {
       "slug": "recovery",
       "name": "Recovery and joints",
-      "label": "Recovery and joints",
+      "label": "Healing and joints",
       "map": {
         "x": 61.5,
         "y": 72
@@ -226,19 +306,36 @@
         {
           "name": "BPC-157",
           "status": "Not approved; FDA proposed excluding it from compounding (Jul 2026)",
-          "chip": "neutral"
+          "chip": "neutral",
+          "does": "The most searched \"healing peptide\". Animal studies only; the FDA reviewed it for pharmacy compounding on 23 Jul 2026 and proposed keeping it off the list.",
+          "how": "Research-use shops only.",
+          "status_plain": "Not approved.",
+          "substance": "bpc-157",
+          "src": [
+            6
+          ]
         },
         {
           "name": "TB-500",
           "status": "Not approved; FDA proposed excluding it from compounding (Jul 2026)",
-          "chip": "neutral"
+          "chip": "neutral",
+          "does": "A copy of a natural repair protein, sold alongside BPC-157. Same July 2026 review, same proposal.",
+          "how": "Research-use shops only.",
+          "status_plain": "Not approved.",
+          "substance": "tb-500",
+          "src": [
+            6
+          ]
         }
-      ]
+      ],
+      "short": "Recovery and joints",
+      "panel_title": "Healing, injuries and joints",
+      "for": "For tendon, joint and injury healing: the peptides people inject for this, and why none is approved."
     },
     {
       "slug": "libido",
       "name": "Sexual health",
-      "label": "Sexual health",
+      "label": "Sex drive",
       "map": {
         "x": 50,
         "y": 51
@@ -249,24 +346,38 @@
         {
           "name": "Bremelanotide (Vyleesi)",
           "status": "FDA approved, prescription",
-          "chip": "ok"
+          "chip": "ok",
+          "does": "A shot you take before sex, approved for low sexual desire in premenopausal women.",
+          "how": "Prescription.",
+          "status_plain": "FDA approved.",
+          "substance": "bremelanotide"
         },
         {
           "name": "PT-141 from online shops",
           "status": "Not an approved product",
-          "chip": "neutral"
+          "chip": "neutral",
+          "does": "The same molecule as Vyleesi, sold without a prescription by research-use shops: no dose control, no checks.",
+          "how": "We do not link to them.",
+          "status_plain": "Not an approved product."
         },
         {
           "name": "Melanotan II",
           "status": "Not approved for any use",
-          "chip": "neutral"
+          "chip": "neutral",
+          "does": "A tanning peptide also sold \"for libido\". Linked to serious side effects; never approved anywhere.",
+          "how": "We do not link to them.",
+          "status_plain": "Not approved for any use.",
+          "substance": "melanotan-2"
         }
-      ]
+      ],
+      "short": "Sexual health",
+      "panel_title": "Sex drive and sexual health",
+      "for": "For low desire or arousal: one approved option for women, and what the online \"PT-141\" really is."
     },
     {
       "slug": "longevity",
       "name": "Longevity and energy",
-      "label": "Longevity and energy",
+      "label": "Energy and aging",
       "map": {
         "x": 74,
         "y": 32
@@ -277,19 +388,40 @@
         {
           "name": "Epitalon",
           "status": "Not approved; FDA proposed excluding it from compounding (Jul 2026)",
-          "chip": "neutral"
+          "chip": "neutral",
+          "does": "A four-amino-acid peptide sold as an \"anti-aging\" shot; human evidence is thin and old. Reviewed by the FDA in July 2026; proposed exclusion.",
+          "how": "Research-use shops.",
+          "status_plain": "Not approved.",
+          "substance": "epitalon",
+          "src": [
+            6
+          ]
         },
         {
           "name": "MOTS-c",
           "status": "Not approved; FDA proposed excluding it from compounding (Jul 2026)",
-          "chip": "neutral"
+          "chip": "neutral",
+          "does": "A \"mitochondrial\" peptide sold for energy; animal studies only. Same July 2026 review.",
+          "how": "Research-use shops.",
+          "status_plain": "Not approved.",
+          "substance": "mots-c",
+          "src": [
+            6
+          ]
         },
         {
           "name": "NAD+ injections",
           "status": "Not a peptide; compounded, not FDA approved",
-          "chip": "warn"
+          "chip": "warn",
+          "does": "Not a peptide: a vitamin-B3-derived molecule sold by clinics as shots or drips for energy.",
+          "how": "Clinics and compounding pharmacies.",
+          "status_plain": "Not FDA approved.",
+          "substance": "nad-plus"
         }
-      ]
+      ],
+      "short": "Longevity and energy",
+      "panel_title": "Energy, aging and longevity",
+      "for": "For \"anti-aging\" and more energy: what is sold, what the evidence says, and what is not even a peptide."
     }
   ],
   "legal": {
@@ -300,63 +432,93 @@
         "status": "FDA approved",
         "chip": "ok",
         "note": "weight management and type 2 diabetes, prescription",
-        "src": 1
+        "src": 1,
+        "substances": [
+          "semaglutide"
+        ]
       },
       {
         "peptide": "Tirzepatide (Zepbound, Mounjaro)",
         "status": "FDA approved",
         "chip": "ok",
         "note": "weight management and type 2 diabetes, prescription",
-        "src": 2
+        "src": 2,
+        "substances": [
+          "tirzepatide"
+        ]
       },
       {
         "peptide": "Bremelanotide (Vyleesi)",
         "status": "FDA approved",
         "chip": "ok",
         "note": "low sexual desire in premenopausal women, prescription",
-        "src": 3
+        "src": 3,
+        "substances": [
+          "bremelanotide"
+        ]
       },
       {
         "peptide": "Tesamorelin (Egrifta)",
         "status": "FDA approved",
         "chip": "ok",
         "note": "excess belly fat in HIV, prescription; not approved for muscle or aging",
-        "src": 4
+        "src": 4,
+        "substances": [
+          "tesamorelin"
+        ]
       },
       {
         "peptide": "GHK-Cu, Matrixyl, Argireline (creams and serums)",
         "status": "Cosmetic",
         "chip": "info",
         "note": "cosmetics are regulated but do not need FDA approval to be sold",
-        "src": 5
+        "src": 5,
+        "substances": [
+          "ghk-cu",
+          "palmitoyl-pentapeptide-4",
+          "acetyl-hexapeptide-8"
+        ]
       },
       {
         "peptide": "BPC-157",
         "status": "Not approved",
         "chip": "neutral",
         "note": "FDA advisory committee reviewed it for compounding on 23 Jul 2026; FDA proposed not to allow it",
-        "src": 6
+        "src": 6,
+        "substances": [
+          "bpc-157"
+        ]
       },
       {
         "peptide": "TB-500",
         "status": "Not approved",
         "chip": "neutral",
         "note": "same July 2026 review; FDA proposed not to allow it",
-        "src": 6
+        "src": 6,
+        "substances": [
+          "tb-500"
+        ]
       },
       {
         "peptide": "MOTS-c, Epitalon",
         "status": "Not approved",
         "chip": "neutral",
         "note": "same July 2026 review; FDA proposed not to allow them",
-        "src": 6
+        "src": 6,
+        "substances": [
+          "mots-c",
+          "epitalon"
+        ]
       },
       {
         "peptide": "Retatrutide",
         "status": "Not approved",
         "chip": "neutral",
         "note": "in clinical trials; no approved product",
-        "src": 7
+        "src": 7,
+        "substances": [
+          "retatrutide"
+        ]
       }
     ],
     "sources": [
@@ -432,5 +594,27 @@
         "url": "https://www.youtube.com/@hubermanlab"
       }
     ]
-  }
+  },
+  "glossary": [
+    {
+      "term": "FDA approved",
+      "text": "the FDA checked that it works and is safe for this use, and every batch is inspected. Prescription unless marked otherwise."
+    },
+    {
+      "term": "Cosmetic",
+      "text": "legal to sell without approval; nobody has to prove it works. Fine on your skin, no claims beyond looks."
+    },
+    {
+      "term": "Not FDA approved, pharmacy-made",
+      "text": "a licensed pharmacy mixes it for you on prescription. Legal in limited cases; no batch testing by the FDA."
+    },
+    {
+      "term": "Not approved",
+      "text": "no approved product exists. Shops sell it \"for research\". Buying it is not a crime for you, but nobody has checked what is in the vial. We never link to these shops."
+    },
+    {
+      "term": "Is it safe?",
+      "text": "only approved products have safety data from large trials. For everything else the honest answer is: unknown."
+    }
+  ]
 }

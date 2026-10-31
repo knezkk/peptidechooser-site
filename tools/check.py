@@ -192,7 +192,21 @@ def check_parts(P):
     return errs
 
 
-CHECKS = {"words": check_words, "seo": check_seo, "schema": check_schema, "parts": check_parts}
+def check_data(P):
+    # Rulebook 11.8: no number without a date and a source. When the database statuses are in site.json
+    # (tools/pull_data.py), every one of them must carry its source link and a date.
+    errs = []
+    d = json.loads((ROOT / "data" / "site.json").read_text(encoding="utf-8"))
+    for r in d.get("legal_db") or []:
+        name = r.get("substance_slug", "?")
+        if not r.get("source_url"):
+            errs.append(f"legal_db {name} ({r.get('regime')}): no source_url")
+        if not (r.get("first_seen_by_us") or r.get("valid_from")):
+            errs.append(f"legal_db {name} ({r.get('regime')}): no date")
+    return errs
+
+
+CHECKS = {"words": check_words, "seo": check_seo, "schema": check_schema, "parts": check_parts, "data": check_data}
 
 if __name__ == "__main__":
     which = sys.argv[1:] or list(CHECKS)
