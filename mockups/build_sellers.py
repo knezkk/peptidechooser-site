@@ -1,6 +1,6 @@
 """Mockup for the owner (31 Oct 2026): how Home looks when one product has ten sellers, with a price comparison and a
-background check per seller. Built from the real dist/index.html; only the hair goal's "Get it" panel and a new
-sellers section are added. Every seller, price and check here is made up and the page says so at the top.
+background check per seller, opening inside the option's own row (steps 2 and 3 are one). Built from the real
+dist/index.html; only the finasteride row of the hair goal changes. Every seller, price and check here is made up and the page says so at the top.
 
     python3 build.py && python3 mockups/build_sellers.py   # writes mockups/sellers-10.html (serve the repo root)
 """
@@ -60,84 +60,71 @@ def details(s):
     return f'<ul class="bg-list">{"".join(rows)}</ul>'
 
 
-rows, cards = [], []
+rows = []
 for i, s in enumerate(SELLERS):
     name, kind, usd, fee, n, letter, complaints, rating, link = s
     first = usd + fee
     open_ = " open" if i == 0 else ""
-    rows.append(f"""<tr>
-  <td class="rank">{i + 1}</td>
-  <td><span class="name">{name}</span><span class="note">{kind}</span></td>
-  <td><span class="num-l">${usd}<span class="num-unit">/mo</span></span><span class="note">{"no visit fee" if not fee else f"plus ${fee} first visit"}</span></td>
-  <td><span class="name">${first}</span></td>
-  <td><details{open_}><summary>{check_chip(n, letter)} <span class="see">See checks</span></summary>{details(s)}</details></td>
-  <td><span class="name">{rating:.1f}</span><span class="note">of 5</span></td>
-  <td class="act">{action(link)}</td>
-</tr>""")
-    cards.append(f"""<li class="seller-card">
-  <div class="sc-hd"><span class="rank">{i + 1}</span><span><span class="name">{name}</span><span class="note">{kind}</span></span><span class="sc-rate"><strong>{rating:.1f}</strong> of 5</span></div>
-  <div class="sc-price"><span class="num-l">${usd}<span class="num-unit">/mo</span></span><span class="note">{"no visit fee" if not fee else f"plus ${fee} first visit"}; first month ${first}</span></div>
-  <details{open_}><summary>{check_chip(n, letter)} <span class="see">See checks</span></summary>{details(s)}</details>
-  <div class="sc-act">{action(link)}</div>
+    rows.append(f"""<li class="seller">
+  <div class="s-name"><span class="rank">{i + 1}</span><span><span class="name">{name}</span><span class="note">{kind}</span></span></div>
+  <div class="s-price"><span class="num-m">${usd}<span class="num-unit">/mo</span></span><span class="note">{"no visit fee" if not fee else f"plus ${fee} first visit"}; first month ${first}</span></div>
+  <div class="s-rate"><strong>{rating:.1f}</strong> <span class="note">of 5</span></div>
+  <div class="s-act">{action(link)}</div>
+  <details class="s-checks"{open_}><summary>{check_chip(n, letter)} <span class="see">See checks</span></summary>{details(s)}</details>
 </li>""")
 
-section = f"""<section class="sellers" id="sellers" aria-labelledby="sellers-h">
-  <div class="sellers-hd">
-    <div><h2 id="sellers-h">Finasteride 1 mg: 10 sellers compared</h2>
-    <p>Every seller is checked the same six ways. Sorted by our rating; a paid link never moves a seller up. Prices checked {CHECKED}.</p></div>
+panel = f"""<details class="sellers" open><summary class="btn btn-line btn-sm">Compare 10 sellers</summary>
+  <div class="sellers-in">
+  <div class="sellers-hd"><p>Every seller is checked the same six ways. Sorted by our rating; a paid link never moves a seller up. Prices checked {CHECKED}.</p>
     <div class="sort" role="group" aria-label="Sort sellers"><span class="note">Sort by</span>
-      <button type="button" class="seg" aria-pressed="true">Our rating</button><button type="button" class="seg" aria-pressed="false">Price per month</button><button type="button" class="seg" aria-pressed="false">First month</button></div>
-  </div>
-  <div class="tbl-wrap sellers-tbl"><table class="tbl">
-    <thead><tr><th scope="col"></th><th scope="col">Seller</th><th scope="col">Price</th><th scope="col">First month</th><th scope="col">Background check</th><th scope="col">Our rating</th><th scope="col"></th></tr></thead>
-    <tbody>{"".join(rows)}</tbody>
-  </table></div>
-  <ul class="seller-cards">{"".join(cards)}</ul>
+      <button type="button" class="seg" aria-pressed="true">Rating</button><button type="button" class="seg" aria-pressed="false">Price</button><button type="button" class="seg" aria-pressed="false">First month</button></div></div>
+  <ol class="seller-list">{"".join(rows)}</ol>
   <p class="small">The six checks: {"; ".join(c[0] for c in CHECKS)}. Each result links to its source with the date we checked it.</p>
-</section>
-"""
+  </div>
+</details>"""
 
-get_old = html[html.index('id="get-hair"'):]
-get_old = get_old[:get_old.index('<div class="step-panel"')]
-get_new = ('id="get-hair" data-goal="hair"><p class="get-pick"><span class="name">Finasteride 1 mg</span><span class="chip chip-ok">FDA approved</span></p>'
-           '<p class="get-how">Best rated of 10 sellers: <strong>Example Clinic A</strong>, $12/mo, no visit fee, passes all 6 checks.</p>'
-           '<span class="pick-act"><a class="btn btn-action" href="#" rel="sponsored">Visit</a><span class="paid">Paid link</span></span>'
-           '<p class="get-more"><a href="#sellers">Compare all 10 sellers</a></p></div>')
-html = html.replace(get_old, get_new)
-html = html.replace('<section class="rate-strip"', section + '    <section class="rate-strip"', 1)
+# The finasteride row in the hair options: its Visit gives way to the seller list, which opens inside the row.
+start = html.index('<li class="opt"><div class="opt-main"><span class="name">Finasteride 1 mg')
+end = html.index("</li>", start)
+row = html[start:end]
+if '<span class="pick-act">' in row:
+    pa = row.index('<span class="pick-act">')
+    row = row[:pa] + row[row.index("</span></span>", pa) + len("</span></span>"):]
+html = html[:start] + row + panel + html[end:]
 
 css = """<style>
 .mock-note{background:var(--warn-tint);color:var(--warn-text);font:600 14px var(--font-text);padding:10px 16px;text-align:center}
-.get-more{margin:14px 0 0;font-weight:600}
-.sellers{margin-top:32px;background:var(--white);border:1px solid var(--line-strong);border-radius:var(--radius-panel);padding:24px}
-.sellers-hd{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:12px 24px;margin-bottom:16px}
-.sellers-hd h2{font-size:22px;line-height:1.3;margin:0 0 4px}
-.sellers-hd p{margin:0;color:var(--ink-2);max-width:70ch}
-.sort{display:flex;align-items:center;gap:6px}
-.seg{min-height:var(--touch);padding:0 14px;border:1px solid var(--line-strong);border-radius:var(--radius-control);background:var(--white);font:600 14px var(--font-text);color:var(--ink);cursor:pointer}
+.flow .opt .sellers{grid-column:1/-1;margin-top:4px}
+.sellers>summary{list-style:none;width:max-content}
+.sellers>summary::-webkit-details-marker{display:none}
+.sellers[open]>summary{background:var(--clinic-tint);border-color:var(--clinic);color:var(--clinic-text)}
+.sellers-in{margin-top:12px;border-top:1px solid var(--line);padding-top:12px}
+.sellers-hd{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:8px 16px;margin-bottom:8px}
+.sellers-hd p{margin:0;font-size:var(--small-size);line-height:1.45;color:var(--ink-2);max-width:52ch}
+.sort{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+.seg{min-height:var(--touch);padding:0 12px;border:1px solid var(--line-strong);border-radius:var(--radius-control);background:var(--white);font:600 13px var(--font-text);color:var(--ink);cursor:pointer}
 .seg[aria-pressed="true"]{background:var(--clinic-tint);border-color:var(--clinic);color:var(--clinic-text)}
-.sellers .tbl td{vertical-align:top}
-.sellers .rank{font:800 15px var(--font-display);color:var(--ink-2)}
-.sellers details summary{cursor:pointer;list-style:none;display:flex;align-items:center;gap:8px}
-.sellers details summary::-webkit-details-marker{display:none}
-.sellers .see{font-size:var(--small-size);color:var(--clinic);text-decoration:underline}
-.bg-list{list-style:none;margin:10px 0 0;padding:0;display:grid;gap:8px;min-width:300px}
+.seller-list{list-style:none;margin:0;padding:0}
+.seller{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"name rate" "price price" "checks checks" "act act";gap:8px 16px;padding:12px 0;border-top:1px solid var(--line)}
+.s-name{grid-area:name;display:flex;gap:10px}.s-price{grid-area:price}.s-rate{grid-area:rate;text-align:right}.s-act{grid-area:act}.s-checks{grid-area:checks}
+.seller .rank{font:800 15px var(--font-display);color:var(--ink-2);min-width:20px}
+.seller .name{display:block;font-weight:700}
+.seller .note{display:block;font-size:var(--small-size);line-height:1.4;color:var(--ink-2)}
+.s-rate .note{display:inline}
+.num-m{font:800 20px/1.2 var(--font-display);color:var(--ink)}
+.s-checks summary{cursor:pointer;list-style:none;display:flex;align-items:center;gap:8px}
+.s-checks summary::-webkit-details-marker{display:none}
+.see{font-size:var(--small-size);color:var(--clinic);text-decoration:underline}
+.bg-list{list-style:none;margin:10px 0 0;padding:0;display:grid;gap:8px}
 .bg-list li{display:grid;grid-template-columns:44px minmax(0,1fr);gap:8px;align-items:start;font-size:var(--small-size);line-height:1.4}
 .bg-list .note{display:block;color:var(--ink-2)}
-.seller-cards{display:none;list-style:none;margin:0;padding:0}
-@media (max-width:760px){
- .sellers{padding:16px}
- .sellers-tbl{display:none}
- .seller-cards{display:grid;gap:10px;margin-bottom:12px}
- .seller-card{border:1px solid var(--line);border-radius:var(--radius-panel);padding:14px;display:grid;gap:10px}
- .sc-hd{display:grid;grid-template-columns:24px minmax(0,1fr) auto;gap:8px;align-items:start}
- .sc-hd .name{display:block;font-weight:700}.sc-hd .note{display:block;font-size:var(--small-size);color:var(--ink-2)}
- .sc-price .note{display:block;font-size:var(--small-size);color:var(--ink-2)}
- .sort{flex-wrap:wrap}
+@media (min-width:900px){
+ .seller{grid-template-columns:minmax(0,1.3fr) minmax(0,1.1fr) 56px 118px;grid-template-areas:"name price rate act" "checks checks checks checks";align-items:start}
+ .s-act{justify-self:end}.s-act .pick-act{align-items:flex-end}
 }
 </style>"""
 html = html.replace("</head>", css + "</head>", 1)
 html = html.replace("<body>", '<body><div class="mock-note">Mockup with example data: the ten sellers, their prices and their checks are made up to show the layout.</div>', 1)
-assert "mock-note" in html and 'id="sellers"' in html
+assert "mock-note" in html and 'class="sellers"' in html
 (ROOT / "mockups" / "sellers-10.html").write_text(html, encoding="utf-8")
 print("ok")

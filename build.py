@@ -419,40 +419,32 @@ def opt_price(p, slug):
 
 
 def rail():
-    """The evidence rail (design book, pages.md, Home): goal chips, then per goal the option list and the top pick.
-    Every goal's steps are in the page; only the first goal's are shown until another is chosen."""
-    chips, compare, get = [], [], []
+    """The flow (design book, pages.md, Home): the goal rows, then per goal the option list, where the top pick's row
+    carries the Visit button. Every goal's options are in the page; only the first goal's show until another is chosen."""
+    chips, compare = [], []
     for i, g in enumerate(ALL_GOALS):
         slug, hide = g["slug"], "" if i == 0 else " hidden"
         chips.append(f'<button type="button" class="goal-item" data-goal="{slug}" aria-pressed="{"true" if i == 0 else "false"}" '
-                     f'aria-controls="opts-{slug} get-{slug}"><span>{g["label"]}</span><span class="small">{len(g["peptides"])} options</span></button>')
+                     f'aria-controls="opts-{slug}"><span>{g["label"]}</span><span class="small">{len(g["peptides"])} options</span></button>')
         # Each option: name and what it does; status chip and status in plain words; price pad and how you get it
         # (docs/copy-home-2026-10-30.md): one line on wide screens, three short lines on phones.
+        # The top pick (same rule as "Top pick per goal") gets the goal's Visit button on its own row.
+        pick = next((p for p in g["peptides"] if p["status"].startswith("FDA approved") and p.get("top_pick", True)), None)
         rows = []
         for p in g["peptides"]:
             pad = opt_price(p, slug)
+            act = f'<span class="pick-act">{visit(g, small=True)}</span>' if p is pick else ""
             rows.append(f'<li class="opt"><div class="opt-main"><span class="name">{p["name"]}</span>'
                         f'<span class="opt-does">{p["does"]}{refs(p, slug, price=not pad)}</span></div>'
                         f'<div class="opt-chip">{status_chip(p)}<span class="opt-status">{plain_status(p, drop_price=bool(pad))}</span></div>'
-                        f'<div class="opt-get">{pad}<span class="opt-how">{p["how"]}</span></div></li>')
+                        f'<div class="opt-get">{pad}<span class="opt-how">{p["how"]}</span>{act}</div></li>')
         n = g.get("options_checked", len(g["peptides"]))
         link = (f'<a class="btn btn-ink" href="/{slug}/">Compare {g["short"].lower()} options</a>' if g.get("page") else
                 '<p class="small">Full comparison for this goal is not published yet. The legal status above is current as of ' + CHECKED + '.</p>')
         compare.append(f'<div class="step-panel" id="opts-{slug}" data-goal="{slug}"{hide}><p class="goal-for">{g["for"]}</p>'
                        f'<ul class="opts">{"".join(rows)}</ul>'
                        f'<p class="opts-foot small">{n} options checked <span class="stamp">Checked {STAMP_CHECKED}</span></p>{link}</div>')
-        pick = top_pick(g)
-        if pick:
-            item = pick[2]
-            body = (f'<p class="get-pick"><span class="name">{pick[0]}</span>{pick[1]}</p>'
-                    f'<p class="get-how">{item.get("how_plain") or item["how"]}</p><span class="pick-act">{visit(g)}</span>')
-        else:
-            sold = sold_peptide(g)
-            body = '<p class="get-none">No FDA-approved option</p>' + (
-                f'<p class="get-pick"><span class="name">{sold[0]}</span>{sold[1]}</p><p class="get-how">Sold by research-use shops; we do not link to them.</p>'
-                if sold else "")
-        get.append(f'<div class="step-panel" id="get-{slug}" data-goal="{slug}"{hide}>{body}</div>')
-    return "".join(chips), "".join(compare), "".join(get)
+    return "".join(chips), "".join(compare)
 
 
 def legal_rows():
@@ -480,7 +472,7 @@ def legal_rows():
 
 LEGAL_ROWS, LEGAL_CHECKED = legal_rows()
 FIGURE = figure_svg()
-GOAL_CHIPS, STEP_COMPARE, STEP_GET = rail()
+GOAL_CHIPS, STEP_COMPARE = rail()
 GLOSSARY = "".join(f'<div><dt>{t["term"]}</dt><dd>{t["text"]}</dd></div>' for t in DATA["glossary"])
 
 CREATOR_ROWS = "".join(
@@ -529,8 +521,6 @@ HOME = f"""
       <div class="goal-list" role="group" aria-labelledby="step-goal">{GOAL_CHIPS}</div>
       <div class="flow-hd fh-compare"><span class="step-n" aria-hidden="true">2</span><h2>Compare the options</h2><a class="step-legal" href="#legal"><strong>Is it legal today?</strong><span>Checked {LEGAL_CHECKED}</span></a></div>
       <div class="flow-compare">{STEP_COMPARE}</div>
-      <div class="flow-hd fh-get"><span class="step-n" aria-hidden="true">3</span><h2>Get it</h2></div>
-      <div class="flow-get">{STEP_GET}</div>
     </div>
     <section class="rate-strip" aria-labelledby="rate-h">
       <div class="rate-hd"><h2 id="rate-h">How we rate</h2><p>Every product and seller is judged on the same five criteria. We publish them so you can check our work.</p><a href="/how-we-rate/">Read the full method</a></div>
