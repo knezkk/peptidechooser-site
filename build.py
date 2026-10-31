@@ -515,6 +515,10 @@ HOME = f"""
       <div class="flow-hd fh-compare"><span class="step-n" aria-hidden="true">2</span><h2>Compare the options</h2><a class="step-legal" href="#legal"><strong>Is it legal today?</strong></a></div>
       <div class="flow-compare">{STEP_COMPARE}</div>
     </div>
+  </div>
+</section>
+<section class="hero-more">
+  <div class="wrap">
     <p class="lede hero-after">For each goal we put peptide products next to the FDA-approved alternatives and show what the evidence says, what it costs per month and how you would get it. We compare; we never sell.</p>
     <section class="rate-strip" aria-labelledby="rate-h">
       <div class="rate-hd"><h2 id="rate-h">How we rate</h2><p>Every product and seller is judged on the same five criteria. We publish them so you can check our work.</p><a href="/how-we-rate/">Read the full method</a></div>

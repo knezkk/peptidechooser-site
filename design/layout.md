@@ -27,7 +27,7 @@ Every control is at least 44px tall: nav items, the header button, in-table `btn
 
 ## Vertical spacing
 
-Only spacing tokens. Between landing sections `space-9` (56px on phones). Home hero 28px top, 56px bottom (12px and 32px on phones), 16px between the H1 and the flow card (12px on phones), 48px above the How we rate strip; category hero 56px. H2 in articles: `space-8` above. Inside panels `space-5`. Nothing else.
+Only spacing tokens. Between landing sections `space-9` (56px on phones). Home first screen 28px top, 32px bottom (12px and 24px on phones), 16px between the H1 and the flow (12px on phones); the grey band after it 32px top, 56px bottom (24px and 40px on phones), 48px above the How we rate strip; category hero 56px. H2 in articles: `space-8` above. Inside panels `space-5`. Nothing else.
 
 ## Checks before every release
 

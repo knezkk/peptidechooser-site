@@ -49,7 +49,11 @@ p { margin: 0 0 1em; }
 .hero h1 { max-width: 17ch; margin-bottom: 16px; }
 
 /* Home hero: intro line, then the evidence rail beside the body figure, then How we rate and the labels (pages.md, Home) */
-.hero-clinic { padding: 28px 0 56px; background: var(--paper-2); border-bottom: 1px solid var(--line); }
+/* The first screen is white with no box around the flow; everything after it sits on the grey band (owner, 31 Oct 2026). */
+.hero-clinic { padding: 28px 0 32px; background: var(--white); }
+.hero-more { padding: 32px 0 56px; background: var(--paper-2); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.hero-more .hero-after { margin-top: 0; }
+.hero-clinic .flow { background: none; border: 0; box-shadow: none; padding: 0; }
 /* The first screen holds the H1 on one line and the whole flow card; the lede follows the card. */
 .hero-clinic .hero-h1 { max-width: none; margin: 0 0 16px; font-size: 34px; line-height: 1.15; }
 .hero-after { margin: 20px 0 0; max-width: 70ch; }
@@ -277,7 +281,8 @@ p { margin: 0 0 1em; }
   h2 { font-size: 22px; }
   .hero { padding: 32px 0 40px; }
   /* Phones: H1, then the rail, then the lede, so the steps reach the first screen (pages.md, Home) */
-  .hero-clinic { padding: 12px 0 32px; }
+  .hero-clinic { padding: 12px 0 24px; }
+  .hero-more { padding: 24px 0 40px; }
   .hero-clinic .wrap { display: flex; flex-direction: column; }
   .hero-clinic .hero-h1 { order: 1; margin-bottom: 12px; font-size: 22px; line-height: 1.2; }
   .hero-after { order: 3; }
