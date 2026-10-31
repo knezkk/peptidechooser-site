@@ -202,7 +202,23 @@ def check_parts(P):
                     errs.append(f"{name}: green button not an /out/ link with rel=sponsored")
                 if under != "Paid link":
                     errs.append(f"{name}: green button without 'Paid link' under it")
+        # The seller window links to no seller (owner, 31 Oct 2026): no <a> to a seller's domain, no Visit inside it.
+        for m in re.finditer(r'<dialog class="sellers-dlg"[^>]*>(.*?)</dialog>', html, re.S):
+            for href in re.findall(r'<a\b[^>]*href="([^"]*)"', m.group(1)):
+                host = re.sub(r"^www\.", "", re.sub(r"^[a-z]+://", "", href).split("/")[0].lower())
+                if host and any(host == d or host.endswith("." + d) for d in seller_domains()):
+                    errs.append(f"{name}: seller window links to a seller ({href})")
+            if "btn-action" in m.group(1):
+                errs.append(f"{name}: Visit button inside the seller window")
     return errs
+
+
+def seller_domains():
+    """Every seller domain site.json knows: the sellers' own and the hosts of their product pages."""
+    d = json.loads((ROOT / "data" / "site.json").read_text(encoding="utf-8"))
+    hosts = {r.get("domain") for r in d.get("sellers") or []}
+    hosts |= {re.sub(r"^[a-z]+://", "", r.get("product_url") or "").split("/")[0] for r in d.get("products") or []}
+    return {re.sub(r"^www\.", "", h.lower()) for h in hosts if h}
 
 
 def check_data(P):

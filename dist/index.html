@@ -130,6 +130,8 @@ gtag('js',new Date());gtag('config','G-12CV2HEYW6',{anonymize_ip:true});
   </div>
 </section>
 
+<div class="wrap sellers-all"></div>
+
 <section class="section" id="sources">
   <div class="wrap">
     <h2 class="h-sources">Sources</h2>
@@ -159,6 +161,12 @@ if(t.classList&&t.classList.contains('pin')&&(e.key==='Enter'||e.key===' ')){e.p
 // Arrow keys move to the next or previous chip and choose it (Tab, Enter and Space work as on any button).
 var i=chips.indexOf(t);if(i<0)return;var d={ArrowRight:1,ArrowDown:1,ArrowLeft:-1,ArrowUp:-1}[e.key];if(!d)return;
 e.preventDefault();var n=chips[(i+d+chips.length)%chips.length];n.focus();pick(n.getAttribute('data-goal'));});})();
+</script>
+<script>
+(function(){if(!window.HTMLDialogElement)return;document.documentElement.classList.add('sellers-js');
+document.addEventListener('click',function(e){var b=e.target.closest('.sellers-open');if(b){var d=document.getElementById(b.getAttribute('data-dlg'));
+if(d){e.preventDefault();d.showModal();}return;}
+var d=e.target.closest('.sellers-dlg');if(d&&e.target===d)d.close();});})();
 </script>
 
 </main>
