@@ -5,6 +5,7 @@ Numbers source: data/site.json. Nothing numeric is typed into a template.
 """
 from pathlib import Path
 import json
+import re
 import shutil
 from datetime import date
 
@@ -240,6 +241,11 @@ SOURCES_HOME = "".join(
 ) + "".join(f'<li id="src-price-{g["slug"]}">{g["price_source_name"]}: <a href="{g["price_source"]}" rel="nofollow">{g["price_source"]}</a></li>' for g in LIVE_GOALS)
 # Price sources follow the legal ones in the same numbered list, so a price's footnote number is its place there.
 PRICE_REF = {g["slug"]: len(LEGAL["sources"]) + i + 1 for i, g in enumerate(LIVE_GOALS)}
+# An option can carry its own price source (data: price_source with name, url, checked); those come last.
+OPT_SOURCES = [p for g in ALL_GOALS for p in g["peptides"] if p.get("price_source")]
+SOURCES_HOME += "".join(f'<li id="src-opt-{i + 1}">{p["price_source"]["name"]}, {nice_date(p["price_source"]["checked"])}: '
+                        f'<a href="{p["price_source"]["url"]}" rel="nofollow">{p["price_source"]["url"]}</a></li>' for i, p in enumerate(OPT_SOURCES))
+OPT_REF = {id(p): (len(LEGAL["sources"]) + len(LIVE_GOALS) + i + 1, f"opt-{i + 1}") for i, p in enumerate(OPT_SOURCES)}
 
 # Numbers from the database (tools/pull_data.py writes these keys when SITE_DATABASE_URL is set). Without them the
 # page renders the hand-written statuses and dates above, unchanged.
@@ -251,13 +257,18 @@ STAMP_CHECKED = nice_date(DB["prices_checked_on"]) if DB and DB.get("prices_chec
 # Lower rank wins when a substance has several open statuses. Statuses not listed here (shortage, not_listed) are
 # not legal statuses and are skipped.
 DB_STATUS = {
-    ("fda_approval", "approved"): (0, "ok", "FDA approved", "an FDA-approved product exists; prescription"),
+    ("fda_approval", "approved"): (0, "ok", "FDA approved", "an FDA-approved product exists"),
     ("fda_cat2_safety", "category_2"): (1, "neutral", "Not approved", "on the FDA list of substances that may be unsafe to compound"),
     ("fda_503a_category", "category_2"): (2, "neutral", "Not approved", "the FDA found safety concerns; pharmacies may not compound it"),
     ("fda_503a_category", "category_3"): (3, "neutral", "Not approved", "nominated for compounding without enough data; pharmacies may not compound it"),
     ("fda_nomination_withdrawn", "withdrawn"): (4, "neutral", "Not approved", "its nomination for pharmacy compounding was withdrawn"),
     ("fda_503a_category", "category_1"): (5, "warn", "Pharmacy-made", "pharmacies may compound it while the FDA reviews it; no approved product"),
 }
+
+
+def brand_base(name):
+    """"Mounjaro (Autoinjector)" and "Mounjaro Kwikpen" are both Mounjaro: the first word, without the bracket, title case."""
+    return re.sub(r"\(.*?\)", "", name).split()[0].title()
 
 
 def db_status(slug):
@@ -267,7 +278,7 @@ def db_status(slug):
     if not rows:
         return None
     (rank, chip, label, sentence), row = min(rows, key=lambda x: x[0][0])
-    brands = sorted({a["brand_name"].title() for a in APPROVED_DB if a["substance_slug"] == slug and a.get("brand_name")})
+    brands = sorted({brand_base(a["brand_name"]) for a in APPROVED_DB if a["substance_slug"] == slug and a.get("brand_name")})[:4]
     name = row["canonical_name"] + (f' ({", ".join(brands)})' if brands and chip == "ok" else "")
     return {"chip": chip, "label": label, "sentence": sentence, "name": name, "url": row["source_url"],
             "seen": row["first_seen_by_us"]}
@@ -281,14 +292,15 @@ def status_chip(item, chip_key="chip", label_key="status"):
 
 def refs(item, goal):
     """Footnote links for the numbers in an option's copy (rulebook: no number without its source)."""
-    ns = list(item.get("src", [])) + ([PRICE_REF[goal]] if item.get("price") in PRICE_REF else [])
-    return (" <sup>" + ", ".join(f'<a href="#src-{n if n <= len(LEGAL["sources"]) else "price-" + goal}">{n}</a>' for n in ns) + "</sup>") if ns else ""
+    ns = [(n, n) for n in item.get("src", [])] + ([(PRICE_REF[goal], "price-" + goal)] if item.get("price") in PRICE_REF else [])
+    ns += [OPT_REF[id(item)]] if id(item) in OPT_REF else []
+    return (" <sup>" + ", ".join(f'<a href="#src-{a}">{n}</a>' for n, a in ns) + "</sup>") if ns else ""
 
 
 def plain_status(item):
     """The plain status line. A price written in the copy is shown only when its source is on the page."""
     s = item["status_plain"]
-    if "$" in s and not item.get("price"):
+    if "$" in s and not (item.get("price") or item.get("price_source")):
         s = " ".join(part for part in s.replace(". ", ".\n").split("\n") if "$" not in part)
     return s
 
@@ -383,8 +395,11 @@ def legal_rows():
             continue
         for s in found:
             seen.append(s["seen"])
+            # A row marked note_with_db keeps its hand-written note (e.g. the July 2026 PCAC proposal) as a second sentence.
+            note = (f'. {r["note"][0].upper() + r["note"][1:]}. <a class="ref" href="#src-{r["src"]}" aria-label="Source {r["src"]}">'
+                    f'<sup>{r["src"]}</sup></a>') if r.get("note_with_db") else ""
             out.append(f'<tr><td><span class="name">{s["name"]}</span></td><td><span class="chip chip-{s["chip"]}">{s["label"]}</span></td>'
-                       f'<td>{s["sentence"]} <a class="ref" href="{s["url"]}" rel="nofollow">FDA source</a>, {nice_date(s["seen"])}</td></tr>')
+                       f'<td>{s["sentence"]} <a class="ref" href="{s["url"]}" rel="nofollow">FDA source</a>, {nice_date(s["seen"])}{note}</td></tr>')
     checked = nice_date(max(seen)) if seen else nice_date(LEGAL["checked"])
     return "".join(out), checked
 
