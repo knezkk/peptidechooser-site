@@ -440,10 +440,13 @@ def rail():
                         f'<p class="opt-status">{plain_status(p, drop_price=bool(pad))}</p><p class="opt-how">{p["how"]}</p></div></details>{act}</li>')
         link = (f'<a class="btn btn-ink" href="/{slug}/">Compare {g["short"].lower()} options</a>' if g.get("page") else
                 '<p class="small">Full comparison for this goal is not published yet. The legal status above is current as of ' + CHECKED + '.</p>')
-        compare.append(f'<div class="step-panel" id="opts-{slug}" data-goal="{slug}"{hide}><p class="goal-for">{g["for"]}</p>'
+        compare.append(f'<div class="step-panel" id="opts-{slug}" data-goal="{slug}" data-title="{g["panel_title"]}"{hide}><p class="goal-for">{g["for"]}</p>'
+                       f'<p class="goal-intro" tabindex="0" title="{g["intro"]}">{g["intro"]}</p>'
                        f'<ul class="opts">{"".join(rows)}</ul>'
                        f'{link}</div>')
-    return "".join(chips), "".join(compare)
+    # The chosen goal's panel title follows the step name in the step 2 heading (ODOBRENO SEO 30 Oct 2026, copy doc
+    # section 2); the page carries the first goal's, the goal switch puts in the next one.
+    return "".join(chips), "".join(compare), f'<span class="goal-t">: {ALL_GOALS[0]["panel_title"]}</span>'
 
 
 def legal_rows():
@@ -471,7 +474,7 @@ def legal_rows():
 
 LEGAL_ROWS, LEGAL_CHECKED = legal_rows()
 FIGURE = figure_svg()
-GOAL_CHIPS, STEP_COMPARE = rail()
+GOAL_CHIPS, STEP_COMPARE, GOAL_TITLES = rail()
 GLOSSARY = "".join(f'<div><dt>{t["term"]}</dt><dd>{t["text"]}</dd></div>' for t in DATA["glossary"])
 
 CREATOR_ROWS = "".join(
@@ -484,7 +487,7 @@ MAP_JS = """<script>
 var chips=[].slice.call(root.querySelectorAll('.goal-item')),cur=chips[0].getAttribute('data-goal');
 var swapS=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--motion-swap'))/1000||0.2;
 root.addEventListener('animationend',function(e){if(e.target.classList.contains('stamp'))root.classList.add('landed');});
-function show(k){root.querySelectorAll('.step-panel').forEach(function(x){x.hidden=x.getAttribute('data-goal')!==k;});
+function show(k){root.querySelectorAll('.step-panel').forEach(function(x){x.hidden=x.getAttribute('data-goal')!==k;if(!x.hidden)root.querySelector('.goal-t').textContent=': '+x.getAttribute('data-title');});
 if(!window.pcMotion)return;var on=root.querySelectorAll('.step-panel[data-goal="'+k+'"]');
 gsap.fromTo(on,{opacity:0},{opacity:1,duration:swapS,ease:'power1.out'});
 gsap.fromTo(root.querySelectorAll('.step-panel[data-goal="'+k+'"] .opt'),{opacity:0,y:4},{opacity:1,y:0,duration:swapS,ease:'power1.out',stagger:0.04});}
@@ -512,13 +515,14 @@ HOME = f"""
       <div class="flow-hd fh-goal"><span class="step-n" aria-hidden="true">1</span><h2 id="step-goal">Choose a goal</h2></div>
       <div class="figure">{FIGURE}</div>
       <div class="goal-list" role="group" aria-labelledby="step-goal">{GOAL_CHIPS}</div>
-      <div class="flow-hd fh-compare"><span class="step-n" aria-hidden="true">2</span><h2>Compare the options</h2><a class="step-legal" href="#legal"><strong>Is it legal today?</strong></a></div>
+      <div class="flow-hd fh-compare"><span class="step-n" aria-hidden="true">2</span><h2>Compare the options{GOAL_TITLES}</h2><a class="step-legal" href="#legal"><strong>Is it legal today?</strong></a></div>
       <div class="flow-compare">{STEP_COMPARE}</div>
     </div>
   </div>
 </section>
 <section class="hero-more">
   <div class="wrap">
+    <p class="what-is"><strong>What is a peptide?</strong> A short chain of amino acids. Some are approved medicines (semaglutide, bremelanotide), some are cosmetics in creams, and many are sold online with no approval and no testing. This site tells you which is which, what it costs, and what the proven alternative is.</p>
     <p class="lede hero-after">For each goal we put peptide products next to the FDA-approved alternatives and show what the evidence says, what it costs per month and how you would get it. We compare; we never sell.</p>
     <section class="rate-strip" aria-labelledby="rate-h">
       <div class="rate-hd"><h2 id="rate-h">How we rate</h2><p>Every product and seller is judged on the same five criteria. We publish them so you can check our work.</p><a href="/how-we-rate/">Read the full method</a></div>
