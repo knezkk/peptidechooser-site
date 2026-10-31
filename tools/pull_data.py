@@ -6,7 +6,7 @@ Reads the `site.*` views through the read-only role (peptide-data spec 0015) and
   - site.plan_prices     -> "plans": telehealth plan prices per seller, with the date the page was last seen
   - site.products        -> "products": research-use listings for the substances the site shows (see keep_products)
   - site.sellers         -> "sellers": the seller rows those listings point to, with their background check
-  - site.seller_enforcement -> "letters": the newest FDA warning letters to sellers in the database (see letters_rows)
+  - site.fda_letters    -> "letters": the newest FDA warning letters to sellers in the database (see letters_rows)
 
 Everything else in site.json (hand-checked prices with their sources, texts, goals) is left untouched.
 Run before build.py:  SITE_DATABASE_URL=postgres://site_reader:...@host:5432/postgres python3 tools/pull_data.py
@@ -66,14 +66,12 @@ def keep_products(all_rows, subs, n=10):
 
 
 def letters_rows(n=8):
-    """The newest FDA warning letters, at most n: sellers with a letter matched by domain or address (a name-only match
-    is left out), newest first. The view has no seller name, so it comes from site.sellers; a seller without a name
-    there is left out rather than shown by its slug. The view has no subject or letter type either."""
+    """The newest FDA warning letters, at most n, one row per letter and seller: letters matched to a seller by domain or
+    address (a name-only match is left out), newest first, from site.fda_letters (owner, 1 Nov 2026)."""
     return rows(
-        "select e.seller_slug, s.seller_name, e.letters_domain_or_address, e.newest_letter_date, e.newest_letter_url, e.source_id "
-        "from site.seller_enforcement e join site.sellers s using (seller_slug) "
-        f"where e.letters_domain_or_address > 0 and s.seller_name is not null "
-        f"order by e.newest_letter_date desc nulls last, s.seller_name limit {int(n)}")
+        "select distinct seller_slug, seller_name, letter_date, letter_url, letter_subject, issuing_office, letter_reference, "
+        "source_id from site.fda_letters where match_kind = 'domain_or_address' "
+        f"order by letter_date desc nulls last, seller_name limit {int(n)}")
 
 
 def main():

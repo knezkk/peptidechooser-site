@@ -235,10 +235,10 @@ def check_data(P):
     if d.get("letters") and not d.get("pulled_at"):
         errs.append("letters without pulled_at: the section's Checked date comes from it")
     for r in d.get("letters") or []:
-        if not (r.get("newest_letter_url") or "").startswith("https://www.fda.gov/"):
+        if not (r.get("letter_url") or "").startswith("https://www.fda.gov/"):
             errs.append(f"letters {r.get('seller_slug')}: no fda.gov source")
-        if not r.get("newest_letter_date") or not r.get("seller_name"):
-            errs.append(f"letters {r.get('seller_slug')}: no date or no seller name")
+        if not r.get("letter_date") or not r.get("seller_name") or not r.get("letter_subject"):
+            errs.append(f"letters {r.get('seller_slug')}: no date, seller name or subject")
     return errs
 
 
