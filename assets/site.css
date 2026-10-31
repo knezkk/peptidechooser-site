@@ -49,10 +49,27 @@ p { margin: 0 0 1em; }
 .hero h1 { max-width: 17ch; margin-bottom: 16px; }
 
 /* Home hero: intro line, then the chooser card with the body, the goal list and the answer (pages.md, Home) */
-.hero-clinic { padding: 28px 0 56px; background: linear-gradient(var(--paper), var(--paper-2)); border-bottom: 1px solid var(--line); }
+.hero-clinic { padding: 20px 0 56px; background: linear-gradient(var(--paper), var(--paper-2)); border-bottom: 1px solid var(--line); }
 .hero-intro { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px 48px; align-items: end; margin-bottom: 20px; }
 .hero-intro h1 { margin: 0; max-width: 17ch; }
 .hero-intro .lede { margin: 0; }
+.what-is { margin: 10px 0 0; max-width: 60ch; font-size: 14px; line-height: 1.5; color: var(--ink-2); }
+.what-is strong { color: var(--ink); }
+
+/* "What the labels mean": one card per label below the chooser, inside the hero band, like the criteria cards */
+.glossary { margin-top: 28px; }
+.glossary h2 { font-size: var(--display-4-size); line-height: var(--display-4-lh); margin-bottom: 12px; }
+.glossary-list { margin: 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
+.glossary-list div { padding: 16px 18px; border: 1px solid var(--line); border-radius: var(--radius-panel); background: var(--white); }
+.glossary-list dt { font-weight: 700; margin-bottom: 4px; }
+.glossary-list dd { margin: 0; font-size: 14px; line-height: 1.5; color: var(--ink-2); }
+
+/* /hair/ table: the three parts under the name and the chip */
+.tbl .opt-does, .tbl .opt-status { display: block; font-size: var(--small-size); line-height: 1.45; margin-top: 4px; max-width: 46ch; }
+.tbl .opt-does { color: var(--ink-2); }
+#options .tbl td { vertical-align: top; }
+#options .tbl td:first-child { min-width: 300px; }
+#options .tbl td:last-child { font-size: var(--small-size); line-height: 1.45; max-width: 30ch; }
 .chooser { display: grid; grid-template-columns: minmax(0, 1fr); gap: 24px; background: var(--white); border: 1px solid var(--line-strong); border-radius: var(--radius-panel); box-shadow: var(--shadow-card); padding: 20px 24px 24px; }
 .chooser-hd { grid-column: 1 / -1; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 6px 24px; padding-bottom: 10px; border-bottom: 1px solid var(--line); }
 .chooser-hd h2 { font-size: 17px; line-height: 1.3; font-weight: 700; letter-spacing: 0; }
@@ -60,7 +77,7 @@ p { margin: 0 0 1em; }
 
 /* The body figure (our own drawing): fill, clipped body areas, outline, pins */
 .figure { display: flex; justify-content: center; }
-.fig { width: auto; height: 420px; overflow: visible; }
+.fig { width: auto; height: 372px; overflow: visible; }
 .fig .body { fill: var(--neutral-tint); }
 .fig .contour { fill: none; stroke: var(--ink-2); stroke-width: 1.1; stroke-linejoin: round; }
 .fig .region { fill: var(--clinic); fill-opacity: 0; transition: fill-opacity var(--motion-quick); }
@@ -96,8 +113,15 @@ p { margin: 0 0 1em; }
 .hero-what .small { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; margin-top: 6px; }
 .goal-intro { font-size: 14px; line-height: 1.5; color: var(--ink-2); margin: 0 0 8px; }
 .pep-list { list-style: none; margin: 0 0 14px; padding: 0; }
-.pep-list li { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 6px 14px; padding: 8px 0; border-top: 1px solid var(--line); font-size: 14px; }
+.pep-list li { padding: 10px 0; border-top: 1px solid var(--line); font-size: 14px; }
 .pep-list .name { font-weight: 600; }
+/* Option row (pages.md, Home): name and chip, then what it does, how you get it, status; one line wide, three on phones */
+.opt-hd { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 6px 14px; }
+.opt-parts { margin: 4px 0 0; line-height: 1.5; color: var(--ink-2); }
+.opt-how { color: var(--ink); }
+.opt-status { color: var(--ink); font-weight: 600; }
+.opt-parts sup a, .opt-status sup a { text-decoration: none; }
+.goal-for { margin: -4px 0 12px; font-size: 15px; line-height: 1.5; color: var(--ink); }
 .goal-panel .btn-row { margin: 0 0 10px; }
 .goal-panel > .fine { margin: 0; }
 .goal-panel > .small { margin: 0; padding-top: 10px; border-top: 1px solid var(--line); }
@@ -175,6 +199,7 @@ p { margin: 0 0 1em; }
 @media (min-width: 760px) {
   .foot-grid { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: 48px; }
   .criteria { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .glossary-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .creators { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .trust-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .chooser { grid-template-columns: 200px minmax(0, 1fr); }
@@ -188,6 +213,7 @@ p { margin: 0 0 1em; }
   .chooser { grid-template-columns: 220px 280px minmax(0, 1fr); gap: 28px; }
   .goal-panels { grid-column: auto; }
   .criteria { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .glossary-list { grid-template-columns: repeat(5, minmax(0, 1fr)); }
   .trust-row { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 }
 @media (max-width: 760px) {
@@ -205,6 +231,10 @@ p { margin: 0 0 1em; }
   .hero-intro h1 { order: 1; margin-bottom: 16px; font-size: 28px; }
   .hero-clinic .chooser { order: 2; }
   .hero-intro .lede { order: 3; margin-top: 20px; }
+  .hero-copy { order: 3; margin-top: 20px; }
+  .hero-intro .hero-copy .lede { margin-top: 0; }
+  .glossary { order: 5; }
+  .opt-parts > span { display: block; margin-top: 2px; }
   .chooser-hd { padding-bottom: 10px; }
   .chooser-hd h2 { font-size: 15px; }
   .chooser { grid-template-columns: 110px minmax(0, 1fr); gap: 14px; padding: 14px; }
