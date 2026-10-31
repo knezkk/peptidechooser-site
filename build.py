@@ -240,12 +240,28 @@ def top_pick(g):
     return (pick[0], pick[3]) if pick else None
 
 
+def sold_peptide(g):
+    """For a goal with no top pick: its most asked-about peptide, the first not-approved option (database chip when
+    there is one) that research-use shops sell, since the card says so. Returns (name, status chip html) or None."""
+    for item in g.get("options") or g["peptides"]:
+        s = db_status(item["substance"]) if item.get("substance") else None
+        chip = s["chip"] if s else item.get("chip", item.get("fda_chip"))
+        if chip == "neutral" and "research-use" in (item.get("does", "") + " " + item.get("how", "")).lower():
+            return item["name"], status_chip(item) if "chip" in item else status_chip(item, "fda_chip", "fda")
+    return None
+
+
 def top_picks():
     cards = []
     for g in ALL_GOALS:
         pick = top_pick(g)
-        body = (f'<span class="name">{pick[0]}</span>{pick[1]}'
-                f'<span class="pick-act">{visit(g)}</span>') if pick else '<span class="note">No FDA-approved option</span>'
+        if pick:
+            body = f'<span class="name">{pick[0]}</span>{pick[1]}<span class="pick-act">{visit(g)}</span>'
+        else:
+            sold = sold_peptide(g)
+            body = '<span class="note">No FDA-approved option</span>' + (
+                f'<span class="name">{sold[0]}</span>{sold[1]}<span class="note">Sold by research-use shops; we do not link to them.</span>'
+                if sold else "")
         cards.append(f'<li><h3>{g["label"]}</h3>{body}</li>')
     return "".join(cards)
 

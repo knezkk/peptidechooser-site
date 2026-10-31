@@ -163,7 +163,7 @@
       "peptides": [
         {
           "name": "Tretinoin cream (proven alternative)",
-          "status": "FDA approved, prescription",
+          "status": "FDA approved",
           "chip": "ok",
           "does": "A nightly prescription cream. Reduces fine wrinkles and evens skin over months; can irritate at first.",
           "how": "Prescription (dermatologist or online clinic).",
@@ -214,7 +214,7 @@
       "peptides": [
         {
           "name": "Semaglutide (Wegovy)",
-          "status": "FDA approved, prescription",
+          "status": "FDA approved",
           "chip": "ok",
           "does": "A weekly shot that cuts appetite; about 15 % body weight lost on average in trials.",
           "how": "Prescription; online clinics prescribe after a visit.",
@@ -226,7 +226,7 @@
         },
         {
           "name": "Tirzepatide (Zepbound)",
-          "status": "FDA approved, prescription",
+          "status": "FDA approved",
           "chip": "ok",
           "does": "A weekly shot, same idea, larger average loss in trials.",
           "how": "Prescription.",
@@ -268,7 +268,7 @@
       "peptides": [
         {
           "name": "Tesamorelin (Egrifta)",
-          "status": "FDA approved for HIV-related belly fat only",
+          "status": "FDA approved",
           "chip": "ok",
           "does": "A daily shot approved only to reduce belly fat in people with HIV. Sold off-label by clinics for \"growth hormone\".",
           "how": "Prescription.",
@@ -352,7 +352,7 @@
       "peptides": [
         {
           "name": "Bremelanotide (Vyleesi)",
-          "status": "FDA approved, prescription",
+          "status": "FDA approved",
           "chip": "ok",
           "does": "A shot you take before sex, approved for low sexual desire in premenopausal women.",
           "how": "Prescription.",
