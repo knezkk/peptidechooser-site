@@ -55,9 +55,38 @@ a:hover{color:var(--clinic-hover)}
 .panel-line{border:1px solid var(--line);border-radius:var(--radius-panel);padding:24px;background:var(--white)}
 .panel-mark{background:var(--mark);border-radius:var(--radius-panel);padding:40px}
 
+/* Evidence rail (Home hero, 31 Oct 2026): numbered steps on a clinic-blue line; the line draws once on load */
+.steps{list-style:none;margin:0;padding:0}
+.step{position:relative;padding:0 0 48px 68px}
+.step:last-child{padding-bottom:0}
+.step:not(:last-child)::before{content:"";position:absolute;left:21px;top:44px;bottom:0;width:2px;background:var(--clinic);transform-origin:top}
+.step-n{position:absolute;left:0;top:0;width:44px;height:44px;border-radius:50%;background:var(--clinic);color:var(--white);display:flex;align-items:center;justify-content:center;font:800 18px/1 var(--font-display)}
+.step-hd{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-start;gap:8px 24px;min-height:44px;padding-top:6px;margin-bottom:14px}
+.step-hd h2{font:var(--display-3-weight) var(--display-3-size)/var(--display-3-lh) var(--font-display);letter-spacing:var(--display-3-ls);margin:0;color:var(--ink)}
+
+/* Goal chips (step 1): the chosen one is filled mark */
+.goal-chip{min-height:var(--touch);padding:8px 16px;border:1px solid var(--line-strong);border-radius:var(--radius-control);background:var(--white);color:var(--ink);font:600 15px/1.25 var(--font-text);cursor:pointer;transition:background-color var(--motion-swap),border-color var(--motion-swap)}
+.goal-chip:hover{border-color:var(--ink)}
+.goal-chip[aria-pressed="true"]{background:var(--mark);border-color:var(--ink)}
+.goal-chip:focus-visible{outline:3px solid var(--clinic);outline-offset:2px}
+
+/* Option list (step 2): one white frame, a hairline between rows */
+.opts{list-style:none;margin:0;padding:0;border:1px solid var(--line);border-radius:var(--radius-panel);background:var(--white)}
+.opt{padding:14px 18px}
+.opt+.opt{border-top:1px solid var(--line)}
+
+/* Price pad on an option row: mark, small corners, source and date under it */
+.price-pad{display:inline-block;padding:4px 10px;border-radius:var(--radius-chip);background:var(--mark);color:var(--ink);font:800 15px/1.3 var(--font-display);white-space:nowrap}
+
 /* Inputs */
 .input{min-height:48px;padding:0 14px;border:1.5px solid var(--line-strong);border-radius:var(--radius-control);font:16px var(--font-text);color:var(--ink);background:var(--white);box-sizing:border-box}
 .input:focus-visible{outline:3px solid var(--clinic);outline-offset:1px}
 
 @media (max-width:640px){.btn{width:100%}.btn-sm{width:auto}.sec-hd h2{font-size:26px}.art-h2{font-size:22px}.num-xl{font-size:48px}}
-@media (prefers-reduced-motion:reduce){.btn{transition:none}}
+@media (max-width:640px){.step{padding:0 0 32px 58px}.step-hd h2{font-size:22px}}
+@media (prefers-reduced-motion:no-preference){
+.step:not(:last-child)::before{animation:pc-draw calc(var(--motion-draw) / 2) linear both}
+.step:nth-child(2)::before{animation-delay:calc(var(--motion-draw) / 2)}
+}
+@keyframes pc-draw{from{transform:scaleY(0)}to{transform:none}}
+@media (prefers-reduced-motion:reduce){.btn,.goal-chip{transition:none}}

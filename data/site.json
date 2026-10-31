@@ -122,6 +122,7 @@
           "does": "A liquid or foam you put on the scalp twice a day. Regrows hair for men and women; works while you keep using it.",
           "how": "No prescription, any pharmacy.",
           "status_plain": "FDA approved for hair loss. From $10/mo.",
+          "price_from_usd": 10,
           "price_source": {
             "name": "Keeps, home page comparison table (\"Minoxidil (OTC), generic Rogaine: $10/mo\")",
             "url": "https://www.keeps.com/",
