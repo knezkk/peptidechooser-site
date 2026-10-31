@@ -232,6 +232,11 @@ def check_data(P):
             errs.append(f"legal_db {name} ({r.get('regime')}): no source_url")
         if not (r.get("first_seen_by_us") or r.get("valid_from")):
             errs.append(f"legal_db {name} ({r.get('regime')}): no date")
+    for r in d.get("letters") or []:
+        if not (r.get("newest_letter_url") or "").startswith("https://www.fda.gov/"):
+            errs.append(f"letters {r.get('seller_slug')}: no fda.gov source")
+        if not r.get("newest_letter_date") or not r.get("seller_name"):
+            errs.append(f"letters {r.get('seller_slug')}: no date or no seller name")
     return errs
 
 
