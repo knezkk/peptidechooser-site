@@ -294,7 +294,7 @@ p { margin: 0 0 1em; }
   .flow .opt:has(> .pick-act):not(:has(.btn-action)) { grid-template-columns: minmax(0, 1fr) auto; }
   .flow .opt:has(> .pick-act):not(:has(.btn-action)) > .opt-more { grid-column: 1 / -1; grid-row: 1; }
   .flow .opt:has(> .pick-act):not(:has(.btn-action)) .opt-sum .name { padding-right: 160px; }
-  .flow .opt > .pick-act:not(:has(.btn-action)) { grid-column: 2; grid-row: 1; align-self: start; padding: 0; }
+  .flow .opt > .pick-act:not(:has(.btn-action)) { grid-column: 2; grid-row: 1; align-self: start; margin-top: 0; padding: 0; }
   .flow-compare .step-panel:not([hidden]) { display: flex; flex-direction: column; }
   .flow-compare .goal-for { order: 2; margin: 10px 0 0; }
   .flow-compare .goal-intro { order: 2; margin: 4px 0 0; }
