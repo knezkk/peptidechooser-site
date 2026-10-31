@@ -580,6 +580,31 @@ def opt_price(p, slug):
     return f'<span class="price-pad">from ${usd}/mo</span><sup><a class="ref" href="{href}" aria-label="Source {n}">{n}</a></sup>'
 
 
+def option_rows(g):
+    """One goal's step 2 option rows (pages.md, Home, step 2; also /hair/): name, chip, price with the plan line,
+    "Compare N sellers" for research-use rows, Visit on the top pick's row."""
+    slug = g["slug"]
+    # Each option: name and what it does; status chip and status in plain words; price pad and how you get it
+    # (docs/copy-home-2026-10-30.md): one line on wide screens, three short lines on phones.
+    # The top pick (same rule as "Top pick per goal") gets the goal's Visit button on its own row.
+    pick = next((p for p in g["peptides"] if p["status"].startswith("FDA approved") and p.get("top_pick", True)), None)
+    rows = []
+    for p in g["peptides"]:
+        pad = opt_price(p, slug)
+        # the goal's cheapest online-clinic plan sits under the price of the option it is for
+        plan = GOAL_PLANS.get(slug)
+        cell = (f'<span class="price-main">{pad}</span>' if pad else "") + (
+            plan_line(g, "plan-line") if plan and p.get("substance") == plan["substance_slug"] else "")
+        sb = sellers_button(p)
+        act = (f'<span class="pick-act">{sb}{visit(g, small=True)}</span>' if p is pick else
+               f'<span class="pick-act">{sb}</span>' if sb else "")
+        rows.append(f'<li class="opt"><details class="opt-more"><summary class="opt-sum"><span class="name">{p["name"]}</span>'
+                    f'{status_chip(p)}<span class="opt-price">{cell}</span></summary>'
+                    f'<div class="opt-body"><p class="opt-does">{p["does"]}{refs(p, slug, price=not pad)}</p>'
+                    f'<p class="opt-status">{plain_status(p, drop_price=bool(pad))}</p><p class="opt-how">{p["how"]}</p></div></details>{act}</li>')
+    return rows
+
+
 def rail():
     """The flow (design book, pages.md, Home): the goal rows, then per goal the option list, where the top pick's row
     carries the Visit button. Every goal's options are in the page; only the first goal's show until another is chosen."""
@@ -588,24 +613,7 @@ def rail():
         slug, hide = g["slug"], "" if i == 0 else " hidden"
         chips.append(f'<button type="button" class="goal-item" data-goal="{slug}" aria-pressed="{"true" if i == 0 else "false"}" '
                      f'aria-controls="opts-{slug}"><span>{g["label"]}</span><span class="small">{len(g["peptides"])} options</span></button>')
-        # Each option: name and what it does; status chip and status in plain words; price pad and how you get it
-        # (docs/copy-home-2026-10-30.md): one line on wide screens, three short lines on phones.
-        # The top pick (same rule as "Top pick per goal") gets the goal's Visit button on its own row.
-        pick = next((p for p in g["peptides"] if p["status"].startswith("FDA approved") and p.get("top_pick", True)), None)
-        rows = []
-        for p in g["peptides"]:
-            pad = opt_price(p, slug)
-            # the goal's cheapest online-clinic plan sits under the price of the option it is for
-            plan = GOAL_PLANS.get(slug)
-            cell = (f'<span class="price-main">{pad}</span>' if pad else "") + (
-                plan_line(g, "plan-line") if plan and p.get("substance") == plan["substance_slug"] else "")
-            sb = sellers_button(p)
-            act = (f'<span class="pick-act">{sb}{visit(g, small=True)}</span>' if p is pick else
-                   f'<span class="pick-act">{sb}</span>' if sb else "")
-            rows.append(f'<li class="opt"><details class="opt-more"><summary class="opt-sum"><span class="name">{p["name"]}</span>'
-                        f'{status_chip(p)}<span class="opt-price">{cell}</span></summary>'
-                        f'<div class="opt-body"><p class="opt-does">{p["does"]}{refs(p, slug, price=not pad)}</p>'
-                        f'<p class="opt-status">{plain_status(p, drop_price=bool(pad))}</p><p class="opt-how">{p["how"]}</p></div></details>{act}</li>')
+        rows = option_rows(g)
         link = (f'<a class="btn btn-ink" href="/{slug}/">Compare {g["short"].lower()} options</a>' if g.get("page") else
                 '<p class="small">Full comparison for this goal is not published yet. The legal status above is current as of ' + CHECKED + '.</p>')
         compare.append(f'<div class="step-panel" id="opts-{slug}" data-goal="{slug}" data-title="{g["panel_title"]}"{hide}><p class="goal-for">{g["for"]}</p>'
@@ -908,6 +916,20 @@ PRIVACY = f"""
 </div></section>
 """
 
+def page_sources(rows_html, own):
+    """The Home source entries an option row on another page links to (price, option and plan sources), kept under
+    their Home numbers so a footnote reads the same everywhere. A row may not link a number the page uses itself."""
+    used = list(dict.fromkeys(re.findall(r'href="#(src-[^"]+)"[^>]*>(?:<sup>)?(\d+)', rows_html)))
+    clash = {i for i, _ in used} & own
+    assert not clash, f"option rows link sources that this page numbers differently: {clash}"
+    out = []
+    for sid, n in sorted(used, key=lambda x: int(x[1])):
+        m = re.search(rf'<li id="{sid}">(.*?)</li>', SOURCES_HOME)
+        if m:
+            out.append(f'<li value="{n}" id="{sid}">{m.group(1)}</li>')
+    return "".join(out)
+
+
 def category_page(g):
     rows = []
     for o in g["options"]:
@@ -922,23 +944,36 @@ def category_page(g):
   <td>{o["how_plain"]}</td>
 </tr>""")
     srcs = "".join(f'<li id="src-{s["n"]}">{s["text"]}: <a href="{s["url"]}" rel="nofollow">{s["url"]}</a></li>' for s in g["sources"])
+    # The Clinic intake look (owner, 31 Oct 2026): Home's parts on the goal page. Title, H1, description and URL stay as
+    # they are (Search Console impressions); the hero keeps the price pad with its Checked stamp, the step 2 option rows
+    # follow, the options table sits in the grey band.
+    opt_html = "".join(option_rows(g))
+    own = {f'src-{s["n"]}' for s in g["sources"]}
+    srcs += page_sources(opt_html, own)
+    windows = "".join(seller_window(p["substance"]) for p in g["peptides"] if p.get("substance") in SELLER_SLUGS and sellers_button(p))
     return f"""
-<section class="hero">
-  <div class="wrap hero-grid">
-    <div>
-      <h1>{g["h1"]}</h1>
-      <p class="small meta">{AUTHOR}. Last updated {CHECKED}. {STANDING_LINE}</p>
-      <p class="intro">{g["short_answer"]}</p>
+<section class="hero hero-goal">
+  <div class="wrap">
+    <div class="hero-grid">
+      <div>
+        <h1>{g["h1"]}</h1>
+        <p class="small meta">{AUTHOR}. Last updated {CHECKED}. {STANDING_LINE}</p>
+        <p class="intro">{g["short_answer"]}</p>
+      </div>
+      <div class="board rx" aria-label="Price pad">
+        <div class="rx-head"><span class="rx-mark" aria-hidden="true">&#8478;</span><h2>Cheapest proven option, per month</h2></div>
+        <p class="hero-num"><span class="num-xl">${g["price_from_usd"]}</span> <span class="num-unit">/mo from</span></p>
+        <div class="ledger"><span>{g["best_option"]}</span></div>
+        <div class="rx-foot"><span class="stamp">Checked {CHECKED}</span><span class="fine">{g["price_note"]}. Not a prescription.</span></div>
+      </div>
     </div>
-    <div class="board rx" aria-label="Price pad">
-      <div class="rx-head"><span class="rx-mark" aria-hidden="true">&#8478;</span><h2>Cheapest proven option, per month</h2></div>
-      <p class="hero-num"><span class="num-xl">${g["price_from_usd"]}</span> <span class="num-unit">/mo from</span></p>
-      <div class="ledger"><span>{g["best_option"]}</span></div>
-      <div class="rx-foot"><span class="stamp">Checked {CHECKED}</span><span class="fine">{g["price_note"]}. Not a prescription.</span></div>
+    <div class="chooser flow flow-solo">
+      <div class="flow-hd fh-compare"><h2>Compare the options</h2><a class="step-legal" href="/#legal"><strong>Is it legal today?</strong></a></div>
+      <div class="flow-compare"><div class="step-panel"><p class="goal-for">{g["for"]}</p><ul class="opts">{opt_html}</ul></div></div>
     </div>
   </div>
 </section>
-<section class="section" id="options">
+<section class="band-2" id="options">
   <div class="wrap">
     <div class="sec-hd"><div><h2>Every option, side by side</h2><p>{g["options_checked"]} options checked on the same five criteria. Rows that are not approved for human use carry no price and no seller.</p></div></div>
     <div class="tbl-wrap"><table class="tbl">
@@ -950,9 +985,11 @@ def category_page(g):
 <section class="section" id="sources">
   <div class="wrap">
     <h2 class="h-sources">Sources</h2>
-    <ol class="small" style="padding-left:1.2em">{srcs}</ol>
+    <ol class="small sources" style="padding-left:1.2em">{srcs}</ol>
   </div>
 </section>
+<div class="wrap sellers-all">{windows}</div>
+{SELLERS_JS}
 """
 
 

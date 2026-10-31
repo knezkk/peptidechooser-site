@@ -52,7 +52,12 @@ Home is the hub for every goal, built from the 26 Oct 2026 mockup ("Peptidi Mast
 
 ## Category `/hair/`
 
-H1, ShortAnswer (`intro`), hero number (cheapest proven option per month, `num-xl` + `mark`), DataTable of every option (Rx, serums, research-use rows at the bottom), guides list, sources.
+The Clinic intake look (owner, 31 Oct 2026), built from Home's parts. The URL, title, H1 and meta description never change (the page has Search Console impressions).
+- **Hero** (white): breadcrumbs; H1; the author and "Last updated" line; ShortAnswer (`short_answer`); beside it from 900px the ℞ price pad (cheapest proven option per month, `num-xl`, the best option on a ledger line, the "Checked <date>" stamp and the price note).
+- **Compare the options** (in the hero, under the text and the pad): the same step 2 heading line as Home (no step number) with "Is it legal today?" linking to `/#legal`, the goal's `for` sentence, then the goal's option rows exactly as on Home step 2: name, status chip, price with its footnote and the online-clinic plan line, the row opening to its `does`, `status_plain` and `how` lines; Visit on the top pick's row (disabled with "No paid link yet" until the goal has an affiliate url); "Compare N sellers" on research-use rows, opening the seller window (one dialog per substance, as on Home).
+- **Every option, side by side** (`paper-2` band): DataTable of the goal's `options`, each option's three lay lines under its name and chip (`does`; chip and `status_plain`; `how_plain`), evidence chip, price with its source.
+- **Sources**: the page's own numbered sources, then the Home sources its option rows link to, under their Home numbers (price, option and plan sources), so a footnote reads the same on both pages.
+- Guides list when guides exist.
 
 ## Guide `/hair/<topic>/`
 

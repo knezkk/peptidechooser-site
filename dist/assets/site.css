@@ -106,6 +106,8 @@ p { margin: 0 0 1em; }
 .flow { grid-template-columns: 110px minmax(0, 1fr); grid-template-areas: "h1 h1" "fig list" "h2 h2" "cmp cmp"; gap: 14px; padding: 14px; }
 .fh-goal { grid-area: h1; } .flow .figure { grid-area: fig; } .flow .goal-list { grid-area: list; align-self: start; }
 .fh-compare { grid-area: h2; } .flow-compare { grid-area: cmp; }
+/* Goal page (/hair/, pages.md, Category): the step 2 card alone, under the hero text and price pad */
+.chooser.flow-solo { grid-template-columns: minmax(0, 1fr); grid-template-areas: "h2" "cmp"; margin-top: 40px; background: none; border: 0; box-shadow: none; padding: 0; }
 .flow-hd { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; padding-bottom: 10px; border-bottom: 1px solid var(--line); }
 .flow-hd .step-n { position: static; flex: none; width: 32px; height: 32px; font-size: 15px; }
 .flow-hd h2 { font-size: 18px; line-height: 1.3; font-weight: 700; letter-spacing: 0; margin: 0; }
