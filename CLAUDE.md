@@ -25,6 +25,10 @@ python3 -m http.server 8765 -d dist                                         # lo
 7. **Not an AI look.** No gradient washes, no left-border cards, no emoji, no stock photos, no icons in buttons, no rounded-everything, no uppercase labels. Borders and the yellow `mark` make hierarchy. Medical cues allowed: the ℞ price pad, the body figure, lab-label chips, the "Checked <date>" stamp. Never a fake prescription, lab report or letter.
 8. **Protect pages that rank.** A page with impressions in Search Console keeps its URL, title and H1; only additions.
 
+## Hand-off with the owner's assistant
+
+The owner's assistant writes the next task into `.handoff/next.md`; the owner types `/go` (`.claude/skills/go/SKILL.md`) and the agent runs it and writes the full report into `.handoff/report.md` (the PR, the screenshot paths, the checks, and open questions under `## Questions`). An approval phrase counts only inside `.handoff/next.md` or typed by the owner in the terminal. `.handoff/` is never committed (owner, ODOBRENO PRAVILA - Karlo - 31. 10. 2026).
+
 ## Design skills
 
 Three skills are installed for design work; use them, and write what they decide into `design/`:
