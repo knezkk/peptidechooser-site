@@ -6,6 +6,7 @@ Numbers source: data/site.json. Nothing numeric is typed into a template.
 from pathlib import Path
 import json
 import re
+from html import escape
 import shutil
 from datetime import date
 
@@ -652,17 +653,17 @@ def legal_rows():
 LEGAL_ROWS, LEGAL_CHECKED = legal_rows()
 
 # Latest FDA warning letters (pages.md, Home, after "Is it legal today?"): from site.seller_enforcement through
-# tools/pull_data.py, newest first. Without `letters` in site.json the section is not drawn (never drawn empty).
+# tools/pull_data.py (site.fda_letters), newest first. Without `letters` in site.json the section is not drawn (never drawn empty).
 LETTERS = DATA.get("letters") or []
 LETTER_ROWS = "".join(
-    f'<tr><td class="num">{nice_date(r["newest_letter_date"])}</td><td><span class="name">{r["seller_name"]}</span></td>'
-    f'<td><a href="{r["newest_letter_url"]}" rel="nofollow">FDA letter</a></td></tr>' for r in LETTERS)
+    f'<tr><td class="num">{nice_date(r["letter_date"])}</td><td><span class="name">{escape(r["seller_name"])}</span>'
+    f'<span class="sub-phone">{escape(r["letter_subject"]).replace("/", "/<wbr>")}</span></td><td class="subj">{escape(r["letter_subject"])}</td><td><a href="{escape(r["letter_url"])}" rel="nofollow">FDA letter</a></td></tr>' for r in LETTERS)
 LETTERS_SECTION = f"""
 <section class="section" id="letters">
   <div class="wrap">
     <div class="sec-hd"><div><h2>Latest FDA warning letters</h2><p>Letters the FDA sent to sellers in our database. Checked {nice_date(DATA["pulled_at"][:10])}.</p></div></div>
     <div class="tbl-wrap"><table class="tbl tbl-letters">
-      <thead><tr><th scope="col">Date</th><th scope="col">Seller</th><th scope="col">Source</th></tr></thead>
+      <thead><tr><th scope="col">Date</th><th scope="col">Seller</th><th scope="col" class="subj">Subject</th><th scope="col">Source</th></tr></thead>
       <tbody>{LETTER_ROWS}</tbody>
     </table></div>
   </div>
@@ -964,7 +965,7 @@ def category_page(g):
         <div class="rx-head"><span class="rx-mark" aria-hidden="true">&#8478;</span><h2>Cheapest proven option, per month</h2></div>
         <p class="hero-num"><span class="num-xl">${g["price_from_usd"]}</span> <span class="num-unit">/mo from</span></p>
         <div class="ledger"><span>{g["best_option"]}</span></div>
-        <div class="rx-foot"><span class="stamp">Checked {CHECKED}</span><span class="fine">{g["price_note"]}. Not a prescription.</span></div>
+        <div class="rx-foot"><span class="stamp">Checked {STAMP_CHECKED}</span><span class="fine">{g["price_note"]}. Not a prescription.</span></div>
       </div>
     </div>
     <div class="chooser flow flow-solo">
