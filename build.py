@@ -71,12 +71,7 @@ var d=document.documentElement;if(!d.classList.contains('motion')||!window.gsap|
 window.pcMotion=true;gsap.registerPlugin(ScrollTrigger);
 var css=getComputedStyle(d),ms=function(n){{return parseFloat(css.getPropertyValue('--motion-'+n))/1000;}};
 var rise=parseFloat(css.getPropertyValue('--motion-rise'));
-var fig=document.querySelector('.figure');
-if(fig){{var tl=gsap.timeline({{paused:true}});
-tl.to(fig.querySelectorAll('.contour > *'),{{strokeDashoffset:0,duration:ms('draw'),ease:'power1.inOut'}})
-.to(fig.querySelector('.body'),{{opacity:1,duration:ms('reveal')*2,ease:'power1.out'}},ms('draw')*0.45);
-ScrollTrigger.create({{trigger:fig,start:'top 85%',once:true,onEnter:function(){{tl.play();}}}});}}
-ScrollTrigger.batch('.sec-hd, .tbl tbody tr, .criteria li, .creators li, .trust-row li',{{start:'top 92%',once:true,
+ScrollTrigger.batch('.sec-hd, .tbl tbody tr, .criteria li, .creators li',{{start:'top 92%',once:true,
 onEnter:function(els){{gsap.fromTo(els,{{opacity:0,y:rise}},{{opacity:1,y:0,duration:ms('reveal'),ease:'power2.out',stagger:ms('stagger'),overwrite:true}});}}}});
 }});
 </script>"""
@@ -229,15 +224,15 @@ def visit(g, small=False):
 
 def top_pick(g):
     """The goal's best proven option: the first FDA-approved one in its options (or its chooser options when it has
-    no comparison page), else the one marked best. Returns (name, status chip html) or None."""
+    no comparison page), else the one marked best. Returns (name, status chip html, option) or None."""
     if g.get("options"):
         items = [(o, o["name"], o["fda"], status_chip(o, "fda_chip", "fda")) for o in g["options"]]
     else:
         items = [(p, p["name"].replace(" (proven alternative)", ""), p["status"], status_chip(p)) for p in g["peptides"]]
     # top_pick: false keeps an option out (e.g. tesamorelin: approved, but not for the goal's use)
-    rows = [(name, status, item.get("best"), chip) for item, name, status, chip in items if item.get("top_pick", True)]
+    rows = [(name, status, item.get("best"), chip, item) for item, name, status, chip in items if item.get("top_pick", True)]
     pick = next((r for r in rows if r[1].startswith("FDA approved")), None) or next((r for r in rows if r[2]), None)
-    return (pick[0], pick[3]) if pick else None
+    return (pick[0], pick[3], pick[4]) if pick else None
 
 
 def sold_peptide(g):
@@ -341,17 +336,20 @@ def status_chip(item, chip_key="chip", label_key="status"):
     return f'<span class="chip chip-{s["chip"]}">{s["label"]}</span>' if s else f'<span class="chip chip-{item[chip_key]}">{item[label_key]}</span>'
 
 
-def refs(item, goal):
-    """Footnote links for the numbers in an option's copy (rulebook: no number without its source)."""
-    ns = [(n, n) for n in item.get("src", [])] + ([(PRICE_REF[goal], "price-" + goal)] if item.get("price") in PRICE_REF else [])
-    ns += [OPT_REF[id(item)]] if id(item) in OPT_REF else []
+def refs(item, goal, price=True):
+    """Footnote links for the numbers in an option's copy (rulebook: no number without its source). price=False leaves
+    out the price sources, for a row whose price pad links its own."""
+    ns = [(n, n) for n in item.get("src", [])]
+    if price:
+        ns += ([(PRICE_REF[goal], "price-" + goal)] if item.get("price") in PRICE_REF else []) + ([OPT_REF[id(item)]] if id(item) in OPT_REF else [])
     return (" <sup>" + ", ".join(f'<a href="#src-{a}">{n}</a>' for n, a in ns) + "</sup>") if ns else ""
 
 
-def plain_status(item):
-    """The plain status line. A price written in the copy is shown only when its source is on the page."""
+def plain_status(item, drop_price=False):
+    """The plain status line. A price written in the copy is shown only when its source is on the page, and is left out
+    when the row's price pad already shows it (drop_price)."""
     s = item["status_plain"]
-    if "$" in s and not (item.get("price") or item.get("price_source")):
+    if "$" in s and (drop_price or not (item.get("price") or item.get("price_source"))):
         s = " ".join(part for part in s.replace(". ", ".\n").split("\n") if "$" not in part)
     return s
 
@@ -391,8 +389,9 @@ def figure_svg():
     for i, g in enumerate(ALL_GOALS):
         shapes, (px, py) = REGIONS[g["slug"]]
         on = "true" if i == 0 else "false"
-        regions += [f'<ellipse class="region" data-goal="{g["slug"]}" cx="{cx}" cy="{cy}" rx="{rx}" ry="{ry}"/>' for cx, cy, rx, ry in shapes]
-        pins.append(f'<g class="pin" data-goal="{g["slug"]}" role="button" tabindex="0" aria-pressed="{on}" aria-label="{g["label"]}">'
+        cls = " on" if i == 0 else ""
+        regions += [f'<ellipse class="region{cls}" data-goal="{g["slug"]}" cx="{cx}" cy="{cy}" rx="{rx}" ry="{ry}"/>' for cx, cy, rx, ry in shapes]
+        pins.append(f'<g class="pin{cls}" data-goal="{g["slug"]}" role="button" tabindex="0" aria-pressed="{on}" aria-label="{g["label"]}">'
                     f'<circle class="pin-hit" cx="{px}" cy="{py}" r="24"/><circle class="pin-ring" cx="{px}" cy="{py}" r="9"/>'
                     f'<circle class="pin-dot" cx="{px}" cy="{py}" r="4.5"/></g>')
     # The neck's top edge sits inside the head; the mask keeps it from drawing a line across the chin.
@@ -405,33 +404,47 @@ def figure_svg():
             f'{"".join(pins)}</svg>')
 
 
-def body_map():
-    items, panels = [], []
+def opt_price(p, slug):
+    """The price on an option row, only where its price has a source in data/site.json (the goal's price source for the
+    option marked price, or the option's own price_source with price_from_usd), with its footnote. Returns html or ""."""
+    if p.get("price") in PRICE_REF:
+        g = next(x for x in LIVE_GOALS if x["slug"] == p["price"])
+        usd, n, href = g["price_from_usd"], PRICE_REF[p["price"]], f"#src-price-{slug}"
+    elif p.get("price_source") and p.get("price_from_usd") is not None and id(p) in OPT_REF:
+        usd, n, href = p["price_from_usd"], OPT_REF[id(p)][0], f"#src-{OPT_REF[id(p)][1]}"
+    else:
+        return ""
+    # the source and its check date are in the numbered list under the page; the footnote links there (owner, 31 Oct 2026)
+    return f'<span class="price-pad">from ${usd}/mo</span><sup><a class="ref" href="{href}" aria-label="Source {n}">{n}</a></sup>'
+
+
+def rail():
+    """The flow (design book, pages.md, Home): the goal rows, then per goal the option list, where the top pick's row
+    carries the Visit button. Every goal's options are in the page; only the first goal's show until another is chosen."""
+    chips, compare = [], []
     for i, g in enumerate(ALL_GOALS):
-        on = ' aria-pressed="true"' if i == 0 else ' aria-pressed="false"'
-        items.append(f'<button type="button" class="goal-item" data-goal="{g["slug"]}"{on}><span>{g["label"]}</span><span class="small">{len(g["peptides"])} options</span></button>')
-        # Each option: name and status chip, then what it does, how you get it, and its status in plain words
+        slug, hide = g["slug"], "" if i == 0 else " hidden"
+        chips.append(f'<button type="button" class="goal-item" data-goal="{slug}" aria-pressed="{"true" if i == 0 else "false"}" '
+                     f'aria-controls="opts-{slug}"><span>{g["label"]}</span><span class="small">{len(g["peptides"])} options</span></button>')
+        # Each option: name and what it does; status chip and status in plain words; price pad and how you get it
         # (docs/copy-home-2026-10-30.md): one line on wide screens, three short lines on phones.
-        peps = "".join(f'<li><div class="opt-hd"><span class="name">{p["name"]}</span>{status_chip(p)}</div>'
-                       f'<p class="opt-parts"><span class="opt-does">{p["does"]}</span> <span class="opt-how">{p["how"]}</span> '
-                       f'<span class="opt-status">{plain_status(p)}{refs(p, g["slug"])}</span></p></li>' for p in g["peptides"])
-        if g.get("live"):
-            # The answer: the price pad's words, now inside the goal's panel (design book, pages.md, Home).
-            answer = (f'<div class="answer"><p class="answer-k">Cheapest proven option, per month</p>'
-                      f'<p class="hero-num"><span class="num-xl">${g["price_from_usd"]}</span> <span class="num-unit">/mo</span></p>'
-                      f'<p class="hero-what"><strong>{g["name"]}:</strong> {g["best_option"]}'
-                      f'<span class="small">{g["options_checked"]} options checked <span class="stamp">Checked {STAMP_CHECKED}</span></span></p></div>')
-            foot = '<p class="fine">Proven means FDA approved for that use. Not a prescription.</p>'
-        else:
-            answer, foot = "", ""
-        link = f'<div class="btn-row"><a class="btn btn-ink" href="/{g["slug"]}/">Compare {g["short"].lower()} options</a><a class="btn btn-line" href="#legal">Legal status</a></div>' if g.get("page") else '<p class="small">Full comparison for this goal is not published yet. The legal status above is current as of ' + CHECKED + '.</p>'
-        panels.append(f'<div class="goal-panel" id="goal-{g["slug"]}" data-goal="{g["slug"]}"{"" if i == 0 else " hidden"}>'
-                      f'<span class="rx-mark" aria-hidden="true">&#8478;</span><h3>{g["panel_title"]}</h3><p class="goal-for">{g["for"]}</p>{answer}'
-                      f'<p class="goal-intro">{g["intro"]}</p><ul class="pep-list">{peps}</ul>{link}{foot}</div>')
-    return figure_svg(), "".join(items), "".join(panels)
+        # The top pick (same rule as "Top pick per goal") gets the goal's Visit button on its own row.
+        pick = next((p for p in g["peptides"] if p["status"].startswith("FDA approved") and p.get("top_pick", True)), None)
+        rows = []
+        for p in g["peptides"]:
+            pad = opt_price(p, slug)
+            act = f'<span class="pick-act">{visit(g, small=True)}</span>' if p is pick else ""
+            rows.append(f'<li class="opt"><details class="opt-more"><summary class="opt-sum"><span class="name">{p["name"]}</span>'
+                        f'{status_chip(p)}<span class="opt-price">{pad}</span></summary>'
+                        f'<div class="opt-body"><p class="opt-does">{p["does"]}{refs(p, slug, price=not pad)}</p>'
+                        f'<p class="opt-status">{plain_status(p, drop_price=bool(pad))}</p><p class="opt-how">{p["how"]}</p></div></details>{act}</li>')
+        link = (f'<a class="btn btn-ink" href="/{slug}/">Compare {g["short"].lower()} options</a>' if g.get("page") else
+                '<p class="small">Full comparison for this goal is not published yet. The legal status above is current as of ' + CHECKED + '.</p>')
+        compare.append(f'<div class="step-panel" id="opts-{slug}" data-goal="{slug}"{hide}><p class="goal-for">{g["for"]}</p>'
+                       f'<ul class="opts">{"".join(rows)}</ul>'
+                       f'{link}</div>')
+    return "".join(chips), "".join(compare)
 
-
-FIGURE, GOAL_ITEMS, GOAL_PANELS = body_map()
 
 def legal_rows():
     """"Is it legal today?": each hand-written row, or, when the database has a status for its substances, one row per
@@ -457,48 +470,66 @@ def legal_rows():
 
 
 LEGAL_ROWS, LEGAL_CHECKED = legal_rows()
+FIGURE = figure_svg()
+GOAL_CHIPS, STEP_COMPARE = rail()
 GLOSSARY = "".join(f'<div><dt>{t["term"]}</dt><dd>{t["text"]}</dd></div>' for t in DATA["glossary"])
 
 CREATOR_ROWS = "".join(
     f'<li><a href="{c["url"]}" rel="nofollow noopener">{c["name"]}</a><span class="small">{c["what"]}</span></li>' for c in CREATORS["rows"])
 
+# The goal switch (design book, pages.md, Home, the three steps): chips and pins are one control. Steps 2 and 3
+# cross-fade (GSAP, motion-swap) only while motion is on; otherwise they swap at once. The stamp lands once.
 MAP_JS = """<script>
 (function(){var root=document.getElementById('goals');if(!root)return;
-function show(k){var old=root.querySelector('.goal-panel:not([hidden])'),next=root.querySelector('.goal-panel[data-goal="'+k+'"]');
-if(!next||old===next)return;
-function swap(){if(old)old.hidden=true;next.hidden=false;
-if(window.pcMotion){gsap.fromTo(next,{opacity:0,y:6},{opacity:1,y:0,duration:0.22,ease:'power1.out'});}}
-if(window.pcMotion&&old){gsap.to(old,{opacity:0,duration:0.12,ease:'power1.in',onComplete:function(){gsap.set(old,{opacity:1});swap();}});}else{swap();}}
-function pick(k){root.querySelectorAll('[data-goal]').forEach(function(x){var on=x.getAttribute('data-goal')===k;
-if(x.hasAttribute('aria-pressed'))x.setAttribute('aria-pressed',on?'true':'false');x.classList.toggle('on',on);
-if(x.classList.contains('pin')){x.classList.remove('pulse');if(on){void x.getBoundingClientRect();x.classList.add('pulse');}}});show(k);}
+var chips=[].slice.call(root.querySelectorAll('.goal-item')),cur=chips[0].getAttribute('data-goal');
+var swapS=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--motion-swap'))/1000||0.2;
+root.addEventListener('animationend',function(e){if(e.target.classList.contains('stamp'))root.classList.add('landed');});
+function show(k){root.querySelectorAll('.step-panel').forEach(function(x){x.hidden=x.getAttribute('data-goal')!==k;});
+if(!window.pcMotion)return;var on=root.querySelectorAll('.step-panel[data-goal="'+k+'"]');
+gsap.fromTo(on,{opacity:0},{opacity:1,duration:swapS,ease:'power1.out'});
+gsap.fromTo(root.querySelectorAll('.step-panel[data-goal="'+k+'"] .opt'),{opacity:0,y:4},{opacity:1,y:0,duration:swapS,ease:'power1.out',stagger:0.04});}
+function pick(k){if(k===cur)return;cur=k;
+root.querySelectorAll('.goal-item,.pin,.region').forEach(function(x){var on=x.getAttribute('data-goal')===k;
+if(x.hasAttribute('aria-pressed'))x.setAttribute('aria-pressed',on?'true':'false');x.classList.toggle('on',on);});
+var old=root.querySelectorAll('.step-panel:not([hidden])');
+if(window.pcMotion&&old.length){gsap.killTweensOf(old);gsap.to(old,{opacity:0,duration:swapS/2,ease:'power1.in',onComplete:function(){gsap.set(old,{opacity:1});if(cur===k)show(k);}});}else{show(k);}}
 function hover(k){root.querySelectorAll('.region,.pin').forEach(function(x){x.classList.toggle('hov',x.getAttribute('data-goal')===k);});}
 root.addEventListener('click',function(e){var b=e.target.closest('.goal-item,.pin');if(b)pick(b.getAttribute('data-goal'));});
 root.addEventListener('mouseover',function(e){var b=e.target.closest('.goal-item,.pin');hover(b?b.getAttribute('data-goal'):null);});
 root.addEventListener('mouseleave',function(){hover(null);});
 root.addEventListener('keydown',function(e){var t=e.target;
 if(t.classList&&t.classList.contains('pin')&&(e.key==='Enter'||e.key===' ')){e.preventDefault();pick(t.getAttribute('data-goal'));return;}
-// Arrow keys move through the goal list (Tab, Enter and Space work as on any button).
-if(e.key!=='ArrowDown'&&e.key!=='ArrowUp')return;var items=[].slice.call(root.querySelectorAll('.goal-item')),i=items.indexOf(t);
-if(i<0)return;e.preventDefault();items[(i+(e.key==='ArrowDown'?1:items.length-1))%items.length].focus();});
-pick(root.querySelector('.goal-item[aria-pressed="true"]').getAttribute('data-goal'));})();
+// Arrow keys move to the next or previous chip and choose it (Tab, Enter and Space work as on any button).
+var i=chips.indexOf(t);if(i<0)return;var d={ArrowRight:1,ArrowDown:1,ArrowLeft:-1,ArrowUp:-1}[e.key];if(!d)return;
+e.preventDefault();var n=chips[(i+d+chips.length)%chips.length];n.focus();pick(n.getAttribute('data-goal'));});})();
 </script>"""
 
 HOME = f"""
 <section class="hero hero-clinic">
   <div class="wrap">
-    <div class="hero-intro">
-      <h1>The best peptides for your goal, compared honestly.</h1>
-      <div class="hero-copy">
-      <p class="lede">For each goal we put peptide products next to the FDA-approved alternatives and show what the evidence says, what it costs per month and how you would get it. We compare; we never sell.</p>
-      <p class="what-is"><strong>What is a peptide?</strong> A short chain of amino acids. Some are approved medicines (semaglutide, bremelanotide), some are cosmetics in creams, and many are sold online with no approval and no testing. This site tells you which is which, what it costs, and what the proven alternative is.</p>
-      </div>
-    </div>
-    <section class="chooser" id="goals" aria-labelledby="goals-h">
-      <div class="chooser-hd"><h2 id="goals-h">Start with what you want to change</h2><p>Tap the body or pick from the list. Every goal shows what is approved, what is not, and the proven alternative.</p></div>
+    <h1 class="hero-h1">The best peptides for your goal, compared honestly.</h1>
+    <div class="chooser flow" id="goals">
+      <div class="flow-hd fh-goal"><span class="step-n" aria-hidden="true">1</span><h2 id="step-goal">Choose a goal</h2></div>
       <div class="figure">{FIGURE}</div>
-      <div class="goal-list" role="group" aria-label="Goals">{GOAL_ITEMS}</div>
-      <div class="goal-panels" aria-live="polite">{GOAL_PANELS}</div>
+      <div class="goal-list" role="group" aria-labelledby="step-goal">{GOAL_CHIPS}</div>
+      <div class="flow-hd fh-compare"><span class="step-n" aria-hidden="true">2</span><h2>Compare the options</h2><a class="step-legal" href="#legal"><strong>Is it legal today?</strong></a></div>
+      <div class="flow-compare">{STEP_COMPARE}</div>
+    </div>
+  </div>
+</section>
+<section class="hero-more">
+  <div class="wrap">
+    <p class="lede hero-after">For each goal we put peptide products next to the FDA-approved alternatives and show what the evidence says, what it costs per month and how you would get it. We compare; we never sell.</p>
+    <section class="rate-strip" aria-labelledby="rate-h">
+      <div class="rate-hd"><h2 id="rate-h">How we rate</h2><p>Every product and seller is judged on the same five criteria. We publish them so you can check our work.</p><a href="/how-we-rate/">Read the full method</a></div>
+      <ul class="criteria">
+        <li><h3>Evidence</h3><p>What human studies show for the use you care about, not what a molecule does in a dish.</p></li>
+        <li><h3>Regulatory status</h3><p>FDA approval, cosmetic or research labeling, and any FDA warning letters sent to the seller.</p></li>
+        <li><h3>Lab testing</h3><p>Whether a third-party certificate of analysis exists and matches the batch you would receive.</p></li>
+        <li><h3>Real price</h3><p>Price per month or per milligram, calculated the same way for every seller so the numbers compare.</p></li>
+        <li><h3>Transparency</h3><p>Who runs the company, where it ships from, and whether paid placements are labeled.</p></li>
+      </ul>
+      <nav class="trust-links" aria-label="How we work"><a href="/disclosure/">How we make money</a><a href="/about/">Who checks our facts</a><a href="/corrections/">Mistakes we fixed</a><a href="#sources">Sources</a></nav>
     </section>
     <section class="glossary" aria-labelledby="glossary-h">
       <h2 id="glossary-h">What the labels mean</h2>
@@ -536,19 +567,6 @@ HOME = f"""
   </div>
 </section>
 
-<section class="section">
-  <div class="wrap">
-    <div class="sec-hd"><div><h2>How we rate</h2><p>Every product and seller is judged on the same five criteria. We publish them so you can check our work.</p><a href="/how-we-rate/">Read the full method</a></div></div>
-    <ul class="criteria">
-      <li><h3>Evidence</h3><p>What human studies show for the use you care about, not what a molecule does in a dish.</p></li>
-      <li><h3>Regulatory status</h3><p>FDA approval, cosmetic or research labeling, and any FDA warning letters sent to the seller.</p></li>
-      <li><h3>Lab testing</h3><p>Whether a third-party certificate of analysis exists and matches the batch you would receive.</p></li>
-      <li><h3>Real price</h3><p>Price per month or per milligram, calculated the same way for every seller so the numbers compare.</p></li>
-      <li><h3>Transparency</h3><p>Who runs the company, where it ships from, and whether paid placements are labeled.</p></li>
-    </ul>
-  </div>
-</section>
-
 <section class="section" id="learn">
   <div class="wrap">
     <div class="sec-hd"><div><h2>Who to follow</h2><p>{CREATORS["note"]}</p></div></div>
@@ -557,18 +575,7 @@ HOME = f"""
   </div>
 </section>
 
-<section class="section">
-  <div class="wrap">
-    <ul class="trust-row">
-      <li><a href="/how-we-rate/">How we rate</a><span>Five public criteria, the same for every product and seller.</span></li>
-      <li><a href="/disclosure/">How we make money</a><span>Some links pay us when you buy. It never changes a rating.</span></li>
-      <li><a href="/about/">Who checks our facts</a><span>Every medical claim links to the FDA page, label or study it comes from.</span></li>
-      <li><a href="/corrections/">Mistakes we fixed</a><span>Every correction, dated and public.</span></li>
-    </ul>
-  </div>
-</section>
-
-<section class="section">
+<section class="section" id="sources">
   <div class="wrap">
     <h2 class="h-sources">Sources</h2>
     <ol class="small sources" style="padding-left:1.2em">{SOURCES_HOME}</ol>
@@ -734,7 +741,7 @@ def category_page(g):
     </table></div>
   </div>
 </section>
-<section class="section">
+<section class="section" id="sources">
   <div class="wrap">
     <h2 class="h-sources">Sources</h2>
     <ol class="small" style="padding-left:1.2em">{srcs}</ol>
