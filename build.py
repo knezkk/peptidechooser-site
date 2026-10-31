@@ -62,6 +62,16 @@ MOTION_HEAD = """<script>
 (function(d){if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;d.classList.add('motion');
 setTimeout(function(){if(!window.pcMotion)d.classList.remove('motion');},3000);})(document.documentElement);
 </script>"""
+# Design book, Every page, Header: under 760px the nav sits behind "Menu". The head script marks the page before it
+# paints, so the closed menu never flashes; with JavaScript off the mark is missing and the links show as a wrapped row.
+NAV_HEAD = "<script>document.documentElement.classList.add('nav-js');</script>"
+NAV_JS = """<script>
+(function(){var b=document.querySelector('.nav-toggle'),n=document.getElementById('site-nav');if(!b||!n)return;
+function set(o){n.classList.toggle('open',o);b.setAttribute('aria-expanded',o?'true':'false');}
+b.addEventListener('click',function(){set(!n.classList.contains('open'));});
+n.addEventListener('click',function(e){if(e.target.closest('a'))set(false);});
+document.addEventListener('keydown',function(e){if(e.key==='Escape'&&n.classList.contains('open')){set(false);b.focus();}});})();
+</script>"""
 GSAP = "https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5"
 MOTION_JS = f"""<script defer src="{GSAP}/gsap.min.js"></script>
 <script defer src="{GSAP}/ScrollTrigger.min.js"></script>
@@ -153,6 +163,7 @@ def page(path, title, description, body, schema="", crumb=None):
 <link rel="stylesheet" href="/assets/site.css">
 {schema}
 {MOTION_HEAD}
+{NAV_HEAD}
 {ANALYTICS}
 </head>
 <body>
@@ -161,8 +172,9 @@ def page(path, title, description, body, schema="", crumb=None):
 <header class="site-head">
   <div class="wrap">
     <a class="brand" href="/"><img src="/assets/mark.svg" alt="" width="32" height="32">Peptide Chooser</a>
-    <nav class="nav" aria-label="Main">{nav_items(path)}</nav>
+    <nav class="nav" id="site-nav" aria-label="Main">{nav_items(path)}</nav>
     <div class="head-cta"><a class="btn btn-ink" href="/#goals">Compare by goal</a></div>
+    <button type="button" class="btn btn-line btn-sm nav-toggle" aria-expanded="false" aria-controls="site-nav">Menu</button>
   </div>
 </header>
 {crumbs(crumb) if crumb else ""}
@@ -188,6 +200,7 @@ def page(path, title, description, body, schema="", crumb=None):
   </div>
 </footer>
 {COOKIE_BAR}
+{NAV_JS}
 {MOTION_JS}
 </body>
 </html>
@@ -637,6 +650,24 @@ def legal_rows():
 
 
 LEGAL_ROWS, LEGAL_CHECKED = legal_rows()
+
+# Latest FDA warning letters (pages.md, Home, after "Is it legal today?"): from site.seller_enforcement through
+# tools/pull_data.py, newest first. Without `letters` in site.json the section is not drawn (never drawn empty).
+LETTERS = DATA.get("letters") or []
+LETTER_ROWS = "".join(
+    f'<tr><td class="num">{nice_date(r["newest_letter_date"])}</td><td><span class="name">{r["seller_name"]}</span></td>'
+    f'<td><a href="{r["newest_letter_url"]}" rel="nofollow">FDA letter</a></td></tr>' for r in LETTERS)
+LETTERS_SECTION = f"""
+<section class="section" id="letters">
+  <div class="wrap">
+    <div class="sec-hd"><div><h2>Latest FDA warning letters</h2><p>Letters the FDA sent to sellers in our database. Checked {nice_date(DATA["pulled_at"][:10])}.</p></div></div>
+    <div class="tbl-wrap"><table class="tbl tbl-letters">
+      <thead><tr><th scope="col">Date</th><th scope="col">Seller</th><th scope="col">Source</th></tr></thead>
+      <tbody>{LETTER_ROWS}</tbody>
+    </table></div>
+  </div>
+</section>
+""" if LETTERS else ""
 FIGURE = figure_svg()
 GOAL_CHIPS, STEP_COMPARE, GOAL_TITLES = rail()
 GLOSSARY = "".join(f'<div><dt>{t["term"]}</dt><dd>{t["text"]}</dd></div>' for t in DATA["glossary"])
@@ -739,6 +770,7 @@ HOME = f"""
   </div>
 </section>
 
+{LETTERS_SECTION}
 <section class="section" id="top-picks">
   <div class="wrap">
     <div class="sec-hd"><div><h2>Top pick per goal</h2></div></div>

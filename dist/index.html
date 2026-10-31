@@ -29,6 +29,7 @@
 (function(d){if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;d.classList.add('motion');
 setTimeout(function(){if(!window.pcMotion)d.classList.remove('motion');},3000);})(document.documentElement);
 </script>
+<script>document.documentElement.classList.add('nav-js');</script>
 <script>
 window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}
 gtag('consent','default',{ad_storage:'denied',ad_user_data:'denied',ad_personalization:'denied',analytics_storage:'denied',wait_for_update:500});
@@ -43,8 +44,9 @@ gtag('js',new Date());gtag('config','G-12CV2HEYW6',{anonymize_ip:true});
 <header class="site-head">
   <div class="wrap">
     <a class="brand" href="/"><img src="/assets/mark.svg" alt="" width="32" height="32">Peptide Chooser</a>
-    <nav class="nav" aria-label="Main"><a href="/#goals">Peptides</a><a href="/#legal">Safety and legal</a><a href="/#learn">Learn</a><a href="/how-we-rate/">How we rate</a><a href="/about/">About</a></nav>
+    <nav class="nav" id="site-nav" aria-label="Main"><a href="/#goals">Peptides</a><a href="/#legal">Safety and legal</a><a href="/#learn">Learn</a><a href="/how-we-rate/">How we rate</a><a href="/about/">About</a></nav>
     <div class="head-cta"><a class="btn btn-ink" href="/#goals">Compare by goal</a></div>
+    <button type="button" class="btn btn-line btn-sm nav-toggle" aria-expanded="false" aria-controls="site-nav">Menu</button>
   </div>
 </header>
 
@@ -114,6 +116,7 @@ gtag('js',new Date());gtag('config','G-12CV2HEYW6',{anonymize_ip:true});
     <p class="small" style="margin-top:16px">Approved means the FDA approved a product containing it for a stated use. Not approved means no approved product exists; buying it for yourself is not a crime in the US, but nobody has checked what is in the vial.</p>
   </div>
 </section>
+
 
 <section class="section" id="top-picks">
   <div class="wrap">
@@ -201,6 +204,13 @@ b.addEventListener('click',function(e){var v=e.target.getAttribute('data-consent
 try{localStorage.setItem('pc-consent',v);}catch(e){}
 if(v==='yes'&&window.gtag){gtag('consent','update',{analytics_storage:'granted'});}
 b.hidden=true;});})();
+</script>
+<script>
+(function(){var b=document.querySelector('.nav-toggle'),n=document.getElementById('site-nav');if(!b||!n)return;
+function set(o){n.classList.toggle('open',o);b.setAttribute('aria-expanded',o?'true':'false');}
+b.addEventListener('click',function(){set(!n.classList.contains('open'));});
+n.addEventListener('click',function(e){if(e.target.closest('a'))set(false);});
+document.addEventListener('keydown',function(e){if(e.key==='Escape'&&n.classList.contains('open')){set(false);b.focus();}});})();
 </script>
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
