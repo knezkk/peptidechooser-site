@@ -56,6 +56,8 @@ p { margin: 0 0 1em; }
 /* "What is a peptide?" (copy doc section 1) opens the grey band, so it costs the first screen nothing. */
 .what-is { margin: 0 0 12px; max-width: 62ch; font-size: var(--ui-size); line-height: 1.5; color: var(--ink-2); }
 .what-is strong { color: var(--ink); }
+/* From 900px the two opening paragraphs sit side by side, so each line stays short and the band uses its width. */
+.hero-pair .hero-after { margin: 0; font-size: var(--ui-size); line-height: 1.5; }
 .hero-clinic .flow { background: none; border: 0; box-shadow: none; padding: 0; }
 /* The first screen holds the H1 on one line and the whole flow card; the lede follows the card. */
 .hero-clinic .hero-h1 { max-width: none; margin: 0 0 16px; font-size: 34px; line-height: 1.15; }
@@ -247,6 +249,8 @@ p { margin: 0 0 1em; }
   .flow .opt > .pick-act { grid-column: 2; justify-self: end; }
   .goal-intro { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: default; }
   .goal-intro:focus { white-space: normal; overflow: visible; }
+  .hero-pair { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0 48px; align-items: start; }
+  .hero-pair .what-is { margin: 0; }
   .hero-grid { grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: 48px; align-items: start; }
   .flow { grid-template-columns: 170px 200px minmax(0, 1fr); grid-template-areas: "h1 h1 h2" "fig list cmp"; gap: 16px 24px; padding: 20px 24px 24px; }
   .fig { height: 372px; }
