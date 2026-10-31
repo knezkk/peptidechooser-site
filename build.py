@@ -331,8 +331,10 @@ def db_status(slug):
 
 
 def status_chip(item, chip_key="chip", label_key="status"):
-    """An option's status chip: the database's when it has a row for the substance, else the hand-written one."""
-    s = db_status(item["substance"]) if item.get("substance") else None
+    """An option's status chip: the database's when it has a row for the substance, else the hand-written one. A cosmetic
+    product (hand chip "info") keeps its own chip: the database status is for the substance as a drug, e.g. injectable
+    GHK-Cu, not for a serum sold as a cosmetic (owner, 31 Oct 2026)."""
+    s = db_status(item["substance"]) if item.get("substance") and item.get(chip_key) != "info" else None
     return f'<span class="chip chip-{s["chip"]}">{s["label"]}</span>' if s else f'<span class="chip chip-{item[chip_key]}">{item[label_key]}</span>'
 
 
