@@ -121,7 +121,12 @@
           "chip": "ok",
           "does": "A liquid or foam you put on the scalp twice a day. Regrows hair for men and women; works while you keep using it.",
           "how": "No prescription, any pharmacy.",
-          "status_plain": "FDA approved for hair loss. From $10/mo."
+          "status_plain": "FDA approved for hair loss. From $10/mo.",
+          "price_source": {
+            "name": "Keeps, home page comparison table (\"Minoxidil (OTC), generic Rogaine: $10/mo\")",
+            "url": "https://www.keeps.com/",
+            "checked": "2026-10-30"
+          }
         },
         {
           "name": "GHK-Cu copper peptide serum",
@@ -487,7 +492,8 @@
         "src": 6,
         "substances": [
           "bpc-157"
-        ]
+        ],
+        "note_with_db": true
       },
       {
         "peptide": "TB-500",
@@ -497,7 +503,8 @@
         "src": 6,
         "substances": [
           "tb-500"
-        ]
+        ],
+        "note_with_db": true
       },
       {
         "peptide": "MOTS-c, Epitalon",
@@ -508,7 +515,8 @@
         "substances": [
           "mots-c",
           "epitalon"
-        ]
+        ],
+        "note_with_db": true
       },
       {
         "peptide": "Retatrutide",
