@@ -527,14 +527,22 @@ def seller_window(slug):
 </div></dialog>"""
 
 
-SELLER_SLUGS = sorted({p["substance"] for g in ALL_GOALS for p in g["peptides"] if p.get("substance") and seller_rows(p["substance"])})
+def approved_row(p):
+    """An FDA-approved option (hand status or database status). Its row gets no seller window: we do not send people
+    from an approved medicine to research-use sellers (owner, 31 Oct 2026)."""
+    s = db_status(p["substance"]) if p.get("substance") else None
+    return p["status"].startswith("FDA approved") or bool(s and s["label"] == "FDA approved")
+
+
+SELLER_SLUGS = sorted({p["substance"] for g in ALL_GOALS for p in g["peptides"]
+                       if p.get("substance") and not approved_row(p) and seller_rows(p["substance"])})
 SELLER_WINDOWS = "".join(seller_window(s) for s in SELLER_SLUGS)
 
 
 def sellers_button(p):
     """"Compare N sellers" on an option row whose substance has research-use listings; a link to the window without JS."""
     slug = p.get("substance")
-    if slug not in SELLER_SLUGS:
+    if slug not in SELLER_SLUGS or approved_row(p):
         return ""
     n = len(seller_rows(slug))
     return (f'<a class="btn btn-line btn-sm sellers-open" href="#sellers-{slug}" data-dlg="sellers-{slug}">'
