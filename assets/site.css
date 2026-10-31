@@ -303,6 +303,8 @@ p { margin: 0 0 1em; }
 }
 @media (max-width: 760px) {
   .tbl { min-width: 720px; }
+  .tbl-letters { min-width: 0; }
+  .tbl-letters td:first-child, .tbl-letters td:last-child { white-space: nowrap; } /* three short columns fit a phone without scrolling inside the frame */
   /* Header under 760px: logo and "Compare by goal" on the first row, "Menu" under them; the open menu (or, with
      JavaScript off, the wrapped links) takes the full width below (pages.md, Every page, Header) */
   .site-head .wrap { flex-wrap: wrap; gap: 6px 16px; padding-top: 10px; padding-bottom: 10px; min-height: 0; }
