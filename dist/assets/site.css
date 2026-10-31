@@ -123,6 +123,10 @@ p { margin: 0 0 1em; }
 .opt-more[open] .opt-sum::before { transform: rotate(45deg); }
 .opt-sum .name { font-weight: 700; }
 .opt-price { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 8px; }
+/* The price and its footnote stay on one line; the goal's online-clinic plan line goes under them (pages.md, Home). */
+.price-main { white-space: nowrap; }
+.price-main sup { margin-left: 6px; }
+.opt-price .plan-line { flex-basis: 100%; font-size: var(--small-size); line-height: 1.4; color: var(--ink-2); white-space: normal; }
 .opt-body { padding: 4px 0 6px 17px; display: grid; gap: 4px; }
 .opt-body p { margin: 0; font-size: var(--small-size); line-height: 1.45; }
 .flow .opt > .pick-act { padding-top: 0; align-items: flex-end; }
@@ -245,7 +249,7 @@ p { margin: 0 0 1em; }
 @media (min-width: 900px) {
   .flow .opt { grid-template-columns: minmax(0, 1fr) 150px; }
   .opt-sum { grid-template-columns: 12px minmax(0, 1fr) 170px; grid-template-areas: "m name price" ". chip price"; }
-  .opt-price { flex-wrap: nowrap; white-space: nowrap; }
+  .opt-price { flex-wrap: wrap; }
   .flow .opt > .pick-act { grid-column: 2; justify-self: end; }
   .goal-intro { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: default; }
   .goal-intro:focus { white-space: normal; overflow: visible; }
@@ -281,6 +285,10 @@ p { margin: 0 0 1em; }
   .fh-compare .step-legal { white-space: nowrap; flex: none; }
   .fh-compare h2 { min-width: 0; }
   .flow .opt { grid-template-columns: minmax(0, 1fr); padding: 6px 10px; }
+  /* the plan line takes its own row under the chip and the price, so it stays on one line */
+  .opt-sum .opt-price:has(.plan-line) { display: contents; }
+  .opt-sum .price-main { grid-area: price; }
+  .opt-sum .plan-line { grid-column: 2 / -1; grid-row: 3; }
   .flow .opt > .pick-act { justify-self: start; flex-direction: row; align-items: center; gap: 10px; padding: 0 0 4px 22px; }
   .flow-compare .step-panel:not([hidden]) { display: flex; flex-direction: column; }
   .flow-compare .goal-for { order: 2; margin: 10px 0 0; }

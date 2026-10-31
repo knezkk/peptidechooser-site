@@ -268,9 +268,9 @@ def goal_rows():
         has_page = bool(g.get("page"))
         compare = f'<td class="act"><a class="btn btn-ink btn-sm" href="/{g["slug"]}/">Compare</a></td>' if has_page else ""
         rows.append(f"""<tr>
-  <td><span class="name">{g["name"]}</span></td>
+  <td><span class="name">{g["label"]}</span></td>
   <td><span class="name">{g["best_option"]}</span><span class="note">{g["options_checked"]} options checked</span></td>
-  <td><span class="num-l">${g["price_from_usd"]}<span class="num-unit">/mo</span></span><span class="note">{g["price_note"]}</span></td>
+  <td><span class="num-l">${g["price_from_usd"]}<span class="num-unit">/mo</span></span><span class="note">{g["price_note"]}</span>{plan_line(g, "note")}</td>
   <td>{chip}</td>
   {compare}
   <td class="act"><span class="pick-act">{visit(g, small=True)}</span></td>
@@ -293,12 +293,46 @@ SOURCES_HOME += "".join(f'<li id="src-opt-{i + 1}">{p["price_source"]["name"]}, 
                         f'<a href="{p["price_source"]["url"]}" rel="nofollow">{p["price_source"]["url"]}</a></li>' for i, p in enumerate(OPT_SOURCES))
 OPT_REF = {id(p): (len(LEGAL["sources"]) + len(LIVE_GOALS) + i + 1, f"opt-{i + 1}") for i, p in enumerate(OPT_SOURCES)}
 
+# Online-clinic plans from the database (site.plan_prices, tools/pull_data.py). A goal's substances are the `substance`
+# of its options; its plan line shows the cheapest monthly plan among them, with the plan page as its footnote source and
+# the day we last saw that price. A goal with no plan row shows nothing (owner, 31 Oct 2026).
+PLANS = DATA.get("plans") or []
+
+
+def cheapest_plan(g):
+    subs = {p["substance"] for p in g["peptides"] if p.get("substance")}
+    found = [r for r in PLANS if r["substance_slug"] in subs and r.get("price_monthly") is not None]
+    return min(found, key=lambda r: (float(r["price_monthly"]), r["seller_name"])) if found else None
+
+
+GOAL_PLANS = {g["slug"]: cheapest_plan(g) for g in ALL_GOALS}
+GOAL_PLANS = {k: v for k, v in GOAL_PLANS.items() if v}
+_n0 = len(LEGAL["sources"]) + len(LIVE_GOALS) + len(OPT_SOURCES)
+PLAN_REF = {slug: _n0 + i + 1 for i, slug in enumerate(GOAL_PLANS)}
+seller_base = lambda name: re.sub(r"\s*\(.*\)", "", name).strip()  # "Strut Health (Strut Health, LLC)" -> "Strut Health"
+SOURCES_HOME += "".join(f'<li id="src-plan-{slug}">{seller_base(r["seller_name"])}, {r["plan_name"]}, {nice_date(r["last_seen"])}: '
+                        f'<a href="{r["pricing_url"]}" rel="nofollow">{r["pricing_url"]}</a></li>' for slug, r in GOAL_PLANS.items())
+
+
+def plan_line(g, cls):
+    """"Online clinics from $25/mo (Strut Health)" with its footnote, or "" for a goal with no plan row."""
+    r = GOAL_PLANS.get(g["slug"])
+    if not r:
+        return ""
+    usd = float(r["price_monthly"])
+    usd = f"{usd:.0f}" if usd == int(usd) else f"{usd:.2f}"
+    n = PLAN_REF[g["slug"]]
+    return (f'<span class="{cls}">Online clinics from ${usd}/mo ({seller_base(r["seller_name"])})'
+            f'<sup><a class="ref" href="#src-plan-{g["slug"]}" aria-label="Source {n}">{n}</a></sup></span>')
+
 # Numbers from the database (tools/pull_data.py writes these keys when SITE_DATABASE_URL is set). Without them the
 # page renders the hand-written statuses and dates above, unchanged.
 DB = DATA.get("db")
 LEGAL_DB = DATA.get("legal_db")
 APPROVED_DB = DATA.get("approved_db") or []
-STAMP_CHECKED = nice_date(DB["prices_checked_on"]) if DB and DB.get("prices_checked_on") else CHECKED
+_plan_seen = max((r["last_seen"] for r in GOAL_PLANS.values()), default="")
+_prices_on = DB.get("prices_checked_on", "") if DB else ""
+STAMP_CHECKED = nice_date(max(_prices_on, _plan_seen)) if (_prices_on or _plan_seen) else CHECKED
 # The one lookup from a database status to what the page shows: (regime, status_value) -> (rank, chip, label, sentence).
 # Lower rank wins when a substance has several open statuses. Statuses not listed here (shortage, not_listed) are
 # not legal statuses and are skipped.
@@ -314,7 +348,8 @@ DB_STATUS = {
 
 def brand_base(name):
     """"Mounjaro (Autoinjector)" and "Mounjaro Kwikpen" are both Mounjaro: the first word, without the bracket, title case."""
-    return re.sub(r"\(.*?\)", "", name).split()[0].title()
+    words = [w for w in re.sub(r"\(.*?\)", "", name).split() if w.upper() not in ("MEN'S", "WOMEN'S")]
+    return words[0].title()
 
 
 def db_status(slug):
@@ -324,7 +359,9 @@ def db_status(slug):
     if not rows:
         return None
     (rank, chip, label, sentence), row = min(rows, key=lambda x: x[0][0])
-    brands = sorted({brand_base(a["brand_name"]) for a in APPROVED_DB if a["substance_slug"] == slug and a.get("brand_name")})[:4]
+    # generic products carry the substance's own name as their brand; those are not brands (Finasteride -> Propecia, Proscar)
+    generic = row["canonical_name"].split()[0].title()
+    brands = sorted({brand_base(a["brand_name"]) for a in APPROVED_DB if a["substance_slug"] == slug and a.get("brand_name")} - {generic})[:4]
     name = row["canonical_name"] + (f' ({", ".join(brands)})' if brands and chip == "ok" else "")
     return {"chip": chip, "label": label, "sentence": sentence, "name": name, "url": row["source_url"],
             "seen": row["first_seen_by_us"]}
@@ -435,9 +472,13 @@ def rail():
         rows = []
         for p in g["peptides"]:
             pad = opt_price(p, slug)
+            # the goal's cheapest online-clinic plan sits under the price of the option it is for
+            plan = GOAL_PLANS.get(slug)
+            cell = (f'<span class="price-main">{pad}</span>' if pad else "") + (
+                plan_line(g, "plan-line") if plan and p.get("substance") == plan["substance_slug"] else "")
             act = f'<span class="pick-act">{visit(g, small=True)}</span>' if p is pick else ""
             rows.append(f'<li class="opt"><details class="opt-more"><summary class="opt-sum"><span class="name">{p["name"]}</span>'
-                        f'{status_chip(p)}<span class="opt-price">{pad}</span></summary>'
+                        f'{status_chip(p)}<span class="opt-price">{cell}</span></summary>'
                         f'<div class="opt-body"><p class="opt-does">{p["does"]}{refs(p, slug, price=not pad)}</p>'
                         f'<p class="opt-status">{plain_status(p, drop_price=bool(pad))}</p><p class="opt-how">{p["how"]}</p></div></details>{act}</li>')
         link = (f'<a class="btn btn-ink" href="/{slug}/">Compare {g["short"].lower()} options</a>' if g.get("page") else
@@ -460,16 +501,17 @@ def legal_rows():
     for r in LEGAL["rows"]:
         found = [db_status(slug) for slug in r.get("substances", [])] if LEGAL_DB else []
         if not found or not all(found):
-            out.append(hand(r))  # a row switches to the database only when every substance in it has a status there
+            if not r.get("db_only"):  # a db_only row (finasteride, minoxidil) is shown only from the database
+                out.append(hand(r))  # a row switches to the database only when every substance in it has a status there
             continue
         for s in found:
             seen.append(s["seen"])
             # A row marked note_with_db keeps its hand-written note (e.g. the July 2026 PCAC proposal) as a second sentence.
-            n = r.get("note_each", r["note"])  # the note for one substance when a grouped row splits ("them" -> "it")
+            n = r.get("note_each", r.get("note", ""))  # the note for one substance when a grouped row splits ("them" -> "it")
             note = (f'. {n[0].upper() + n[1:]}. <a class="ref" href="#src-{r["src"]}" aria-label="Source {r["src"]}">'
                     f'<sup>{r["src"]}</sup></a>') if r.get("note_with_db") else ""
             out.append(f'<tr><td><span class="name">{s["name"]}</span></td><td><span class="chip chip-{s["chip"]}">{s["label"]}</span></td>'
-                       f'<td>{s["sentence"]} <a class="ref" href="{s["url"]}" rel="nofollow">FDA source</a>, {nice_date(s["seen"])}{note}</td></tr>')
+                       f'<td>{s["sentence"]}{" " + r["use"] if r.get("use") else ""} <a class="ref" href="{s["url"]}" rel="nofollow">FDA source</a>, {nice_date(s["seen"])}{note}</td></tr>')
     checked = nice_date(max(seen)) if seen else nice_date(LEGAL["checked"])
     return "".join(out), checked
 
