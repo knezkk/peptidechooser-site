@@ -76,7 +76,7 @@ for i, s in enumerate(SELLERS):
 # click outside it (owner, 31 Oct 2026: not expanded inside the row).
 panel = ('<span class="pick-act sellers-act"><button type="button" class="btn btn-line btn-sm sellers-open" '
          'onclick="document.getElementById(\'sellers-fin\').showModal()">Compare 10 sellers</button>'
-         f'<span class="paid">from ${min(x[2] for x in SELLERS)}/mo, all checked</span></span>')
+         '</span>')
 dialog = f"""<dialog class="sellers-dlg" id="sellers-fin" aria-labelledby="sellers-h" onclick="if(event.target===this)this.close()">
   <div class="dlg-hd"><h2 id="sellers-h">Finasteride 1 mg: 10 sellers compared</h2>
     <form method="dialog"><button class="btn btn-line btn-sm">Close</button></form></div>

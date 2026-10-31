@@ -405,17 +405,17 @@ def figure_svg():
 
 
 def opt_price(p, slug):
-    """The price pad for an option row, only where its price has a source in data/site.json: the goal's price source for
-    the option marked price, or the option's own price_source with price_from_usd. Returns html or ""."""
+    """The price on an option row, only where its price has a source in data/site.json (the goal's price source for the
+    option marked price, or the option's own price_source with price_from_usd), with its footnote. Returns html or ""."""
     if p.get("price") in PRICE_REF:
         g = next(x for x in LIVE_GOALS if x["slug"] == p["price"])
-        usd, src, href = g["price_from_usd"], g["price_source_name"], f"#src-price-{slug}"
+        usd, n, href = g["price_from_usd"], PRICE_REF[p["price"]], f"#src-price-{slug}"
     elif p.get("price_source") and p.get("price_from_usd") is not None and id(p) in OPT_REF:
-        ps = p["price_source"]
-        usd, src, href = p["price_from_usd"], f'{ps["name"].split(",")[0]}, {nice_date(ps["checked"])}', f"#src-{OPT_REF[id(p)][1]}"
+        usd, n, href = p["price_from_usd"], OPT_REF[id(p)][0], f"#src-{OPT_REF[id(p)][1]}"
     else:
         return ""
-    return f'<span class="price-pad">from ${usd}/mo</span><a class="pad-src fine" href="{href}">{src}</a>'
+    # the source and its check date are in the numbered list under the page; the footnote links there (owner, 31 Oct 2026)
+    return f'<span class="price-pad">from ${usd}/mo</span><sup><a class="ref" href="{href}" aria-label="Source {n}">{n}</a></sup>'
 
 
 def rail():
@@ -438,12 +438,11 @@ def rail():
                         f'{status_chip(p)}<span class="opt-price">{pad}</span></summary>'
                         f'<div class="opt-body"><p class="opt-does">{p["does"]}{refs(p, slug, price=not pad)}</p>'
                         f'<p class="opt-status">{plain_status(p, drop_price=bool(pad))}</p><p class="opt-how">{p["how"]}</p></div></details>{act}</li>')
-        n = g.get("options_checked", len(g["peptides"]))
         link = (f'<a class="btn btn-ink" href="/{slug}/">Compare {g["short"].lower()} options</a>' if g.get("page") else
                 '<p class="small">Full comparison for this goal is not published yet. The legal status above is current as of ' + CHECKED + '.</p>')
         compare.append(f'<div class="step-panel" id="opts-{slug}" data-goal="{slug}"{hide}><p class="goal-for">{g["for"]}</p>'
                        f'<ul class="opts">{"".join(rows)}</ul>'
-                       f'<p class="opts-foot small">{n} options checked <span class="stamp">Checked {STAMP_CHECKED}</span></p>{link}</div>')
+                       f'{link}</div>')
     return "".join(chips), "".join(compare)
 
 
@@ -513,7 +512,7 @@ HOME = f"""
       <div class="flow-hd fh-goal"><span class="step-n" aria-hidden="true">1</span><h2 id="step-goal">Choose a goal</h2></div>
       <div class="figure">{FIGURE}</div>
       <div class="goal-list" role="group" aria-labelledby="step-goal">{GOAL_CHIPS}</div>
-      <div class="flow-hd fh-compare"><span class="step-n" aria-hidden="true">2</span><h2>Compare the options</h2><a class="step-legal" href="#legal"><strong>Is it legal today?</strong><span>Checked {LEGAL_CHECKED}</span></a></div>
+      <div class="flow-hd fh-compare"><span class="step-n" aria-hidden="true">2</span><h2>Compare the options</h2><a class="step-legal" href="#legal"><strong>Is it legal today?</strong></a></div>
       <div class="flow-compare">{STEP_COMPARE}</div>
     </div>
     <p class="lede hero-after">For each goal we put peptide products next to the FDA-approved alternatives and show what the evidence says, what it costs per month and how you would get it. We compare; we never sell.</p>
