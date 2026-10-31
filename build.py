@@ -958,7 +958,7 @@ def category_page(g):
     <div class="hero-grid">
       <div>
         <h1>{g["h1"]}</h1>
-        <p class="small meta">{AUTHOR}. Last updated {CHECKED}. {STANDING_LINE}</p>
+        <p class="small meta">{AUTHOR}. Last updated {CHECKED}. Every claim links to its source. Prices checked {STAMP_CHECKED}.</p>
         <p class="intro">{g["short_answer"]}</p>
       </div>
       <div class="board rx" aria-label="Price pad">
