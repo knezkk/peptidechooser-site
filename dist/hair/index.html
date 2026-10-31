@@ -87,7 +87,7 @@ gtag('js',new Date());gtag('config','G-12CV2HEYW6',{anonymize_ip:true});
     </table></div>
   </div>
 </section>
-<section class="section">
+<section class="section" id="sources">
   <div class="wrap">
     <h2 class="h-sources">Sources</h2>
     <ol class="small" style="padding-left:1.2em"><li id="src-1">MedlinePlus, Finasteride, revised 15 Jun 2026: <a href="https://medlineplus.gov/druginfo/meds/a698016.html" rel="nofollow">https://medlineplus.gov/druginfo/meds/a698016.html</a></li><li id="src-2">GoodRx, How much is finasteride without insurance, 3 Aug 2026: <a href="https://www.goodrx.com/finasteride/how-much-is-finasteride-without-insurance" rel="nofollow">https://www.goodrx.com/finasteride/how-much-is-finasteride-without-insurance</a></li><li id="src-3">Pyo HK et al., The effect of tripeptide-copper complex on human hair growth in vitro, Archives of Pharmacal Research 30(7), 2007: <a href="https://agris.fao.org/search/fr/records/65de423b63b8185d9ca7d5b9" rel="nofollow">https://agris.fao.org/search/fr/records/65de423b63b8185d9ca7d5b9</a></li><li id="src-4">Divi, Scalp Serum product page, price checked 30 Oct 2026: <a href="https://diviofficial.com/products/scalp-serum" rel="nofollow">https://diviofficial.com/products/scalp-serum</a></li></ol>
@@ -135,12 +135,7 @@ var d=document.documentElement;if(!d.classList.contains('motion')||!window.gsap|
 window.pcMotion=true;gsap.registerPlugin(ScrollTrigger);
 var css=getComputedStyle(d),ms=function(n){return parseFloat(css.getPropertyValue('--motion-'+n))/1000;};
 var rise=parseFloat(css.getPropertyValue('--motion-rise'));
-var fig=document.querySelector('.figure');
-if(fig){var tl=gsap.timeline({paused:true});
-tl.to(fig.querySelectorAll('.contour > *'),{strokeDashoffset:0,duration:ms('draw'),ease:'power1.inOut'})
-.to(fig.querySelector('.body'),{opacity:1,duration:ms('reveal')*2,ease:'power1.out'},ms('draw')*0.45);
-ScrollTrigger.create({trigger:fig,start:'top 85%',once:true,onEnter:function(){tl.play();}});}
-ScrollTrigger.batch('.sec-hd, .tbl tbody tr, .criteria li, .creators li, .trust-row li',{start:'top 92%',once:true,
+ScrollTrigger.batch('.sec-hd, .tbl tbody tr, .criteria li, .creators li',{start:'top 92%',once:true,
 onEnter:function(els){gsap.fromTo(els,{opacity:0,y:rise},{opacity:1,y:0,duration:ms('reveal'),ease:'power2.out',stagger:ms('stagger'),overwrite:true});}});
 });
 </script>

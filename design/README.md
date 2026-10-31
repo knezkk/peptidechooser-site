@@ -27,16 +27,20 @@ The site looks like a good clinic's online intake: clean white, calm clinical bl
 
 ## Principles
 
-1. **The answer comes first.** Home opens on the chooser: the body, the goal list and the answer panel, all in the first screen on a laptop. The answer panel carries the one big number (the cheapest proven price per month, `number-xl`).
-2. **White cards on a pale band.** Hierarchy comes from white cards with 1px `line` borders on `paper` or `paper-2`, one 1.5px `ink` border on the answer panel and the price pad, and a 2px `ink` rule above the price. One soft shadow only, on the chooser card (`shadow-card`). One gradient only: the Home hero fades from `paper` to `paper-2`.
+1. **The answer comes first, read left to right.** Home opens on the flow (owner decision 31 Oct 2026): one white card that reads from left to right: 1 the body figure and the goal list, 2 the chosen goal's options with status, price and where to get them; the top pick's row carries the Visit button. The price is `ink` figures on its option row.
+2. **White cards on a pale band.** Hierarchy comes from white cards with 1px `line` borders on `paper` or `paper-2`, one 1.5px `ink` border on the category price pad, and a 2px `ink` rule above its price. The Home first screen is `white` with no card around the flow (owner, 31 Oct 2026); its option list is one white frame with a 1px `line` border, and the grey `paper-2` band starts where the first screen ends. No shadows on Home. No gradients anywhere.
 3. **One typeface.** Public Sans, the US government's open typeface: plain, clinical and very legible. Weight does the work: 800 for headings and numbers, 600 to 700 for labels, 400 for reading.
-4. **Blue is ours, green is paid.** `clinic` blue marks the site's own things: links, the selected goal, the body areas, focus rings. `action` green appears only on the paid Visit button (`btn-action`, with "Paid link" under it). Chips keep their status colours. Nothing else is coloured.
+4. **Blue is ours, green is paid.** `clinic` blue marks the site's own things: links, the step numbers, the chosen goal row, the body areas and pins, focus rings. `action` green appears only on the paid Visit button (`btn-action`, with "Paid link" under it). Chips keep their status colours. No yellow on Home (owner, 31 Oct 2026). Nothing else is coloured.
 5. **Honesty is visible.** "Paid link" sits under every paid button in `fine`. Sponsored rows carry a chip and never move up. A seller without a named pharmacy gets a grey chip, not a green one.
 6. **Plain words.** Labels use the words people type into Google: "Where to buy", not "Providers". "Is it legal?", not "Regulatory status". No all-caps labels, no abbreviations without the plain name next to them.
 
 ## Medical cues (only these)
 
-- **The body chart.** Our own front-view figure, eight heads tall: a `neutral-tint` fill with an `ink-2` outline. Each goal has a body area that shades in `clinic` blue (light on hover, stronger when chosen) and a pin: a white ring with a blue dot, filled blue when chosen. Pins, list rows and the answer panel are one control: choosing any of them updates the others. Like a clinic's "where does it hurt" chart. Never a stock photo, never organs. The figure's shape and the body areas live in `build.py` (`body_path`, `REGIONS`).
+- **The body chart** (kept as it was live, owner decision 31 Oct 2026). Our own front-view figure, eight heads tall: a `neutral-tint` fill with an `ink-2` outline. Each goal has a body area that shades in `clinic` blue (light on hover, stronger when chosen) and a pin: a white ring with a blue dot, filled blue when chosen. Pins and goal list rows are one control: choosing either updates both and columns 2 and 3. Like a clinic's "where does it hurt" chart. Never a stock photo, never organs. The figure's shape and the body areas live in `build.py` (`body_path`, `REGIONS`).
+- **The flow** (Home hero, 31 Oct 2026). No card: the two numbered steps sit straight on the `white` first screen, left to right: Choose a goal, Compare the options. Each step opens with a 32px `clinic` circle with its white number (800) and an H2 (18px, 700) over a 1px `line` rule. There is no separate "Get it" step: where to get an option is on its own row (owner, 31 Oct 2026), so a seller comparison opens from that row, in a window over the page that the reader closes ("Close", Esc, or a click outside it). The window: white, 12px corners, at most 960px wide, `shadow-card`, a sticky head with the H2 and `btn-line` "Close", the page dimmed behind it with `ink` at 55%; full screen on phones. On phones the two steps stack.
+- **The goal list** (column 1, beside the figure). One row per goal, at least 44px: `label` in 600 16px with "N options" in `small` on the right; rows divided by `line`; the chosen row `clinic-tint` with `clinic-text`. The same rows as the chooser that was live before 31 Oct 2026.
+- **The option list** (step 2). One white frame, 12px corners, 1px `line` border, `line` between rows. A row: the name (700) and its `does` line; the status chip with the plain status under it; the price pad (where a price source exists) and the `how` line. One line of three columns on wide screens, three short lines on phones.
+- **The price on an option row.** "from $X/mo" in 800 17px `ink`, no fill (as the price was in the live answer panel; owner, 31 Oct 2026: no yellow), with the source and its check date in `fine` beside it, linked to the numbered source. Only on a row whose price has a source in data/site.json.
 - **The answer panel as a prescription pad.** White card, 1.5px `ink` border, 12px corners, an ℞ mark top right, the title, then a 2px `ink` rule and the price. It always says "Not a prescription." in `fine`. Category pages use the same look for their price pad.
 - **Chips as lab labels.** Small, 4px corners, factual.
 - **The Checked stamp.** "Checked <date>" in a small `action-text` outline next to "options checked"; everywhere else dates are plain `small` text.
@@ -45,14 +49,15 @@ Not allowed: fake documents (anything that could pass as a real prescription, la
 
 ## Motion (updated 30 Oct 2026, clinic intake)
 
-Motion confirms; it never entertains. Everything plays once and then the page is still. GSAP 3.12.5 from cdnjs (with ScrollTrigger) runs the figure, the panel change and the scroll reveals. Durations are the `motion-*` tokens.
+Motion confirms; it never entertains. Everything plays once and then the page is still. GSAP 3.12.5 from cdnjs (with ScrollTrigger) runs the goal change and the scroll reveals; the rail line and the stamp are CSS. Durations are the `motion-*` tokens.
 
 | What | Trigger | Move | Time |
 |---|---|---|---|
-| Body figure (GSAP) | page load (it is in the first screen) | the outline draws itself, then the fill fades in under it | `motion-draw` (1.5s) |
-| Chosen pin (CSS) | on choosing a goal | the ring pulses twice, then still | 600ms |
+| Body areas and pins (CSS) | on choosing a goal | the chosen area shades and its pin fills blue | `motion-quick` |
+| Checked stamp in column 2 (CSS) | page load, once | lands: fades in from 1.15 scale to 1 | `motion-base` |
+| Goal row (CSS) | on choosing a goal | background cross-fades to `clinic-tint` | `motion-quick` |
 | Body areas (CSS) | hover on a pin or a goal row | the area shades lightly | `motion-quick` |
-| Answer panel (GSAP) | on choosing a goal | old panel fades out, new one fades in and rises 6px | 120ms out, 220ms in |
+| Column 2 (GSAP) | on choosing a goal | old content fades out, new content fades in, option rows rise 4px `motion-stagger` apart | `motion-swap` |
 | Category price pad (CSS) | page load | rows rise 8px and fade in, 60ms apart | `motion-base` |
 | Section headings, table rows, criteria, creators, trust row (GSAP) | scrolled into view, once | rise `motion-rise` (12px) and fade in, `motion-stagger` (50ms) apart | `motion-reveal` (420ms) |
 
@@ -62,11 +67,11 @@ Fallbacks: things are pre-hidden only while `html.motion` is set, which a small 
 
 - **Notice bar** (`paper-2`, 36px, `small`): one sentence on what we are and how we earn, with a link.
 - **Header** (72px, white, 1px `line` under it): wordmark, five nav items (44px tall), one `btn-ink`. Nav never wraps; on phones it scrolls.
-- **Home hero**: H1 and lede side by side, then the chooser card (pages.md, Home).
+- **Home hero**: the H1 on one line, then the flow on white (figure and goal list, then the options with where to get them); then, on the grey band, the lede, the How we rate strip and the trust links (pages.md, Home).
 - **Category hero**: H1 and short answer left, price pad right (7 + 5).
 - **Sections** on landing pages: 72px apart, each opened by a section heading (H2 in `display-2`, one-sentence lede, 1px `line` under it, "All X" link on the right).
 - **Tables**: a white card with 12px corners and a 1px `line` frame, a `paper-2` header row in 13px `ink-2`, `line` between rows; prices in `number-l`.
-- **Lists of short items** (How we rate, trust row): white cards with 1px `line` borders in a grid.
+- **Lists of short items** (Top picks, glossary): white cards with 1px `line` borders in a grid. **How we rate on Home** is one strip: the heading, then the five criteria in a row, divided by 1px `line` rules, no cards.
 - **Article pages**: 8-column body with `body` text at 64ch, H2 in `display-3` with a 1px `line` above, 4-column sticky sidebar with the decision card first.
 - **Footer** (`ink`): wordmark and the one-line disclaimer.
 
@@ -87,15 +92,15 @@ Every text pair is 6.4:1 or better (ink-2 on paper-2 7.2:1, clinic on paper 6.7:
 
 ## Shape (updated 30 Oct 2026)
 
-- **Soft but firm.** 6px on buttons, inputs, nav items and goal rows; 12px on cards (chooser, answer panel, price pad, table frames, criteria, trust row); 4px on chips.
-- The answer panel sits inside the chooser card on purpose: it is the answer to the card's question. No other card holds a card.
+- **Soft but firm.** 6px on buttons, inputs, nav items and goal rows; 12px on cards (option list frame, category price pad, table frames, top picks, glossary); 4px on chips and the Home price pad; step circles and pins are round.
+- No card holds a card.
 
 ## What not to do
 
 - No uppercase labels above headings. The heading is the label.
 - No middle dots between facts. Use commas or separate lines.
 - No icons in buttons. Words do the work.
-- No cards inside cards, except the answer panel in the chooser.
+- No cards inside cards.
 - No "→" at the end of links.
 - No green except the paid button and approved chips.
 
@@ -111,7 +116,7 @@ Every text pair is 6.4:1 or better (ink-2 on paper-2 7.2:1, clinic on paper 6.7:
 
 Each component below has a guideline and a live preview. The CSS in `components/bundle.css` is the single source for buttons, chips, tables and section headings: change a token or a class there and every page follows.
 
-Built and previewed: Button, Chip, DataTable, Price, SectionHeading. Built on the site, preview owed here: PricePad (the ℞ board), BodyMap (figure, goal list, goal panel), LegalTable, CreatorList, TrustRow, CookieNotice. Defined in `pages.md` and built in phase 2 before any content page ships: Header, NoticeBar, Footer, Breadcrumbs, ShortAnswer, DecisionCard, ProductRow, SourcesList, AuthorLine, CookieNotice. Each gets its README and preview here first.
+Built and previewed: Button, Chip, DataTable, Price, SectionHeading. Built on the site, preview owed here: PricePad (the ℞ board), Flow (body chart, goal list, option list, top pick), LegalTable, CreatorList, TrustRow, CookieNotice. Defined in `pages.md` and built in phase 2 before any content page ships: Header, NoticeBar, Footer, Breadcrumbs, ShortAnswer, DecisionCard, ProductRow, SourcesList, AuthorLine, CookieNotice. Each gets its README and preview here first.
 
 ## Changes
 
@@ -124,3 +129,12 @@ Built and previewed: Button, Chip, DataTable, Price, SectionHeading. Built on th
 | 30 Oct 2026 | Direction A, "Clinical paper, finished": Home hero number is the price (pages.md), pad under the H1 on phones, motion budget, tap targets 44px on phones (dots, nav, header button), shadows removed from the active dot and cookie bar, stamp in sentence case (no uppercase labels) | ODOBRENO DIZAJN - Karlo - 30. 10. 2026. |
 | 30 Oct 2026 | Medical journal direction: display face Newsreader (wordmark stays Bricolage), warmer palette (paper, ink, hairlines; green deepened, all text 6:1 or better), type scale and motion tokens, journal section heads and tables, notepad price pad with double rule, body figure redrawn as one outline, GSAP motion with fallbacks, in-table buttons 44px | ODOBRENO DIZAJN - Karlo - 30. 10. 2026. |
 | 30 Oct 2026 | Look changed to "Clinic intake" (Option 1 of five mockups in `mockups/`, chosen by Karlo): white and clinical blue, Public Sans, the chooser (body chart, goal list, answer panel with the price) moved into the Home hero so the figure is never cut, new body chart with shaded areas and pins, cards for tables and lists, links blue, green only for the paid button | ODOBRENO DIZAJN - Karlo - 30. 10. 2026. |
+| 31 Oct 2026 | Home hero becomes "the evidence rail" (owner's mockup `mockups/evidence-rail.png`): body figure redrawn from `mockups/body-figure.svg` with new areas and a yellow chosen pin, three numbered steps on a clinic-blue rail (goal chips, option list with the price pad, top pick with Visit), How we rate as one strip with the trust links in the hero band; hero gradient and chooser card removed; motion tokens `motion-draw` 600ms (rail line) and `motion-swap` 200ms | Proposed; waiting for ODOBRENO DIZAJN |
+| 31 Oct 2026 | Owner review of the evidence rail: keep the live body chart and goal list where they were, and read the steps left to right in the chooser card ("the flow"): 1 figure and goal list, 2 options, 3 Get it. The redrawn figure and the goal chips are dropped; `mockups/body-figure.svg` stays as a reference only. |
+| 31 Oct 2026 | No yellow on Home (owner): the option price loses its `mark` fill and is `ink` figures, as the live answer panel had it. |
+| 31 Oct 2026 | Steps 2 and 3 become one (owner): the Get it column goes; the top pick's option row carries the Visit button, and a seller comparison will open from the option's own row. |
+| 31 Oct 2026 | First screen rule (owner): the body chart and all options of the chosen goal are visible on opening on every device. H1 on one line above the card, "What is a peptide?" removed, the lede below the card, option rows one line each that open to their details; under 900px a two-column goal list beside a 190px figure. The seller window rows are one line on wide screens, checks closed until opened. |
+| 31 Oct 2026 | Option rows line up like a table (same columns in every row: name and chip, price, action); prices carry a footnote number instead of the source name and date; "N options checked", the Checked stamp and the date under "Is it legal today?" leave the hero (owner). |
+| 31 Oct 2026 | No box around the flow (owner): the first screen is white; the grey `paper-2` band starts after it with the lede, How we rate and the labels. |
+| 31 Oct 2026 | Approved text back (owner review of PR #8): "What is a peptide?" opens the grey band under the hero; the step 2 heading carries the goal's panel title; the goal's intro is one `ink-2` line under its `for` sentence (full on hover, focus and phones). The body figure stays inside the first screen at 1440 by 900; no room had to be made. |
+| 31 Oct 2026 | "What is a peptide?" and the lede sit side by side from 900px (owner): short lines that still use the band's width. |

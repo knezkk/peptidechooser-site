@@ -48,16 +48,23 @@ p { margin: 0 0 1em; }
 .hero-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 32px; }
 .hero h1 { max-width: 17ch; margin-bottom: 16px; }
 
-/* Home hero: intro line, then the chooser card with the body, the goal list and the answer (pages.md, Home) */
-.hero-clinic { padding: 20px 0 56px; background: linear-gradient(var(--paper), var(--paper-2)); border-bottom: 1px solid var(--line); }
-.hero-intro { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px 48px; align-items: end; margin-bottom: 20px; }
-.hero-intro h1 { margin: 0; max-width: 17ch; }
-.hero-intro .lede { margin: 0; }
-.what-is { margin: 10px 0 0; max-width: 60ch; font-size: 14px; line-height: 1.5; color: var(--ink-2); }
+/* Home hero: intro line, then the evidence rail beside the body figure, then How we rate and the labels (pages.md, Home) */
+/* The first screen is white with no box around the flow; everything after it sits on the grey band (owner, 31 Oct 2026). */
+.hero-clinic { padding: 28px 0 32px; background: var(--white); }
+.hero-more { padding: 32px 0 56px; background: var(--paper-2); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.hero-more .hero-after { margin-top: 0; }
+/* "What is a peptide?" (copy doc section 1) opens the grey band, so it costs the first screen nothing. */
+.what-is { margin: 0 0 12px; max-width: 62ch; font-size: var(--ui-size); line-height: 1.5; color: var(--ink-2); }
 .what-is strong { color: var(--ink); }
+/* From 900px the two opening paragraphs sit side by side, so each line stays short and the band uses its width. */
+.hero-pair .hero-after { margin: 0; font-size: var(--ui-size); line-height: 1.5; }
+.hero-clinic .flow { background: none; border: 0; box-shadow: none; padding: 0; }
+/* The first screen holds the H1 on one line and the whole flow card; the lede follows the card. */
+.hero-clinic .hero-h1 { max-width: none; margin: 0 0 16px; font-size: 34px; line-height: 1.15; }
+.hero-after { margin: 20px 0 0; max-width: 62ch; }
 
-/* "What the labels mean": one card per label below the chooser, inside the hero band, like the criteria cards */
-.glossary { margin-top: 28px; }
+/* "What the labels mean": one card per label below the rail, inside the hero band, like the criteria cards */
+.glossary { margin-top: 48px; }
 .glossary h2 { font-size: var(--display-4-size); line-height: var(--display-4-lh); margin-bottom: 12px; }
 .glossary-list { margin: 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
 .glossary-list div { padding: 16px 18px; border: 1px solid var(--line); border-radius: var(--radius-panel); background: var(--white); }
@@ -70,12 +77,9 @@ p { margin: 0 0 1em; }
 #options .tbl td { vertical-align: top; }
 #options .tbl td:first-child { min-width: 300px; }
 #options .tbl td:last-child { font-size: var(--small-size); line-height: 1.45; max-width: 30ch; }
+/* The flow (pages.md, Home): the live chooser card, read left to right: 1 the body figure and the goal list,
+   2 the options of the chosen goal, 3 how to get the top pick. Phones and tablets stack the same order. */
 .chooser { display: grid; grid-template-columns: minmax(0, 1fr); gap: 24px; background: var(--white); border: 1px solid var(--line-strong); border-radius: var(--radius-panel); box-shadow: var(--shadow-card); padding: 20px 24px 24px; }
-.chooser-hd { grid-column: 1 / -1; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 6px 24px; padding-bottom: 10px; border-bottom: 1px solid var(--line); }
-.chooser-hd h2 { font-size: 17px; line-height: 1.3; font-weight: 700; letter-spacing: 0; }
-.chooser-hd p { margin: 0; font-size: 13px; color: var(--ink-2); max-width: 60ch; }
-
-/* The body figure (our own drawing): fill, clipped body areas, outline, pins */
 .figure { display: flex; justify-content: center; }
 .fig { width: auto; height: 372px; overflow: visible; }
 .fig .body { fill: var(--neutral-tint); }
@@ -92,8 +96,6 @@ p { margin: 0 0 1em; }
 .pin.hov .pin-ring { fill: var(--clinic-tint); }
 .pin.on .pin-ring { fill: var(--clinic); }
 .pin.on .pin-dot { fill: var(--white); }
-
-/* Goal list */
 .goal-list { display: flex; flex-direction: column; gap: 2px; }
 .goal-item { display: flex; justify-content: space-between; align-items: center; gap: 12px; width: 100%; min-height: 44px; padding: 10px 12px; border: 0; border-radius: var(--radius-control); background: transparent; color: var(--ink); font: 600 16px var(--font-text); text-align: left; cursor: pointer; transition: background-color var(--motion-quick), color var(--motion-quick); }
 .goal-item + .goal-item { box-shadow: 0 -1px 0 var(--line); }
@@ -101,30 +103,63 @@ p { margin: 0 0 1em; }
 .goal-item:hover { background: var(--neutral-tint); }
 .goal-item[aria-pressed="true"] { background: var(--clinic-tint); color: var(--clinic-text); box-shadow: none; }
 .goal-item[aria-pressed="true"] + .goal-item { box-shadow: none; }
+.flow { grid-template-columns: 110px minmax(0, 1fr); grid-template-areas: "h1 h1" "fig list" "h2 h2" "cmp cmp"; gap: 14px; padding: 14px; }
+.fh-goal { grid-area: h1; } .flow .figure { grid-area: fig; } .flow .goal-list { grid-area: list; align-self: start; }
+.fh-compare { grid-area: h2; } .flow-compare { grid-area: cmp; }
+.flow-hd { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; padding-bottom: 10px; border-bottom: 1px solid var(--line); }
+.flow-hd .step-n { position: static; flex: none; width: 32px; height: 32px; font-size: 15px; }
+.flow-hd h2 { font-size: 18px; line-height: 1.3; font-weight: 700; letter-spacing: 0; margin: 0; }
+.fh-compare .step-legal { margin-left: auto; }
+/* Option rows line up like a table: the same columns in every row (owner, 31 Oct 2026). Name with its chip under it,
+   then the price, then the action; a row without a price or an action keeps the empty column. */
+.flow .opt { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 12px; align-items: center; padding: 10px 14px; }
+.opt-sum { display: grid; grid-template-columns: 12px auto minmax(0, 1fr); grid-template-areas: "m name name" ". chip price"; align-items: center; gap: 4px 10px; cursor: pointer; list-style: none; min-height: var(--touch); }
+.opt-sum::before { grid-area: m; }
+.opt-sum .name { grid-area: name; }
+.opt-sum .chip { grid-area: chip; justify-self: start; }
+.opt-price { grid-area: price; }
+.opt-sum::-webkit-details-marker { display: none; }
+.opt-sum::before { content: ""; width: 7px; height: 7px; border-right: 2px solid var(--ink-2); border-bottom: 2px solid var(--ink-2); transform: rotate(-45deg); transition: transform var(--motion-quick); flex: none; }
+.opt-more[open] .opt-sum::before { transform: rotate(45deg); }
+.opt-sum .name { font-weight: 700; }
+.opt-price { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 8px; }
+.opt-body { padding: 4px 0 6px 17px; display: grid; gap: 4px; }
+.opt-body p { margin: 0; font-size: var(--small-size); line-height: 1.45; }
+.flow .opt > .pick-act { padding-top: 0; align-items: flex-end; }
+.flow-compare .goal-for { margin-bottom: 4px; font-size: var(--small-size); }
+/* The goal's intro (goals[].intro): one ink-2 line under the "for" sentence; the full text on hover (title) and when it
+   is clicked or focused on wide screens, always in full on phones. */
+.goal-intro { margin: 0 0 10px; max-width: 70ch; font-size: var(--small-size); line-height: 1.45; color: var(--ink-2); }
+.flow-hd .goal-t { font-weight: 700; }
+.flow-compare .step-panel > .btn, .flow-compare .step-panel > p.small { margin-top: 12px; }
 
-/* The answer panel: one per goal; for a published goal it carries the price (the prescription-pad look) */
-.goal-panel { position: relative; background: var(--white); border: 1.5px solid var(--ink); border-radius: var(--radius-panel); padding: 20px 22px; }
-.goal-panel .rx-mark { position: absolute; right: 18px; top: 14px; font: 700 26px/1 var(--font-display); color: var(--ink); }
-.goal-panel h3 { margin: 0 40px 12px 0; }
-.answer { border-top: 2px solid var(--ink); padding-top: 10px; margin-bottom: 12px; }
-.answer-k { margin: 0 0 4px; font-size: 13px; color: var(--ink-2); }
-.answer .hero-num { margin: 0; display: flex; align-items: baseline; gap: 4px; }
-.hero-what { margin: 8px 0 0; font-size: 15px; }
-.hero-what .small { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; margin-top: 6px; }
-.goal-intro { font-size: 14px; line-height: 1.5; color: var(--ink-2); margin: 0 0 8px; }
-.pep-list { list-style: none; margin: 0 0 14px; padding: 0; }
-.pep-list li { padding: 10px 0; border-top: 1px solid var(--line); font-size: 14px; }
-.pep-list .name { font-weight: 600; }
-/* Option row (pages.md, Home): name and chip, then what it does, how you get it, status; one line wide, three on phones */
-.opt-hd { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 6px 14px; }
-.opt-parts { margin: 4px 0 0; line-height: 1.5; color: var(--ink-2); }
-.opt-how { color: var(--ink); }
-.opt-status { color: var(--ink); font-weight: 600; }
-.opt-parts sup a, .opt-status sup a { text-decoration: none; }
-.goal-for { margin: -4px 0 12px; font-size: 15px; line-height: 1.5; color: var(--ink); }
-.goal-panel .btn-row { margin: 0 0 10px; }
-.goal-panel > .fine { margin: 0; }
-.goal-panel > .small { margin: 0; padding-top: 10px; border-top: 1px solid var(--line); }
+.step-legal { display: flex; flex-direction: column; align-items: flex-end; font-size: var(--small-size); line-height: 1.4; color: var(--ink-2); text-decoration: none; }
+.step-legal strong { color: var(--clinic); font-size: var(--ui-size); text-decoration: underline; text-underline-offset: 0.18em; }
+.step-legal:hover strong { color: var(--clinic-hover); }
+.goal-for { margin: 0 0 14px; font-size: var(--ui-size); line-height: 1.5; color: var(--ink-2); max-width: 70ch; }
+
+/* Option rows: three short lines on phones, one line of three columns from 1100px */
+.opt { display: grid; grid-template-columns: minmax(0, 1fr); gap: 6px; }
+.opt .name { display: block; font-weight: 700; }
+.opt-does { display: block; font-size: var(--small-size); line-height: 1.45; color: var(--ink-2); margin-top: 2px; }
+.opt-chip { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; }
+.opt-status { font-size: var(--small-size); line-height: 1.45; color: var(--ink); }
+.opt-get { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; font-size: var(--small-size); line-height: 1.45; }
+.pad-src { color: var(--ink-2); }
+.opt-how { flex-basis: 100%; color: var(--ink); }
+.opt sup a { text-decoration: none; }
+.opts-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; margin: 12px 0 16px; }
+.step-panel > .btn { margin-top: 2px; }
+.step-panel > p.small:last-child { margin: 0; }
+
+
+/* How we rate as one strip, then the trust links */
+.rate-strip { margin-top: 56px; padding-top: 24px; border-top: 1px solid var(--line-strong); }
+.rate-hd h2 { font-size: var(--display-4-size); line-height: var(--display-4-lh); margin-bottom: 6px; }
+.rate-hd p { margin: 0 0 6px; font-size: var(--small-size); line-height: var(--small-lh); color: var(--ink-2); }
+.rate-hd a { font-size: var(--small-size); font-weight: 600; }
+.trust-links { display: flex; flex-wrap: wrap; gap: 4px 24px; margin-top: 20px; font-size: var(--small-size); }
+.trust-links a { display: inline-flex; align-items: center; min-height: 44px; font-weight: 600; }
 
 /* Price pad (category pages): the same answer look as Home's panel */
 .board.rx { position: relative; background: var(--white); color: var(--ink); border: 1.5px solid var(--ink); border-radius: var(--radius-panel); padding: 22px 24px; }
@@ -140,9 +175,10 @@ p { margin: 0 0 1em; }
 .section { padding: 72px 0 0; }
 .section:last-of-type { padding-bottom: 72px; }
 .band-2 { background: var(--paper-2); padding: 72px 0; margin-top: 72px; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
-.criteria { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
-.criteria li { padding: 18px 20px; border: 1px solid var(--line); border-radius: var(--radius-panel); background: var(--white); display: grid; grid-template-columns: minmax(0, 1fr); gap: 6px 32px; }
-.criteria p { margin: 0; color: var(--ink-2); }
+.criteria { list-style: none; margin: 16px 0 0; padding: 0; display: grid; gap: 0 24px; }
+.criteria li { padding: 12px 0; border-top: 1px solid var(--line); }
+.criteria h3 { font: 700 var(--ui-size)/1.3 var(--font-text); margin-bottom: 4px; }
+.criteria p { margin: 0; font-size: var(--small-size); line-height: var(--small-lh); color: var(--ink-2); }
 /* Top pick per goal: one card per goal, the Visit button at the foot with its line under it */
 .picks { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
 .picks li { padding: 18px 20px; border: 1px solid var(--line); border-radius: var(--radius-panel); background: var(--white); display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
@@ -191,11 +227,6 @@ p { margin: 0 0 1em; }
 .creators { list-style: none; margin: 0; padding: 0; display: grid; gap: 0 32px; }
 .creators li { display: flex; flex-direction: column; gap: 2px; padding: 14px 0; border-bottom: 1px solid var(--line); }
 .creators a { font-weight: 600; }
-.trust-row { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
-.trust-row li { display: flex; flex-direction: column; gap: 4px; padding: 18px 20px; border: 1px solid var(--line); border-radius: var(--radius-panel); background: var(--white); }
-.trust-row a { font: 700 17px/1.3 var(--font-display); color: var(--ink); }
-.trust-row span { color: var(--ink-2); font-size: 14px; }
-
 /* Cookie notice (design book: Pages and buttons, item 6) */
 .cookie { position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; background: var(--white); border-top: 1px solid var(--line-strong); }
 .cookie .wrap { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 24px; padding-top: 12px; padding-bottom: 12px; }
@@ -210,21 +241,52 @@ p { margin: 0 0 1em; }
   .picks { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .glossary-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .creators { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .trust-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .chooser { grid-template-columns: 200px minmax(0, 1fr); }
-  .goal-panels { grid-column: 1 / -1; }
 }
 @media (min-width: 900px) {
+  .flow .opt { grid-template-columns: minmax(0, 1fr) 150px; }
+  .opt-sum { grid-template-columns: 12px minmax(0, 1fr) 170px; grid-template-areas: "m name price" ". chip price"; }
+  .opt-price { flex-wrap: nowrap; white-space: nowrap; }
+  .flow .opt > .pick-act { grid-column: 2; justify-self: end; }
+  .goal-intro { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: default; }
+  .goal-intro:focus { white-space: normal; overflow: visible; }
+  .hero-pair { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0 48px; align-items: start; }
+  .hero-pair .what-is { margin: 0; }
   .hero-grid { grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: 48px; align-items: start; }
-  .hero-intro { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .flow { grid-template-columns: 170px 200px minmax(0, 1fr); grid-template-areas: "h1 h1 h2" "fig list cmp"; gap: 16px 24px; padding: 20px 24px 24px; }
+  .fig { height: 372px; }
 }
 @media (min-width: 1100px) {
-  .chooser { grid-template-columns: 220px 280px minmax(0, 1fr); gap: 28px; }
-  .goal-panels { grid-column: auto; }
-  .criteria { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .opt { grid-template-columns: minmax(0, 1.35fr) minmax(0, .8fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+  .rate-strip { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 5fr); gap: 0 28px; }
+  .criteria { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 0; margin-top: 0; }
+  .criteria li { border-top: 0; border-left: 1px solid var(--line); padding: 0 16px; }
+  .trust-links { grid-column: 1 / -1; }
   .picks { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   .glossary-list { grid-template-columns: repeat(5, minmax(0, 1fr)); }
-  .trust-row { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+/* Phones and tablets (pages.md, Home): the figure, the goal list and every option of the chosen goal fit the first
+   screen. The step numbers and the "Choose a goal" heading go (the list says it), the goal's sentence follows its options. */
+@media (max-width: 899px) {
+  .fig { height: 190px; }
+  .flow { grid-template-columns: 92px minmax(0, 1fr); grid-template-areas: "fig list" "h2 h2" "cmp cmp"; gap: 10px; padding: 12px; }
+  .fh-goal, .flow-hd .step-n, .fh-compare .step-legal span { display: none; }
+  .flow .goal-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; align-self: center; }
+  .goal-item { font-size: 13px; line-height: 1.2; padding: 4px 8px; }
+  .goal-item + .goal-item { box-shadow: none; }
+  .goal-item .small { display: none; }
+  .flow-hd { flex-wrap: nowrap; justify-content: space-between; padding-bottom: 6px; }
+  .flow-hd h2 { font-size: 16px; }
+  .fh-compare .step-legal { margin-left: auto; font-size: 13px; }
+  .fh-compare .step-legal strong { font-size: 13px; }
+  .fh-compare .step-legal { white-space: nowrap; flex: none; }
+  .fh-compare h2 { min-width: 0; }
+  .flow .opt { grid-template-columns: minmax(0, 1fr); padding: 6px 10px; }
+  .flow .opt > .pick-act { justify-self: start; flex-direction: row; align-items: center; gap: 10px; padding: 0 0 4px 22px; }
+  .flow-compare .step-panel:not([hidden]) { display: flex; flex-direction: column; }
+  .flow-compare .goal-for { order: 2; margin: 10px 0 0; }
+  .flow-compare .goal-intro { order: 2; margin: 4px 0 0; }
+  .flow-compare .opts-foot { order: 3; }
+  .flow-compare .step-panel > .btn, .flow-compare .step-panel > p.small:last-child { order: 4; }
 }
 @media (max-width: 760px) {
   .tbl { min-width: 720px; }
@@ -234,26 +296,17 @@ p { margin: 0 0 1em; }
   h1 { font-size: 32px; }
   h2 { font-size: 22px; }
   .hero { padding: 32px 0 40px; }
-  /* Phones: H1, then the chooser, then the lede, so the price reaches the first screen (pages.md, Home) */
-  .hero-clinic { padding: 20px 0 32px; }
+  /* Phones: H1, then the rail, then the lede, so the steps reach the first screen (pages.md, Home) */
+  .hero-clinic { padding: 12px 0 24px; }
+  .hero-more { padding: 24px 0 40px; }
   .hero-clinic .wrap { display: flex; flex-direction: column; }
-  .hero-intro { display: contents; }
-  .hero-intro h1 { order: 1; margin-bottom: 16px; font-size: 28px; }
-  .hero-clinic .chooser { order: 2; }
-  .hero-intro .lede { order: 3; margin-top: 20px; }
-  .hero-copy { order: 3; margin-top: 20px; }
-  .hero-intro .hero-copy .lede { margin-top: 0; }
-  .glossary { order: 5; }
-  .opt-parts > span { display: block; margin-top: 2px; }
-  .chooser-hd { padding-bottom: 10px; }
-  .chooser-hd h2 { font-size: 15px; }
-  .chooser { grid-template-columns: 110px minmax(0, 1fr); gap: 14px; padding: 14px; }
-  .goal-panels { grid-column: 1 / -1; }
-  .chooser-hd p { display: none; }
-  .fig { height: 230px; }
-  .goal-item { font-size: 14px; padding: 8px 8px; }
-  .goal-item .small { display: none; }
-  .goal-panel { padding: 16px; }
+  .hero-clinic .hero-h1 { order: 1; margin-bottom: 12px; font-size: 22px; line-height: 1.2; }
+  .hero-after { order: 3; }
+  .hero-clinic .flow { order: 2; }
+  .opt { padding: 12px 14px; }
+  .step-legal { align-items: flex-start; }
+  .rate-strip { order: 4; margin-top: 40px; }
+  .glossary { order: 5; margin-top: 40px; }
   .section { padding-top: 48px; }
   .section:last-of-type { padding-bottom: 48px; }
   .band-2 { padding: 48px 0; margin-top: 48px; }
@@ -261,6 +314,8 @@ p { margin: 0 0 1em; }
   .nav { order: 3; width: 100%; margin-left: 0; }
   .head-cta { margin-left: auto; }
   .head-cta .btn { width: auto; min-height: 44px; padding: 0 14px; font-size: 14px; }
+  .site-head .brand { font-size: 17px; gap: 8px; }
+  .site-head .brand img { width: 26px; height: 26px; }
   .notice .more { display: none; }
   .prose h2 { font-size: 22px; margin-top: 40px; }
   .prose p, .prose li { font-size: 17px; }
@@ -274,11 +329,11 @@ p { margin: 0 0 1em; }
   h1 { font-size: 50px; }
   .sec-hd h2 { font-size: 36px; }
   .lede { font-size: 19px; }
-  .hero-clinic { padding: 56px 0 72px; }
-  .chooser { grid-template-columns: 260px 320px minmax(0, 1fr); gap: 36px; padding: 32px; }
-  .fig { height: 500px; }
+  .hero-clinic { padding: 28px 0 72px; }
+  .flow { grid-template-columns: 220px 260px minmax(0, 1fr); gap: 20px 36px; padding: 32px; }
+  .fig { height: 480px; }
   .goal-item { font-size: 17px; min-height: 52px; }
-  .goal-panel { padding: 26px 28px; }
+  .flow-hd h2 { font-size: 20px; }
   .num-xl { font-size: 64px; }
   .section { padding-top: 88px; }
   .band-2 { padding: 88px 0; margin-top: 88px; }
@@ -291,27 +346,27 @@ p { margin: 0 0 1em; }
   h1 { font-size: 56px; }
   .sec-hd h2 { font-size: 40px; }
   .lede { font-size: 21px; }
-  .chooser { grid-template-columns: 300px 360px minmax(0, 1fr); gap: 44px; }
-  .fig { height: 560px; }
+  .flow { grid-template-columns: 260px 300px minmax(0, 1fr); gap: 24px 44px; }
+  .fig { height: 540px; }
+  .flow-hd h2 { font-size: 22px; }
   .num-xl { font-size: 70px; }
   .tbl { font-size: 17px; }
   .prose p, .prose li { font-size: 20px; }
   .prose > * { max-width: 960px; }
 }
 
-/* Motion (design book, README, Motion). The figure and scroll reveals are GSAP, pre-hidden only while html.motion
-   is set (MOTION_HEAD in build.py); the price pad on category pages plays in CSS. */
+/* Motion (design book, README, Motion). The goal change and scroll reveals are GSAP, pre-hidden only while html.motion
+   is set (MOTION_HEAD in build.py); the rail line (bundle.css), the stamp and the category price pad play in CSS. */
 @media (prefers-reduced-motion: no-preference) {
   .board.rx > * { animation: pc-rise var(--motion-base) ease-out both; }
   .board.rx > :nth-child(2) { animation-delay: 60ms; }
   .board.rx > :nth-child(n+3) { animation-delay: 120ms; }
-  .pin.pulse .pin-ring { animation: pc-pulse 600ms ease-out 2; }
-  html.motion .fig .contour > * { stroke-dasharray: 1; stroke-dashoffset: 1; }
-  html.motion .fig .body { opacity: 0; }
-  html.motion .sec-hd, html.motion .tbl tbody tr, html.motion .criteria li, html.motion .creators li, html.motion .trust-row li { opacity: 0; }
+  .flow .stamp { animation: pc-land var(--motion-base) ease-out var(--motion-draw) both; }
+  .landed .stamp { animation: none; }
+  html.motion .sec-hd, html.motion .tbl tbody tr, html.motion .criteria li, html.motion .creators li { opacity: 0; }
 }
 @keyframes pc-rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
-@keyframes pc-pulse { 0% { stroke-width: 2; } 50% { stroke-width: 8; stroke-opacity: .35; } 100% { stroke-width: 2; stroke-opacity: 1; } }
+@keyframes pc-land { from { opacity: 0; transform: scale(1.15); } to { opacity: 1; transform: none; } }
 @media (prefers-reduced-motion: reduce) {
   * { scroll-behavior: auto !important; transition: none !important; animation: none !important; }
 }

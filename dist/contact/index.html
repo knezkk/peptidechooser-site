@@ -99,12 +99,7 @@ var d=document.documentElement;if(!d.classList.contains('motion')||!window.gsap|
 window.pcMotion=true;gsap.registerPlugin(ScrollTrigger);
 var css=getComputedStyle(d),ms=function(n){return parseFloat(css.getPropertyValue('--motion-'+n))/1000;};
 var rise=parseFloat(css.getPropertyValue('--motion-rise'));
-var fig=document.querySelector('.figure');
-if(fig){var tl=gsap.timeline({paused:true});
-tl.to(fig.querySelectorAll('.contour > *'),{strokeDashoffset:0,duration:ms('draw'),ease:'power1.inOut'})
-.to(fig.querySelector('.body'),{opacity:1,duration:ms('reveal')*2,ease:'power1.out'},ms('draw')*0.45);
-ScrollTrigger.create({trigger:fig,start:'top 85%',once:true,onEnter:function(){tl.play();}});}
-ScrollTrigger.batch('.sec-hd, .tbl tbody tr, .criteria li, .creators li, .trust-row li',{start:'top 92%',once:true,
+ScrollTrigger.batch('.sec-hd, .tbl tbody tr, .criteria li, .creators li',{start:'top 92%',once:true,
 onEnter:function(els){gsap.fromTo(els,{opacity:0,y:rise},{opacity:1,y:0,duration:ms('reveal'),ease:'power2.out',stagger:ms('stagger'),overwrite:true});}});
 });
 </script>
