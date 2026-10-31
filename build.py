@@ -467,7 +467,11 @@ def month_year(iso):
 
 
 def substance_name(slug):
-    return next((r["canonical_name"] for r in LEGAL_DB or [] if r["substance_slug"] == slug), slug)
+    """The window heading: the name readers already see for the substance (owner, 31 Oct 2026), never the slug: the
+    "Is it legal today?" row for that substance alone, else the shortest option name that carries it."""
+    row = next((r["peptide"] for r in LEGAL["rows"] if r.get("substances") == [slug]), None)
+    opts = [p["name"] for g in ALL_GOALS for p in g["peptides"] if p.get("substance") == slug]
+    return row or min(opts, key=len)
 
 
 def seller_rows(slug):
@@ -488,7 +492,7 @@ def check_chips(r):
     letters = chip("neutral", "FDA warning letters: unknown") if n is None else (
         chip("ok", "FDA warning letters: none") if n == 0 else chip("warn", f"FDA warning letters: {n}"))
     company = (chip("ok", "Company: " + ", ".join(x for x in (s.get("legal_entity_name"), s.get("registry_state")) if x))
-               if s.get("legal_entity_name") else chip("neutral", "Company: not found"))
+               if s.get("legal_entity_name") else chip("neutral", "Company: not verified"))
     st = r.get("seller_status")
     status = chip("ok" if st == "active" else "neutral", f"Status: {st or 'unknown'}")
     first = chip("neutral", f"First seen: {month_year(s['first_seen']) if s.get('first_seen') else 'unknown'}")
