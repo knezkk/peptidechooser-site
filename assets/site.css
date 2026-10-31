@@ -50,7 +50,7 @@ p { margin: 0 0 1em; }
 
 /* Home hero: intro line, then the evidence rail beside the body figure, then How we rate and the labels (pages.md, Home) */
 .hero-clinic { padding: 28px 0 56px; background: var(--paper-2); border-bottom: 1px solid var(--line); }
-.hero-intro { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px 48px; align-items: end; margin-bottom: 48px; }
+.hero-intro { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px 48px; align-items: end; margin-bottom: 32px; }
 .hero-intro h1 { margin: 0; max-width: 17ch; }
 .hero-intro .lede { margin: 0; }
 .what-is { margin: 10px 0 0; max-width: 60ch; font-size: 14px; line-height: 1.5; color: var(--ink-2); }
@@ -70,27 +70,47 @@ p { margin: 0 0 1em; }
 #options .tbl td { vertical-align: top; }
 #options .tbl td:first-child { min-width: 300px; }
 #options .tbl td:last-child { font-size: var(--small-size); line-height: 1.45; max-width: 30ch; }
-/* The evidence rail: the figure (sticky from 900px, hidden under 640px) beside the three steps */
-.evidence { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 40px; align-items: start; }
-.rail-fig { display: flex; justify-content: center; }
-.fig { width: auto; height: 400px; max-height: calc(100vh - 48px); overflow: visible; }
-.fig .body { fill: var(--white); }
-.fig .contour { fill: none; stroke: var(--ink); stroke-width: 7; stroke-linejoin: round; }
+/* The flow (pages.md, Home): the live chooser card, read left to right: 1 the body figure and the goal list,
+   2 the options of the chosen goal, 3 how to get the top pick. Phones and tablets stack the same order. */
+.chooser { display: grid; grid-template-columns: minmax(0, 1fr); gap: 24px; background: var(--white); border: 1px solid var(--line-strong); border-radius: var(--radius-panel); box-shadow: var(--shadow-card); padding: 20px 24px 24px; }
+.figure { display: flex; justify-content: center; }
+.fig { width: auto; height: 372px; overflow: visible; }
+.fig .body { fill: var(--neutral-tint); }
+.fig .contour { fill: none; stroke: var(--ink-2); stroke-width: 1.1; stroke-linejoin: round; }
 .fig .region { fill: var(--clinic); fill-opacity: 0; transition: fill-opacity var(--motion-quick); }
-.fig .region.hov { fill-opacity: .1; }
-.fig .region.on { fill-opacity: .16; }
+.fig .region.hov { fill-opacity: .18; }
+.fig .region.on { fill-opacity: .32; }
 .pin { cursor: pointer; }
 .pin:focus { outline: none; }
-.pin:focus-visible .pin-ring { stroke: var(--clinic); stroke-width: 14; }
+.pin:focus-visible .pin-ring { stroke: var(--ink); stroke-width: 3; }
 .pin-hit { fill: transparent; }
-.pin-ring { fill: var(--white); stroke: var(--ink); stroke-width: 7; transition: fill var(--motion-swap); }
+.pin-ring { fill: var(--white); stroke: var(--clinic); stroke-width: 2; transition: fill var(--motion-quick); }
+.pin-dot { fill: var(--clinic); }
 .pin.hov .pin-ring { fill: var(--clinic-tint); }
-.pin.on .pin-ring { fill: var(--mark); }
+.pin.on .pin-ring { fill: var(--clinic); }
+.pin.on .pin-dot { fill: var(--white); }
+.goal-list { display: flex; flex-direction: column; gap: 2px; }
+.goal-item { display: flex; justify-content: space-between; align-items: center; gap: 12px; width: 100%; min-height: 44px; padding: 10px 12px; border: 0; border-radius: var(--radius-control); background: transparent; color: var(--ink); font: 600 16px var(--font-text); text-align: left; cursor: pointer; transition: background-color var(--motion-quick), color var(--motion-quick); }
+.goal-item + .goal-item { box-shadow: 0 -1px 0 var(--line); }
+.goal-item .small { font-weight: 400; font-size: 13px; white-space: nowrap; }
+.goal-item:hover { background: var(--neutral-tint); }
+.goal-item[aria-pressed="true"] { background: var(--clinic-tint); color: var(--clinic-text); box-shadow: none; }
+.goal-item[aria-pressed="true"] + .goal-item { box-shadow: none; }
+.flow { grid-template-columns: 110px minmax(0, 1fr); grid-template-areas: "h1 h1" "fig list" "h2 h2" "cmp cmp" "h3 h3" "get get"; gap: 14px; padding: 14px; }
+.fh-goal { grid-area: h1; } .flow .figure { grid-area: fig; } .flow .goal-list { grid-area: list; align-self: start; }
+.fh-compare { grid-area: h2; } .flow-compare { grid-area: cmp; } .fh-get { grid-area: h3; } .flow-get { grid-area: get; }
+.flow-hd { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; padding-bottom: 10px; border-bottom: 1px solid var(--line); }
+.flow-hd .step-n { position: static; flex: none; width: 32px; height: 32px; font-size: 15px; }
+.flow-hd h2 { font-size: 18px; line-height: 1.3; font-weight: 700; letter-spacing: 0; margin: 0; }
+.fh-compare .step-legal { margin-left: auto; }
+.flow .opt { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+.flow-get .pick-act { padding-top: 6px; }
+.flow-get .get-pick .name { font-size: var(--ui-size); line-height: 1.35; }
+.flow-get .get-how { font-size: var(--small-size); line-height: 1.45; }
 
 .step-legal { display: flex; flex-direction: column; align-items: flex-end; font-size: var(--small-size); line-height: 1.4; color: var(--ink-2); text-decoration: none; }
 .step-legal strong { color: var(--clinic); font-size: var(--ui-size); text-decoration: underline; text-underline-offset: 0.18em; }
 .step-legal:hover strong { color: var(--clinic-hover); }
-.goal-chips { display: flex; flex-wrap: wrap; gap: 8px; }
 .goal-for { margin: 0 0 14px; font-size: var(--ui-size); line-height: 1.5; color: var(--ink-2); max-width: 70ch; }
 
 /* Option rows: three short lines on phones, one line of three columns from 1100px */
@@ -205,13 +225,12 @@ p { margin: 0 0 1em; }
 @media (min-width: 900px) {
   .hero-grid { grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: 48px; align-items: start; }
   .hero-intro { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
-  .rail-fig { position: sticky; top: 24px; }
+  .flow { grid-template-columns: 170px 200px minmax(0, 1fr); grid-template-areas: "h1 h1 h2" "fig list cmp" "h3 h3 h3" "get get get"; gap: 16px 24px; padding: 20px 24px 24px; }
+  .fig { height: 372px; }
 }
 @media (min-width: 1100px) {
-  .evidence { gap: 56px; }
-  .fig { height: 560px; }
-  .goal-chips { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); }
-  .goal-chip { padding: 8px 10px; text-align: center; }
+  .flow { grid-template-columns: 170px 200px minmax(0, 1fr) 220px; grid-template-areas: "h1 h1 h2 h3" "fig list cmp get"; }
+  .fh-get, .flow-get { border-left: 1px solid var(--line); padding-left: 24px; margin-left: -1px; }
   .opt { grid-template-columns: minmax(0, 1.35fr) minmax(0, .8fr) minmax(0, 1fr); gap: 20px; align-items: start; }
   .rate-strip { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 5fr); gap: 0 28px; }
   .criteria { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 0; margin-top: 0; }
@@ -233,10 +252,10 @@ p { margin: 0 0 1em; }
   .hero-clinic .wrap { display: flex; flex-direction: column; }
   .hero-intro { display: contents; }
   .hero-intro h1 { order: 1; margin-bottom: 16px; font-size: 28px; }
-  .hero-clinic .evidence { order: 2; grid-template-columns: minmax(0, 1fr); }
-  .rail-fig { display: none; }
-  .goal-chips { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .goal-chip { font-size: 14px; padding: 8px; }
+  .hero-clinic .flow { order: 2; }
+  .fig { height: 230px; }
+  .goal-item { font-size: 14px; padding: 8px; }
+  .goal-item .small { display: none; }
   .opt { padding: 12px 14px; }
   .step-legal { align-items: flex-start; }
   .rate-strip { order: 4; margin-top: 40px; }
@@ -265,9 +284,11 @@ p { margin: 0 0 1em; }
   .sec-hd h2 { font-size: 36px; }
   .lede { font-size: 19px; }
   .hero-clinic { padding: 56px 0 72px; }
-  .fig { height: 620px; }
-  .goal-chip { font-size: 16px; min-height: 52px; }
-  .step-hd h2 { font-size: 30px; }
+  .flow { grid-template-columns: 220px 260px minmax(0, 1fr) 280px; gap: 20px 36px; padding: 32px; }
+  .fh-get, .flow-get { padding-left: 36px; }
+  .fig { height: 480px; }
+  .goal-item { font-size: 17px; min-height: 52px; }
+  .flow-hd h2 { font-size: 20px; }
   .num-xl { font-size: 64px; }
   .section { padding-top: 88px; }
   .band-2 { padding: 88px 0; margin-top: 88px; }
@@ -280,8 +301,10 @@ p { margin: 0 0 1em; }
   h1 { font-size: 56px; }
   .sec-hd h2 { font-size: 40px; }
   .lede { font-size: 21px; }
-  .fig { height: 680px; }
-  .step-hd h2 { font-size: 32px; }
+  .flow { grid-template-columns: 260px 300px minmax(0, 1fr) 320px; gap: 24px 44px; }
+  .fh-get, .flow-get { padding-left: 44px; }
+  .fig { height: 540px; }
+  .flow-hd h2 { font-size: 22px; }
   .num-xl { font-size: 70px; }
   .tbl { font-size: 17px; }
   .prose p, .prose li { font-size: 20px; }
@@ -294,7 +317,7 @@ p { margin: 0 0 1em; }
   .board.rx > * { animation: pc-rise var(--motion-base) ease-out both; }
   .board.rx > :nth-child(2) { animation-delay: 60ms; }
   .board.rx > :nth-child(n+3) { animation-delay: 120ms; }
-  .steps .stamp { animation: pc-land var(--motion-base) ease-out var(--motion-draw) both; }
+  .flow .stamp { animation: pc-land var(--motion-base) ease-out var(--motion-draw) both; }
   .landed .stamp { animation: none; }
   html.motion .sec-hd, html.motion .tbl tbody tr, html.motion .criteria li, html.motion .creators li { opacity: 0; }
 }

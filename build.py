@@ -353,59 +353,34 @@ def plain_status(item, drop_price=False):
         s = " ".join(part for part in s.replace(". ", ".\n").split("\n") if "$" not in part)
     return s
 
-# The body figure is our own drawing (design book: no stock art): a front view as one closed outline, head included,
-# traced from the evidence rail mockup (mockups/body-figure.svg, 31 Oct 2026), in a 980 x 2400 box.
+# The body figure is our own drawing (design book: no stock art): a front view, eight heads tall, in a 240 x 480
+# box. The right half is listed and mirrored, then smoothed. Each goal shades its body area and has a pin.
 def body_path():
-    return (
-        "M321 2311 C345 2306 360 2285 364 2253 C366 2238 368 2232 375 2223 C388 2207 390 2198 386 2173 "
-        "C384 2157 385 2148 391 2128 C397 2106 397 2100 393 2068 C389 2042 388 1999 391 1982 C391 1978 392 1971 393 1966 "
-        "C396 1945 402 1919 414 1876 C432 1813 435 1782 432 1727 C429 1671 430 1657 442 1624 C456 1586 463 1564 464 1546 "
-        "C465 1542 466 1536 467 1531 C467 1526 468 1519 469 1515 C470 1499 473 1484 483 1442 C490 1409 497 1373 501 1352 "
-        "C501 1347 502 1341 503 1339 C503 1336 504 1330 505 1324 C507 1305 510 1296 516 1296 C522 1296 527 1307 527 1319 "
-        "C527 1323 531 1350 535 1372 C538 1390 545 1423 551 1450 C558 1479 562 1503 564 1522 C566 1557 572 1581 589 1627 "
-        "C599 1655 602 1685 598 1725 C596 1744 596 1779 597 1791 C601 1827 602 1831 615 1884 C619 1898 623 1914 624 1920 "
-        "C627 1935 631 1956 631 1962 C632 1965 633 1972 634 1978 C637 2000 636 2047 632 2068 C625 2104 626 2106 634 2131 "
-        "C639 2147 639 2154 638 2189 C637 2206 638 2210 650 2226 C655 2232 656 2235 658 2252 C662 2292 681 2313 712 2313 "
-        "C755 2313 798 2297 808 2276 C815 2262 810 2250 787 2225 C775 2211 766 2199 760 2188 C758 2183 752 2173 747 2164 "
-        "C733 2139 733 2136 735 2119 C737 2110 735 2104 728 2082 C720 2055 722 2023 741 1936 C751 1889 753 1876 759 1834 "
-        "C762 1814 761 1750 758 1730 C754 1700 748 1679 734 1637 C720 1594 717 1576 717 1530 C717 1493 717 1487 725 1458 "
-        "C732 1427 743 1376 745 1359 C745 1356 746 1350 747 1345 C747 1340 748 1333 748 1329 C749 1325 750 1315 751 1306 "
-        "C753 1287 753 1208 751 1194 C751 1189 750 1180 749 1174 C746 1137 736 1089 720 1032 C705 982 706 986 702 957 "
-        "C699 940 697 931 691 904 C681 865 679 848 683 820 C686 798 693 770 698 756 C702 744 713 747 717 761 "
-        "C718 764 720 772 722 778 C724 785 728 798 732 809 C739 829 742 843 744 860 C750 917 757 937 812 1052 "
-        "C829 1089 842 1122 844 1140 C845 1148 845 1146 839 1177 C835 1198 835 1210 840 1233 C841 1243 843 1256 844 1262 "
-        "C848 1305 856 1320 872 1310 C878 1306 880 1306 883 1310 C886 1313 886 1317 880 1331 C869 1356 870 1370 883 1373 "
-        "C894 1375 924 1337 936 1305 C955 1253 954 1224 927 1157 C910 1113 899 1062 892 988 C892 980 891 972 891 971 "
-        "C890 970 890 964 889 958 C884 907 875 874 850 823 C835 791 833 787 824 746 C821 734 814 695 812 686 "
-        "C812 684 811 678 810 673 C808 655 807 632 808 608 C812 557 809 534 793 502 C777 470 757 454 718 441 "
-        "C706 437 690 429 672 419 C665 415 653 408 644 403 C609 383 600 373 596 349 C592 329 593 319 600 306 "
-        "C603 300 606 291 608 286 C611 278 612 276 618 269 C626 261 628 256 633 243 C640 220 640 210 630 198 "
-        "C626 192 626 192 625 171 C624 142 620 126 608 109 C577 63 508 56 459 93 C432 114 419 139 417 178 "
-        "C416 190 416 191 413 194 C403 208 401 212 402 223 C404 240 411 258 421 268 C428 275 429 277 432 289 "
-        "C434 294 437 301 439 305 C444 317 444 332 441 349 C434 379 426 386 344 429 C336 433 326 437 321 439 "
-        "C296 447 283 453 271 462 C236 489 216 552 225 610 C227 623 227 637 226 652 C225 658 224 666 224 670 "
-        "C222 691 207 760 199 784 C197 790 191 804 185 817 C155 875 144 910 139 966 C138 972 138 979 137 982 "
-        "C137 985 136 991 135 994 C134 1011 128 1048 124 1070 C114 1119 111 1128 99 1159 C73 1223 71 1249 88 1302 "
-        "C97 1329 130 1373 141 1373 C155 1373 157 1358 145 1329 C138 1314 138 1310 141 1306 C144 1303 147 1303 153 1308 "
-        "C167 1320 177 1308 181 1276 C183 1256 186 1236 188 1228 C190 1219 190 1186 188 1176 C178 1136 181 1125 234 1017 "
-        "C274 935 284 907 288 862 C290 846 293 828 299 811 C305 795 311 774 315 761 C321 742 331 742 337 761 "
-        "C346 793 351 821 351 848 C351 869 352 868 342 906 C337 927 334 943 332 962 C330 975 328 982 320 1010 "
-        "C270 1173 266 1286 305 1443 C315 1485 316 1486 315 1526 C315 1579 313 1589 294 1647 C276 1703 271 1731 269 1780 "
-        "C268 1825 273 1864 287 1940 C304 2029 305 2052 294 2088 C288 2107 288 2108 289 2121 C291 2135 290 2135 277 2160 "
-        "C259 2193 249 2208 234 2224 C220 2240 217 2244 214 2251 C200 2278 229 2303 282 2310 C291 2311 299 2312 300 2312 "
-        "C302 2313 315 2313 321 2311 Z")
+    r = [(128, 52), (130, 74), (146, 80), (164, 88), (175, 100), (178, 118), (179, 150), (181, 182), (185, 214), (188, 244),
+         (192, 262), (191, 280), (185, 288), (179, 284), (176, 266), (172, 248), (167, 216), (162, 184), (158, 150), (154, 128),
+         (151, 150), (146, 192), (150, 224), (155, 250), (155, 284), (150, 322), (145, 348), (147, 378), (142, 416), (138, 446),
+         (146, 462), (142, 472), (126, 472), (124, 458), (125, 440), (124, 404), (126, 378), (125, 350), (126, 316), (122, 276)]
+    pts = r + [(120, 270)] + [(240 - x, y) for x, y in reversed(r)]
+    f = lambda v: ("%.1f" % v).rstrip("0").rstrip(".")
+    d = "M%s %s" % (f(pts[0][0]), f(pts[0][1]))
+    for i in range(len(pts)):
+        p0, p1, p2, p3 = pts[i - 1], pts[i], pts[(i + 1) % len(pts)], pts[(i + 2) % len(pts)]
+        c = (p1[0] + (p2[0] - p0[0]) / 6, p1[1] + (p2[1] - p0[1]) / 6, p2[0] - (p3[0] - p1[0]) / 6, p2[1] - (p3[1] - p1[1]) / 6, *p2)
+        d += " C%s %s %s %s %s %s" % tuple(map(f, c))
+    return d + "Z"
 
 
 BODY_D = body_path()
-# Body area per goal: shaded ellipses (cx, cy, rx, ry), clipped to the outline, and where its pin sits.
+HEAD = '<ellipse cx="120" cy="34" rx="21" ry="27"'
+# Body area per goal: shaded ellipses (cx, cy, rx, ry), clipped to the body, and where its pin sits.
 REGIONS = {
-    "hair": ([(520, 95, 120, 58)], (520, 100)),
-    "skin": ([(520, 228, 92, 72)], (520, 250)),
-    "muscle": ([(285, 560, 72, 92), (750, 560, 72, 92)], (285, 560)),
-    "longevity": ([(600, 650, 85, 72)], (600, 650)),
-    "weight-loss": ([(517, 905, 130, 112)], (517, 905)),
-    "libido": ([(517, 1222, 112, 70)], (517, 1215)),
-    "recovery": ([(350, 1725, 82, 88), (678, 1725, 82, 88)], (678, 1725)),
+    "hair": ([(120, 14, 24, 12)], (120, 13)),
+    "skin": ([(120, 40, 17, 15)], (120, 42)),
+    "muscle": ([(168, 128, 13, 26), (72, 128, 13, 26)], (72, 126)),
+    "longevity": ([(131, 134, 13, 12)], (131, 134)),
+    "weight-loss": ([(120, 204, 28, 24)], (120, 204)),
+    "libido": ([(120, 258, 22, 12)], (120, 258)),
+    "recovery": ([(136, 352, 13, 14), (104, 352, 13, 14)], (136, 352)),
 }
 
 
@@ -413,15 +388,19 @@ def figure_svg():
     regions, pins = [], []
     for i, g in enumerate(ALL_GOALS):
         shapes, (px, py) = REGIONS[g["slug"]]
-        on = " on" if i == 0 else ""
-        regions += [f'<ellipse class="region{on}" data-goal="{g["slug"]}" cx="{cx}" cy="{cy}" rx="{rx}" ry="{ry}"/>' for cx, cy, rx, ry in shapes]
-        pins.append(f'<g class="pin{on}" data-goal="{g["slug"]}" role="button" tabindex="0" aria-pressed="{"true" if on else "false"}" aria-label="{g["label"]}">'
-                    f'<circle class="pin-hit" cx="{px}" cy="{py}" r="75"/><circle class="pin-ring" cx="{px}" cy="{py}" r="42"/></g>')
-    return (f'<svg class="fig" viewBox="0 0 980 2400" role="group" aria-label="Choose a goal on the body">'
-            f'<defs><clipPath id="body-clip"><path d="{BODY_D}"/></clipPath></defs>'
-            f'<path class="body" d="{BODY_D}"/>'
+        on = "true" if i == 0 else "false"
+        cls = " on" if i == 0 else ""
+        regions += [f'<ellipse class="region{cls}" data-goal="{g["slug"]}" cx="{cx}" cy="{cy}" rx="{rx}" ry="{ry}"/>' for cx, cy, rx, ry in shapes]
+        pins.append(f'<g class="pin{cls}" data-goal="{g["slug"]}" role="button" tabindex="0" aria-pressed="{on}" aria-label="{g["label"]}">'
+                    f'<circle class="pin-hit" cx="{px}" cy="{py}" r="24"/><circle class="pin-ring" cx="{px}" cy="{py}" r="9"/>'
+                    f'<circle class="pin-dot" cx="{px}" cy="{py}" r="4.5"/></g>')
+    # The neck's top edge sits inside the head; the mask keeps it from drawing a line across the chin.
+    return (f'<svg class="fig" viewBox="0 0 240 480" role="group" aria-label="Choose a goal on the body">'
+            f'<defs><clipPath id="body-clip"><path d="{BODY_D}"/>{HEAD}/></clipPath>'
+            f'<mask id="no-head"><rect x="-10" y="-10" width="260" height="500" fill="#fff"/>{HEAD} fill="#000"/></mask></defs>'
+            f'<g class="body"><path d="{BODY_D}"/>{HEAD}/></g>'
             f'<g clip-path="url(#body-clip)">{"".join(regions)}</g>'
-            f'<path class="contour" d="{BODY_D}"/>'
+            f'<g class="contour"><path pathLength="1" mask="url(#no-head)" d="{BODY_D}"/>{HEAD} pathLength="1"/></g>'
             f'{"".join(pins)}</svg>')
 
 
@@ -445,8 +424,8 @@ def rail():
     chips, compare, get = [], [], []
     for i, g in enumerate(ALL_GOALS):
         slug, hide = g["slug"], "" if i == 0 else " hidden"
-        chips.append(f'<button type="button" class="goal-chip" data-goal="{slug}" aria-pressed="{"true" if i == 0 else "false"}" '
-                     f'aria-controls="opts-{slug} get-{slug}">{g["label"]}</button>')
+        chips.append(f'<button type="button" class="goal-item" data-goal="{slug}" aria-pressed="{"true" if i == 0 else "false"}" '
+                     f'aria-controls="opts-{slug} get-{slug}"><span>{g["label"]}</span><span class="small">{len(g["peptides"])} options</span></button>')
         # Each option: name and what it does; status chip and status in plain words; price pad and how you get it
         # (docs/copy-home-2026-10-30.md): one line on wide screens, three short lines on phones.
         rows = []
@@ -511,7 +490,7 @@ CREATOR_ROWS = "".join(
 # cross-fade (GSAP, motion-swap) only while motion is on; otherwise they swap at once. The stamp lands once.
 MAP_JS = """<script>
 (function(){var root=document.getElementById('goals');if(!root)return;
-var chips=[].slice.call(root.querySelectorAll('.goal-chip')),cur=chips[0].getAttribute('data-goal');
+var chips=[].slice.call(root.querySelectorAll('.goal-item')),cur=chips[0].getAttribute('data-goal');
 var swapS=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--motion-swap'))/1000||0.2;
 root.addEventListener('animationend',function(e){if(e.target.classList.contains('stamp'))root.classList.add('landed');});
 function show(k){root.querySelectorAll('.step-panel').forEach(function(x){x.hidden=x.getAttribute('data-goal')!==k;});
@@ -519,13 +498,13 @@ if(!window.pcMotion)return;var on=root.querySelectorAll('.step-panel[data-goal="
 gsap.fromTo(on,{opacity:0},{opacity:1,duration:swapS,ease:'power1.out'});
 gsap.fromTo(root.querySelectorAll('.step-panel[data-goal="'+k+'"] .opt'),{opacity:0,y:4},{opacity:1,y:0,duration:swapS,ease:'power1.out',stagger:0.04});}
 function pick(k){if(k===cur)return;cur=k;
-root.querySelectorAll('.goal-chip,.pin,.region').forEach(function(x){var on=x.getAttribute('data-goal')===k;
+root.querySelectorAll('.goal-item,.pin,.region').forEach(function(x){var on=x.getAttribute('data-goal')===k;
 if(x.hasAttribute('aria-pressed'))x.setAttribute('aria-pressed',on?'true':'false');x.classList.toggle('on',on);});
 var old=root.querySelectorAll('.step-panel:not([hidden])');
 if(window.pcMotion&&old.length){gsap.killTweensOf(old);gsap.to(old,{opacity:0,duration:swapS/2,ease:'power1.in',onComplete:function(){gsap.set(old,{opacity:1});if(cur===k)show(k);}});}else{show(k);}}
 function hover(k){root.querySelectorAll('.region,.pin').forEach(function(x){x.classList.toggle('hov',x.getAttribute('data-goal')===k);});}
-root.addEventListener('click',function(e){var b=e.target.closest('.goal-chip,.pin');if(b)pick(b.getAttribute('data-goal'));});
-root.addEventListener('mouseover',function(e){var b=e.target.closest('.goal-chip,.pin');hover(b?b.getAttribute('data-goal'):null);});
+root.addEventListener('click',function(e){var b=e.target.closest('.goal-item,.pin');if(b)pick(b.getAttribute('data-goal'));});
+root.addEventListener('mouseover',function(e){var b=e.target.closest('.goal-item,.pin');hover(b?b.getAttribute('data-goal'):null);});
 root.addEventListener('mouseleave',function(){hover(null);});
 root.addEventListener('keydown',function(e){var t=e.target;
 if(t.classList&&t.classList.contains('pin')&&(e.key==='Enter'||e.key===' ')){e.preventDefault();pick(t.getAttribute('data-goal'));return;}
@@ -544,22 +523,14 @@ HOME = f"""
       <p class="what-is"><strong>What is a peptide?</strong> A short chain of amino acids. Some are approved medicines (semaglutide, bremelanotide), some are cosmetics in creams, and many are sold online with no approval and no testing. This site tells you which is which, what it costs, and what the proven alternative is.</p>
       </div>
     </div>
-    <div class="evidence" id="goals">
-      <div class="rail-fig">{FIGURE}</div>
-      <ol class="steps">
-        <li class="step"><span class="step-n" aria-hidden="true">1</span>
-          <div class="step-hd"><h2 id="step-goal">Choose a goal</h2></div>
-          <div class="goal-chips" role="group" aria-labelledby="step-goal">{GOAL_CHIPS}</div>
-        </li>
-        <li class="step"><span class="step-n" aria-hidden="true">2</span>
-          <div class="step-hd"><h2>Compare the options</h2><a class="step-legal" href="#legal"><strong>Is it legal today?</strong><span>Checked {LEGAL_CHECKED}</span></a></div>
-          {STEP_COMPARE}
-        </li>
-        <li class="step"><span class="step-n" aria-hidden="true">3</span>
-          <div class="step-hd"><h2>Get it</h2></div>
-          {STEP_GET}
-        </li>
-      </ol>
+    <div class="chooser flow" id="goals">
+      <div class="flow-hd fh-goal"><span class="step-n" aria-hidden="true">1</span><h2 id="step-goal">Choose a goal</h2></div>
+      <div class="figure">{FIGURE}</div>
+      <div class="goal-list" role="group" aria-labelledby="step-goal">{GOAL_CHIPS}</div>
+      <div class="flow-hd fh-compare"><span class="step-n" aria-hidden="true">2</span><h2>Compare the options</h2><a class="step-legal" href="#legal"><strong>Is it legal today?</strong><span>Checked {LEGAL_CHECKED}</span></a></div>
+      <div class="flow-compare">{STEP_COMPARE}</div>
+      <div class="flow-hd fh-get"><span class="step-n" aria-hidden="true">3</span><h2>Get it</h2></div>
+      <div class="flow-get">{STEP_GET}</div>
     </div>
     <section class="rate-strip" aria-labelledby="rate-h">
       <div class="rate-hd"><h2 id="rate-h">How we rate</h2><p>Every product and seller is judged on the same five criteria. We publish them so you can check our work.</p><a href="/how-we-rate/">Read the full method</a></div>
