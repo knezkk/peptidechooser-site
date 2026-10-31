@@ -639,7 +639,7 @@ LETTER_ROWS = "".join(
 LETTERS_SECTION = f"""
 <section class="section" id="letters">
   <div class="wrap">
-    <div class="sec-hd"><div><h2>Latest FDA warning letters</h2><p>Letters the FDA sent to sellers in our database. Checked {nice_date(LETTERS[0]["newest_letter_date"])}.</p></div></div>
+    <div class="sec-hd"><div><h2>Latest FDA warning letters</h2><p>Letters the FDA sent to sellers in our database. Checked {nice_date(DATA["pulled_at"][:10])}.</p></div></div>
     <div class="tbl-wrap"><table class="tbl tbl-letters">
       <thead><tr><th scope="col">Date</th><th scope="col">Seller</th><th scope="col">Source</th></tr></thead>
       <tbody>{LETTER_ROWS}</tbody>
