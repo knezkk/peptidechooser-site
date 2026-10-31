@@ -294,7 +294,7 @@ p { margin: 0 0 1em; }
   .flow .opt:has(> .pick-act):not(:has(.btn-action)) { grid-template-columns: minmax(0, 1fr) auto; }
   .flow .opt:has(> .pick-act):not(:has(.btn-action)) > .opt-more { grid-column: 1 / -1; grid-row: 1; }
   .flow .opt:has(> .pick-act):not(:has(.btn-action)) .opt-sum .name { padding-right: 160px; }
-  .flow .opt > .pick-act:not(:has(.btn-action)) { grid-column: 2; grid-row: 1; align-self: start; padding: 0; }
+  .flow .opt > .pick-act:not(:has(.btn-action)) { grid-column: 2; grid-row: 1; align-self: start; margin-top: 0; padding: 0; }
   .flow-compare .step-panel:not([hidden]) { display: flex; flex-direction: column; }
   .flow-compare .goal-for { order: 2; margin: 10px 0 0; }
   .flow-compare .goal-intro { order: 2; margin: 4px 0 0; }
@@ -305,6 +305,16 @@ p { margin: 0 0 1em; }
   .tbl { min-width: 720px; }
   .tbl-letters { min-width: 0; }
   .tbl-letters td:first-child, .tbl-letters td:last-child { white-space: nowrap; } /* three short columns fit a phone without scrolling inside the frame */
+  /* Header under 760px: logo and "Compare by goal" on the first row, "Menu" under them; the open menu (or, with
+     JavaScript off, the wrapped links) takes the full width below (pages.md, Every page, Header) */
+  .site-head .wrap { flex-wrap: wrap; gap: 6px 16px; padding-top: 10px; padding-bottom: 10px; min-height: 0; }
+  .site-head .brand { order: 1; }
+  .head-cta { order: 2; margin-left: auto; }
+  .head-cta .btn { width: auto; min-height: 44px; padding: 0 14px; font-size: 14px; }
+  .nav-toggle { order: 3; }
+  .nav { order: 4; width: 100%; margin-left: 0; flex-wrap: wrap; overflow: visible; }
+  .nav-js .nav.open { padding-bottom: 6px; }
+  .nav-js .nav.open a { width: 100%; }
 }
 @media (max-width: 640px) {
   .wrap { padding: 0 16px; }
@@ -325,10 +335,6 @@ p { margin: 0 0 1em; }
   .section { padding-top: 48px; }
   .section:last-of-type { padding-bottom: 48px; }
   .band-2 { padding: 48px 0; margin-top: 48px; }
-  .site-head .wrap { flex-wrap: wrap; gap: 6px 16px; padding-top: 10px; padding-bottom: 10px; min-height: 0; }
-  .nav { order: 3; width: 100%; margin-left: 0; }
-  .head-cta { margin-left: auto; }
-  .head-cta .btn { width: auto; min-height: 44px; padding: 0 14px; font-size: 14px; }
   .site-head .brand { font-size: 17px; gap: 8px; }
   .site-head .brand img { width: 26px; height: 26px; }
   .notice .more { display: none; }
