@@ -250,7 +250,8 @@
           "chip": "warn",
           "does": "Pharmacy-made copies sold by online clinics, often cheaper. Not checked by the FDA batch by batch.",
           "how": "Prescription through the clinic.",
-          "status_plain": "Not FDA approved; pharmacy-made."
+          "status_plain": "Not FDA approved; pharmacy-made.",
+          "no_link": "Not FDA approved; we do not link"
         },
         {
           "name": "Retatrutide",
@@ -286,7 +287,8 @@
           "status_plain": "FDA approved for HIV-related belly fat only.",
           "substance": "tesamorelin",
           "top_pick": false,
-          "top_pick_why": "Approved only for HIV-related belly fat, not for muscle (owner, 31 Oct 2026)."
+          "top_pick_why": "Approved only for HIV-related belly fat, not for muscle (owner, 31 Oct 2026).",
+          "no_link": "Approved for HIV belly fat, not muscle"
         },
         {
           "name": "Sermorelin",

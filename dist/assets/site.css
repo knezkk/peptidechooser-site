@@ -138,6 +138,8 @@ p { margin: 0 0 1em; }
 .opt-body { padding: 4px 0 6px 17px; display: grid; gap: 4px; }
 .opt-body p { margin: 0; font-size: var(--small-size); line-height: 1.45; }
 .flow .opt > .pick-act { padding-top: 0; align-items: flex-end; }
+/* every row button has one width, so "Online clinic" and "Prices at N shops" line up one under the other (owner, 1 Nov 2026) */
+.flow .opt > .pick-act .btn { width: 160px; }
 .flow-compare .goal-for { margin-bottom: 4px; font-size: var(--small-size); }
 /* The goal's intro (goals[].intro): one ink-2 line under the "for" sentence; the full text on hover (title) and when it
    is clicked or focused on wide screens, always in full on phones. */
@@ -198,6 +200,8 @@ p { margin: 0 0 1em; }
 /* Top pick per goal: one card per goal, the Visit button at the foot with its line under it */
 .pick-act { display: inline-flex; flex-direction: column; align-items: flex-start; gap: 4px; margin-top: auto; padding-top: 8px; }
 .tbl .pick-act { align-items: flex-end; padding-top: 0; white-space: nowrap; }
+/* the grey line where a row has no button: why there is none, at most two short lines */
+.pick-act .no-link { max-width: 160px; text-align: right; }
 
 /* Tables */
 .tbl .act { text-align: right; }
@@ -253,7 +257,7 @@ p { margin: 0 0 1em; }
   .creators { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (min-width: 900px) {
-  .flow .opt { grid-template-columns: minmax(0, 1fr) 150px; }
+  .flow .opt { grid-template-columns: minmax(0, 1fr) 160px; }
   .flow .opt > .pick-act { grid-column: 2; justify-self: end; }
   .goal-intro { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: default; }
   .goal-intro:focus { white-space: normal; overflow: visible; }
@@ -295,10 +299,10 @@ p { margin: 0 0 1em; }
   .flow .opt:has(> .pick-act) { grid-template-columns: minmax(0, 1fr) auto; }
   .flow .opt:has(> .pick-act) > .opt-more { grid-column: 1 / -1; grid-row: 1; }
   .flow .opt > .pick-act { grid-column: 2; grid-row: 1; justify-self: end; align-self: start; flex-direction: column; align-items: flex-end; gap: 2px; margin-top: 0; padding: 0; }
-  .flow .opt > .pick-act .btn { padding: 0 12px; }
+  .flow .opt > .pick-act .btn { width: 150px; padding: 0 8px; }
+  .pick-act .no-link { max-width: 150px; }
   .flow .opt:has(> .pick-act) .opt-sum { grid-template-areas: "m name" "chip chip"; }
-  .flow .opt:has(> .pick-act .btn-action) .opt-sum .name { padding-right: 120px; }
-  .flow .opt:has(> .pick-act):not(:has(.btn-action)) .opt-sum .name { padding-right: 150px; }
+  .flow .opt:has(> .pick-act) .opt-sum .name { padding-right: 160px; }
   .flow-compare .step-panel:not([hidden]) { display: flex; flex-direction: column; }
   .flow-compare .goal-for { order: 2; margin: 10px 0 0; }
   .flow-compare .goal-intro { order: 2; margin: 4px 0 0; }
@@ -307,7 +311,7 @@ p { margin: 0 0 1em; }
 }
 /* small phones (480px breakpoint, layout.md): the chips wrap clear of the button and its line, never under it */
 @media (max-width: 480px) {
-  .flow .opt:has(> .pick-act .btn-action) .opt-chips { padding-right: 120px; }
+  .flow .opt:has(> .pick-act .btn-action) .opt-chips { padding-right: 160px; }
 }
 @media (max-width: 760px) {
   .tbl { min-width: 720px; }
