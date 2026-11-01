@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Logo directions</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+  :root { --ink: #0f1d2b; --ink-2: #475569; --ink-muted: #64748b; --clinic: #0b5cad; --mark: #ffe066; --paper: #ffffff; --paper-2: #f6f9fb; --line: #e2e8ee; --line-dark: #2a3a4b; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--paper); color: var(--ink); font: 15px/1.5 "Public Sans", system-ui, sans-serif; }
+  main { max-width: 1120px; margin: 0 auto; padding: 40px 16px 72px; }
+  h1 { font-size: 24px; margin: 0 0 4px; font-weight: 800; }
+  .lede { margin: 0 0 40px; color: var(--ink-muted); }
+  section { border-top: 2px solid var(--ink); padding: 20px 0 48px; }
+  h2 { font-size: 18px; margin: 0 0 2px; font-weight: 800; }
+  .idea { margin: 0 0 20px; color: var(--ink-2); max-width: 62ch; }
+  .hero { border: 1px solid var(--line); display: grid; place-items: center; padding: 64px 16px; margin-bottom: 16px; }
+  .row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+  @media (max-width: 860px) { .row { grid-template-columns: 1fr; } }
+  .cell { border: 1px solid var(--line); }
+  .cell > small { display: block; padding: 8px 12px; color: var(--ink-muted); font-size: 12px; border-top: 1px solid var(--line); }
+  .sizes { display: flex; align-items: flex-end; gap: 20px; padding: 20px 16px; min-height: 112px; }
+  .tabbar { background: #dfe3e8; padding: 10px 10px 0; }
+  .tab { background: #fff; display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; font: 12px system-ui, sans-serif; color: #222; border-radius: 6px 6px 0 0; }
+  .tab svg { display: block; }
+  .addr { background: #fff; height: 28px; border-bottom: 1px solid var(--line); }
+  .header { height: 72px; display: flex; align-items: center; justify-content: space-between; padding: 0 16px; border-bottom: 1px solid var(--line); }
+  .btn-ink { background: var(--ink); color: #fff; font-weight: 600; font-size: 13px; padding: 9px 12px; border-radius: 4px; }
+  .footer { background: var(--ink); padding: 22px 16px; }
+  .footer p { margin: 10px 0 0; color: #c3cdd8; font-size: 12px; }
+  .lockup { display: inline-flex; align-items: center; gap: .45em; font-weight: 800; letter-spacing: -0.02em; white-space: nowrap; }
+  .lockup svg { width: 1.6em; height: 1.6em; flex: none; display: block; }
+  .hl { background: var(--mark); color: var(--ink); padding: 0 .14em; margin-left: .12em; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Logo, round two: three directions</h1>
+  <p class="lede">Each direction shown on its own, as a browser tab icon, in the site header, in the dark footer, and at 64, 32 and 16 px. The name is Public Sans 800, as on the site today.</p>
+  <div id="out"></div>
+</main>
+<script>
+const INK = "#0f1d2b", MARK = "#ffe066", WHITE = "#ffffff";
+
+// Mark drawings on a 64 grid. dark = on the ink footer.
+const marks = {
+  // A: a heavy P; its counter is the yellow point, the chosen one
+  a: dark => `<svg viewBox="0 0 64 64" aria-hidden="true">
+      <path d="M14 7 H35 A16.5 16.5 0 0 1 35 40 H26 V57 H14 Z" fill="${dark ? WHITE : INK}"/>
+      <circle cx="35" cy="23.5" r="7" fill="${MARK}"/></svg>`,
+  // B: an index tile, like an element on a reference chart
+  b: dark => `<svg viewBox="0 0 64 64" aria-hidden="true">
+      <rect x="3" y="3" width="58" height="58" fill="${dark ? INK : WHITE}" stroke="${dark ? WHITE : INK}" stroke-width="5"/>
+      <rect x="44" y="9" width="11" height="11" fill="${MARK}"/>
+      <text x="9.5" y="50" font-family="Public Sans" font-weight="800" font-size="31" letter-spacing="-1.2" fill="${dark ? WHITE : INK}">Pc</text></svg>`,
+  // C: the marker: a P on the yellow marker block the site already uses
+  c: dark => `<svg viewBox="0 0 64 64" aria-hidden="true">
+      <rect x="2" y="2" width="60" height="60" fill="${MARK}"/>
+      <text x="14" y="52" font-family="Public Sans" font-weight="800" font-size="50" fill="${INK}">P</text></svg>`
+};
+
+const lockup = (k, dark, size) => k === "c"
+  ? `<span class="lockup" style="font-size:${size}px;color:${dark ? WHITE : INK}">Peptide<span class="hl">Chooser</span></span>`
+  : `<span class="lockup" style="font-size:${size}px;color:${dark ? WHITE : INK}">${marks[k](dark)}Peptide Chooser</span>`;
+
+const sized = (k, s) => `<span style="display:block;width:${s}px;height:${s}px">${marks[k](false).replace("<svg", `<svg width="${s}" height="${s}"`)}</span>`;
+
+const directions = [
+  ["a", "A. The marked P",
+   "A heavy P whose round counter is filled yellow: the one point you were looking for. One letter, one dot; nothing to explain, and it survives 16 px."],
+  ["b", "B. The index tile",
+   "\"Pc\" set in a square tile like an entry on a reference chart, with the yellow marker in the corner. Reads as a reference book, not a shop."],
+  ["c", "C. The marker",
+   "No separate symbol: the name itself, with \"Chooser\" under the yellow marker the site already uses for the answer. The tab icon is a P on that marker."]
+];
+
+document.getElementById("out").innerHTML = directions.map(([k, title, idea]) => `
+  <section>
+    <h2>${title}</h2>
+    <p class="idea">${idea}</p>
+    <div class="hero">${lockup(k, false, 44)}</div>
+    <div class="row">
+      <div class="cell">
+        <div class="tabbar"><span class="tab">${marks[k](false).replace("<svg", '<svg width="16" height="16"')}Peptide Chooser</span></div>
+        <div class="addr"></div>
+        <small>Browser tab, 16 px</small>
+      </div>
+      <div class="cell">
+        <div class="header">${lockup(k, false, 18)}<span class="btn-ink">Compare by goal</span></div>
+        <small>Site header, 72 px tall</small>
+      </div>
+      <div class="cell">
+        <div class="footer">${lockup(k, true, 18)}<p>We compare; we never sell.</p></div>
+        <small>Dark footer</small>
+      </div>
+    </div>
+    <div class="row" style="margin-top:16px">
+      <div class="cell"><div class="sizes">${sized(k, 64)}${sized(k, 32)}${sized(k, 16)}</div><small>Mark alone at 64, 32 and 16 px</small></div>
+    </div>
+  </section>`).join("");
+</script>
+</body>
+</html>
