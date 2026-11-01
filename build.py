@@ -482,10 +482,12 @@ def month_year(iso):
 
 def substance_name(slug):
     """The window heading: the name readers already see for the substance (owner, 31 Oct 2026), never the slug: the
-    "Is it legal today?" row for that substance alone, else the shortest option name that carries it."""
+    "Is it legal today?" row for that substance alone, else the database's name for it, else the shortest option name
+    that carries it."""
     row = next((r["peptide"] for r in LEGAL["rows"] if r.get("substances") == [slug]), None)
-    opts = [p["name"] for g in ALL_GOALS for p in g["peptides"] if p.get("substance") == slug]
-    return row or min(opts, key=len)
+    db = next((r["canonical_name"] for r in LEGAL_DB or [] if r["substance_slug"] == slug), None)
+    opts = [p["name"] for g in ALL_GOALS for p in g["peptides"] if slug in subs_of(p)]
+    return row or db or min(opts, key=len)
 
 
 def seller_rows(slug):
@@ -515,8 +517,8 @@ def check_chips(r):
     return f'<span class="chips">{coa}{letters}{company}{status}{first}{checked}</span>'
 
 
-def seller_window(slug):
-    """One seller window (a dialog; a plain section with JavaScript off). No Visit, no link to a seller."""
+def seller_table(slug):
+    """One substance's sellers as a table, its source lines and its newest last_seen. No link to a seller."""
     rows = seller_rows(slug)
     newest = max((r["last_seen"] for r in rows if r.get("last_seen")), default="")
     trs, src = [], []
@@ -534,12 +536,40 @@ def seller_window(slug):
                    f'<td>{check_chips(r)}</td></tr>')
         seen = r.get("price_observed_at") or r.get("last_seen")
         src.append(f'<li>{seller}, {name}{", " + nice_date(seen) if seen else ""}: {r["product_url"]}</li>')
+    table = (f'<div class="tbl-wrap"><table class="tbl"><thead><tr><th scope="col">Seller</th><th scope="col">Product</th>'
+             f'<th scope="col">Price</th><th scope="col">Per mg</th><th scope="col">Background check</th></tr></thead>'
+             f'<tbody>{"".join(trs)}</tbody></table></div>')
+    return table, src, newest
+
+
+def subs_of(p):
+    """An option's substances for the seller window: its `substance`, or its `substances` list (a row that stands for
+    several research-use peptides, e.g. "Injectable peptides sold for hair"; owner, 1 Nov 2026)."""
+    return [p["substance"]] if p.get("substance") else list(p.get("substances") or [])
+
+
+def window_key(p):
+    return "sellers-" + "-".join(s for s in subs_of(p) if seller_rows(s))
+
+
+def seller_window(p):
+    """One seller window for an option row (a dialog; a plain section with JavaScript off). One substance: its table
+    under the substance name. Several: the option's name as the heading and one table per substance under the
+    substance name as a sub-heading. No Visit, no link to a seller."""
+    subs = [s for s in subs_of(p) if seller_rows(s)]
+    key = window_key(p)
+    parts, src, newest = [], [], ""
+    for s in subs:
+        table, lines, seen = seller_table(s)
+        parts.append((f'<h3 class="dlg-sub">{substance_name(s)}</h3>' if len(subs) > 1 else "") + table)
+        src += lines
+        newest = max(newest, seen)
+    title = substance_name(subs[0]) if p.get("substance") else p["name"]
     checked = f" Prices checked {nice_date(newest)}." if newest else ""
-    return f"""<dialog class="sellers-dlg" id="sellers-{slug}" aria-labelledby="sellers-{slug}-h"><div class="dlg-in">
-  <div class="dlg-hd"><h2 id="sellers-{slug}-h">{substance_name(slug)}</h2><form method="dialog"><button class="btn btn-line btn-sm" type="submit">Close</button></form></div>
+    return f"""<dialog class="sellers-dlg" id="{key}" aria-labelledby="{key}-h"><div class="dlg-in">
+  <div class="dlg-hd"><h2 id="{key}-h">{title}</h2><form method="dialog"><button class="btn btn-line btn-sm" type="submit">Close</button></form></div>
   <p class="dlg-lede">Research-use sellers. We do not link to them.{checked}</p>
-  <div class="tbl-wrap"><table class="tbl"><thead><tr><th scope="col">Seller</th><th scope="col">Product</th><th scope="col">Price</th><th scope="col">Per mg</th><th scope="col">Background check</th></tr></thead>
-  <tbody>{"".join(trs)}</tbody></table></div>
+  {"".join(parts)}
   <p class="dlg-foot">Price per mg is price divided by the stated amount; blends have no per-mg price.</p>
   <ol class="dlg-src">{"".join(src)}</ol>
 </div></dialog>"""
@@ -552,18 +582,22 @@ def approved_row(p):
     return p["status"].startswith("FDA approved") or bool(s and s["label"] == "FDA approved")
 
 
-SELLER_SLUGS = sorted({p["substance"] for g in ALL_GOALS for p in g["peptides"]
-                       if p.get("substance") and not approved_row(p) and seller_rows(p["substance"])})
-SELLER_WINDOWS = "".join(seller_window(s) for s in SELLER_SLUGS)
+def has_window(p):
+    return not approved_row(p) and any(seller_rows(s) for s in subs_of(p))
+
+
+# One window per distinct set of substances (two rows for the same substance share it).
+SELLER_WINDOWS = "".join({window_key(p): seller_window(p) for g in ALL_GOALS for p in g["peptides"] if has_window(p)}.values())
 
 
 def sellers_button(p):
-    """"Compare N sellers" on an option row whose substance has research-use listings; a link to the window without JS."""
-    slug = p.get("substance")
-    if slug not in SELLER_SLUGS or approved_row(p):
+    """"Compare N sellers" on a research-use option row with listings, N the distinct sellers across its substances;
+    a link to the window without JS. FDA-approved rows never get it."""
+    if not has_window(p):
         return ""
-    n = len(seller_rows(slug))
-    return (f'<a class="btn btn-line btn-sm sellers-open" href="#sellers-{slug}" data-dlg="sellers-{slug}">'
+    n = len({r["seller_slug"] for s in subs_of(p) for r in seller_rows(s)})
+    key = window_key(p)
+    return (f'<a class="btn btn-line btn-sm sellers-open" href="#{key}" data-dlg="{key}">'
             f'Compare {n} seller{"s" if n != 1 else ""}</a>')
 
 
@@ -951,7 +985,7 @@ def category_page(g):
     opt_html = "".join(option_rows(g))
     own = {f'src-{s["n"]}' for s in g["sources"]}
     srcs += page_sources(opt_html, own)
-    windows = "".join(seller_window(p["substance"]) for p in g["peptides"] if p.get("substance") in SELLER_SLUGS and sellers_button(p))
+    windows = "".join({window_key(p): seller_window(p) for p in g["peptides"] if has_window(p)}.values())
     return f"""
 <section class="hero hero-goal">
   <div class="wrap">
