@@ -46,8 +46,9 @@ def rows(sql):
 
 
 def substances(d):
-    """The substances the site shows: every option's `substance` and every legal row's `substances`."""
+    """The substances the site shows: every option's `substance` or `substances` and every legal row's `substances`."""
     out = {p["substance"] for g in d["goals"] for p in g.get("peptides", []) if p.get("substance")}
+    out |= {s for g in d["goals"] for p in g.get("peptides", []) for s in p.get("substances", [])}
     return out | {s for r in d["legal"]["rows"] for s in r.get("substances", [])}
 
 
