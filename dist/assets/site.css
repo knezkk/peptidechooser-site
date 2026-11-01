@@ -37,6 +37,8 @@ p { margin: 0 0 1em; }
 .nav a:hover { background: var(--neutral-tint); color: var(--ink); }
 .nav a[aria-current="page"] { color: var(--clinic-text); }
 .head-cta { flex: none; }
+/* 761 to 900px: the five header items keep one row beside the logo and the button */
+@media (min-width: 761px) and (max-width: 900px) { .site-head .wrap { gap: 12px; } .nav a, .nav-goals-btn { padding: 0 8px; } }
 
 /* Breadcrumbs */
 .crumbs { font-size: var(--small-size); color: var(--ink-2); padding: 16px 0 0; }
