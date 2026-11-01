@@ -70,7 +70,12 @@ p { margin: 0 0 1em; }
 .glossary h2 { font-size: var(--display-4-size); line-height: var(--display-4-lh); margin-bottom: 12px; }
 .glossary-list { margin: 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
 .glossary-list div { padding: 16px 18px; border: 1px solid var(--line); border-radius: var(--radius-panel); background: var(--white); }
-.glossary-list dt { font-weight: 700; margin-bottom: 4px; }
+.glossary-list dt { font-weight: 700; margin-bottom: 8px; }
+.glossary-list dt .chip { font-size: 13px; }
+/* one title row and one text row across the cards, so every card's text starts on the same line */
+.glossary-list { grid-auto-rows: auto; }
+.glossary-list div { display: grid; grid-row: span 2; grid-template-rows: subgrid; row-gap: 8px; }
+.glossary-list dt { margin: 0; align-self: center; }
 .glossary-list dd { margin: 0; font-size: 14px; line-height: 1.5; color: var(--ink-2); }
 
 /* /hair/ table: the three parts under the name and the chip */
@@ -118,20 +123,15 @@ p { margin: 0 0 1em; }
 /* Option rows line up like a table: the same columns in every row (owner, 31 Oct 2026). Name with its chip under it,
    then the price, then the action; a row without a price or an action keeps the empty column. */
 .flow .opt { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 12px; align-items: center; padding: 10px 14px; }
-.opt-sum { display: grid; grid-template-columns: 12px auto minmax(0, 1fr); grid-template-areas: "m name name" ". chip price"; align-items: center; gap: 4px 10px; cursor: pointer; list-style: none; min-height: var(--touch); }
+.opt-sum { display: grid; grid-template-columns: 12px minmax(0, 1fr); grid-template-areas: "m name" ". chip"; align-items: center; gap: 4px 10px; cursor: pointer; list-style: none; min-height: var(--touch); }
 .opt-sum::before { grid-area: m; }
 .opt-sum .name { grid-area: name; }
-.opt-sum .chip { grid-area: chip; justify-self: start; }
-.opt-price { grid-area: price; }
+.opt-sum .opt-chips { grid-area: chip; display: flex; flex-wrap: wrap; gap: 4px 6px; justify-self: start; }
 .opt-sum::-webkit-details-marker { display: none; }
 .opt-sum::before { content: ""; width: 7px; height: 7px; border-right: 2px solid var(--ink-2); border-bottom: 2px solid var(--ink-2); transform: rotate(-45deg); transition: transform var(--motion-quick); flex: none; }
 .opt-more[open] .opt-sum::before { transform: rotate(45deg); }
 .opt-sum .name { font-weight: 700; }
-.opt-price { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 8px; }
 /* The price and its footnote stay on one line; the goal's online-clinic plan line goes under them (pages.md, Home). */
-.price-main { white-space: nowrap; }
-.price-main sup { margin-left: 6px; }
-.opt-price .plan-line { flex-basis: 100%; font-size: var(--small-size); line-height: 1.4; color: var(--ink-2); white-space: normal; }
 .opt-body { padding: 4px 0 6px 17px; display: grid; gap: 4px; }
 .opt-body p { margin: 0; font-size: var(--small-size); line-height: 1.45; }
 .flow .opt > .pick-act { padding-top: 0; align-items: flex-end; }
@@ -186,7 +186,11 @@ p { margin: 0 0 1em; }
 .band-2 { background: var(--paper-2); padding: 72px 0; margin-top: 72px; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
 .criteria { list-style: none; margin: 16px 0 0; padding: 0; display: grid; gap: 0 24px; }
 .criteria li { padding: 12px 0; border-top: 1px solid var(--line); }
-.criteria h3 { font: 700 var(--ui-size)/1.3 var(--font-text); margin-bottom: 4px; }
+/* the five criteria share one title row and one text row, so titles and lines start on the same baseline at every width */
+.criteria { grid-auto-rows: auto; }
+.criteria li { display: grid; grid-row: span 2; grid-template-rows: subgrid; row-gap: 4px; }
+.criteria h3 { margin: 0; align-self: end; }
+.criteria h3 { font: 700 var(--ui-size)/1.3 var(--font-text); }
 .criteria p { margin: 0; font-size: var(--small-size); line-height: var(--small-lh); color: var(--ink-2); }
 /* Top pick per goal: one card per goal, the Visit button at the foot with its line under it */
 .picks { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
@@ -253,8 +257,6 @@ p { margin: 0 0 1em; }
 }
 @media (min-width: 900px) {
   .flow .opt { grid-template-columns: minmax(0, 1fr) 150px; }
-  .opt-sum { grid-template-columns: 12px minmax(0, 1fr) 170px; grid-template-areas: "m name price" ". chip price"; }
-  .opt-price { flex-wrap: wrap; }
   .flow .opt > .pick-act { grid-column: 2; justify-self: end; }
   .goal-intro { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: default; }
   .goal-intro:focus { white-space: normal; overflow: visible; }
@@ -291,9 +293,6 @@ p { margin: 0 0 1em; }
   .fh-compare h2 { min-width: 0; }
   .flow .opt { grid-template-columns: minmax(0, 1fr); padding: 6px 10px; }
   /* the plan line takes its own row under the chip and the price, so it stays on one line */
-  .opt-sum .opt-price:has(.plan-line) { display: contents; }
-  .opt-sum .price-main { grid-area: price; }
-  .opt-sum .plan-line { grid-column: 2 / -1; grid-row: 3; }
   .flow .opt > .pick-act { justify-self: start; flex-direction: row; align-items: center; gap: 10px; padding: 0 0 4px 22px; }
   /* a row whose only action is "Compare N sellers": the button sits beside the name, the chip line keeps the full width */
   .flow .opt:has(> .pick-act):not(:has(.btn-action)) { grid-template-columns: minmax(0, 1fr) auto; }
@@ -339,8 +338,8 @@ p { margin: 0 0 1em; }
   .hero-clinic .flow { order: 2; }
   .opt { padding: 12px 14px; }
   .step-legal { align-items: flex-start; }
-  .rate-strip { order: 4; margin-top: 40px; }
-  .glossary { order: 5; margin-top: 40px; }
+  .glossary { order: 4; margin-top: 40px; }
+  .rate-strip { order: 5; margin-top: 40px; }
   .section { padding-top: 48px; }
   .section:last-of-type { padding-bottom: 48px; }
   .band-2 { padding: 48px 0; margin-top: 48px; }
