@@ -101,11 +101,14 @@ def main():
         "from site.sellers order by seller_slug")
     d["sellers"] = [r for r in sellers if r["seller_slug"] in used]
     d["letters"] = letters_rows()
+    # the line under the letters table: how many letters, since when (domain or address matches only)
+    tot = rows("select count(*) as n, min(letter_date) as oldest from site.fda_letters where match_kind = 'domain_or_address'")[0]
+    d["letters_total"], d["letters_oldest"] = tot["n"], tot["oldest"]
     d["pulled_at"] = datetime.utcnow().isoformat(timespec="seconds") + "Z"
     DATA.write_text(json.dumps(d, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     print(f"pull_data: {len(d['legal_db'])} status rows, {len(d['approved_db'])} approvals, {len(d['plans'])} plans, "
           f"{len(d['products'])} of {len(products)} listings, {len(d['sellers'])} of {len(sellers)} sellers, "
-          f"{len(d['letters'])} letters")
+          f"{len(d['letters'])} of {d['letters_total']} letters")
     return 0
 
 

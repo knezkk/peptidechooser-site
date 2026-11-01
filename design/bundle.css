@@ -115,6 +115,14 @@ body:has(.sellers-dlg[open]){overflow:hidden}
 .nav-js .nav.open{flex-direction:column;align-items:stretch;border-top:1px solid var(--line);padding-top:6px}
 }
 
+/* Legal filter (pages.md, Home, "Is it legal today?", 1 Nov 2026): a labelled plain input and btn-line "Clear" above
+   the table; "Show all N" (btn-line) under it. Shown only with JavaScript. */
+.legal-filter{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin-bottom:16px}
+.legal-filter[hidden],.legal-more[hidden]{display:none}
+.legal-filter label{font-weight:600;font-size:var(--small-size)}
+.legal-filter .input{flex:1 1 220px;max-width:360px}
+.legal-more{margin:16px 0 0}
+
 /* Inputs */
 .input{min-height:48px;padding:0 14px;border:1.5px solid var(--line-strong);border-radius:var(--radius-control);font:16px var(--font-text);color:var(--ink);background:var(--white);box-sizing:border-box}
 .input:focus-visible{outline:3px solid var(--clinic);outline-offset:1px}

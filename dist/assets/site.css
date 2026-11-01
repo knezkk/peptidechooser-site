@@ -37,6 +37,9 @@ p { margin: 0 0 1em; }
 .nav a:hover { background: var(--neutral-tint); color: var(--ink); }
 .nav a[aria-current="page"] { color: var(--clinic-text); }
 .head-cta { flex: none; }
+/* text for screen readers only (table headers of button columns) */
+.vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.tbl th:has(.vh) { position: relative; } /* keeps the hidden text inside the scrolling table frame */
 
 /* Breadcrumbs */
 .crumbs { font-size: var(--small-size); color: var(--ink-2); padding: 16px 0 0; }
@@ -187,11 +190,6 @@ p { margin: 0 0 1em; }
 .criteria h3 { font: 700 var(--ui-size)/1.3 var(--font-text); margin-bottom: 4px; }
 .criteria p { margin: 0; font-size: var(--small-size); line-height: var(--small-lh); color: var(--ink-2); }
 /* Top pick per goal: one card per goal, the Visit button at the foot with its line under it */
-.picks { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
-.picks li { padding: 18px 20px; border: 1px solid var(--line); border-radius: var(--radius-panel); background: var(--white); display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
-.picks h3 { margin: 0; font-size: var(--small-size); color: var(--ink-2); font-weight: 600; }
-.picks .name { font-weight: 700; }
-.picks .note { color: var(--ink-2); }
 .pick-act { display: inline-flex; flex-direction: column; align-items: flex-start; gap: 4px; margin-top: auto; padding-top: 8px; }
 .tbl .pick-act { align-items: flex-end; padding-top: 0; white-space: nowrap; }
 
@@ -245,7 +243,6 @@ p { margin: 0 0 1em; }
 @media (min-width: 760px) {
   .foot-grid { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: 48px; }
   .criteria { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .picks { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .glossary-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .creators { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
@@ -268,7 +265,6 @@ p { margin: 0 0 1em; }
   .criteria { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 0; margin-top: 0; }
   .criteria li { border-top: 0; border-left: 1px solid var(--line); padding: 0 16px; }
   .trust-links { grid-column: 1 / -1; }
-  .picks { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   .glossary-list { grid-template-columns: repeat(5, minmax(0, 1fr)); }
 }
 /* Phones and tablets (pages.md, Home): the figure, the goal list and every option of the chosen goal fit the first
