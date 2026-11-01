@@ -115,6 +115,34 @@ body:has(.sellers-dlg[open]){overflow:hidden}
 .nav-js .nav.open{flex-direction:column;align-items:stretch;border-top:1px solid var(--line);padding-top:6px}
 }
 
+/* Goal menu in the header (pages.md, Every page, Header, 1 Nov 2026): "Peptides by goal" opens a list of the seven goals
+   under it; Escape, a click outside or choosing a goal closes it. JavaScript off: no button, the label and the goals show
+   as a plain row under the other links. Phones: one more group inside the Menu, always open. */
+.nav-goals{position:relative;display:flex;align-items:center}
+.nav-goals-btn{display:inline-flex;align-items:center;min-height:var(--touch);padding:0 12px;border:0;border-radius:var(--radius-control);background:none;font:600 15px var(--font-text);color:var(--ink);cursor:pointer;white-space:nowrap}
+.nav-goals-btn:hover,.nav-goals.open .nav-goals-btn{background:var(--neutral-tint)}
+.nav-goals-btn:focus-visible{outline:3px solid var(--clinic);outline-offset:2px}
+.goal-menu{list-style:none;margin:0;padding:0}
+.nav-group{font:600 13px var(--font-text);color:var(--ink-2);padding:0 12px;white-space:nowrap}
+html:not(.nav-js) .site-head .wrap{flex-wrap:wrap;padding-top:10px;padding-bottom:10px}
+html:not(.nav-js) .site-head .brand{order:1;flex:none}
+html:not(.nav-js) .head-cta{order:2;margin-left:auto}
+html:not(.nav-js) .nav{order:3;flex-basis:100%;margin-left:0;flex-wrap:wrap;overflow:visible}
+html:not(.nav-js) .nav-goals-btn{display:none}
+html:not(.nav-js) .nav-goals{order:9;flex-basis:100%;flex-wrap:wrap;align-items:center}
+html:not(.nav-js) .goal-menu{display:flex;flex-wrap:wrap}
+.nav-js .nav{overflow:visible}
+.nav-js .nav-group{display:none}
+.nav-js .goal-menu{display:none;position:absolute;top:calc(100% + 6px);left:0;z-index:30;min-width:220px;padding:6px;background:var(--white);border:1px solid var(--line-strong);border-radius:var(--radius-panel);box-shadow:var(--shadow-card)}
+.nav-js .nav-goals.open .goal-menu{display:block}
+.nav-js .goal-menu a{display:flex;width:100%;box-sizing:border-box}
+@media (max-width:760px){
+.nav-js .nav-goals{flex-direction:column;align-items:stretch}
+.nav-js .nav-goals-btn{display:none}
+.nav-js .nav-group{display:block;padding:8px 12px 2px}
+.nav-js .goal-menu{display:block;position:static;min-width:0;padding:0;border:0;box-shadow:none;background:none}
+}
+
 /* Inputs */
 .input{min-height:48px;padding:0 14px;border:1.5px solid var(--line-strong);border-radius:var(--radius-control);font:16px var(--font-text);color:var(--ink);background:var(--white);box-sizing:border-box}
 .input:focus-visible{outline:3px solid var(--clinic);outline-offset:1px}

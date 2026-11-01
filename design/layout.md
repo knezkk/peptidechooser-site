@@ -17,7 +17,7 @@ Nothing on any page may leave its margins or push the page sideways, at any scre
 3. Images, SVG and video: `max-width: 100%`, `height: auto`. No fixed pixel widths on content blocks; only the container has a max width.
 4. Tables never shrink below readable: the ranking table lives inside `.tbl-wrap`, which scrolls sideways inside itself. The page never scrolls sideways.
 5. Buttons: label at most 24 characters. Full width under 640px (except `btn-sm` in tables). A button row wraps onto a new line rather than overflow.
-6. Header nav never scrolls sideways: from 761px it is one row; under 760px it sits behind the "Menu" button (pages.md, Every page, Header) and, with JavaScript off, wraps onto rows under the logo. The wordmark never shrinks below the 16px mark.
+6. Header nav never scrolls sideways: from 761px it is one row (items 8px apart up to 900px), the goal menu opening below it; under 760px it sits behind the "Menu" button (pages.md, Every page, Header) and, with JavaScript off, wraps onto rows under the logo. The wordmark never shrinks below the 16px mark.
 7. Headings use the phone sizes from `tokens.json` under 640px (`display-1` 32px, 28px in the Home hero; `display-2` 26px; `display-3` 22px; `number-xl` 48px).
 8. No element is positioned outside the container (no negative margins, no absolute elements past the edges). Sticky only for the article sidebar, from 900px up.
 

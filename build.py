@@ -72,6 +72,12 @@ function set(o){n.classList.toggle('open',o);b.setAttribute('aria-expanded',o?'t
 b.addEventListener('click',function(){set(!n.classList.contains('open'));});
 n.addEventListener('click',function(e){if(e.target.closest('a'))set(false);});
 document.addEventListener('keydown',function(e){if(e.key==='Escape'&&n.classList.contains('open')){set(false);b.focus();}});})();
+(function(){var w=document.querySelector('.nav-goals'),b=w&&w.querySelector('.nav-goals-btn');if(!b)return;
+function set(o){w.classList.toggle('open',o);b.setAttribute('aria-expanded',o?'true':'false');}
+b.addEventListener('click',function(){set(!w.classList.contains('open'));});
+w.addEventListener('click',function(e){if(e.target.closest('a'))set(false);});
+document.addEventListener('click',function(e){if(w.classList.contains('open')&&!w.contains(e.target))set(false);});
+document.addEventListener('keydown',function(e){if(e.key==='Escape'&&w.classList.contains('open')){set(false);b.focus();}});})();
 </script>"""
 GSAP = "https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5"
 MOTION_JS = f"""<script defer src="{GSAP}/gsap.min.js"></script>
@@ -113,15 +119,20 @@ def tokens_css():
     return "\n".join(out) + "\n"
 
 
+def goal_href(g):
+    return f'/{g["slug"]}/' if g.get("page") else f'/#goals-{g["slug"]}'
+
+
 def nav_items(path):
-    # Design book, Pages and buttons: one item per section of the site. An item appears only when
-    # its section exists; Where to buy and Compare prices join once vendor and compare pages are live.
-    items = [("/#goals", "Peptides"), ("/#legal", "Safety and legal"), ("/#learn", "Learn"),
-             ("/how-we-rate/", "How we rate"), ("/about/", "About")]
+    # Design book, Pages and buttons, Header (owner, 1 Nov 2026): "Peptides by goal" (a menu of the seven goals: a goal
+    # with its own page links there, the others to Home with the goal chosen, /#goals-<slug>), then Legal status, FDA
+    # letters, How we rate, About. Learn comes back when guides exist.
     current = ' aria-current="page"'
-    return "".join(
-        f'<a href="{href}"{current if href == path else ""}>{label}</a>' for href, label in items
-    )
+    goals = "".join(f'<li><a href="{goal_href(g)}">{g["label"]}</a></li>' for g in ALL_GOALS)
+    items = [("/#legal", "Legal status"), ("/#letters", "FDA letters"), ("/how-we-rate/", "How we rate"), ("/about/", "About")]
+    return (f'<div class="nav-goals"><button type="button" class="nav-goals-btn" aria-expanded="false" aria-controls="goal-menu">Peptides by goal</button>'
+            f'<span class="nav-group">Peptides by goal</span><ul class="goal-menu" id="goal-menu">{goals}</ul></div>'
+            + "".join(f'<a href="{href}"{current if href == path else ""}>{label}</a>' for href, label in items))
 
 
 def crumbs(items):
@@ -709,7 +720,11 @@ root.addEventListener('keydown',function(e){var t=e.target;
 if(t.classList&&t.classList.contains('pin')&&(e.key==='Enter'||e.key===' ')){e.preventDefault();pick(t.getAttribute('data-goal'));return;}
 // Arrow keys move to the next or previous chip and choose it (Tab, Enter and Space work as on any button).
 var i=chips.indexOf(t);if(i<0)return;var d={ArrowRight:1,ArrowDown:1,ArrowLeft:-1,ArrowUp:-1}[e.key];if(!d)return;
-e.preventDefault();var n=chips[(i+d+chips.length)%chips.length];n.focus();pick(n.getAttribute('data-goal'));});})();
+e.preventDefault();var n=chips[(i+d+chips.length)%chips.length];n.focus();pick(n.getAttribute('data-goal'));});
+// /#goals-<slug> (the header's goal menu) chooses that goal on load and when the hash changes.
+function fromHash(){var m=location.hash.match(/^#goals-([a-z0-9-]+)$/);
+if(m&&root.querySelector('.goal-item[data-goal="'+m[1]+'"]')){pick(m[1]);root.scrollIntoView();}}
+fromHash();window.addEventListener('hashchange',fromHash);})();
 </script>"""
 
 HOME = f"""
