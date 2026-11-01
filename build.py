@@ -242,9 +242,9 @@ def visit(g, small=False):
     size = " btn-sm" if small else ""
     a = g.get("affiliate") or {}
     if a.get("url") and a.get("name"):
-        return (f'<a class="btn btn-action{size}" href="/out/{a["name"]}/" rel="sponsored">Visit</a>'
+        return (f'<a class="btn btn-action{size}" href="/out/{a["name"]}/" rel="sponsored">Online clinic</a>'
                 f'<span class="paid">Paid link</span>')
-    return f'<span class="btn btn-action{size}" role="button" aria-disabled="true">Visit</span><span class="paid">No paid link yet</span>'
+    return f'<span class="btn btn-action{size}" role="button" aria-disabled="true">Online clinic</span><span class="paid">No paid link yet</span>'
 
 
 def top_pick(g):
@@ -305,7 +305,7 @@ def goal_rows():
     return "\n".join(rows)
 
 
-COMPARE_TH = '<th scope="col"><span class="vh">Compare</span></th><th scope="col"><span class="vh">Visit</span></th>'
+COMPARE_TH = '<th scope="col"><span class="vh">Compare</span></th><th scope="col"><span class="vh">Online clinic</span></th>'
 ALL_GOALS = DATA["goals"]
 LEGAL = DATA["legal"]
 CREATORS = DATA["creators"]
@@ -604,14 +604,14 @@ SELLER_WINDOWS = "".join({window_key(p): seller_window(p) for g in ALL_GOALS for
 
 
 def sellers_button(p):
-    """"Compare N sellers" on a research-use option row with listings, N the distinct sellers across its substances;
+    """"Prices at N shops" on a research-use option row with listings, N the distinct sellers across its substances;
     a link to the window without JS. FDA-approved rows never get it."""
     if not has_window(p):
         return ""
     n = len({r["seller_slug"] for s in subs_of(p) for r in seller_rows(s)})
     key = window_key(p)
     return (f'<a class="btn btn-line btn-sm sellers-open" href="#{key}" data-dlg="{key}">'
-            f'Compare {n} seller{"s" if n != 1 else ""}</a>')
+            f'Prices at {n} shop{"s" if n != 1 else ""}</a>')
 
 
 def opt_price(p, slug):
@@ -651,13 +651,14 @@ def alt_chip(p):
 
 def option_rows(g):
     """One goal's step 2 option rows (pages.md, Home, step 2; also /hair/): name and chips; opened, the does, status
-    and how lines, the price and plan line ending the how line; "Compare N sellers" for research-use rows, Visit on
-    the top pick's row."""
+    and how lines, the price and plan line ending the how line; "Prices at N shops" for research-use rows, "Online clinic" on
+    every FDA-approved row."""
     slug = g["slug"]
     # Each option: name and what it does; status chip and status in plain words; price pad and how you get it
     # (docs/copy-home-2026-10-30.md): one line on wide screens, three short lines on phones.
-    # The top pick (same rule as "Top pick per goal") gets the goal's Visit button on its own row.
-    pick = next((p for p in g["peptides"] if p["status"].startswith("FDA approved") and p.get("top_pick", True)), None)
+    # Every FDA-approved option (not marked top_pick: false) gets the goal's "Online clinic" button on its own row, so
+    # each approved medicine shows where to get it (owner, 1 Nov 2026).
+    approved = [p for p in g["peptides"] if p["status"].startswith("FDA approved") and p.get("top_pick", True)]
     rows = []
     for p in g["peptides"]:
         pad = opt_price(p, slug)
@@ -667,7 +668,7 @@ def option_rows(g):
         cost = price_sentence(p, pad) + (
             " " + plan_line(g, "plan-in").replace(")<sup>", ").<sup>", 1) if plan and p.get("substance") == plan["substance_slug"] else "")
         sb = sellers_button(p)
-        act = (f'<span class="pick-act">{sb}{visit(g, small=True)}</span>' if p is pick else
+        act = (f'<span class="pick-act">{sb}{visit(g, small=True)}</span>' if p in approved else
                f'<span class="pick-act">{sb}</span>' if sb else "")
         rows.append(f'<li class="opt"><details class="opt-more"><summary class="opt-sum"><span class="name">{p["name"]}</span>'
                     f'<span class="opt-chips">{status_chip(p)}{alt_chip(p)}</span></summary>'
