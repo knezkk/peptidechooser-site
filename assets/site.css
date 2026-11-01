@@ -198,6 +198,8 @@ p { margin: 0 0 1em; }
 /* Top pick per goal: one card per goal, the Visit button at the foot with its line under it */
 .pick-act { display: inline-flex; flex-direction: column; align-items: flex-start; gap: 4px; margin-top: auto; padding-top: 8px; }
 .tbl .pick-act { align-items: flex-end; padding-top: 0; white-space: nowrap; }
+/* the grey line where a row has no button: why there is none, at most two short lines */
+.pick-act .no-link { max-width: 140px; text-align: right; }
 
 /* Tables */
 .tbl .act { text-align: right; }

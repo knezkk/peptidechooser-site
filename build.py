@@ -669,7 +669,9 @@ def option_rows(g):
             " " + plan_line(g, "plan-in").replace(")<sup>", ").<sup>", 1) if plan and p.get("substance") == plan["substance_slug"] else "")
         sb = sellers_button(p)
         act = (f'<span class="pick-act">{sb}{visit(g, small=True)}</span>' if p in approved else
-               f'<span class="pick-act">{sb}</span>' if sb else "")
+               f'<span class="pick-act">{sb}</span>' if sb else
+               # a row with no button says why in one grey line where the button would be (owner, 1 Nov 2026)
+               f'<span class="pick-act"><span class="paid no-link">{p["no_link"]}</span></span>' if p.get("no_link") else "")
         rows.append(f'<li class="opt"><details class="opt-more"><summary class="opt-sum"><span class="name">{p["name"]}</span>'
                     f'<span class="opt-chips">{status_chip(p)}{alt_chip(p)}</span></summary>'
                     f'<div class="opt-body"><p class="opt-does">{p["does"]}{refs(p, slug, price=not pad)}</p>'
