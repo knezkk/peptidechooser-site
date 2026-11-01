@@ -107,17 +107,18 @@
       "intro": "Finasteride and minoxidil are the only FDA-approved options. Copper peptide serums are cosmetics; injectable peptides sold for hair are not approved for any use.",
       "peptides": [
         {
-          "name": "Finasteride 1 mg (proven alternative)",
+          "name": "Finasteride 1 mg",
           "status": "FDA approved",
           "chip": "ok",
           "does": "A daily pill. Slows hair loss and regrows some hair in most men; not for women who may become pregnant.",
           "how": "Prescription, from an online clinic or your doctor.",
           "status_plain": "FDA approved for hair loss. From $10/mo (generic, pharmacy coupon).",
           "price": "hair",
-          "substance": "finasteride"
+          "substance": "finasteride",
+          "proven_alternative": true
         },
         {
-          "name": "Minoxidil (proven alternative)",
+          "name": "Minoxidil",
           "status": "FDA approved",
           "chip": "ok",
           "does": "A liquid or foam you put on the scalp twice a day. Regrows hair for men and women; works while you keep using it.",
@@ -129,7 +130,8 @@
             "url": "https://www.keeps.com/",
             "checked": "2026-10-30"
           },
-          "substance": "minoxidil"
+          "substance": "minoxidil",
+          "proven_alternative": true
         },
         {
           "name": "GHK-Cu copper peptide serum",
@@ -165,12 +167,13 @@
       "intro": "Peptide creams and serums are cosmetics: legal to sell without approval, and judged on their own studies, which are small. The proven prescription option for wrinkles is tretinoin.",
       "peptides": [
         {
-          "name": "Tretinoin cream (proven alternative)",
+          "name": "Tretinoin cream",
           "status": "FDA approved",
           "chip": "ok",
           "does": "A nightly prescription cream. Reduces fine wrinkles and evens skin over months; can irritate at first.",
           "how": "Prescription (dermatologist or online clinic).",
-          "status_plain": "FDA approved for fine wrinkles."
+          "status_plain": "FDA approved for fine wrinkles.",
+          "proven_alternative": true
         },
         {
           "name": "GHK-Cu copper peptide",
@@ -426,7 +429,8 @@
           "does": "Not a peptide: a vitamin-B3-derived molecule sold by clinics as shots or drips for energy.",
           "how": "Clinics and compounding pharmacies.",
           "status_plain": "Not FDA approved.",
-          "substance": "nad-plus"
+          "substance": "nad-plus",
+          "not_peptide": true
         }
       ],
       "short": "Longevity and energy",
@@ -628,19 +632,23 @@
   "glossary": [
     {
       "term": "FDA approved",
-      "text": "the FDA checked that it works and is safe for this use, and every batch is inspected. Prescription unless marked otherwise."
+      "text": "the FDA checked that it works and is safe for this use, and every batch is inspected. Prescription unless marked otherwise.",
+      "chip": "ok"
     },
     {
       "term": "Cosmetic",
-      "text": "legal to sell without approval; nobody has to prove it works. Fine on your skin, no claims beyond looks."
+      "text": "legal to sell without approval; nobody has to prove it works. Fine on your skin, no claims beyond looks.",
+      "chip": "info"
     },
     {
       "term": "Not FDA approved, pharmacy-made",
-      "text": "a licensed pharmacy mixes it for you on prescription. Legal in limited cases; no batch testing by the FDA."
+      "text": "a licensed pharmacy mixes it for you on prescription. Legal in limited cases; no batch testing by the FDA.",
+      "chip": "warn"
     },
     {
       "term": "Not approved",
-      "text": "no approved product exists. Shops sell it \"for research\". Buying it is not a crime for you, but nobody has checked what is in the vial. We never link to these shops."
+      "text": "no approved product exists. Shops sell it \"for research\". Buying it is not a crime for you, but nobody has checked what is in the vial. We never link to these shops.",
+      "chip": "neutral"
     },
     {
       "term": "Is it safe?",
