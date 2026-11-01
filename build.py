@@ -615,9 +615,31 @@ def opt_price(p, slug):
     return f'<span class="price-pad">from ${usd}/mo</span><sup><a class="ref" href="{href}" aria-label="Source {n}">{n}</a></sup>'
 
 
+def price_sentence(p, pad):
+    """The option's price as a sentence for its "how" line, with the footnote of its source: the price sentence of
+    `status_plain` when the copy has one ("From $10/mo (generic, pharmacy coupon)."), else "From $X/mo."."""
+    if not pad:
+        return ""
+    sup = re.search(r"<sup>.*</sup>", pad).group(0)
+    said = " ".join(x for x in p["status_plain"].replace(". ", ".\n").split("\n") if "$" in x).strip()
+    if not said:
+        said = re.search(r"from \$[\d.,]+/mo", pad).group(0).capitalize() + "."
+    return f" {said}{sup}"
+
+
+def alt_chip(p):
+    """"Proven alternative" (chip-info) after the status chip, for an option that is not a peptide but is in the list
+    as the proven choice (`proven_alternative` in data/site.json); "Not a peptide" (chip-neutral) for one sold
+    alongside peptides that is not one (`not_peptide`) (owner, 1 Nov 2026)."""
+    if p.get("proven_alternative"):
+        return '<span class="chip chip-info">Proven alternative</span>'
+    return '<span class="chip chip-neutral">Not a peptide</span>' if p.get("not_peptide") else ""
+
+
 def option_rows(g):
-    """One goal's step 2 option rows (pages.md, Home, step 2; also /hair/): name, chip, price with the plan line,
-    "Compare N sellers" for research-use rows, Visit on the top pick's row."""
+    """One goal's step 2 option rows (pages.md, Home, step 2; also /hair/): name and chips; opened, the does, status
+    and how lines, the price and plan line ending the how line; "Compare N sellers" for research-use rows, Visit on
+    the top pick's row."""
     slug = g["slug"]
     # Each option: name and what it does; status chip and status in plain words; price pad and how you get it
     # (docs/copy-home-2026-10-30.md): one line on wide screens, three short lines on phones.
@@ -626,17 +648,18 @@ def option_rows(g):
     rows = []
     for p in g["peptides"]:
         pad = opt_price(p, slug)
-        # the goal's cheapest online-clinic plan sits under the price of the option it is for
+        # The price and the goal's cheapest online-clinic plan are the last items of the "how" line, with their
+        # footnotes; the right side of the row keeps only the button (owner, 1 Nov 2026).
         plan = GOAL_PLANS.get(slug)
-        cell = (f'<span class="price-main">{pad}</span>' if pad else "") + (
-            plan_line(g, "plan-line") if plan and p.get("substance") == plan["substance_slug"] else "")
+        cost = price_sentence(p, pad) + (
+            " " + plan_line(g, "plan-in").replace(")<sup>", ").<sup>", 1) if plan and p.get("substance") == plan["substance_slug"] else "")
         sb = sellers_button(p)
         act = (f'<span class="pick-act">{sb}{visit(g, small=True)}</span>' if p is pick else
                f'<span class="pick-act">{sb}</span>' if sb else "")
         rows.append(f'<li class="opt"><details class="opt-more"><summary class="opt-sum"><span class="name">{p["name"]}</span>'
-                    f'{status_chip(p)}<span class="opt-price">{cell}</span></summary>'
+                    f'<span class="opt-chips">{status_chip(p)}{alt_chip(p)}</span></summary>'
                     f'<div class="opt-body"><p class="opt-does">{p["does"]}{refs(p, slug, price=not pad)}</p>'
-                    f'<p class="opt-status">{plain_status(p, drop_price=bool(pad))}</p><p class="opt-how">{p["how"]}</p></div></details>{act}</li>')
+                    f'<p class="opt-status">{plain_status(p, drop_price=bool(pad))}</p><p class="opt-how">{p["how"]}{cost}</p></div></details>{act}</li>')
     return rows
 
 
@@ -705,7 +728,13 @@ LETTERS_SECTION = f"""
 """ if LETTERS else ""
 FIGURE = figure_svg()
 GOAL_CHIPS, STEP_COMPARE, GOAL_TITLES = rail()
-GLOSSARY = "".join(f'<div><dt>{t["term"]}</dt><dd>{t["text"]}</dd></div>' for t in DATA["glossary"])
+def chip_title(t):
+    return f'<span class="chip chip-{t["chip"]}">{t["term"]}</span>' if t.get("chip") else t["term"]
+
+
+# Each label's title carries the chip the option rows use for that status (`chip` in data/site.json); "Is it safe?" has none.
+GLOSSARY = "".join(
+    f'<div><dt>{chip_title(t)}</dt><dd>{t["text"]}</dd></div>' for t in DATA["glossary"])
 
 CREATOR_ROWS = "".join(
     f'<li><a href="{c["url"]}" rel="nofollow noopener">{c["name"]}</a><span class="small">{c["what"]}</span></li>' for c in CREATORS["rows"])
@@ -765,6 +794,10 @@ HOME = f"""
     <p class="what-is"><strong>What is a peptide?</strong> A short chain of amino acids. Some are approved medicines (semaglutide, bremelanotide), some are cosmetics in creams, and many are sold online with no approval and no testing. This site tells you which is which, what it costs, and what the proven alternative is.</p>
     <p class="lede hero-after">For each goal we put peptide products next to the FDA-approved alternatives and show what the evidence says, what it costs per month and how you would get it. We compare; we never sell.</p>
     </div>
+    <section class="glossary" aria-labelledby="glossary-h">
+      <h2 id="glossary-h">What the labels mean</h2>
+      <dl class="glossary-list">{GLOSSARY}</dl>
+    </section>
     <section class="rate-strip" aria-labelledby="rate-h">
       <div class="rate-hd"><h2 id="rate-h">How we rate</h2><p>Every product and seller is judged on the same five criteria. We publish them so you can check our work.</p><a href="/how-we-rate/">Read the full method</a></div>
       <ul class="criteria">
@@ -775,10 +808,6 @@ HOME = f"""
         <li><h3>Transparency</h3><p>Who runs the company, where it ships from, and whether paid placements are labeled.</p></li>
       </ul>
       <nav class="trust-links" aria-label="How we work"><a href="/disclosure/">How we make money</a><a href="/about/">Who checks our facts</a><a href="/corrections/">Mistakes we fixed</a><a href="#sources">Sources</a></nav>
-    </section>
-    <section class="glossary" aria-labelledby="glossary-h">
-      <h2 id="glossary-h">What the labels mean</h2>
-      <dl class="glossary-list">{GLOSSARY}</dl>
     </section>
   </div>
 </section>
