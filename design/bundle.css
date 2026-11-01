@@ -142,6 +142,13 @@ html:not(.nav-js) .goal-menu{display:flex;flex-wrap:wrap}
 .nav-js .nav-group{display:block;padding:8px 12px 2px}
 .nav-js .goal-menu{display:block;position:static;min-width:0;padding:0;border:0;box-shadow:none;background:none}
 }
+/* Legal filter (pages.md, Home, "Is it legal today?", 1 Nov 2026): a labelled plain input and btn-line "Clear" above
+   the table; "Show all N" (btn-line) under it. Shown only with JavaScript. */
+.legal-filter{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin-bottom:16px}
+.legal-filter[hidden],.legal-more[hidden]{display:none}
+.legal-filter label{font-weight:600;font-size:var(--small-size)}
+.legal-filter .input{flex:1 1 220px;max-width:360px}
+.legal-more{margin:16px 0 0}
 
 /* Inputs */
 .input{min-height:48px;padding:0 14px;border:1.5px solid var(--line-strong);border-radius:var(--radius-control);font:16px var(--font-text);color:var(--ink);background:var(--white);box-sizing:border-box}

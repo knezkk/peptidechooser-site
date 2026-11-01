@@ -271,39 +271,41 @@ def sold_peptide(g):
     return None
 
 
-def top_picks():
-    cards = []
+def goal_rows():
+    """"Compare by goal" (owner, 1 Nov 2026: one table for all seven goals, replacing "Top pick per goal"): the goal,
+    its best proven option (the top-pick rule), the price where a priced option or plan exists, the FDA status chip,
+    "Compare" for a goal with its own page, and Visit for a goal with an approved option."""
+    rows = []
     for g in ALL_GOALS:
         pick = top_pick(g)
         if pick:
-            body = f'<span class="name">{pick[0]}</span>{pick[1]}<span class="pick-act">{visit(g)}</span>'
+            option, chip = f'<span class="name">{pick[0]}</span>', pick[1]
         else:
             sold = sold_peptide(g)
-            body = '<span class="note">No FDA-approved option</span>' + (
-                f'<span class="name">{sold[0]}</span>{sold[1]}<span class="note">Sold by research-use shops; we do not link to them.</span>'
-                if sold else "")
-        cards.append(f'<li><h3>{g["label"]}</h3>{body}</li>')
-    return "".join(cards)
-
-
-def goal_rows():
-    rows = []
-    for g in LIVE_GOALS:
-        chip = f'<span class="chip chip-{g["fda_chip"]}">{g["fda"]}</span>'
-        has_page = bool(g.get("page"))
-        compare = f'<td class="act"><a class="btn btn-ink btn-sm" href="/{g["slug"]}/">Compare</a></td>' if has_page else ""
+            option = '<span class="note">No FDA-approved option</span>' + (f'<span class="name">{sold[0]}</span><span class="note">Sold by research-use shops; we do not link to them.</span>' if sold else "")
+            chip = sold[1] if sold else ""
+        price = ""
+        if g["slug"] in PRICE_REF:
+            n = PRICE_REF[g["slug"]]
+            price = (f'<span class="num-l">${g["price_from_usd"]}<span class="num-unit">/mo</span></span>'
+                     f'<sup><a class="ref" href="#src-price-{g["slug"]}" aria-label="Source {n}">{n}</a></sup><span class="note">{g["price_note"]}</span>')
+        elif pick and opt_price(pick[2], g["slug"]):
+            price = opt_price(pick[2], g["slug"])
+        price += plan_line(g, "note")
+        compare = f'<a class="btn btn-ink btn-sm" href="/{g["slug"]}/">Compare</a>' if g.get("page") else ""
+        act = f'<span class="pick-act">{visit(g, small=True)}</span>' if pick else ""
         rows.append(f"""<tr>
   <td><span class="name">{g["label"]}</span></td>
-  <td><span class="name">{g["best_option"]}</span><span class="note">{g["options_checked"]} options checked</span></td>
-  <td><span class="num-l">${g["price_from_usd"]}<span class="num-unit">/mo</span></span><span class="note">{g["price_note"]}</span>{plan_line(g, "note")}</td>
+  <td>{option}</td>
+  <td>{price}</td>
   <td>{chip}</td>
-  {compare}
-  <td class="act"><span class="pick-act">{visit(g, small=True)}</span></td>
+  <td class="act">{compare}</td>
+  <td class="act">{act}</td>
 </tr>""")
     return "\n".join(rows)
 
 
-COMPARE_TH = ('<th scope="col"></th>' if any(g.get("page") for g in LIVE_GOALS) else "") + '<th scope="col"></th>'
+COMPARE_TH = '<th scope="col"><span class="vh">Compare</span></th><th scope="col"><span class="vh">Visit</span></th>'
 ALL_GOALS = DATA["goals"]
 LEGAL = DATA["legal"]
 CREATORS = DATA["creators"]
@@ -714,11 +716,25 @@ def legal_rows():
                     f'<sup>{r["src"]}</sup></a>') if r.get("note_with_db") else ""
             out.append(f'<tr><td><span class="name">{s["name"]}</span></td><td><span class="chip chip-{s["chip"]}">{s["label"]}</span></td>'
                        f'<td>{s["sentence"]}{" " + r["use"] if r.get("use") else ""} <a class="ref" href="{s["url"]}" rel="nofollow">FDA source</a>, {nice_date(s["seen"])}{note}</td></tr>')
+    # Every other substance with a database status gets its own row (owner, 1 Nov 2026: the table lists every substance
+    # the database has a status for, plus the hand rows it lacks), then all rows are sorted by name.
+    shown = {slug for r in LEGAL["rows"] for slug in r.get("substances", [])
+             if all(db_status(x) for x in r.get("substances", [])) and LEGAL_DB}
+    for slug in sorted({r["substance_slug"] for r in LEGAL_DB or []} - shown):
+        s = db_status(slug)
+        if not s:
+            continue
+        seen.append(s["seen"])
+        out.append(f'<tr><td><span class="name">{s["name"]}</span></td><td><span class="chip chip-{s["chip"]}">{s["label"]}</span></td>'
+                   f'<td>{s["sentence"]} <a class="ref" href="{s["url"]}" rel="nofollow">FDA source</a>, {nice_date(s["seen"])}</td></tr>')
+    out.sort(key=lambda row: re.sub(r"<[^>]+>", "", row.split("</td>")[0]).strip().lower())
     checked = nice_date(max(seen)) if seen else nice_date(LEGAL["checked"])
-    return "".join(out), checked
+    return out, checked
 
 
-LEGAL_ROWS, LEGAL_CHECKED = legal_rows()
+LEGAL_LIST, LEGAL_CHECKED = legal_rows()
+# The first 12 rows show; the rest carry class "more" and stay hidden until "Show all N" (only with JavaScript).
+LEGAL_ROWS = "".join(r if i < 12 else r.replace("<tr>", '<tr class="more">', 1) for i, r in enumerate(LEGAL_LIST))
 
 # Latest FDA warning letters (pages.md, Home, after "Is it legal today?"): from site.seller_enforcement through
 # tools/pull_data.py (site.fda_letters), newest first. Without `letters` in site.json the section is not drawn (never drawn empty).
@@ -734,6 +750,7 @@ LETTERS_SECTION = f"""
       <thead><tr><th scope="col">Date</th><th scope="col">Seller</th><th scope="col" class="subj">Subject</th><th scope="col">Source</th></tr></thead>
       <tbody>{LETTER_ROWS}</tbody>
     </table></div>
+    {f'<p class="small" style="margin-top:16px">{DATA["letters_total"]} letters to sellers in our database since {nice_date(DATA["letters_oldest"])}.</p>' if DATA.get("letters_total") and DATA.get("letters_oldest") else ""}
   </div>
 </section>
 """ if LETTERS else ""
@@ -749,6 +766,18 @@ GLOSSARY = "".join(
 
 CREATOR_ROWS = "".join(
     f'<li><a href="{c["url"]}" rel="nofollow noopener">{c["name"]}</a><span class="small">{c["what"]}</span></li>' for c in CREATORS["rows"])
+
+# "Is it legal today?" (pages.md, Home): with JavaScript, a name filter above the table and only the first 12 rows until
+# "Show all N"; typing shows every matching row. Without JavaScript the whole table shows and the controls stay hidden.
+LEGAL_JS = """<script>
+(function(){var tb=document.getElementById('legal-table');if(!tb)return;var f=document.querySelector('.legal-filter'),q=document.getElementById('legal-q'),
+c=document.getElementById('legal-clear'),m=document.querySelector('.legal-more'),all=document.getElementById('legal-all'),rows=[].slice.call(tb.tBodies[0].rows),open=false;
+function draw(){var s=q.value.trim().toLowerCase();rows.forEach(function(r){var name=r.cells[0].textContent.toLowerCase();
+r.hidden=s?name.indexOf(s)<0:(!open&&r.classList.contains('more'));});if(m)m.hidden=open||!!s;}
+f.hidden=false;if(m)m.hidden=false;q.addEventListener('input',draw);
+c.addEventListener('click',function(){q.value='';draw();q.focus();});
+if(all)all.addEventListener('click',function(){open=true;draw();});draw();})();
+</script>"""
 
 # The seller window (pages.md, Home): with JavaScript the windows hide until "Compare N sellers" opens one as a modal
 # dialog (Esc and "Close" are the dialog's own; a click on the dimmed area outside closes it; focus returns to the button).
@@ -829,7 +858,7 @@ HOME = f"""
 
 <section class="section" id="compare">
   <div class="wrap">
-    <div class="sec-hd"><div><h2>Compare by goal</h2><p>One row per published goal. The best proven option is the cheapest one the FDA has approved for that use.</p></div></div>
+    <div class="sec-hd"><div><h2>Compare by goal</h2><p>One row per goal. The best proven option is the cheapest one the FDA has approved for that use.</p></div></div>
     <div class="tbl-wrap"><table class="tbl">
       <thead><tr><th scope="col">Goal</th><th scope="col">Best proven option</th><th scope="col">Price from</th><th scope="col">FDA status</th>{COMPARE_TH}</tr></thead>
       <tbody>{goal_rows()}</tbody>
@@ -841,21 +870,17 @@ HOME = f"""
 <section class="band-2" id="legal">
   <div class="wrap">
     <div class="sec-hd"><div><h2>Is it legal today?</h2><p>FDA status of the peptides people ask about most, each with its source. Checked {LEGAL_CHECKED}.</p></div></div>
-    <div class="tbl-wrap"><table class="tbl">
+    <div class="legal-filter" hidden><label for="legal-q">Filter by name</label><input class="input" id="legal-q" type="text" autocomplete="off"><button type="button" class="btn btn-line btn-sm" id="legal-clear">Clear</button></div>
+    <div class="tbl-wrap"><table class="tbl tbl-legal" id="legal-table">
       <thead><tr><th scope="col">Peptide</th><th scope="col">Status</th><th scope="col">What that means</th></tr></thead>
       <tbody>{LEGAL_ROWS}</tbody>
     </table></div>
+    {f'<p class="legal-more" hidden><button type="button" class="btn btn-line btn-sm" id="legal-all">Show all {len(LEGAL_LIST)}</button></p>' if len(LEGAL_LIST) > 12 else ""}
     <p class="small" style="margin-top:16px">Approved means the FDA approved a product containing it for a stated use. Not approved means no approved product exists; buying it for yourself is not a crime in the US, but nobody has checked what is in the vial.</p>
   </div>
 </section>
 
 {LETTERS_SECTION}
-<section class="section" id="top-picks">
-  <div class="wrap">
-    <div class="sec-hd"><div><h2>Top pick per goal</h2></div></div>
-    <ul class="picks">{top_picks()}</ul>
-  </div>
-</section>
 
 <section class="section" id="learn">
   <div class="wrap">
@@ -875,6 +900,7 @@ HOME = f"""
 </section>
 {MAP_JS}
 {SELLERS_JS}
+{LEGAL_JS}
 """
 
 CORRECTIONS = f"""

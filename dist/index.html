@@ -90,16 +90,64 @@ gtag('js',new Date());gtag('config','G-12CV2HEYW6',{anonymize_ip:true});
 
 <section class="section" id="compare">
   <div class="wrap">
-    <div class="sec-hd"><div><h2>Compare by goal</h2><p>One row per published goal. The best proven option is the cheapest one the FDA has approved for that use.</p></div></div>
+    <div class="sec-hd"><div><h2>Compare by goal</h2><p>One row per goal. The best proven option is the cheapest one the FDA has approved for that use.</p></div></div>
     <div class="tbl-wrap"><table class="tbl">
-      <thead><tr><th scope="col">Goal</th><th scope="col">Best proven option</th><th scope="col">Price from</th><th scope="col">FDA status</th><th scope="col"></th><th scope="col"></th></tr></thead>
+      <thead><tr><th scope="col">Goal</th><th scope="col">Best proven option</th><th scope="col">Price from</th><th scope="col">FDA status</th><th scope="col"><span class="vh">Compare</span></th><th scope="col"><span class="vh">Visit</span></th></tr></thead>
       <tbody><tr>
   <td><span class="name">Hair loss</span></td>
-  <td><span class="name">Finasteride 1 mg (generic, prescription)</span><span class="note">3 options checked</span></td>
-  <td><span class="num-l">$10<span class="num-unit">/mo</span></span><span class="note">with a pharmacy coupon; average cash price $45.80</span></td>
+  <td><span class="name">Finasteride 1 mg and minoxidil</span></td>
+  <td><span class="num-l">$10<span class="num-unit">/mo</span></span><sup><a class="ref" href="#src-price-hair" aria-label="Source 8">8</a></sup><span class="note">with a pharmacy coupon; average cash price $45.80</span></td>
   <td><span class="chip chip-ok">FDA approved</span></td>
   <td class="act"><a class="btn btn-ink btn-sm" href="/hair/">Compare</a></td>
   <td class="act"><span class="pick-act"><span class="btn btn-action btn-sm" role="button" aria-disabled="true">Visit</span><span class="paid">No paid link yet</span></span></td>
+</tr>
+<tr>
+  <td><span class="name">Skin</span></td>
+  <td><span class="name">Tretinoin cream</span></td>
+  <td></td>
+  <td><span class="chip chip-ok">FDA approved</span></td>
+  <td class="act"></td>
+  <td class="act"><span class="pick-act"><span class="btn btn-action btn-sm" role="button" aria-disabled="true">Visit</span><span class="paid">No paid link yet</span></span></td>
+</tr>
+<tr>
+  <td><span class="name">Weight loss</span></td>
+  <td><span class="name">Semaglutide (Wegovy)</span></td>
+  <td></td>
+  <td><span class="chip chip-ok">FDA approved</span></td>
+  <td class="act"></td>
+  <td class="act"><span class="pick-act"><span class="btn btn-action btn-sm" role="button" aria-disabled="true">Visit</span><span class="paid">No paid link yet</span></span></td>
+</tr>
+<tr>
+  <td><span class="name">Muscle growth</span></td>
+  <td><span class="note">No FDA-approved option</span><span class="name">CJC-1295 / ipamorelin</span><span class="note">Sold by research-use shops; we do not link to them.</span></td>
+  <td></td>
+  <td><span class="chip chip-neutral">Not approved</span></td>
+  <td class="act"></td>
+  <td class="act"></td>
+</tr>
+<tr>
+  <td><span class="name">Healing and joints</span></td>
+  <td><span class="note">No FDA-approved option</span><span class="name">BPC-157</span><span class="note">Sold by research-use shops; we do not link to them.</span></td>
+  <td></td>
+  <td><span class="chip chip-neutral">Not approved; FDA proposed excluding it from compounding (Jul 2026)</span></td>
+  <td class="act"></td>
+  <td class="act"></td>
+</tr>
+<tr>
+  <td><span class="name">Sex drive</span></td>
+  <td><span class="name">Bremelanotide (Vyleesi)</span></td>
+  <td></td>
+  <td><span class="chip chip-ok">FDA approved</span></td>
+  <td class="act"></td>
+  <td class="act"><span class="pick-act"><span class="btn btn-action btn-sm" role="button" aria-disabled="true">Visit</span><span class="paid">No paid link yet</span></span></td>
+</tr>
+<tr>
+  <td><span class="name">Energy and aging</span></td>
+  <td><span class="note">No FDA-approved option</span><span class="name">Epitalon</span><span class="note">Sold by research-use shops; we do not link to them.</span></td>
+  <td></td>
+  <td><span class="chip chip-neutral">Not approved; FDA proposed excluding it from compounding (Jul 2026)</span></td>
+  <td class="act"></td>
+  <td class="act"></td>
 </tr></tbody>
     </table></div>
     <p class="small" style="margin-top:16px">Every claim links to its source. Prices checked 30 Oct 2026.</p>
@@ -109,21 +157,17 @@ gtag('js',new Date());gtag('config','G-12CV2HEYW6',{anonymize_ip:true});
 <section class="band-2" id="legal">
   <div class="wrap">
     <div class="sec-hd"><div><h2>Is it legal today?</h2><p>FDA status of the peptides people ask about most, each with its source. Checked 30 Oct 2026.</p></div></div>
-    <div class="tbl-wrap"><table class="tbl">
+    <div class="legal-filter" hidden><label for="legal-q">Filter by name</label><input class="input" id="legal-q" type="text" autocomplete="off"><button type="button" class="btn btn-line btn-sm" id="legal-clear">Clear</button></div>
+    <div class="tbl-wrap"><table class="tbl tbl-legal" id="legal-table">
       <thead><tr><th scope="col">Peptide</th><th scope="col">Status</th><th scope="col">What that means</th></tr></thead>
-      <tbody><tr><td><span class="name">Semaglutide (Ozempic, Wegovy)</span></td><td><span class="chip chip-ok">FDA approved</span></td><td>weight management and type 2 diabetes, prescription <a class="ref" href="#src-1" aria-label="Source 1"><sup>1</sup></a></td></tr><tr><td><span class="name">Tirzepatide (Zepbound, Mounjaro)</span></td><td><span class="chip chip-ok">FDA approved</span></td><td>weight management and type 2 diabetes, prescription <a class="ref" href="#src-2" aria-label="Source 2"><sup>2</sup></a></td></tr><tr><td><span class="name">Bremelanotide (Vyleesi)</span></td><td><span class="chip chip-ok">FDA approved</span></td><td>low sexual desire in premenopausal women, prescription <a class="ref" href="#src-3" aria-label="Source 3"><sup>3</sup></a></td></tr><tr><td><span class="name">Tesamorelin (Egrifta)</span></td><td><span class="chip chip-ok">FDA approved</span></td><td>excess belly fat in HIV, prescription; not approved for muscle or aging <a class="ref" href="#src-4" aria-label="Source 4"><sup>4</sup></a></td></tr><tr><td><span class="name">GHK-Cu, Matrixyl, Argireline (creams and serums)</span></td><td><span class="chip chip-info">Cosmetic</span></td><td>cosmetics are regulated but do not need FDA approval to be sold <a class="ref" href="#src-5" aria-label="Source 5"><sup>5</sup></a></td></tr><tr><td><span class="name">BPC-157</span></td><td><span class="chip chip-neutral">Not approved</span></td><td>FDA advisory committee reviewed it for compounding on 23 Jul 2026; FDA proposed not to allow it <a class="ref" href="#src-6" aria-label="Source 6"><sup>6</sup></a></td></tr><tr><td><span class="name">TB-500</span></td><td><span class="chip chip-neutral">Not approved</span></td><td>same July 2026 review; FDA proposed not to allow it <a class="ref" href="#src-6" aria-label="Source 6"><sup>6</sup></a></td></tr><tr><td><span class="name">MOTS-c, Epitalon</span></td><td><span class="chip chip-neutral">Not approved</span></td><td>same July 2026 review; FDA proposed not to allow them <a class="ref" href="#src-6" aria-label="Source 6"><sup>6</sup></a></td></tr><tr><td><span class="name">Retatrutide</span></td><td><span class="chip chip-neutral">Not approved</span></td><td>in clinical trials; no approved product <a class="ref" href="#src-7" aria-label="Source 7"><sup>7</sup></a></td></tr></tbody>
+      <tbody><tr><td><span class="name">BPC-157</span></td><td><span class="chip chip-neutral">Not approved</span></td><td>FDA advisory committee reviewed it for compounding on 23 Jul 2026; FDA proposed not to allow it <a class="ref" href="#src-6" aria-label="Source 6"><sup>6</sup></a></td></tr><tr><td><span class="name">Bremelanotide (Vyleesi)</span></td><td><span class="chip chip-ok">FDA approved</span></td><td>low sexual desire in premenopausal women, prescription <a class="ref" href="#src-3" aria-label="Source 3"><sup>3</sup></a></td></tr><tr><td><span class="name">GHK-Cu, Matrixyl, Argireline (creams and serums)</span></td><td><span class="chip chip-info">Cosmetic</span></td><td>cosmetics are regulated but do not need FDA approval to be sold <a class="ref" href="#src-5" aria-label="Source 5"><sup>5</sup></a></td></tr><tr><td><span class="name">MOTS-c, Epitalon</span></td><td><span class="chip chip-neutral">Not approved</span></td><td>same July 2026 review; FDA proposed not to allow them <a class="ref" href="#src-6" aria-label="Source 6"><sup>6</sup></a></td></tr><tr><td><span class="name">Retatrutide</span></td><td><span class="chip chip-neutral">Not approved</span></td><td>in clinical trials; no approved product <a class="ref" href="#src-7" aria-label="Source 7"><sup>7</sup></a></td></tr><tr><td><span class="name">Semaglutide (Ozempic, Wegovy)</span></td><td><span class="chip chip-ok">FDA approved</span></td><td>weight management and type 2 diabetes, prescription <a class="ref" href="#src-1" aria-label="Source 1"><sup>1</sup></a></td></tr><tr><td><span class="name">TB-500</span></td><td><span class="chip chip-neutral">Not approved</span></td><td>same July 2026 review; FDA proposed not to allow it <a class="ref" href="#src-6" aria-label="Source 6"><sup>6</sup></a></td></tr><tr><td><span class="name">Tesamorelin (Egrifta)</span></td><td><span class="chip chip-ok">FDA approved</span></td><td>excess belly fat in HIV, prescription; not approved for muscle or aging <a class="ref" href="#src-4" aria-label="Source 4"><sup>4</sup></a></td></tr><tr><td><span class="name">Tirzepatide (Zepbound, Mounjaro)</span></td><td><span class="chip chip-ok">FDA approved</span></td><td>weight management and type 2 diabetes, prescription <a class="ref" href="#src-2" aria-label="Source 2"><sup>2</sup></a></td></tr></tbody>
     </table></div>
+    
     <p class="small" style="margin-top:16px">Approved means the FDA approved a product containing it for a stated use. Not approved means no approved product exists; buying it for yourself is not a crime in the US, but nobody has checked what is in the vial.</p>
   </div>
 </section>
 
 
-<section class="section" id="top-picks">
-  <div class="wrap">
-    <div class="sec-hd"><div><h2>Top pick per goal</h2></div></div>
-    <ul class="picks"><li><h3>Hair loss</h3><span class="name">Finasteride 1 mg and minoxidil</span><span class="chip chip-ok">FDA approved</span><span class="pick-act"><span class="btn btn-action" role="button" aria-disabled="true">Visit</span><span class="paid">No paid link yet</span></span></li><li><h3>Skin</h3><span class="name">Tretinoin cream</span><span class="chip chip-ok">FDA approved</span><span class="pick-act"><span class="btn btn-action" role="button" aria-disabled="true">Visit</span><span class="paid">No paid link yet</span></span></li><li><h3>Weight loss</h3><span class="name">Semaglutide (Wegovy)</span><span class="chip chip-ok">FDA approved</span><span class="pick-act"><span class="btn btn-action" role="button" aria-disabled="true">Visit</span><span class="paid">No paid link yet</span></span></li><li><h3>Muscle growth</h3><span class="note">No FDA-approved option</span><span class="name">CJC-1295 / ipamorelin</span><span class="chip chip-neutral">Not approved</span><span class="note">Sold by research-use shops; we do not link to them.</span></li><li><h3>Healing and joints</h3><span class="note">No FDA-approved option</span><span class="name">BPC-157</span><span class="chip chip-neutral">Not approved; FDA proposed excluding it from compounding (Jul 2026)</span><span class="note">Sold by research-use shops; we do not link to them.</span></li><li><h3>Sex drive</h3><span class="name">Bremelanotide (Vyleesi)</span><span class="chip chip-ok">FDA approved</span><span class="pick-act"><span class="btn btn-action" role="button" aria-disabled="true">Visit</span><span class="paid">No paid link yet</span></span></li><li><h3>Energy and aging</h3><span class="note">No FDA-approved option</span><span class="name">Epitalon</span><span class="chip chip-neutral">Not approved; FDA proposed excluding it from compounding (Jul 2026)</span><span class="note">Sold by research-use shops; we do not link to them.</span></li></ul>
-  </div>
-</section>
 
 <section class="section" id="learn">
   <div class="wrap">
@@ -174,6 +218,15 @@ fromHash();window.addEventListener('hashchange',fromHash);})();
 document.addEventListener('click',function(e){var b=e.target.closest('.sellers-open');if(b){var d=document.getElementById(b.getAttribute('data-dlg'));
 if(d){e.preventDefault();d.showModal();}return;}
 var d=e.target.closest('.sellers-dlg');if(d&&e.target===d)d.close();});})();
+</script>
+<script>
+(function(){var tb=document.getElementById('legal-table');if(!tb)return;var f=document.querySelector('.legal-filter'),q=document.getElementById('legal-q'),
+c=document.getElementById('legal-clear'),m=document.querySelector('.legal-more'),all=document.getElementById('legal-all'),rows=[].slice.call(tb.tBodies[0].rows),open=false;
+function draw(){var s=q.value.trim().toLowerCase();rows.forEach(function(r){var name=r.cells[0].textContent.toLowerCase();
+r.hidden=s?name.indexOf(s)<0:(!open&&r.classList.contains('more'));});if(m)m.hidden=open||!!s;}
+f.hidden=false;if(m)m.hidden=false;q.addEventListener('input',draw);
+c.addEventListener('click',function(){q.value='';draw();q.focus();});
+if(all)all.addEventListener('click',function(){open=true;draw();});draw();})();
 </script>
 
 </main>
