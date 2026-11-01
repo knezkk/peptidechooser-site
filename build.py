@@ -595,8 +595,11 @@ def price_sentence(p, pad):
 
 def alt_chip(p):
     """"Proven alternative" (chip-info) after the status chip, for an option that is not a peptide but is in the list
-    as the proven choice (`proven_alternative` in data/site.json; owner, 1 Nov 2026)."""
-    return '<span class="chip chip-info">Proven alternative</span>' if p.get("proven_alternative") else ""
+    as the proven choice (`proven_alternative` in data/site.json); "Not a peptide" (chip-neutral) for one sold
+    alongside peptides that is not one (`not_peptide`) (owner, 1 Nov 2026)."""
+    if p.get("proven_alternative"):
+        return '<span class="chip chip-info">Proven alternative</span>'
+    return '<span class="chip chip-neutral">Not a peptide</span>' if p.get("not_peptide") else ""
 
 
 def option_rows(g):
