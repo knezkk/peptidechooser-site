@@ -289,17 +289,25 @@ p { margin: 0 0 1em; }
   .fh-compare h2 { min-width: 0; }
   .flow .opt { grid-template-columns: minmax(0, 1fr); padding: 6px 10px; }
   /* the plan line takes its own row under the chip and the price, so it stays on one line */
-  .flow .opt > .pick-act { justify-self: start; flex-direction: row; align-items: center; gap: 10px; padding: 0 0 4px 22px; }
-  /* a row whose only action is "Compare N sellers": the button sits beside the name, the chip line keeps the full width */
-  .flow .opt:has(> .pick-act):not(:has(.btn-action)) { grid-template-columns: minmax(0, 1fr) auto; }
-  .flow .opt:has(> .pick-act):not(:has(.btn-action)) > .opt-more { grid-column: 1 / -1; grid-row: 1; }
-  .flow .opt:has(> .pick-act):not(:has(.btn-action)) .opt-sum .name { padding-right: 160px; }
-  .flow .opt > .pick-act:not(:has(.btn-action)) { grid-column: 2; grid-row: 1; align-self: start; margin-top: 0; padding: 0; }
+  /* every row with an action ("Online clinic" with its line under it, or "Prices at N shops"): the action sits top
+     right beside the name and the chip line starts under the arrow, so each row stays two lines and every hair
+     option fits the first screen at 390 by 844 (owner, 1 Nov 2026) */
+  .flow .opt:has(> .pick-act) { grid-template-columns: minmax(0, 1fr) auto; }
+  .flow .opt:has(> .pick-act) > .opt-more { grid-column: 1 / -1; grid-row: 1; }
+  .flow .opt > .pick-act { grid-column: 2; grid-row: 1; justify-self: end; align-self: start; flex-direction: column; align-items: flex-end; gap: 2px; margin-top: 0; padding: 0; }
+  .flow .opt > .pick-act .btn { padding: 0 12px; }
+  .flow .opt:has(> .pick-act) .opt-sum { grid-template-areas: "m name" "chip chip"; }
+  .flow .opt:has(> .pick-act .btn-action) .opt-sum .name { padding-right: 120px; }
+  .flow .opt:has(> .pick-act):not(:has(.btn-action)) .opt-sum .name { padding-right: 150px; }
   .flow-compare .step-panel:not([hidden]) { display: flex; flex-direction: column; }
   .flow-compare .goal-for { order: 2; margin: 10px 0 0; }
   .flow-compare .goal-intro { order: 2; margin: 4px 0 0; }
   .flow-compare .opts-foot { order: 3; }
   .flow-compare .step-panel > .btn, .flow-compare .step-panel > p.small:last-child { order: 4; }
+}
+/* small phones (480px breakpoint, layout.md): the chips wrap clear of the button and its line, never under it */
+@media (max-width: 480px) {
+  .flow .opt:has(> .pick-act .btn-action) .opt-chips { padding-right: 120px; }
 }
 @media (max-width: 760px) {
   .tbl { min-width: 720px; }
