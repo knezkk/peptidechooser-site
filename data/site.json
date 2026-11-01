@@ -114,7 +114,8 @@
           "how": "Prescription, from an online clinic or your doctor.",
           "status_plain": "FDA approved for hair loss. From $10/mo (generic, pharmacy coupon).",
           "price": "hair",
-          "substance": "finasteride"
+          "substance": "finasteride",
+          "proven_alternative": true
         },
         {
           "name": "Minoxidil (proven alternative)",
@@ -129,7 +130,8 @@
             "url": "https://www.keeps.com/",
             "checked": "2026-10-30"
           },
-          "substance": "minoxidil"
+          "substance": "minoxidil",
+          "proven_alternative": true
         },
         {
           "name": "GHK-Cu copper peptide serum",
@@ -170,7 +172,8 @@
           "chip": "ok",
           "does": "A nightly prescription cream. Reduces fine wrinkles and evens skin over months; can irritate at first.",
           "how": "Prescription (dermatologist or online clinic).",
-          "status_plain": "FDA approved for fine wrinkles."
+          "status_plain": "FDA approved for fine wrinkles.",
+          "proven_alternative": true
         },
         {
           "name": "GHK-Cu copper peptide",
@@ -628,19 +631,23 @@
   "glossary": [
     {
       "term": "FDA approved",
-      "text": "the FDA checked that it works and is safe for this use, and every batch is inspected. Prescription unless marked otherwise."
+      "text": "the FDA checked that it works and is safe for this use, and every batch is inspected. Prescription unless marked otherwise.",
+      "chip": "ok"
     },
     {
       "term": "Cosmetic",
-      "text": "legal to sell without approval; nobody has to prove it works. Fine on your skin, no claims beyond looks."
+      "text": "legal to sell without approval; nobody has to prove it works. Fine on your skin, no claims beyond looks.",
+      "chip": "info"
     },
     {
       "term": "Not FDA approved, pharmacy-made",
-      "text": "a licensed pharmacy mixes it for you on prescription. Legal in limited cases; no batch testing by the FDA."
+      "text": "a licensed pharmacy mixes it for you on prescription. Legal in limited cases; no batch testing by the FDA.",
+      "chip": "warn"
     },
     {
       "term": "Not approved",
-      "text": "no approved product exists. Shops sell it \"for research\". Buying it is not a crime for you, but nobody has checked what is in the vial. We never link to these shops."
+      "text": "no approved product exists. Shops sell it \"for research\". Buying it is not a crime for you, but nobody has checked what is in the vial. We never link to these shops.",
+      "chip": "neutral"
     },
     {
       "term": "Is it safe?",
