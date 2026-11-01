@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Logo molecules</title>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@600;800&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #fff; color: #0f1d2b; font: 15px/1.5 "Public Sans", system-ui, sans-serif; }
+  main { max-width: 760px; margin: 0 auto; padding: 32px 16px 64px; }
+  .lk { display: inline-flex; align-items: center; gap: .45em; font-weight: 800; letter-spacing: -.02em; white-space: nowrap; }
+  .lk svg { width: 1.6em; height: 1.6em; display: block; flex: none; }
+  .c { border: 1px solid #e2e8ee; margin-bottom: 24px; }
+  .t { padding: 10px 14px; font-weight: 800; }
+  .hero { display: grid; place-items: center; padding: 48px 12px; border-top: 1px solid #e2e8ee; }
+  .big { display: grid; place-items: center; padding: 0 0 32px; }
+  .big svg { width: 200px; height: 200px; }
+  .hdr { height: 64px; display: flex; align-items: center; justify-content: space-between; padding: 0 14px; border-top: 1px solid #e2e8ee; }
+  .btn { background: #0f1d2b; color: #fff; font-weight: 600; font-size: 12px; padding: 8px 10px; border-radius: 4px; }
+  .ftr { background: #0f1d2b; padding: 16px 14px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .ico { display: flex; align-items: flex-end; gap: 14px; background: #fff; padding: 6px 10px; border-radius: 4px; }
+</style>
+</head>
+<body>
+<main><div id="o"></div></main>
+<script>
+const I = "#0f1d2b", B = "#0b5cad", M = "#ffe066", W = "#ffffff";
+const mk = {
+  // A: a peptide chain: backbone zigzag, side chains alternating up and down, one side chain marked
+  a: d => `<svg viewBox="0 0 64 64" aria-hidden="true">
+    <path d="M11 36 L25 28 L39 36 L53 28 M11 36 V44 M25 28 V20 M39 36 V44 M53 28 V20" fill="none" stroke="${d ? W : I}" stroke-width="5" stroke-linejoin="round" stroke-linecap="round"/>
+    <circle cx="11" cy="50" r="6" fill="${d ? W : I}"/>
+    <circle cx="25" cy="14" r="6" fill="${d ? W : I}"/>
+    <circle cx="39" cy="50" r="6.5" fill="${M}" stroke="${d ? W : I}" stroke-width="4"/>
+    <circle cx="53" cy="14" r="6" fill="${d ? W : I}"/></svg>`,
+  // B: a modern vial with a short chain inside, one bead marked
+  b: d => `<svg viewBox="0 0 64 64" aria-hidden="true">
+    <rect x="21" y="3" width="22" height="11" rx="2" fill="${d ? W : I}"/>
+    <path d="M25 14 V19 L18 25 V53 Q18 60 25 60 H39 Q46 60 46 53 V25 L39 19 V14" fill="none" stroke="${d ? W : I}" stroke-width="4" stroke-linejoin="round"/>
+    <path d="M22 31 H42" stroke="${B}" stroke-width="4"/>
+    <path d="M25.5 49 L32 40 L38.5 49" fill="none" stroke="${d ? W : I}" stroke-width="4" stroke-linejoin="round"/>
+    <circle cx="25.5" cy="49" r="4" fill="${d ? W : I}"/>
+    <circle cx="32" cy="40" r="4" fill="${d ? W : I}"/>
+    <circle cx="38.5" cy="49" r="4.5" fill="${M}" stroke="${d ? W : I}" stroke-width="3"/></svg>`,
+  // C: one amino acid: amine (blue), carboxyl, and the side chain that makes each one different (yellow)
+  c: d => `<svg viewBox="0 0 64 64" aria-hidden="true">
+    <path d="M14 18 L32 30 L50 18 M32 30 V44" fill="none" stroke="${d ? W : I}" stroke-width="5"/>
+    <circle cx="13" cy="17" r="8" fill="${B}" stroke="${d ? W : 'none'}" stroke-width="${d ? 3 : 0}"/>
+    <circle cx="51" cy="17" r="8" fill="${d ? W : I}"/>
+    <circle cx="32" cy="30" r="6" fill="${d ? W : I}"/>
+    <circle cx="32" cy="50" r="10" fill="${M}" stroke="${d ? W : I}" stroke-width="4"/></svg>`
+};
+const lk = (k, d, s) => `<span class="lk" style="font-size:${s}px;color:${d ? W : I}">${mk[k](d)}Peptide Chooser</span>`;
+const sz = (k, s) => mk[k](false).replace("<svg", `<svg width="${s}" height="${s}"`);
+const D = [["a", "A. Peptide chain"], ["b", "B. Vial"], ["c", "C. Amino acid"]];
+document.getElementById("o").innerHTML = D.map(([k, t]) => `<div class="c">
+  <div class="t">${t}</div>
+  <div class="hero"><div class="big">${mk[k](false)}</div>${lk(k, false, 34)}</div>
+  <div class="hdr">${lk(k, false, 16)}<span class="btn">Compare by goal</span></div>
+  <div class="ftr">${lk(k, true, 16)}<span class="ico">${sz(k, 32)}${sz(k, 16)}</span></div>
+</div>`).join("");
+</script>
+</body>
+</html>

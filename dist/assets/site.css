@@ -303,6 +303,8 @@ p { margin: 0 0 1em; }
   .pick-act .no-link { max-width: 150px; }
   .flow .opt:has(> .pick-act) .opt-sum { grid-template-areas: "m name" "chip chip"; }
   .flow .opt:has(> .pick-act) .opt-sum .name { padding-right: 160px; }
+  /* a one-line name stands as tall as the button beside it, so the chip line always starts under the button */
+  .flow .opt:has(> .pick-act):not(:has(.btn-action)) .opt-sum .name { min-height: var(--touch); display: flex; align-items: center; }
   .flow-compare .step-panel:not([hidden]) { display: flex; flex-direction: column; }
   .flow-compare .goal-for { order: 2; margin: 10px 0 0; }
   .flow-compare .goal-intro { order: 2; margin: 4px 0 0; }
