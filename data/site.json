@@ -148,7 +148,12 @@
           "chip": "neutral",
           "does": "Vials from research-use shops, meant to be injected. No human evidence for hair.",
           "how": "We do not link to them.",
-          "status_plain": "Not approved for any use."
+          "status_plain": "Not approved for any use.",
+          "substances": [
+            "bpc-157",
+            "ghk-cu",
+            "tb-500"
+          ]
         }
       ],
       "short": "Hair",
@@ -298,7 +303,11 @@
           "chip": "neutral",
           "does": "Growth-hormone-releasing peptides sold by research-use shops and some clinics. No approved product, no large human trials.",
           "how": "We do not link to shops.",
-          "status_plain": "Not approved for any use."
+          "status_plain": "Not approved for any use.",
+          "substances": [
+            "cjc-1295",
+            "ipamorelin"
+          ]
         }
       ],
       "short": "Muscle and hormones",
@@ -371,7 +380,10 @@
           "chip": "neutral",
           "does": "The same molecule as Vyleesi, sold without a prescription by research-use shops: no dose control, no checks.",
           "how": "We do not link to them.",
-          "status_plain": "Not an approved product."
+          "status_plain": "Not an approved product.",
+          "substances": [
+            "bremelanotide"
+          ]
         },
         {
           "name": "Melanotan II",
