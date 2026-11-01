@@ -271,7 +271,7 @@ def goal_rows():
             option, chip = f'<span class="name">{pick[0]}</span>', pick[1]
         else:
             sold = sold_peptide(g)
-            option = '<span class="note">No FDA-approved option</span>' + (f'<span class="name">{sold[0]}</span>' if sold else "")
+            option = '<span class="note">No FDA-approved option</span>' + (f'<span class="name">{sold[0]}</span><span class="note">Sold by research-use shops; we do not link to them.</span>' if sold else "")
             chip = sold[1] if sold else ""
         price = ""
         if g["slug"] in PRICE_REF:
