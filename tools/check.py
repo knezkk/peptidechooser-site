@@ -324,6 +324,33 @@ def check_parts(P):
                 errs.append(f"{name}: Background check card without its five marks")
             if "Checks are facts we hold about the seller, not a safety or quality grade." not in html:
                 errs.append(f"{name}: no note that the checks are facts, not a grade")
+        else:
+            # Filters on /sellers/ (pages.md, Sellers; owner task 2 Nov 2026): without JavaScript the controls stay hidden
+            # and every seller page in the build has its row, none hidden; the script and the filter's options name
+            # only sellers and substances that are in the build's rows.
+            built = {n.split("/")[1] for n in P if n.startswith("sellers/") and n != "sellers/index.html"}
+            trs = re.findall(r"<tr( [^>]*)?><td><a class=\"name\" href=\"/sellers/([^\"/]+)/\"", html)
+            if {s for _, s in trs} != built:
+                errs.append(f"{name}: the tables do not list every seller page in the build")
+            if any(re.search(r"\bhidden\b", a or "") for a, _ in trs):
+                errs.append(f"{name}: a seller row is hidden without JavaScript")
+            for cls in ("sellers-filter", "clinics-filter"):
+                m = re.search(rf'<div class="[^"]*\b{cls}\b[^"]*"([^>]*)>', html)
+                if m and "hidden" not in m.group(1):
+                    errs.append(f"{name}: the {cls} block shows without JavaScript")
+            subs = {s for a, _ in trs for s in re.findall(r'data-subs="([^"]*)"', a or "")[0:1] for s in s.split()}
+            sel = re.search(r'<select class="input" id="sellers-sub">(.*?)</select>', html, re.S)
+            for v in re.findall(r'<option value="([^"]+)"', sel.group(1) if sel else ""):
+                if v not in subs:
+                    errs.append(f"{name}: the substance filter offers {v}, which no row carries")
+            for s in re.findall(r"/sellers/([^\"'/#]+)/", "".join(re.findall(r"<script>(.*?)</script>", html, re.S))):
+                if s not in built:
+                    errs.append(f"{name}: a script names /sellers/{s}/, which is not in the build")
+            opts = set(re.findall(r'<option value="([^"]+)"', sel.group(1) if sel else ""))
+            for pn in (n for n in P if n.startswith("peptides/")):
+                for s in re.findall(r'href="/sellers/#substance=([^"]+)"', (DIST / pn).read_text(encoding="utf-8")):
+                    if s not in opts:
+                        errs.append(f"{pn}: links to /sellers/#substance={s}, which the sellers filter does not offer")
     # Search and Compare any two (pages.md, Every page, Header, Search; Search; Compare; owner task 2 Nov 2026): the index
     # parses, stays under 150 KB and every entry has its five fields and a page that exists; /search/ is noindex; neither
     # page nor the index links to a seller's site.
