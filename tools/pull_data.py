@@ -10,6 +10,8 @@ Reads the `site.*` views through the read-only role (peptide-data spec 0015) and
                             five-check score (score, score_* yes/no, score_checked_on)
   - site.fda_letters    -> "letters": the newest FDA warning letters to sellers in the database (see letters_rows)
   - site.fda_letters_all -> "letters_all": every peptide-related letter or letter to a seller we know, for /fda-warning-letters/
+  - site.seller_profile, site.seller_substances, site.seller_letters -> "seller_profiles", "seller_substances" (top 12 per
+    seller, see top_substances), "seller_letters": the seller pages /sellers/ and /sellers/<slug>/
 
 Everything else in site.json (hand-checked prices with their sources, texts, goals) is left untouched.
 Run before build.py:  SITE_DATABASE_URL=postgres://site_reader:...@host:5432/postgres python3 tools/pull_data.py
@@ -87,6 +89,17 @@ def letters_all_rows():
         "where peptide_related or seller_slug is not null order by letter_date desc nulls last, company_name")
 
 
+def top_substances(all_rows, n=12):
+    """site.json stays small: per seller, its n substances with the most listings (ties by slug), for the seller pages
+    (owner task, phase 4d, 2 Nov 2026)."""
+    out, per = [], {}
+    for r in sorted(all_rows, key=lambda r: (r["seller_slug"], -(r["listing_count"] or 0), r["substance_slug"])):
+        per[r["seller_slug"]] = per.get(r["seller_slug"], 0) + 1
+        if per[r["seller_slug"]] <= n:
+            out.append(r)
+    return out
+
+
 def main():
     if not URL:
         print("pull_data: SITE_DATABASE_URL not set, site.json left as it is")
@@ -123,11 +136,27 @@ def main():
     # the count and the oldest date the letters page and Home's "See all N letters" show
     d["letters_all_total"] = len(d["letters_all"])
     d["letters_all_oldest"] = min((r["letter_date"] for r in d["letters_all"] if r["letter_date"]), default=None)
+    # The seller pages /sellers/ and /sellers/<slug>/ (pages.md, Seller): every seller's profile with its five checks,
+    # its top 12 substances by listing count and its FDA warning letters.
+    d["seller_profiles"] = rows(
+        "select seller_slug, seller_name, domain, seller_kind, product_count, substance_count, price_per_mg_min, "
+        "price_per_mg_max, coa_count, newest_coa_date, fda_letter_count, last_fda_letter_date, entity_name, entity_state, "
+        "entity_evidence, entity_source_url, registry_status, registry_checked_on, terms_seen, terms_checked_on, privacy_seen, "
+        "privacy_checked_on, refund_seen, refund_checked_on, first_seen, price_updated_at, score, score_lab_testing, "
+        "score_no_fda_letter, score_registered_company, score_legal_pages, score_fresh_prices, score_checked_on "
+        "from site.seller_profile order by seller_slug")
+    d["seller_substances"] = top_substances(rows(
+        "select seller_slug, substance_slug, listing_count, price_per_mg_min, price_per_mg_max, has_coa, "
+        "newest_price_observed_at from site.seller_substances"))
+    d["seller_letters"] = rows(
+        "select seller_slug, letter_date, letter_url, letter_subject, issuing_office, match_kind from site.seller_letters "
+        "order by seller_slug, letter_date desc")
     d["pulled_at"] = datetime.utcnow().isoformat(timespec="seconds") + "Z"
     DATA.write_text(json.dumps(d, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     print(f"pull_data: {len(d['legal_db'])} status rows, {len(d['approved_db'])} approvals, {len(d['plans'])} plans, "
           f"{len(d['products'])} of {len(products)} listings, {len(d['sellers'])} of {len(sellers)} sellers, "
-          f"{len(d['letters'])} of {d['letters_total']} letters, {d['letters_all_total']} on the letters page")
+          f"{len(d['letters'])} of {d['letters_total']} letters, {d['letters_all_total']} on the letters page, "
+          f"{len(d['seller_profiles'])} seller pages")
     return 0
 
 

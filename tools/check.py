@@ -236,6 +236,25 @@ def check_parts(P):
                 errs.append(f"{name}: row {i} without a date, a company or a subject")
             elif not re.search(r'href="https://www\.fda\.gov/[^"]+"[^>]*rel="nofollow"', cells[4]):
                 errs.append(f"{name}: row {i} without its nofollow fda.gov letter")
+    # The seller pages (pages.md, Sellers and Seller; owner task 2 Nov 2026): no link to any seller's site; every profile
+    # carries the five check marks and the note; the facts are never a verdict.
+    for name in (n for n in P if n.startswith("sellers/")):
+        html = (DIST / name).read_text(encoding="utf-8")
+        for a in P[name].links:
+            href = a.get("href", "")
+            host = re.sub(r"^www\.", "", re.sub(r"^[a-z]+://", "", href).split("/")[0].lower()) if "://" in href else ""
+            if host and any(host == d or host.endswith("." + d) for d in seller_domains()):
+                errs.append(f"{name}: links to a seller ({href})")
+        main = re.search(r'<main id="main">(.*?)</main>', html, re.S)
+        text = re.sub(r"<[^>]+>", " ", re.sub(r"<script.*?</script>", "", main.group(1) if main else "", flags=re.S))
+        for w in re.findall(r"\b(safe|trusted|best|legit)\b", text, re.I):
+            errs.append(f"{name}: seller page says '{w}'")
+        if name != "sellers/index.html":
+            card = re.search(r'<div class="board check-card".*?<ul class="check-list">(.*?)</ul>', html, re.S)
+            if not card or len(re.findall(r'class="chip chip-(?:ok|neutral) mark-(?:yes|no)"', card.group(1))) != 5:
+                errs.append(f"{name}: Background check card without its five marks")
+            if "Checks are facts we hold about the seller, not a safety or quality grade." not in html:
+                errs.append(f"{name}: no note that the checks are facts, not a grade")
     # The letters feed (pages.md, Letters): it parses as XML and every item links to the letter on fda.gov.
     feed = DIST / "fda-warning-letters" / "feed.xml"
     if feed.exists():
@@ -257,7 +276,7 @@ def check_parts(P):
 def seller_domains():
     """Every seller domain site.json knows: the sellers' own and the hosts of their product pages."""
     d = json.loads((ROOT / "data" / "site.json").read_text(encoding="utf-8"))
-    hosts = {r.get("domain") for r in d.get("sellers") or []}
+    hosts = {r.get("domain") for r in (d.get("sellers") or []) + (d.get("seller_profiles") or [])}
     hosts |= {re.sub(r"^[a-z]+://", "", r.get("product_url") or "").split("/")[0] for r in d.get("products") or []}
     return {re.sub(r"^www\.", "", h.lower()) for h in hosts if h}
 
