@@ -329,6 +329,12 @@
       "slug": "recovery",
       "name": "Recovery and joints",
       "label": "Healing and joints",
+      "page": true,
+      "title": "BPC-157 and TB-500 for healing, compared | Peptide Chooser",
+      "h1": "Peptides for healing and joints, compared with what is approved.",
+      "description": "BPC-157 and TB-500 are sold for injuries and joints, but neither is approved for any use. The evidence, the FDA's July 2026 proposal and what sellers charge.",
+      "short_answer": "Nothing on this page is FDA approved. BPC-157 and TB-500 have animal studies only; in July 2026 an FDA advisory committee reviewed both for pharmacy compounding and the FDA proposed keeping them off the list. Research-use shops sell them anyway; we show their prices and checks and do not link to them.",
+      "legal_section": true,
       "map": {
         "x": 61.5,
         "y": 72
@@ -342,7 +348,7 @@
           "chip": "neutral",
           "does": "The most searched \"healing peptide\". Animal studies only; the FDA reviewed it for pharmacy compounding on 23 Jul 2026 and proposed keeping it off the list.",
           "how": "Research-use shops only.",
-          "status_plain": "Not approved.",
+          "status_plain": "Not approved for any use.",
           "substance": "bpc-157",
           "src": [
             6
@@ -354,7 +360,7 @@
           "chip": "neutral",
           "does": "A copy of a natural repair protein, sold alongside BPC-157. Same July 2026 review, same proposal.",
           "how": "Research-use shops only.",
-          "status_plain": "Not approved.",
+          "status_plain": "Not approved for any use.",
           "substance": "tb-500",
           "src": [
             6
