@@ -1555,7 +1555,9 @@ def main():
         "# Peptide Chooser\n\n> An independent US comparison site: peptide products next to FDA-approved alternatives, "
         "with evidence, FDA status and price per month for each goal. We compare; we never sell.\n\n"
         + "".join(f"- [{t}]({SITE}{p}): {d}\n" for p, _, t, d, *_ in PAGES))
-    urls = "".join(f"<url><loc>{SITE}{p[0]}</loc><lastmod>{DATA['checked']}</lastmod></url>" for p in PAGES)
+    # lastmod: the newest data date of this build, the database pull when connected, else the hand-checked date (owner, Q1 a, 2 Nov 2026)
+    lastmod = max(DATA["checked"], (DATA.get("pulled_at") or "")[:10])
+    urls = "".join(f"<url><loc>{SITE}{p[0]}</loc><lastmod>{lastmod}</lastmod></url>" for p in PAGES)
     (DIST / "sitemap.xml").write_text(
         f'<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">{urls}</urlset>\n')
     (DIST / "pages.json").write_text(json.dumps([{"path": p[0], "title": p[2]} for p in PAGES] + [{"path": "/404", "title": "Page not found | Peptide Chooser"}]))
