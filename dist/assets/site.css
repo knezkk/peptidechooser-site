@@ -260,7 +260,7 @@ p { margin: 0 0 1em; }
 .prose h2:first-of-type { margin-top: 40px; }
 .prose ul, .prose ol { padding-left: 1.2em; }
 .prose li { margin-bottom: 8px; }
-.prose a { color: var(--clinic); }
+.prose a:not(.btn) { color: var(--clinic); } /* a button keeps its own colours (Contact, 404) */
 .btn-row { display: flex; flex-wrap: wrap; gap: 10px; margin: 24px 0 32px; }
 
 /* Footer */
