@@ -115,9 +115,14 @@ def guide_stats():
         "(select count(distinct seller_slug) from site.products where substance_slug = 'bpc-157') as bpc_sellers")[0]
     # per substance the guides name (hair, muscle, recovery, skin, libido, longevity, buying): shops that list it and the middle price per mg across all of them (owner task
     # 2 Nov 2026, guides 7 to 9); site.json's ten listings per substance cannot give either
-    r["substances"] = {x["substance_slug"]: {"shops": x["shops"], "ppm_median": x["ppm_median"]} for x in rows(
+    # and, for the BPC-157 price guide (owner task 2 Nov 2026, feat/learn-5), the lowest and highest price per mg inside the
+    # band /compare/ uses ($0.01 to $100 per mg), so one mislabeled listing does not set the range
+    r["substances"] = {x["substance_slug"]: {"shops": x["shops"], "ppm_median": x["ppm_median"], "ppm_min": x["ppm_min"],
+                                             "ppm_max": x["ppm_max"]} for x in rows(
         "select substance_slug, count(distinct seller_slug) as shops, "
-        "round((percentile_cont(0.5) within group (order by price_per_mg))::numeric, 2) as ppm_median "
+        "round((percentile_cont(0.5) within group (order by price_per_mg))::numeric, 2) as ppm_median, "
+        "min(price_per_mg) filter (where price_per_mg between 0.01 and 100) as ppm_min, "
+        "max(price_per_mg) filter (where price_per_mg between 0.01 and 100) as ppm_max "
         "from site.products where substance_slug in ('bpc-157', 'ghk-cu', 'tb-500', 'cjc-1295', 'ipamorelin', 'sermorelin', "
         "'tesamorelin', 'palmitoyl-pentapeptide-4', 'acetyl-hexapeptide-8', 'bremelanotide', 'melanotan-2', 'epitalon', "
         "'mots-c', 'nad-plus', 'semaglutide') group by substance_slug")}
