@@ -7,6 +7,7 @@ Reads the `site.*` views through the read-only role (peptide-data spec 0015) and
   - site.products        -> "products": research-use listings for the substances the site shows (see keep_products)
   - site.sellers         -> "sellers": the seller rows those listings point to, with their background check
   - site.fda_letters    -> "letters": the newest FDA warning letters to sellers in the database (see letters_rows)
+  - site.fda_letters_all -> "letters_all": every peptide-related letter or letter to a seller we know, for /fda-warning-letters/
 
 Everything else in site.json (hand-checked prices with their sources, texts, goals) is left untouched.
 Run before build.py:  SITE_DATABASE_URL=postgres://site_reader:...@host:5432/postgres python3 tools/pull_data.py
@@ -75,6 +76,15 @@ def letters_rows(n=8):
         f"order by letter_date desc nulls last, seller_name limit {int(n)}")
 
 
+def letters_all_rows():
+    """Every FDA warning letter the letters page lists (owner, 1 Nov 2026): letters marked peptide_related or matched to a
+    seller in the database, newest first, from site.fda_letters_all."""
+    return rows(
+        "select letter_date, letter_url, company_name, letter_subject, issuing_office, letter_reference, seller_slug, "
+        "seller_name, seller_kind, match_kind, peptide_related from site.fda_letters_all "
+        "where peptide_related or seller_slug is not null order by letter_date desc nulls last, company_name")
+
+
 def main():
     if not URL:
         print("pull_data: SITE_DATABASE_URL not set, site.json left as it is")
@@ -105,11 +115,15 @@ def main():
     # the line under the letters table: how many letters, since when (domain or address matches only)
     tot = rows("select count(*) as n, min(letter_date) as oldest from site.fda_letters where match_kind = 'domain_or_address'")[0]
     d["letters_total"], d["letters_oldest"] = tot["n"], tot["oldest"]
+    d["letters_all"] = letters_all_rows()
+    # the count and the oldest date the letters page and Home's "See all N letters" show
+    d["letters_all_total"] = len(d["letters_all"])
+    d["letters_all_oldest"] = min((r["letter_date"] for r in d["letters_all"] if r["letter_date"]), default=None)
     d["pulled_at"] = datetime.utcnow().isoformat(timespec="seconds") + "Z"
     DATA.write_text(json.dumps(d, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     print(f"pull_data: {len(d['legal_db'])} status rows, {len(d['approved_db'])} approvals, {len(d['plans'])} plans, "
           f"{len(d['products'])} of {len(products)} listings, {len(d['sellers'])} of {len(sellers)} sellers, "
-          f"{len(d['letters'])} of {d['letters_total']} letters")
+          f"{len(d['letters'])} of {d['letters_total']} letters, {d['letters_all_total']} on the letters page")
     return 0
 
 
