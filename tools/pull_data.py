@@ -111,12 +111,13 @@ def guide_stats():
         "(select count(*) from site.seller_profile where product_count > 0 "
         "and newest_coa_date >= current_date - interval '12 months') as sellers_coa_12m, "
         "(select count(distinct seller_slug) from site.products where substance_slug = 'bpc-157') as bpc_sellers")[0]
-    # per substance the hair guides name: shops that list it and the middle price per mg across all of them (owner task
+    # per substance the hair, muscle, recovery and skin guides name: shops that list it and the middle price per mg across all of them (owner task
     # 2 Nov 2026, guides 7 to 9); site.json's ten listings per substance cannot give either
     r["substances"] = {x["substance_slug"]: {"shops": x["shops"], "ppm_median": x["ppm_median"]} for x in rows(
         "select substance_slug, count(distinct seller_slug) as shops, "
         "round((percentile_cont(0.5) within group (order by price_per_mg))::numeric, 2) as ppm_median "
-        "from site.products where substance_slug in ('bpc-157', 'ghk-cu', 'tb-500') group by substance_slug")}
+        "from site.products where substance_slug in ('bpc-157', 'ghk-cu', 'tb-500', 'cjc-1295', 'ipamorelin', 'sermorelin', "
+        "'tesamorelin', 'palmitoyl-pentapeptide-4', 'acetyl-hexapeptide-8') group by substance_slug")}
     r["checked_on"] = date.today().isoformat()
     return r
 

@@ -57,6 +57,31 @@ GUIDES = [
      "h1": "Compounded semaglutide price: what online clinics charge.",
      "desc": "Every compounded semaglutide plan at the online clinics we track, cheapest first, with its care fee and FDA letter, next to Wegovy and Ozempic plans.",
      "line": "Every compounded semaglutide plan we track, with care fees and brand prices."},
+    # guides 11 to 16: one per remaining goal and the two questions people type most (owner task 2 Nov 2026, feat/learn-3)
+    {"slug": "best-peptides-for-muscle-growth", "title": "Best peptides for muscle growth: what the evidence shows",
+     "h1": "Best peptides for muscle growth: what the evidence in people shows.",
+     "desc": "CJC-1295, ipamorelin, sermorelin and tesamorelin: what each was tested on in people, their FDA status, what is approved and for what, and prices.",
+     "line": "Growth hormone peptides: what was tested, their status and what is approved."},
+    {"slug": "bpc-157-vs-tb-500", "title": "BPC-157 vs TB-500: status, evidence, prices",
+     "h1": "BPC-157 vs TB-500: FDA status, evidence and prices side by side.",
+     "desc": "BPC-157 and TB-500 side by side: the FDA status of each from our database, the studies in people, what shops charge per mg and the FDA letters.",
+     "line": "The two recovery peptides side by side: status, studies and shop prices."},
+    {"slug": "are-peptides-legal-in-the-us", "title": "Are peptides legal in the US? Status by kind in 2026",
+     "h1": "Are peptides legal in the US? It depends on the kind.",
+     "desc": "Approved, pharmacy-made, cosmetic and research-use peptides: what each kind means in law, the FDA's 503A lists and how to read our status chip.",
+     "line": "The four kinds of peptide in law, the 503A lists and our status chip."},
+    {"slug": "semaglutide-vs-tirzepatide-price", "title": "Semaglutide vs tirzepatide: price at online clinics",
+     "h1": "Semaglutide vs tirzepatide: what online clinics charge for each.",
+     "desc": "Every semaglutide and tirzepatide plan at the online clinics we track, brand and compounded, cheapest first, with care fees and what each is approved for.",
+     "line": "Both GLP-1 medicines, brand and compounded, with the plans side by side."},
+    {"slug": "peptides-for-skin-what-works", "title": "Peptides for skin: what works and what is marketing",
+     "h1": "Peptides for skin: what has evidence, what is marketing.",
+     "desc": "GHK-Cu, Matrixyl and Argireline: what each skin peptide was tested on, in people or in a dish, their cosmetic status and how to read an ingredient list.",
+     "line": "Copper peptides, Matrixyl and Argireline, and what each was tested on."},
+    {"slug": "how-we-check-sellers", "title": "How we check peptide sellers: the five checks explained",
+     "h1": "How we check peptide sellers: the five checks, with examples.",
+     "desc": "The five checks behind every seller score, each with a real example from our database, what the score does not tell you and how often it refreshes.",
+     "line": "The five seller checks, each with a real example, and what the score is not."},
 ]
 # Home's card shows the first six with "All guides" under them (owner task 2 Nov 2026: the first six when space is tight)
 HOME_CARD = 6
@@ -64,13 +89,15 @@ HOME_CARD = 6
 TOPIC = {"is-bpc-157-legal": "legal", "are-peptides-safe": "legal", "how-to-read-a-coa": "legal",
          "what-an-fda-warning-letter-means": "legal", "compounded-vs-brand-glp-1": "glp1",
          "compounded-semaglutide-price": "glp1", "peptides-for-hair-loss-what-works": "hair",
-         "best-peptides-for-hair-growth": "hair", "ghk-cu-for-hair": "hair", "injectable-peptides-for-hair-growth": "hair"}
+         "best-peptides-for-hair-growth": "hair", "ghk-cu-for-hair": "hair", "injectable-peptides-for-hair-growth": "hair",
+         "best-peptides-for-muscle-growth": "body", "bpc-157-vs-tb-500": "body", "peptides-for-skin-what-works": "body",
+         "are-peptides-legal-in-the-us": "legal", "how-we-check-sellers": "legal", "semaglutide-vs-tirzepatide-price": "glp1"}
 RELATED_MAX = 5
 
 LEARN_TITLE = "Peptide guides in plain words | Peptide Chooser"
 LEARN_H1 = "Peptide guides in plain words"
-LEARN_DESC = ("Ten short guides on peptides in the US: what is legal, what is safe to know, lab reports, GLP-1 prices, "
-              "FDA letters and peptides for hair.")
+LEARN_DESC = ("Sixteen short guides on peptides in the US: what is legal, lab reports, seller checks, GLP-1 prices, and "
+              "peptides for hair, skin, muscle and recovery.")
 
 # Outside pages the guides cite (fda.gov and MedlinePlus only, plus the sources already on the site, which build.py
 # hands over). The date is the page's own "Content current as of" where it shows one.
@@ -95,6 +122,35 @@ SOURCES = {
                             "https://www.fda.gov/cosmetics/cosmetics-labeling-regulations/cosmetics-labeling-guide"),
     "drugsfda-hair": ("Drugs@FDA, searched through openFDA for BPC-157, GHK-Cu (also as copper tripeptide and prezatide) and TB-500 "
                       "(also as thymosin beta-4): no approved product, 2 Nov 2026", "https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm"),
+    # guides 11 to 16
+    "fda-503a": ("FDA, Bulk Drug Substances Used in Compounding Under Section 503A of the FD&C Act, current as of 14 May 2026",
+                 "https://www.fda.gov/drugs/human-drug-compounding/bulk-drug-substances-used-compounding-under-section-503a-fdc-act"),
+    "label-ozempic": ("FDA drug label for Ozempic, Indications and Usage, through openFDA, effective 30 Jan 2026",
+                      "https://api.fda.gov/drug/label.json?search=openfda.brand_name:%22OZEMPIC%22"),
+    "label-wegovy": ("FDA drug label for Wegovy, Indications and Usage, through openFDA, effective 23 Apr 2024",
+                     "https://api.fda.gov/drug/label.json?search=openfda.brand_name:%22WEGOVY%22"),
+    "label-mounjaro": ("FDA drug label for Mounjaro, Indications and Usage, through openFDA, effective 29 Jul 2026",
+                       "https://api.fda.gov/drug/label.json?search=openfda.brand_name:%22MOUNJARO%22"),
+    "label-zepbound": ("FDA drug label for Zepbound, Indications and Usage, through openFDA, effective 28 Aug 2026",
+                       "https://api.fda.gov/drug/label.json?search=openfda.brand_name:%22ZEPBOUND%22"),
+    "label-egrifta": ("FDA drug label for Egrifta SV (tesamorelin), Indications and Usage, through openFDA, effective 29 Jul 2026",
+                      "https://api.fda.gov/drug/label.json?search=openfda.brand_name:%22EGRIFTA%22"),
+    "label-genotropin": ("FDA drug label for Genotropin (somatropin), Indications and Usage, through openFDA, effective 4 Aug 2026",
+                         "https://api.fda.gov/drug/label.json?search=openfda.brand_name:%22GENOTROPIN%22"),
+    "pm-teichman": ("Teichman SL et al., Prolonged stimulation of growth hormone and IGF-I secretion by CJC-1295 in healthy adults, "
+                    "J Clin Endocrinol Metab 91(3), 2006, PubMed 16352683", "https://pubmed.ncbi.nlm.nih.gov/16352683/"),
+    "pm-raun": ("Raun K et al., Ipamorelin, the first selective growth hormone secretagogue, Eur J Endocrinol 139(5), 1998, PubMed 9849822",
+                "https://pubmed.ncbi.nlm.nih.gov/9849822/"),
+    "pm-beck": ("Beck DE et al., Randomized, controlled, proof-of-concept study of ipamorelin for postoperative ileus, "
+                "Int J Colorectal Dis 29(12), 2014, PubMed 25331030", "https://pubmed.ncbi.nlm.nih.gov/25331030/"),
+    "pm-poolton": ("Poolton JT et al., Human evidence for BPC-157 in orthopaedic and regenerative medicine: a systematic review, "
+                   "Acta Orthop Belg 92(3), 2026, PubMed 42885452", "https://pubmed.ncbi.nlm.nih.gov/42885452/"),
+    "pm-esposito": ("Esposito S et al., The N-terminal acetylated 17-23 fragment of thymosin beta 4 identified in TB-500, "
+                    "Drug Test Anal 4(9), 2012, PubMed 22962027", "https://pubmed.ncbi.nlm.nih.gov/22962027/"),
+    "pm-robinson": ("Robinson LR et al., Topical palmitoyl pentapeptide provides improvement in photoaged human facial skin, "
+                    "Int J Cosmet Sci 27(3), 2005, PubMed 18492182", "https://pubmed.ncbi.nlm.nih.gov/18492182/"),
+    "pm-blanes": ("Blanes-Mira C et al., A synthetic hexapeptide (Argireline) with antiwrinkle activity, Int J Cosmet Sci 24(5), 2002, "
+                  "PubMed 18498523", "https://pubmed.ncbi.nlm.nih.gov/18498523/"),
     "pm-kaufman": ("Kaufman KD et al., Finasteride in the treatment of men with androgenetic alopecia, J Am Acad Dermatol 39(4), 1998, PubMed 9777765",
                    "https://pubmed.ncbi.nlm.nih.gov/9777765/"),
     "pm-pyo": ("Pyo HK et al., The effect of tripeptide-copper complex on human hair growth in vitro, Arch Pharm Res 30(7), 2007, PubMed 17703734",
@@ -200,6 +256,8 @@ def facts(b):
         "hair_plans": hair_plans,
         "sema_comp": [r for r in plans if r["substance_slug"] == "semaglutide" and r.get("product_kind") == "compounded"],
         "sema_brand": [r for r in plans if r["substance_slug"] == "semaglutide" and r.get("product_kind") in b.BRANDED],
+        "tirz_all": [r for r in plans if r["substance_slug"] == "tirzepatide" and r.get("product_kind") in ("compounded",) + b.BRANDED],
+        "sema_all": [r for r in plans if r["substance_slug"] == "semaglutide" and r.get("product_kind") in ("compounded",) + b.BRANDED],
     }
 
 
@@ -221,14 +279,22 @@ def known_sources(b, f):
     if f["letters"]:
         k["db-letters"] = (f"Peptide Chooser, FDA warning letters to peptide sellers, compounders and online clinics, "
                            f"checked {nice(f['letters_on'])}", b.LETTERS_URL, "own")
-    for slug in ("ghk-cu", "tb-500"):
+    for slug in sorted({r["substance_slug"] for r in b.LEGAL_DB or []} - {"bpc-157"}):
         st = b.db_status(slug)
         if st:
             k[f"db-{slug}"] = (f"FDA status of {b.substance_name(slug)} in the Peptide Chooser database, first seen {nice(st['seen'])}",
                                st["url"], "link")
-    for r in f["hair_plans"] + f["sema_comp"] + f["sema_brand"]:
+    for r in f["hair_plans"] + f["sema_all"] + f["tirz_all"]:
         k[f"plan-{r['seller_slug']}-{r['plan_slug']}"] = (f"{b.seller_base(r['seller_name'])}, {r['plan_name']}, {nice(r['last_seen'])}",
                                                           r["pricing_url"], "text")
+    # our own pages (the seller guide): How we rate, the sellers list and each seller's page
+    k["own-how-we-rate"] = ("Peptide Chooser, How we rate peptide products and sellers", "/how-we-rate/", "own")
+    if b.PROFILES:
+        on = max((r.get("score_checked_on") or "" for r in b.PROFILES.values()), default="")
+        k["own-sellers"] = (f"Peptide Chooser, Peptide sellers and their checks{', checked ' + nice(on) if on else ''}", "/sellers/", "own")
+        for slug, r in b.PROFILES.items():
+            k[f"seller-{slug}"] = (f"Peptide Chooser, {b.clean(r['seller_name'])}: our page on this seller"
+                                   + (f", checked {nice(r['score_checked_on'])}" if r.get("score_checked_on") else ""), f"/sellers/{slug}/", "own")
     hair = next(g for g in b.ALL_GOALS if g["slug"] == "hair")
     for s in hair.get("sources", []):
         k[f"hair-text-{s['n']}"] = (s["text"], s["url"], "text")  # a shop's page as plain text, never a link
@@ -704,14 +770,16 @@ def plan_table(b, rows, N, kind):
         n = r.get("fda_letter_count") or 0
         letter = (f'<a class="chip chip-warn chip-link" href="{b.LETTERS_URL}">FDA letter {nice(r["last_fda_letter_date"])}</a>'
                   if n and r.get("last_fda_letter_date") else '<span class="no-letter">none</span>')
-        what = plan_kind_words(r) if kind == "hair" else b.care_note(r)
+        what = plan_kind_words(r) if kind == "hair" else glp1_words(b, r) if kind == "glp1" else b.care_note(r)
         ref = N(f"plan-{r['seller_slug']}-{r['plan_slug']}")
         trs.append(f'<tr><td>{b.clinic_link(r["seller_slug"], b.seller_base(r["seller_name"]))}</td><td data-l="Plan">{r["plan_name"]}</td>'
-                   f'<td data-l="{"What it is" if kind == "hair" else "Care fee"}">{what}</td>'
-                   f'<td data-l="Per month"><span class="num">{b.usd(r["price_monthly"])}</span>{ref}</td>'
+                   f'<td data-l="{"Care fee" if kind == "price" else "What it is"}">{what}</td>'
+                   f'<td data-l="Per month"><span class="num">{b.usd(r["price_monthly"])}</span>{ref}'
+                   + (f'<span class="sub">{b.care_note(r)}</span>' if kind == "glp1" else "") + '</td>'
                    f'<td data-l="FDA letter">{letter}</td><td data-l="Checked">{nice(r["last_seen"])}</td></tr>')
-    third = "What it is" if kind == "hair" else "Care fee"
-    return (f'<div class="tbl-wrap"><table class="tbl tbl-cards"><thead><tr><th scope="col">Clinic</th><th scope="col">Plan</th>'
+    third = "Care fee" if kind == "price" else "What it is"
+    cls = "tbl tbl-cards tbl-clinics" if kind == "glp1" else "tbl tbl-cards"  # the clinic table part, care fee under the price
+    return (f'<div class="tbl-wrap"><table class="{cls}"><thead><tr><th scope="col">Clinic</th><th scope="col">Plan</th>'
             f'<th scope="col">{third}</th><th scope="col">Per month</th><th scope="col">FDA letter</th><th scope="col">Checked</th>'
             f'</tr></thead><tbody>{"".join(trs)}</tbody></table></div>')
 
@@ -835,11 +903,395 @@ def g_sema_price(b, f, N):
     return short, body, nxt
 
 
+def glp1_words(b, r):
+    """What a GLP-1 plan is: the brand by its name, or a pharmacy-made copy."""
+    if r.get("product_kind") == "compounded":
+        return "Compounded, not FDA approved"
+    return f"{b.brand_base(r['plan_name'])}, FDA approved"
+
+
+def and_list(xs):
+    xs = list(xs)
+    return xs[0] if len(xs) == 1 else ", ".join(xs[:-1]) + " and " + xs[-1] if xs else ""
+
+
+def pep_link(b, slug, name=None):
+    """A substance's name, linked to its /peptides/ page when the site has one."""
+    name = name or b.substance_name(slug)
+    return f'<a href="/peptides/{slug}/">{name}</a>' if any(p[0] == f"/peptides/{slug}/" for p in b.PAGES) else name
+
+
+def brands(b, slug):
+    """The brand names approved_db holds for a substance ("Ozempic, Rybelsus and Wegovy"), or ""."""
+    names = sorted({b.brand_base(a["brand_name"]) for a in b.APPROVED_DB if a["substance_slug"] == slug and a.get("brand_name")}
+                   - {slug.split("-")[0].title()})
+    return and_list(names[:4])
+
+
+def db_sentence(b, slug, N):
+    """The database's status sentence with its source ("on the FDA list of ... compound.[n]"), or ""."""
+    st = b.db_status(slug)
+    if not st:
+        return ""
+    key = "db-bpc" if slug == "bpc-157" else f"db-{slug}"
+    src = next((k for k, (_, u) in SOURCES.items() if u == st["url"]), key)
+    return f"{st['sentence']}.{N(src)}"
+
+
+def low_shop_words(b, slug, N):
+    """"the lowest price per mg among the shops in our window is $1.14 (Chimera Peptides)" with its source, or ""."""
+    r = b.pep_low_shop(slug)
+    if not r:
+        return ""
+    name = b.seller_base(b.clean(b.SELLERS.get(r["seller_slug"], {}).get("seller_name") or r["seller_name"]))
+    return (f"The lowest price per mg in our {b.substance_name(slug)} window is {b.per_mg(r['price_per_mg'])} "
+            f"({b.clinic_link(r['seller_slug'], name, True)}).{N('db-sellers')}")
+
+
+def g_muscle(b, f, N):
+    eg, ge = brands(b, "tesamorelin"), brands(b, "somatropin")
+    short = (f"No peptide is FDA approved for building muscle. Tesamorelin ({eg or 'Egrifta'}) is approved to reduce belly fat in "
+             f"adults with HIV and lipodystrophy, and growth hormone itself (somatropin) mainly for growth hormone deficiency."
+             f"{N('label-egrifta')}{N('label-genotropin')} CJC-1295 and ipamorelin are research-use peptides")
+    ipa = db_sentence(b, "ipamorelin", N)  # after the labels, so the short answer's footnotes read in order
+    short += (f", and ipamorelin is {ipa}" if ipa else ".") + " We found no trial in people that shows any of them builds muscle."
+    mus = next(g for g in b.ALL_GOALS if g["slug"] == "muscle")
+    opts = "".join(f"<li><strong>{p['name']}</strong>: {p['status']}. {p['does']}</li>" for p in mus["peptides"])
+    counts = " ".join(x for x in (shops_line(b, f, s, N) for s in ("cjc-1295", "ipamorelin", "sermorelin")) if x)
+    tes_shops = f["subs"].get("tesamorelin", {}).get("shops")
+    cjc = db_sentence(b, "cjc-1295", N)
+    body = f"""
+<h2>Which peptides are sold for muscle?</h2>
+<p>Our <a href="/muscle/">muscle page</a> lists the options people ask about:</p>
+<ul>{opts}</ul>
+<p>Most of them work on the same signal. They make the body release more growth hormone, which is why they are called growth hormone secretagogues. CJC-1295 is a long-acting copy of the hormone that tells the body to release growth hormone.{N('pm-teichman')} Ipamorelin acts on a different receptor with the same aim.{N('pm-raun')}</p>
+
+<h2>What has been tested in people?</h2>
+<p>Hormone levels, not muscle. In two placebo-controlled trials in healthy adults, CJC-1295 raised growth hormone and IGF-I, a hormone made in response to it, for days after each injection.{N('pm-teichman')} The trials measured those hormones and side effects; they did not measure muscle or strength.</p>
+<p>Ipamorelin was developed in rats and pigs.{N('pm-raun')} Its one larger trial in people was for a different problem: 117 patients after bowel surgery, where it did no better than a placebo.{N('pm-beck')}</p>
+<p>We found no trial in people that shows CJC-1295, ipamorelin or sermorelin builds muscle. A higher hormone level in a blood test is not the same as more muscle.</p>
+
+<h2>Why are they on the FDA's risk list for compounding?</h2>
+<p>The FDA keeps a list of substances that may be risky when pharmacies use them to make medicines.{N('fda-bulk-risks')} {f"Our database records that ipamorelin is {ipa}" if ipa else ""} The FDA says ipamorelin may set off an immune reaction when given some ways, and that a published study found serious side effects, including a death, when it was given into a vein for gut problems.{N('fda-bulk-risks')}</p>
+<p>{f"For CJC-1295, our database records that {cjc}" if cjc else ""} The FDA lists serious side effects linked to CJC-1295, including a faster heart rate and a reaction in which blood vessels widen across the body, and says the data in people are limited.{N('fda-bulk-risks')}</p>
+
+<h2>What is approved, and for what?</h2>
+<p><strong>Tesamorelin</strong>{f" ({eg})" if eg else ""} is approved to reduce excess belly fat in adults with HIV who have lipodystrophy, a change in where the body stores fat. Its label says it is not for weight loss.{N('label-egrifta')} It is not approved for muscle.</p>
+<p><strong>Somatropin</strong> is growth hormone made in a lab{f", sold as {ge}" if ge else ""}. It is approved for children who do not grow because of growth hormone deficiency or some other conditions, and for adults with growth hormone deficiency.{N('label-genotropin')} It is not approved for building muscle in healthy people.</p>
+<p>A doctor decides whether you have a condition they treat.</p>
+
+<h2>What do they cost?</h2>
+<p>{counts or "We show shop prices once the shops are in our database."}{f" {tes_shops} shops also list tesamorelin as a research-use vial; that is not the approved medicine.{N('db-sellers')}" if tes_shops else ""}</p>
+<p>A price per mg says nothing about what is in a vial. Our guide on <a href="/learn/how-to-read-a-coa/">how to read a COA</a> shows what a lab report can tell you, and <a href="/learn/how-we-check-sellers/">how we check sellers</a> explains the five checks next to each shop.</p>
+
+<h2>So what are the best peptides for muscle?</h2>
+<p>On the evidence in people, none. The peptides sold for muscle raise hormone levels in short trials or were tested for other problems, and the FDA lists safety concerns for two of them. The approved growth hormone medicines are for medical conditions.</p>
+<p>None of this is medical advice. A doctor can tell you what fits your goal.</p>"""
+    nxt = (("/muscle/", "Compare muscle options"), ("/learn/are-peptides-safe/", "Are peptides safe? guide"))
+    return short, body, nxt
+
+
+def g_bpc_tb(b, f, N):
+    sb_, st_ = b.db_status("bpc-157"), b.db_status("tb-500")
+    same = sb_ and st_ and sb_["sentence"] == st_["sentence"]
+    short = (f"Neither BPC-157 nor TB-500 is FDA approved for any use.{N('drugsfda-hair')} "
+             + (f"For each, {db_sentence(b, 'bpc-157', N)} " if same else ""))
+    bs, ts = status_words(b, "bpc-157", N, plain=True), status_words(b, "tb-500", N, plain=True)
+    short += (
+             f"In July 2026 the FDA proposed not to let pharmacies use either one.{N('legal-6')} For BPC-157 we found three small "
+             f"studies in people, rated very low in certainty; for TB-500 the FDA found no human data.{N('pm-poolton')}{N('fda-bulk-risks')}")
+    rec = next(g for g in b.ALL_GOALS if g["slug"] == "recovery")
+    uses = "".join(f"<li><strong>{p['name']}</strong>: {p['does']}</li>" for p in rec["peptides"])
+    prices = "".join(f"<li>{x}</li>" for x in (shops_line(b, f, s, N) + (" " + low_shop_words(b, s, N) if low_shop_words(b, s, N) else "")
+                                                for s in ("bpc-157", "tb-500")) if x.strip())
+    cmp_url = ("/compare/bpc-157-vs-tb-500/" if any(p[0] == "/compare/bpc-157-vs-tb-500/" for p in b.PAGES)
+               else "/compare/" if any(p[0] == "/compare/" for p in b.PAGES) else "")
+    letters = (f"<p>Of the {f['letters']} FDA warning letters on our <a href=\"{b.LETTERS_URL}\">letters page</a>, {f['ruo_letters']} "
+               f"went to research-use peptide shops, the kind that sell both.{N('db-letters')}</p>") if f["letters"] else ""
+    body = f"""
+<h2>What are BPC-157 and TB-500?</h2>
+<p>{pep_link(b, "bpc-157", "BPC-157")} is a lab-made peptide of 15 amino acids, popular for recovery from muscle and tendon injuries.{N('pm-poolton')} {pep_link(b, "tb-500", "TB-500")} is a short piece of a larger body protein, thymosin beta-4: the fragment found in TB-500 products is seven amino acids long.{N('pm-esposito')}{N('fda-bulk-risks')}</p>
+<p>Both are sold by research-use shops as powder in a vial, often side by side and sometimes in one blend.</p>
+
+<h2>What is the FDA status of each?</h2>
+<ul>
+<li><strong>BPC-157</strong>: {bs or "not approved for any use." + N('drugsfda-hair')}</li>
+<li><strong>TB-500</strong>: {ts or "not approved for any use." + N('drugsfda-hair')}</li>
+</ul>
+<p>On 23 and 24 July 2026 the FDA's Pharmacy Compounding Advisory Committee reviewed both, and the FDA proposed not to allow pharmacies to use them to make medicines.{N('legal-6')} The FDA says both may set off an immune reaction when given some ways.{N('fda-bulk-risks')} Our guide <a href="/learn/is-bpc-157-legal/">Is BPC-157 legal?</a> explains the review.</p>
+
+<h2>What do the studies show?</h2>
+<p>For BPC-157, most of the research is in animals. A 2026 review found three studies in people, with 30 people in all: two looked back at patients treated for knee pain or a bladder condition, and one tested its safety in two people. The reviewers rated the evidence very low in certainty.{N('pm-poolton')}</p>
+<p>For TB-500, the FDA says it found no data on its use in people.{N('fda-bulk-risks')} We found no trial in people either.</p>
+
+<h2>How do the FDA's concerns compare?</h2>
+<p>The FDA lists both among the substances that may be risky when pharmacies use them to make medicines, for slightly different reasons.{N('fda-bulk-risks')}</p>
+<ul>
+<li><strong>BPC-157</strong>: it may set off an immune reaction when given some ways, it may be hard to make without unwanted peptide fragments, and the FDA found no, or only limited, safety information for the ways it was proposed to be used.{N('fda-bulk-risks')}</li>
+<li><strong>TB-500</strong>: it may set off an immune reaction because the peptide can clump together or carry unwanted fragments, and the FDA found no data on its use in people, so it does not know whether it would cause harm.{N('fda-bulk-risks')}</li>
+</ul>
+<p>In both cases the FDA's point is the same: there is too little information to know what the product does to a person.</p>
+
+<h2>What do people buy them for?</h2>
+<p>Our <a href="/recovery/">recovery page</a> describes each one:</p>
+<ul>{uses}</ul>
+<p>Those are the claims shops make. Neither has been shown in a trial in people to speed recovery.</p>
+
+<h2>What do they cost?</h2>
+{f"<ul>{prices}</ul>" if prices else "<p>We show shop prices once the shops are in our database.</p>"}
+<p>The window on our recovery page lists each shop with its five checks; we never link to the shops.{f' You can also put two shops side by side on <a href="{cmp_url}">Compare</a>.' if cmp_url else ''}</p>
+
+<h2>What has the FDA said to the shops?</h2>
+{letters}
+<p>A warning letter is the FDA's formal notice, not a court ruling.{N('fda-letters')} Our guide on <a href="/learn/what-an-fda-warning-letter-means/">what an FDA warning letter means</a> explains what follows one.</p>
+
+<h2>So which is better?</h2>
+<p>Neither has the evidence in people to answer that. Both are not approved, both were reviewed by the FDA in July 2026, and both have little or no human data. A lower price per mg does not make one a better choice.</p>
+<p>None of this is medical advice. A doctor or physical therapist can tell you what helps your injury.</p>"""
+    nxt = (("/recovery/", "Compare recovery options"), ("/learn/is-bpc-157-legal/", "Is BPC-157 legal? guide"))
+    return short, body, nxt
+
+
+def g_legal(b, f, N):
+    groups = {}
+    for slug in sorted({r["substance_slug"] for r in b.LEGAL_DB or []}):
+        st = b.db_status(slug)
+        if st:
+            groups.setdefault(st["label"], []).append(pep_link(b, slug, b.pep_short(slug)))
+    cos = [r["peptide"] for r in b.LEGAL["rows"] if r.get("chip") == "info"][:3]
+    ruo = lambda: (f'The FDA warning letters on our <a href="{b.LETTERS_URL}">letters page</a> went to companies: {f["ruo_letters"]} of the '
+           f'{f["letters"]} went to research-use peptide shops.{N("db-letters")}') if f["letters"] else ""
+    ex = lambda label: f" In our database: {and_list(groups[label][:3])}." if groups.get(label) else ""
+    short = ("It depends on the kind. An FDA-approved peptide medicine is legal on a prescription.{0} A pharmacy may make some "
+             "peptides for a patient under the FDA's compounding rules.{1} Cosmetic peptides are legal to sell without approval.{2} "
+             "Research-use peptides are not approved for use in people.{3}").format(N('fda-approval'), N('fda-503a'), N('legal-5'),
+                                                                                  N('drugsfda-hair'))
+    short += (f" The FDA warning letters we track went to the companies selling peptides, not to people who bought them.{N('db-letters')}"
+              if f["letters"] else "")
+    body = f"""
+<h2>What are the four kinds of peptide?</h2>
+<p>The law treats a peptide by how it is made and sold, not by what it is. The same substance can be an approved medicine in one product and a research-use powder in another.</p>
+<ul>
+<li><strong>FDA-approved medicines.</strong> The maker sent the FDA its trial data, and the FDA found that the benefits outweigh the known risks.{N('fda-approval')}{ex("FDA approved")}</li>
+<li><strong>Pharmacy-made (compounded).</strong> A pharmacy makes the medicine for one patient with a prescription. It is not FDA approved, and the FDA does not check its safety, effectiveness or quality before it is sold.{N('fda-compounding')}{ex("Pharmacy-made")}</li>
+<li><strong>Cosmetics.</strong> Serums and creams with peptides. They do not need FDA approval before they are sold.{N('legal-5')}{f" On our legal table: {and_list(cos)}." if cos else ""}</li>
+<li><strong>Research-use.</strong> Powders and vials sold "for research only". They are not approved for use in people.{N('drugsfda-hair')}{ex("Not approved")}</li>
+</ul>
+
+<h2>What are the 503A lists?</h2>
+<p>Section 503A of the federal drug law covers ordinary pharmacies. A pharmacy may make a medicine from a raw ingredient only if that ingredient is allowed, for example because it is on the FDA's 503A bulks list.{N('fda-503a')}</p>
+<p>While the FDA reviews the ingredients people have asked to add, it sorts them into three groups:{N('fda-503a')}</p>
+<ul>
+<li><strong>Category 1</strong>: enough information was sent to review it; the FDA does not plan to act against pharmacies that use it, under conditions.</li>
+<li><strong>Category 2</strong>: the FDA found significant safety risks, so the category 1 policy does not apply.</li>
+<li><strong>Category 3</strong>: too little information was sent to review it.</li>
+</ul>
+<p>The FDA's page on substances that may be risky to compound also names peptides whose nomination was withdrawn, such as BPC-157.{N('fda-bulk-risks')} Outsourcing facilities work under a different section, 503B, with their own list.{N('fda-glp1-supply')}</p>
+
+<h2>What does "research use only" mean for a buyer?</h2>
+<p>It is a label the seller puts on the product: it says the product is for lab research, not for people. It does not make the product approved, checked or safe to use.{N('fda-approval')} It also does not tell you what is in the vial; only a lab report from an outside lab can, and only for one batch. Our guide on <a href="/learn/how-to-read-a-coa/">how to read a COA</a> explains what to look for.</p>
+<p>{ruo()} We make no claim about what the law means for a person who buys one. A lawyer can answer that for your state.</p>
+
+<h2>How do you read our status chip?</h2>
+<p>Every peptide on our pages carries one chip, taken from our database when it has a row for the substance, else from our own checked table:</p>
+<ul>
+<li><span class="chip chip-ok">FDA approved</span> an FDA-approved product with this substance exists. It may be approved for one use and not for another.</li>
+<li><span class="chip chip-warn">Pharmacy-made</span> pharmacies may make it while the FDA reviews it; there is no approved product.</li>
+<li><span class="chip chip-neutral">Not approved</span> no approved product, and the FDA has not allowed pharmacies to use it, or its nomination was withdrawn.</li>
+<li><span class="chip chip-info">Cosmetic</span> sold as a cosmetic; no approval is needed.</li>
+</ul>
+<p>Each status on our legal table and our peptide pages comes with its source and the date we first saw it. Our <a href="/#legal">Is it legal today?</a> table and our <a href="/peptides/">peptides A to Z</a> show every one.</p>
+
+<h2>Can a status change?</h2>
+<p>Yes. The FDA can add a substance to a list, move it between categories or approve a new product. In July 2026 its compounding advisory committee reviewed BPC-157, TB-500, MOTS-c and epitalon, and the FDA proposed not to allow them.{N('legal-6')} We check the FDA's pages and change our chips when the FDA publishes a decision.</p>
+<p>None of this is legal or medical advice.</p>"""
+    nxt = (("/peptides/", "See every peptide's status"), ("/learn/is-bpc-157-legal/", "Is BPC-157 legal? guide"))
+    return short, body, nxt
+
+
+def g_sema_tirz(b, f, N):
+    sa, ta = f["sema_all"], f["tirz_all"]
+    ref = lambda r: N(pkey(r))
+    brand = lambda rows: [r for r in rows if r.get("product_kind") in b.BRANDED]
+    comp = lambda rows: [r for r in rows if r.get("product_kind") == "compounded"]
+    def low(rows, name):
+        return f"{name} from {b.usd(rows[0]['price_monthly'])}{ref(rows[0])}" if rows else ""
+    weg = [r for r in sa if b.brand_base(r["plan_name"]) == "Wegovy"]
+    zep = [r for r in ta if b.brand_base(r["plan_name"]) == "Zepbound"]
+    parts = [x for x in (low(weg, "Wegovy"), low(zep, "Zepbound"), low(comp(sa), "compounded semaglutide"),
+                         low(comp(ta), "compounded tirzepatide")) if x]
+    short = ((f"At the online clinics we track, the monthly plans start at: {and_list(parts)}. " if parts else "")
+             + f"Wegovy and Zepbound are FDA approved for weight management; Ozempic and Mounjaro are approved for type 2 diabetes."
+             f"{N('label-wegovy')}{N('label-zepbound')}{N('label-ozempic')}{N('label-mounjaro')} Compounded copies are not FDA approved."
+             f"{N('fda-compounding')}")
+    sb, tb = brands(b, "semaglutide"), brands(b, "tirzepatide")
+    newest = max((r["last_seen"] for r in sa + ta), default=None)
+    def section(rows, name):
+        return plan_table(b, rows, N, "glp1") if rows else f"<p>We show {name} plans once the clinic plans are in our database.</p>"
+    fee = [r for r in sa + ta if r.get("membership_fee_monthly") not in (None,) and float(r["membership_fee_monthly"]) > 0]
+    body = f"""
+<h2>What are semaglutide and tirzepatide?</h2>
+<p>Both act on the body's receptors for gut hormones. Semaglutide acts on one, the GLP-1 receptor;{N('label-ozempic')} tirzepatide acts on two, the GIP and GLP-1 receptors.{N('label-mounjaro')}</p>
+{f"<p>Each is sold under more than one brand name: semaglutide as {sb}, tirzepatide as {tb}.{N('db-semaglutide')}{N('db-tirzepatide')}</p>" if sb and tb and b.db_status("semaglutide") and b.db_status("tirzepatide") else ""}
+
+<h2>Which brands are approved for weight loss?</h2>
+<ul>
+<li><strong>Wegovy</strong> (semaglutide): to reduce excess body weight and keep it off in adults with obesity, or with overweight and a weight-related condition, and to lower the risk of heart attack and stroke in some adults.{N('label-wegovy')}</li>
+<li><strong>Zepbound</strong> (tirzepatide): to reduce excess body weight and keep it off in the same groups, and to treat moderate to severe sleep apnea in adults with obesity.{N('label-zepbound')}</li>
+<li><strong>Ozempic</strong> (semaglutide): for blood sugar in adults with type 2 diabetes, and to lower heart risk in some of them.{N('label-ozempic')}</li>
+<li><strong>Mounjaro</strong> (tirzepatide): for blood sugar in adults and children aged 10 and over with type 2 diabetes.{N('label-mounjaro')}</li>
+</ul>
+<p>Some clinics sell Ozempic plans too, as the table below shows. The label tells you what the FDA approved each brand for.</p>
+
+<h2>What do clinics charge for semaglutide?</h2>
+<p>Every semaglutide plan at the online clinics we track, brand and compounded, cheapest first{f", checked {nice(newest)}" if newest else ""}:</p>
+{section(sa, "semaglutide")}
+
+<h2>What do clinics charge for tirzepatide?</h2>
+{section(ta, "tirzepatide")}
+<p>A clinic with an FDA warning letter is still listed; the chip opens our <a href="{b.LETTERS_URL}">letters page</a>. Prices are the clinics' published monthly prices; "from" prices are the lowest shown.</p>
+
+<h2>What does the care fee add?</h2>
+<p>Under each price is the clinic's care fee: "all-in" when the price includes the prescriber and check-ins, a monthly amount when it is charged on top, or "care fee not known" when the clinic's page did not say.{f" {len(fee)} of the plans above add a fee on top." if fee else ""} Add it before you compare two plans.</p>
+
+<h2>What does the price not tell you?</h2>
+<ul>
+<li>Whether the price goes up as the dose goes up. Ask the clinic.</li>
+<li>For a compounded plan, which pharmacy makes it. The FDA does not check a compounded medicine before it is sold.{N('fda-compounding')}</li>
+<li>Whether a compounded semaglutide is a salt form, which the FDA says is a different ingredient from the one in the approved drugs.{N('fda-glp1-concerns')}</li>
+</ul>
+<p>Our guides on <a href="/learn/compounded-semaglutide-price/">compounded semaglutide prices</a> and <a href="/learn/compounded-vs-brand-glp-1/">compounded vs brand GLP-1</a> go further. None of this is medical advice; your prescriber can tell you which medicine fits you.</p>"""
+    nxt = (("/weight-loss/", "Compare clinic prices"), ("/learn/compounded-vs-brand-glp-1/", "Compounded vs brand guide"))
+    return short, body, nxt
+
+
+def g_skin(b, f, N):
+    skin = next(g for g in b.ALL_GOALS if g["slug"] == "skin")
+    pep = [p for p in skin["peptides"] if p.get("substance")]
+    short = (f"Skin peptides are sold as cosmetics: legal without FDA approval, and nobody has to show that they work.{N('legal-5')} "
+             f"Matrixyl, a palmitoyl pentapeptide, has one 12-week, placebo-controlled study in 93 women that found fewer fine lines."
+             f"{N('pm-robinson')} Argireline, an acetylated hexapeptide, has a small study in women without a placebo group.{N('pm-blanes')} "
+             f"For copper peptides (GHK-Cu), a 2026 review called the studies in people small and few.{N('pm-najafi')}")
+    opts = "".join(f"<li><strong>{p['name']}</strong>: {p['status']}. {p['does']}</li>" for p in pep)
+    counts = " ".join(x for x in (shops_line(b, f, p["substance"], N) for p in pep) if x)
+    body = f"""
+<h2>Which peptides are sold for skin?</h2>
+<p>Our <a href="/skin/">skin page</a> lists the peptides you see most on labels:</p>
+<ul>{opts}</ul>
+<p>All three are sold in serums and creams as cosmetics. Cosmetics do not need FDA approval before they are sold, and the maker does not have to show that they work.{N('legal-5')}</p>
+
+<h2>What does Matrixyl have behind it?</h2>
+<p>The peptide in Matrixyl is a palmitoyl pentapeptide (pal-KTTKS), made in a lab and designed to help skin make collagen. In a 12-week study, 93 women aged 35 to 55 used a moisturizer with it on one side of the face and the same moisturizer without it on the other, without knowing which was which. The side with the peptide showed fewer wrinkles and fine lines in image analysis.{N('pm-robinson')}</p>
+<p>That is a study in people, with a placebo, which is more than most skin peptides have. It was one study, in one group of women, in a cream at a stated strength.{N('pm-robinson')}</p>
+
+<h2>What does Argireline have behind it?</h2>
+<p>Argireline is an acetylated hexapeptide, designed to act a little like botulinum toxin by calming the nerve signal that tightens face muscles. In lab tests it blocked that signal, much more weakly than the toxin. In healthy women, a cream with 10% of it reduced wrinkle depth by up to 30% over 30 days.{N('pm-blanes')}</p>
+<p>The study reports no placebo group and gives no number of women in its summary, so it is weaker evidence than the Matrixyl study.{N('pm-blanes')}</p>
+
+<h2>What about copper peptides?</h2>
+<p>GHK-Cu is a copper peptide the body makes; lab studies link it to skin repair and collagen.{N('pm-pickart')} A 2026 review of the research found four decades of lab and animal work, but called the studies in people thin: most trials were small and tested face creams.{N('pm-najafi')} Our <a href="/learn/ghk-cu-for-hair/">GHK-Cu guide</a> has more.</p>
+
+<h2>How do you read a skin peptide claim?</h2>
+<p>Ask four questions before you believe a promise on the box:</p>
+<ul>
+<li>Was it tested in people, or only in a dish?</li>
+<li>Was there a placebo, a cream without the peptide, to compare with?</li>
+<li>How many people, and for how long?</li>
+<li>Was the product you are buying tested, or only the ingredient at a stated strength?</li>
+</ul>
+<p>The Matrixyl study answers the first three well; most skin peptide claims answer none of them.{N('pm-robinson')}</p>
+
+<h2>How do you read the ingredient list?</h2>
+<p>On a cosmetic label, the ingredients are listed from the largest amount to the smallest, and ingredients at 1% or less may follow in any order.{N('fda-cosmetic-labels')} A peptide near the end of the list may be there in a very small amount.</p>
+<ul>
+<li>Look for the ingredient name, not the brand name: our skin page names palmitoyl pentapeptide-4 for Matrixyl and acetyl hexapeptide-8 for Argireline, and GHK-Cu often appears as copper tripeptide-1.{N('pm-inci')}</li>
+<li>The studies above used a stated amount. A product that does not say how much it contains cannot tell you whether it matches.</li>
+<li>A product meant to treat a disease or change how the body works is a drug under the law, even when it is sold as a cosmetic.{N('legal-5')}</li>
+</ul>
+
+<h2>What do they cost?</h2>
+<p>{counts or "We show prices once the shops are in our database."} Those are research-use powders and vials, not finished creams.</p>
+<p>Our skin page lists every option with its status and its source. None of this is medical advice. A dermatologist can tell you what fits your skin.</p>"""
+    nxt = (("/skin/", "Compare skin options"), ("/learn/ghk-cu-for-hair/", "GHK-Cu guide"))
+    return short, body, nxt
+
+
+def g_checks(b, f, N):
+    shops = list(b.SHOPS.values())
+    scored = [r for r in shops if r.get("score") is not None]
+    order = lambda r: (-(r.get("score") or 0), -(r.get("product_count") or 0), r["seller_slug"])
+    used = set()
+
+    def example(key):
+        met = sorted((r for r in scored if r.get(key)), key=lambda r: (r["seller_slug"] in used,) + order(r))
+        n_met = len(met)
+        if not scored:
+            return ""
+        out = f"Today {n_met} of the {len(scored)} shops we score meet it.{N('own-sellers')}"
+        if met:
+            r = met[0]
+            used.add(r["seller_slug"])
+            out += (f" One that does: <a href=\"/sellers/{r['seller_slug']}/\">{b.clean(r['seller_name'])}</a>."
+                    f"{N('seller-' + r['seller_slug'])}")
+        else:
+            out += " No shop meets it yet."
+        if len(scored) - n_met:
+            miss = len(scored) - n_met
+            out += f" {miss} {'does' if miss == 1 else 'do'} not; we do not name them here, and each one's page shows its checks."
+        return out
+    names = [t for _, t in b.SCORE_CHECKS]
+    checked = max((r.get("score_checked_on") or "" for r in scored), default="")
+    short = (f"Every shop we track gets the same five yes or no checks: {and_list(names)}.{N('own-how-we-rate')} "
+             "The score is how many it meets, out of five. It is a count of facts we found, not a safety or quality grade, and "
+             "a shop with five of five can still sell a product that is not approved for any use.{0}".format(N('own-how-we-rate'))
+             + (f" We recompute the checks each time we pull our data; the newest check is from {nice(checked)}.{N('own-sellers')}"
+                if checked else ""))
+    body = f"""
+<h2>Why do we check sellers at all?</h2>
+<p>Research-use shops sell products that are not approved for use in people, so no regulator checks them before they are sold.{N('fda-approval')} We cannot test what is in a vial. What we can do is collect the same public facts about every shop and show them side by side, with their dates.</p>
+
+<h2>Lab reports</h2>
+<p>Met when the shop has published at least one lab report (a certificate of analysis) dated in the last 12 months, for any of its products. A miss means we found no recent report; it does not mean a product failed a test.{N('own-how-we-rate')}</p>
+<p>{example("score_lab_testing")}</p>
+
+<h2>No FDA letter</h2>
+<p>Met when the FDA's list of warning letters holds no letter matched to the shop by its web address or street address. A letter that only shares a company name does not count, because names repeat.{N('own-how-we-rate')}</p>
+<p>{example("score_no_fda_letter")} This is the one check where a miss means we found something against the shop: the FDA sent it a letter, and its page links the letter.</p>
+
+<h2>Company found</h2>
+<p>Met when we find the business behind the shop in a state business registry, matched with high confidence. We do not search every state yet, so a real company can still show as not found.{N('own-how-we-rate')}</p>
+<p>{example("score_registered_company")}</p>
+
+<h2>Legal pages</h2>
+<p>Met when the shop's site has a terms page and a privacy or refund page, seen by our crawler in the last 30 days. Having them says nothing about what they promise.{N('own-how-we-rate')}</p>
+<p>{example("score_legal_pages")}</p>
+
+<h2>Fresh prices</h2>
+<p>Met when our own price crawl saw at least one price per mg on the shop's site in the last 30 days. A miss means our prices for that shop are older, so read them with care.{N('own-how-we-rate')}</p>
+<p>{example("score_fresh_prices")}</p>
+
+<h2>What does the score not tell you?</h2>
+<ul>
+<li>Whether a product is safe or works. The checks are about the shop, not the vial.</li>
+<li>Whether the product is approved. A shop with five of five can sell a product that is not approved for any use.{N('own-how-we-rate')}</li>
+<li>That a low score means problems. A shop with zero of five is one where we found none of the five facts; only a missed "No FDA letter" means we found something against it.{N('own-how-we-rate')}</li>
+</ul>
+<p>Paid links do not change a check, and nobody can buy a higher score.{N('own-how-we-rate')}</p>
+
+<h2>How often do the checks refresh?</h2>
+<p>We recompute all five each time we pull our data, and each seller page shows the date of its last check.{N('own-how-we-rate')} The time windows are fixed: 12 months for lab reports, 30 days for legal pages and prices.{N('own-how-we-rate')}</p>
+<p>Our <a href="/how-we-rate/">How we rate</a> page has the full rules{', and our <a href="/sellers/">sellers list</a> shows every shop with its score' if b.PROFILES else ''}. A lab report still covers only one batch; our guide on <a href="/learn/how-to-read-a-coa/">how to read a COA</a> explains why.</p>"""
+    nxt = ((("/sellers/", "See all sellers") if b.PROFILES else (b.LETTERS_URL, "See FDA warning letters")), ("/how-we-rate/", "How we rate"))
+    return short, body, nxt
+
+
 TEXTS = {"is-bpc-157-legal": g_bpc, "are-peptides-safe": g_safe, "how-to-read-a-coa": g_coa,
          "compounded-vs-brand-glp-1": g_glp1, "what-an-fda-warning-letter-means": g_letter,
          "peptides-for-hair-loss-what-works": g_hair, "best-peptides-for-hair-growth": g_best,
          "ghk-cu-for-hair": g_ghk, "injectable-peptides-for-hair-growth": g_inject,
-         "compounded-semaglutide-price": g_sema_price}
+         "compounded-semaglutide-price": g_sema_price, "best-peptides-for-muscle-growth": g_muscle,
+         "bpc-157-vs-tb-500": g_bpc_tb, "are-peptides-legal-in-the-us": g_legal, "semaglutide-vs-tirzepatide-price": g_sema_tirz,
+         "peptides-for-skin-what-works": g_skin, "how-we-check-sellers": g_checks}
 
 
 def article_schema(b, g):
