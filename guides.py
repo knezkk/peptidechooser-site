@@ -500,7 +500,7 @@ def g_hair(b, f, N):
              "use, and we found no human evidence for hair.")
     generic = (f" Generic finasteride starts at about ${hair['price_from_usd']} a month with a pharmacy coupon.{N('hair-2')}"
                if hair.get("price_from_usd") is not None else "")
-    serum_p = (f" A scalp serum with copper peptides costs about {serum['price']} ({serum['price_note'].replace(serum['price'] + ' ', '', 1)}).{N('hair-4')}"
+    serum_p = (f" A scalp serum with copper peptides costs about {serum['price']} ({serum['price_note'].replace(serum['price'] + ' ', '', 1)}).{N('hair-text-4')}"
                if serum and serum.get("price") else "")
     fp, hc = f["fin_plan"], f["hair_comp"]
     clinics = (f"""<h2>What do online clinics charge?</h2>
@@ -527,7 +527,7 @@ def g_hair(b, f, N):
 <p>It takes at least four months, and sometimes up to a year, before you see an effect, and most new hair is lost within a few months after you stop.{N('medline-minoxidil')}</p>
 
 <h2>Do copper peptides (GHK-Cu) grow hair?</h2>
-<p>GHK-Cu is a small copper peptide found in serums and shampoos. The evidence for hair comes from lab work: a 2007 study tested it on human hair follicles kept alive in a dish.{N('hair-3')} That is not the same as a trial in people, and we found no large trial in people.</p>
+<p>GHK-Cu is a small copper peptide found in serums and shampoos. The evidence for hair comes from lab work: a 2007 study tested AHK-Cu, a close relative of GHK-Cu, on human hair follicles kept alive in a dish.{N('hair-3')} That is not the same as a trial in people, and we found no large trial in people.</p>
 <p>Copper peptide serums are sold as cosmetics. Cosmetics do not need FDA approval, and nobody has to show that they work.{N('legal-5')}{serum_p}</p>
 
 <h2>What about peptide shampoos and creams?</h2>
