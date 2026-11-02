@@ -1520,6 +1520,11 @@ EVIDENCE_WORDS = {"registry": "state registry", "fda_letter": "named in an FDA l
 SELLERS_FIRST = 25
 
 
+def shown_company(r):
+    """A company name we show: one from a state registry or an FDA letter, never one read off the seller's own pages."""
+    return bool(r.get("entity_name")) and r.get("entity_evidence") in ("registry", "fda_letter")
+
+
 def kind_words(r):
     k = r.get("seller_kind") or ""
     if k in KIND_WORDS:
@@ -1581,10 +1586,12 @@ def newest_letter(r):
 def short_answer(r):
     """The short answer (pages.md, Seller; Tier 1 template): one sentence per field, a missing field drops its sentence."""
     name, (kind, _, _) = seller_name(r), kind_words(r)
-    state = STATES.get(r.get("entity_state") or "")
+    state = STATES.get(r.get("entity_state") or "") if shown_company(r) else ""  # the state of a company we show
     out = [f"{name} is a {kind}{' in ' + state if state else ''}."]
     if r.get("product_count") is not None and r.get("substance_count") is not None:
-        price = f"; prices from {per_mg(r['price_per_mg_min'])}/mg" if r.get("price_per_mg_min") is not None else ""
+        # no "prices from" under $0.01/mg: those minimums are data errors until the database fixes them (owner answer Q6 a)
+        low = r.get("price_per_mg_min")
+        price = f"; prices from {per_mg(low)}/mg" if low is not None and low >= 0.01 else ""
         out.append(f"It lists {plural(r['product_count'], 'product')} across {plural(r['substance_count'], 'substance')}{price}.")
     if r.get("score_lab_testing") and r.get("coa_count") and r.get("newest_coa_date"):
         out.append(f"Lab reports: {r['coa_count']}, the newest dated {nice_date(r['newest_coa_date'])}.")
@@ -1595,9 +1602,13 @@ def short_answer(r):
         out.append("No FDA warning letter.")
     elif n:
         out.append(f"{plural(n, 'FDA warning letter')}, the newest on {nice_date(newest_letter(r))}.")
-    if r.get("entity_name"):
-        how = ", ".join(x for x in (STATES.get(r.get("entity_state") or ""), EVIDENCE_WORDS.get(r.get("entity_evidence") or "")) if x)
-        out.append(f"Registered company: {clean(r['entity_name'])}{' (' + how + ')' if how else ''}.")
+    # "Registered company" only with a registry match; a name from an FDA letter says so; a name from the seller's own
+    # pages is not shown (owner answer Q4 a, 2 Nov 2026)
+    state = STATES.get(r.get("entity_state") or "")
+    if shown_company(r) and r.get("entity_evidence") == "registry":
+        out.append(f"Registered company: {clean(r['entity_name'])}{' (' + state + ')' if state else ''}.")
+    elif shown_company(r) and r.get("entity_evidence") == "fda_letter":
+        out.append(f"Company named in an FDA letter: {clean(r['entity_name'])}.")
     else:
         out.append("No registered company found.")
     return out
@@ -1721,19 +1732,19 @@ def seller_letters_section(r):
 
 
 def company_source(r):
-    """The company's source: the FDA letter as a nofollow link; the state registry and the seller's own pages as plain
-    text (never a link to the seller)."""
+    """The company's source: the FDA letter as a nofollow link; the state registry as plain text. Names from the
+    seller's own pages are not shown (owner answer Q4 a), so the seller is never a source here."""
     url = r.get("entity_source_url") or ""
     host = re.sub(r"^[a-z]+://", "", url).split("/")[0].lower()
     if url.startswith("https://www.fda.gov/"):
         return f'<a href="{escape(url)}" rel="nofollow">The FDA warning letter</a>'
     if host.endswith("floridados.gov"):
         return "Florida Department of State, Division of Corporations, corporate data file"
-    return f"The seller's own page: {escape(url)}" if url else ""
+    return ""
 
 
 def seller_company_section(r):
-    if not r.get("entity_name"):
+    if not shown_company(r):
         return ""
     rows = [("Name", escape(clean(r["entity_name"])))]
     if r.get("entity_state"):
