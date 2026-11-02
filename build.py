@@ -1082,6 +1082,26 @@ if(m&&root.querySelector('.goal-item[data-goal="'+m[1]+'"]')){pick(m[1]);root.sc
 fromHash();window.addEventListener('hashchange',fromHash);})();
 </script>"""
 
+# What we track (owner task 2 Nov 2026): the counts the trust pages and Home's sellers card show, all from site.json;
+# each line is drawn only when its data is there (never a placeholder).
+N_SELLERS = len(PROFILES)
+N_CLINICS = len({r["seller_slug"] for r in PLANS})
+N_LETTERS = DATA.get("letters_all_total") or len(LETTERS_ALL)
+N_STATUS = len({r["substance_slug"] for r in LEGAL_DB or []})
+PULLED = nice_date(DATA["pulled_at"][:10]) if DATA.get("pulled_at") else ""
+SCORE_ON = max((r["score_checked_on"] for r in PROFILES.values() if r.get("score_checked_on")), default="")
+
+# Sellers we track (pages.md, Home, under "Latest FDA warning letters"): the letters block's look, one line and
+# btn-line "See all sellers". No seller names on Home.
+SELLERS_HOME = f"""
+<section class="section" id="sellers-home">
+  <div class="wrap">
+    <div class="sec-hd"><div><h2>Sellers we track</h2><p>{N_SELLERS} shops that sell peptides online, each with five background checks.{f" Checked {nice_date(SCORE_ON)}." if SCORE_ON else ""}</p></div></div>
+    <p class="letters-all"><a class="btn btn-line" href="/sellers/">See all sellers</a></p>
+  </div>
+</section>
+""" if PROFILES else ""
+
 HOME = f"""
 <section class="hero hero-clinic">
   <div class="wrap">
@@ -1106,13 +1126,13 @@ HOME = f"""
       <dl class="glossary-list">{GLOSSARY}</dl>
     </section>
     <section class="rate-strip" aria-labelledby="rate-h">
-      <div class="rate-hd"><h2 id="rate-h">How we rate</h2><p>Every product and seller is judged on the same five criteria. We publish them so you can check our work.</p><a href="/how-we-rate/">Read the full method</a></div>
+      <div class="rate-hd"><h2 id="rate-h">How we rate</h2><p>Every seller gets the same five checks, in this order. They are facts we hold about the seller, not a safety grade.</p><a href="/how-we-rate/">Read the full method</a></div>
       <ul class="criteria">
-        <li><h3>Evidence</h3><p>What human studies show for the use you care about, not what a molecule does in a dish.</p></li>
-        <li><h3>Regulatory status</h3><p>FDA approval, cosmetic or research labeling, and any FDA warning letters sent to the seller.</p></li>
-        <li><h3>Lab testing</h3><p>Whether a third-party certificate of analysis exists and matches the batch you would receive.</p></li>
-        <li><h3>Real price</h3><p>Price per month or per milligram, calculated the same way for every seller so the numbers compare.</p></li>
-        <li><h3>Transparency</h3><p>Who runs the company, where it ships from, and whether paid placements are labeled.</p></li>
+        <li><h3>Lab reports</h3><p>A lab report dated in the last 12 months.</p></li>
+        <li><h3>No FDA letter</h3><p>No FDA warning letter matched to its web or street address.</p></li>
+        <li><h3>Company found</h3><p>The business behind the shop found in a state registry.</p></li>
+        <li><h3>Legal pages</h3><p>A terms page and a privacy or refund page, seen in the last 30 days.</p></li>
+        <li><h3>Fresh prices</h3><p>A price per milligram seen in the last 30 days.</p></li>
       </ul>
       <nav class="trust-links" aria-label="How we work"><a href="/disclosure/">How we make money</a><a href="/about/">Who checks our facts</a><a href="/corrections/">Mistakes we fixed</a><a href="#sources">Sources</a></nav>
     </section>
@@ -1144,7 +1164,7 @@ HOME = f"""
 </section>
 
 {LETTERS_SECTION}
-
+{SELLERS_HOME}
 <section class="section" id="learn">
   <div class="wrap">
     <div class="sec-hd"><div><h2>Who to follow</h2><p>{CREATORS["note"]}</p></div></div>
@@ -1175,6 +1195,18 @@ CORRECTIONS = f"""
 </div></section>
 """
 
+# What we track (pages.md, Trust pages, About; owner task 2 Nov 2026): one line per count that site.json holds.
+_track = [f'<li><a href="/sellers/">{N_SELLERS} sellers</a> that sell peptides online, each with its five checks.</li>' if N_SELLERS else "",
+          f"<li>{N_CLINICS} online clinics with plan prices.</li>" if N_CLINICS else "",
+          (f'<li><a href="/fda-warning-letters/">{N_LETTERS} FDA warning letters</a> to peptide sellers, compounders and online clinics.</li>'
+           if LETTERS_ALL else f"<li>{N_LETTERS} FDA warning letters to peptide sellers, compounders and online clinics.</li>") if N_LETTERS else "",
+          f"<li>{N_STATUS} substances with an FDA status, each with its source.</li>" if N_STATUS else ""]
+ABOUT_TRACK = (f"""<h2>What we track</h2>
+<ul>
+{"".join(x + chr(10) for x in _track if x)}</ul>
+<p>{f"Last data pull: {PULLED}. " if PULLED else ""}The data comes from the sellers' public pages, the FDA and state business registries, read by our own crawler. Items marked for review are checked by a person before they are published.</p>
+""" if any(_track) else "")
+
 ABOUT = f"""
 <section class="page"><div class="wrap prose">
 <h1>About Peptide Chooser</h1>
@@ -1188,7 +1220,7 @@ ABOUT = f"""
 <li>Show the source and date behind every claim, including FDA status and warning letters.</li>
 <li>Include FDA-approved alternatives when they are the better-supported option.</li>
 </ul>
-<h2>What we do not do</h2>
+{ABOUT_TRACK}<h2>What we do not do</h2>
 <ul>
 <li>We do not sell peptides or any other product.</li>
 <li>We do not give personal medical advice or dosing instructions.</li>
@@ -1203,25 +1235,38 @@ ABOUT = f"""
 </div></section>
 """
 
+# How we rate (pages.md, Trust pages; owner task 2 Nov 2026): the five seller checks exactly as the seller pages and
+# the price windows show them (site.sellers in peptide-data), then the goal page rule. URL, title and H1 unchanged.
 HOW = f"""
 <section class="page"><div class="wrap prose">
 <h1>How we rate peptide products and sellers</h1>
-<p class="lede">Every product and seller is judged on the same five criteria. We publish them so you can check our work.</p>
-<p class="small meta">{AUTHOR}. Last updated {CHECKED}. {STANDING_LINE}</p>
-<h2>1. Evidence</h2>
-<p>We look for human studies on the specific use you are reading about. Lab and animal results are reported as such and never presented as proof that something works in people.</p>
-<h2>2. Regulatory status</h2>
-<p>We state whether a product is FDA-approved for that use, sold as a cosmetic or supplement, compounded by a pharmacy, or labeled for research only. We check the FDA's public warning letter database for every seller we list and link the letter when one exists.</p>
-<h2>3. Lab testing</h2>
-<p>We record whether a seller publishes a certificate of analysis (COA), which lab issued it, its date, and whether it is tied to a specific batch. A COA that cannot be matched to a batch counts for less.</p>
-<h2>4. Real price</h2>
-<p>Sellers quote prices in different ways. We convert them to a common unit, such as price per milligram or price per 30 days of use, so the numbers can be compared directly.</p>
-<h2>5. Transparency</h2>
-<p>We look at who owns the company, where it ships from, its return policy, and whether it labels paid promotions.</p>
-<h2>What does not affect a rating</h2>
-<p>Whether a seller pays us a commission. Paid links are labeled and sellers without an affiliate program are rated and listed the same way.</p>
+<p class="lede">We judge every seller by the same five checks and build every goal page by the same rule. The checks are facts we hold about a seller, not a safety grade.</p>
+<p class="small meta">{AUTHOR}. Last updated {STAMP_CHECKED}. Every claim links to its source. Prices checked {STAMP_CHECKED}.</p>
+<h2>The five seller checks</h2>
+<p>{f'We track <a href="/sellers/">{N_SELLERS} sellers</a>. ' if N_SELLERS else ""}Every seller page and every price window shows a line such as "3 of 5 checks". These are the five, in the order the seller page shows them. We recompute all five each time we pull our data, and the seller page shows the date as "Checked" and a date{f"; the last pull was on {PULLED}" if PULLED else ""}.</p>
+<h3>Lab reports</h3>
+<p>Met when the seller has published at least one lab report (a certificate of analysis) dated in the last 12 months, for any of its products. We read the reports on the seller's own pages. A miss means we found no report from the last 12 months; it does not mean a product failed a test. A lab report shows what one batch contained on the day it was tested, not that a product is safe or that it works.</p>
+<h3>No FDA letter</h3>
+<p>Met when the FDA's public list of warning letters holds no letter matched to the seller by its web address or street address. A letter that only shares a company name is not counted, because names repeat. A miss means the FDA sent the seller at least one warning letter; the seller page links each one.{f' We keep every letter to peptide sellers, compounders and online clinics, {N_LETTERS} so far, on our <a href="/fda-warning-letters/">FDA warning letters</a> page.' if LETTERS_ALL and N_LETTERS else ""}</p>
+<h3>Company found</h3>
+<p>Met when we find the business behind the shop in a state business registry, matched with high confidence. A miss means we did not find it. We do not search every state's registry yet, so a real company can still show as not found. When an FDA letter names the company, the seller page says so, but that alone does not meet this check.</p>
+<h3>Legal pages</h3>
+<p>Met when the seller's site has a terms page and a privacy or refund page, seen by our crawler in the last 30 days. A miss means we did not see those pages in that time. Having them says nothing about what they promise.</p>
+<h3>Fresh prices</h3>
+<p>Met when our own price crawl saw at least one price per milligram on the seller's site in the last 30 days. A miss means our prices for this seller are older than that, so read them with care.</p>
+<h3>What the score does not tell you</h3>
+<p>A seller with 5 of 5 can still sell a product that is not approved for any use. A seller with 0 of 5 is one where we found none of the five facts, not one where we found five problems; only a missed "No FDA letter" check means we found something against the seller. Read the checks one by one.</p>
+<h2>How a goal page is built</h2>
+<ul>
+<li>When the FDA has approved a treatment for the goal, it is listed first.</li>
+<li>Research-use peptides are shown with one sentence on their FDA status. We never link to a research-use seller: the price window lists the shops by name, and each name opens our page on that seller.</li>
+<li>Online clinics get a grey "Online clinic" button with "No paid link yet" under it until we have a paid link with that clinic. A paid link is a green button with "Paid link" under it.</li>
+<li>Every price shows the date we checked it, and every claim links to its source.</li>
+</ul>
+<h2>What does not change a check</h2>
+<p>Paid links, partnership requests and a seller asking us. A seller with a paid link is checked the same way as one without, and no one can buy a higher score or a better place on a page.</p>
 <h2>Corrections</h2>
-<p>If you find an error, email <a href="mailto:{EMAIL}">{EMAIL}</a> with the page and the source. We correct confirmed errors and note the date of the change.</p>
+<p>If you find an error, email <a href="mailto:{EMAIL}">{EMAIL}</a> with the page and the source. We correct confirmed errors, note the date of the change and list it on our <a href="/corrections/">corrections page</a>.</p>
 </div></section>
 """
 
@@ -1336,7 +1381,7 @@ def category_page(g):
 </tr>""")
     table = ('<thead><tr><th scope="col">Option</th><th scope="col">FDA status for hair loss</th><th scope="col">Evidence in people</th><th scope="col">Price from</th><th scope="col">How you get it</th></tr></thead>\n'
              f'      <tbody>{"".join(rows)}</tbody>')
-    return category_body(g, table, f'{g["options_checked"]} options checked on the same five criteria. Rows that are not approved for human use carry no price and no seller.')
+    return category_body(g, table, f'{g["options_checked"]} options checked on the same rule. Rows that are not approved for human use carry no price and no seller.')
 
 
 KIND_CHIP = {"brand": ("ok", "Brand"), "compounded": ("warn", "Compounded"), "program": ("neutral", "Program")}
@@ -1875,7 +1920,7 @@ PAGES = [
     ("/about/", "about/index.html", "About Peptide Chooser",
      "Peptide Chooser is an independent site that compares peptide products and sellers for people in the United States.", ABOUT, "", [("/about/", "About")]),
     ("/how-we-rate/", "how-we-rate/index.html", "How we rate peptide products and sellers | Peptide Chooser",
-     "The five criteria Peptide Chooser uses to rate every peptide product and seller: evidence, FDA status, lab testing, real price and transparency.", HOW, "", [("/how-we-rate/", "How we rate")]),
+     "The five checks Peptide Chooser runs on every peptide seller (lab reports, FDA letters, company, legal pages, fresh prices) and how each goal page is built.", HOW, "", [("/how-we-rate/", "How we rate")]),
     ("/contact/", "contact/index.html", "Contact | Peptide Chooser",
      "Email Peptide Chooser for corrections with a source, questions about a listing, press and partnerships. We cannot answer personal medical questions.", CONTACT, "", [("/contact/", "Contact")]),
     ("/disclosure/", "disclosure/index.html", "Affiliate and medical disclosure | Peptide Chooser",
