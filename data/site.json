@@ -167,6 +167,12 @@
       "slug": "skin",
       "name": "Skin",
       "label": "Skin",
+      "page": true,
+      "title": "Peptides for skin vs proven options | Peptide Chooser",
+      "h1": "Peptides for skin, compared with the proven options.",
+      "description": "Copper peptides, Matrixyl and Argireline next to tretinoin, the cream the FDA approved for wrinkles. What each does, how you get it, what it costs.",
+      "short_answer": "Tretinoin is the only option on this page the FDA has approved for fine wrinkles, and it needs a prescription. Peptide creams and serums are cosmetics: legal to sell without approval, judged on small studies of their own. None is a drug and none needs a prescription.",
+      "legal_section": true,
       "map": {
         "x": 50,
         "y": 11
