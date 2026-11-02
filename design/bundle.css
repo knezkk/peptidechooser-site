@@ -94,6 +94,24 @@ body:has(.sellers-dlg[open]){overflow:hidden}
 .sellers-dlg .sub{display:block;font-size:var(--small-size);line-height:1.4;color:var(--ink-2)}
 .dlg-foot{margin:16px 0 0;font-size:var(--small-size);line-height:1.45;color:var(--ink-2)}
 .dlg-src{margin:8px 0 0;padding-left:1.2em;font-size:var(--fine-size);line-height:1.45;color:var(--ink-2);overflow-wrap:anywhere}
+/* Seller score (pages.md, Seller window, owner 2 Nov 2026): at the top of the Background check cell, before the six chips,
+   "N of 5 checks" (the number in tabular figures) and the five checks as small marks (11px) on one line from 641px (they wrap on phones): met chip-ok, not met
+   chip-neutral, the state also spoken (.vh). The note under the table says what the checks are and are not. On phones the
+   score line moves under the seller name. */
+.sellers-dlg .score{display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px;margin-bottom:8px}
+.sellers-dlg .score-n{font-size:var(--small-size);font-weight:600;color:var(--ink);white-space:nowrap}
+.sellers-dlg .score-marks{display:flex;flex-wrap:wrap;gap:4px}
+.sellers-dlg .score-marks .chip{font-weight:600;font-size:11px;padding:2px 6px;white-space:nowrap}
+@media (min-width:641px){.sellers-dlg .score-marks{flex-wrap:nowrap}.sellers-dlg .tbl th:nth-child(2){width:20%}}
+.dlg-foot+.dlg-score{margin-top:4px}
+@media (max-width:640px){
+.sellers-dlg .tbl tbody tr{display:flex;flex-direction:column}
+.sellers-dlg .tbl td{order:2}
+.sellers-dlg .tbl td:first-child{order:0}
+.sellers-dlg .tbl td.checks{display:contents}
+.sellers-dlg .tbl td.checks .score{order:1;margin:6px 0 0}
+.sellers-dlg .tbl td.checks .chips{order:3;margin-top:6px}
+}
 @media (max-width:640px){
 .sellers-dlg[open]{width:100%;height:100%;max-height:100%;margin:0;border:0;border-radius:0}
 .dlg-in{padding:0 16px 16px}

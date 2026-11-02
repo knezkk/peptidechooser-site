@@ -511,12 +511,37 @@ def substance_name(slug):
 
 
 def seller_rows(slug):
-    """The listings for one substance, one per seller, sorted by price per mg, blends and unknown amounts last."""
+    """The listings for one substance, one per seller (its cheapest by price per mg, blends and unknown amounts last).
+    The rows are sorted by the seller's score, high first, then by how many products it lists, more first, then by name
+    (owner, 2 Nov 2026); a seller without a score goes last."""
     key = lambda r: (r.get("price_per_mg") is None, r.get("price_per_mg") or 0, r.get("price_usd") or 0, r["seller_slug"])
     best = {}
     for r in sorted((r for r in PRODUCTS if r["substance_slug"] == slug), key=key):
         best.setdefault(r["seller_slug"], r)
-    return sorted(best.values(), key=key)
+    def order(r):
+        s = SELLERS.get(r["seller_slug"], {})
+        return (-(s.get("score") if s.get("score") is not None else -1), -(s.get("product_count") or 0),
+                clean(s.get("seller_name") or r["seller_name"]).lower())
+    return sorted(best.values(), key=order)
+
+
+# The seller score (pages.md, Seller window, owner 2 Nov 2026): five yes/no checks from site.sellers, in this order, with
+# the short name each mark carries. Facts we hold about the seller, never a safety or quality grade.
+SCORE_CHECKS = [("score_lab_testing", "Lab tests"), ("score_no_fda_letter", "No FDA letter"),
+                ("score_registered_company", "Company found"), ("score_legal_pages", "Legal pages"),
+                ("score_fresh_prices", "Fresh prices")]
+
+
+def score_line(r):
+    """"N of 5 checks" with the five checks as small marks in one line: met chip-ok, not met chip-neutral (the state is
+    also spoken). Nothing when the seller has no score yet."""
+    s = SELLERS.get(r["seller_slug"], {})
+    if s.get("score") is None:
+        return ""
+    marks = "".join(f'<span class="chip chip-{"ok" if s.get(k) else "neutral"} mark-{"yes" if s.get(k) else "no"}">{t}'
+                    f'<span class="vh">: {"yes" if s.get(k) else "no"}</span></span>' for k, t in SCORE_CHECKS)
+    return (f'<span class="score"><span class="score-n"><span class="num">{s["score"]}</span> of {len(SCORE_CHECKS)} checks</span>'
+            f'<span class="score-marks">{marks}</span></span>')
 
 
 def check_chips(r):
@@ -541,6 +566,7 @@ def seller_table(slug):
     """One substance's sellers as a table, its source lines and its newest last_seen. No link to a seller."""
     rows = seller_rows(slug)
     newest = max((r["last_seen"] for r in rows if r.get("last_seen")), default="")
+    scored = max((SELLERS.get(r["seller_slug"], {}).get("score_checked_on") or "" for r in rows), default="")
     trs, src = [], []
     for r in rows:
         name = clean(r["product_name"])
@@ -553,13 +579,13 @@ def seller_table(slug):
         seller = clean(SELLERS.get(r["seller_slug"], {}).get("seller_name") or r["seller_name"])
         trs.append(f'<tr><td><span class="name">{seller}</span></td><td data-l="Product">{name}<span class="sub">{size}</span></td>'
                    f'<td data-l="Price"><span class="num">{price}</span></td><td data-l="Per mg"><span class="num">{ppm}</span></td>'
-                   f'<td>{check_chips(r)}</td></tr>')
+                   f'<td class="checks">{score_line(r)}{check_chips(r)}</td></tr>')
         seen = r.get("price_observed_at") or r.get("last_seen")
         src.append(f'<li>{seller}, {name}{", " + nice_date(seen) if seen else ""}: {r["product_url"]}</li>')
     table = (f'<div class="tbl-wrap"><table class="tbl"><thead><tr><th scope="col">Seller</th><th scope="col">Product</th>'
              f'<th scope="col">Price</th><th scope="col">Per mg</th><th scope="col">Background check</th></tr></thead>'
              f'<tbody>{"".join(trs)}</tbody></table></div>')
-    return table, src, newest
+    return table, src, newest, scored
 
 
 def subs_of(p):
@@ -578,12 +604,12 @@ def seller_window(p):
     substance name as a sub-heading. No Visit, no link to a seller."""
     subs = [s for s in subs_of(p) if seller_rows(s)]
     key = window_key(p)
-    parts, src, newest = [], [], ""
+    parts, src, newest, scored = [], [], "", ""
     for s in subs:
-        table, lines, seen = seller_table(s)
+        table, lines, seen, sc = seller_table(s)
         parts.append((f'<h3 class="dlg-sub">{substance_name(s)}</h3>' if len(subs) > 1 else "") + table)
         src += lines
-        newest = max(newest, seen)
+        newest, scored = max(newest, seen), max(scored, sc)
     title = substance_name(subs[0]) if p.get("substance") else p["name"]
     checked = f" Prices checked {nice_date(newest)}." if newest else ""
     return f"""<dialog class="sellers-dlg" id="{key}" aria-labelledby="{key}-h"><div class="dlg-in">
@@ -591,6 +617,7 @@ def seller_window(p):
   <p class="dlg-lede">Research-use sellers. We do not link to them.{checked}</p>
   {"".join(parts)}
   <p class="dlg-foot">Price per mg is price divided by the stated amount; blends have no per-mg price.</p>
+  {f'<p class="dlg-foot dlg-score">Checks are facts we hold about the seller, not a safety or quality grade. Checked {nice_date(scored)}.</p>' if scored else ""}
   <ol class="dlg-src">{"".join(src)}</ol>
 </div></dialog>"""
 
