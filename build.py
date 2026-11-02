@@ -38,13 +38,16 @@ GA4_ID = DATA.get("ga4_id", "")
 # Google Analytics 4 with Consent Mode v2. Everything starts denied; the cookie notice (design book,
 # Pages and buttons, item 6) flips analytics_storage to granted only after "Accept". The choice is kept
 # in localStorage under "pc-consent" so the bar is shown once.
+# Google's script loads only after "Accept" (now or on an earlier visit), so nothing reaches Google before consent, as the
+# privacy policy says; consent mode alone still sent cookieless pings (design/site-polish, 2 Nov 2026).
 ANALYTICS = f"""<script>
 window.dataLayer=window.dataLayer||[];function gtag(){{dataLayer.push(arguments);}}
-gtag('consent','default',{{ad_storage:'denied',ad_user_data:'denied',ad_personalization:'denied',analytics_storage:'denied',wait_for_update:500}});
-try{{if(localStorage.getItem('pc-consent')==='yes'){{gtag('consent','update',{{analytics_storage:'granted'}});}}}}catch(e){{}}
-gtag('js',new Date());gtag('config','{GA4_ID}',{{anonymize_ip:true}});
-</script>
-<script async src="https://www.googletagmanager.com/gtag/js?id={GA4_ID}"></script>""" if GA4_ID else ""
+gtag('consent','default',{{ad_storage:'denied',ad_user_data:'denied',ad_personalization:'denied',analytics_storage:'denied'}});
+window.pcLoadGA=function(){{if(window.pcGA)return;window.pcGA=1;gtag('consent','update',{{analytics_storage:'granted'}});
+gtag('js',new Date());gtag('config','{GA4_ID}',{{anonymize_ip:true}});var s=document.createElement('script');s.async=true;
+s.src='https://www.googletagmanager.com/gtag/js?id={GA4_ID}';document.head.appendChild(s);}};
+try{{if(localStorage.getItem('pc-consent')==='yes')pcLoadGA();}}catch(e){{}}
+</script>""" if GA4_ID else ""
 
 COOKIE_BAR = """<div class="cookie" id="cookie" hidden role="region" aria-label="Cookie notice">
   <div class="wrap">
@@ -57,7 +60,7 @@ COOKIE_BAR = """<div class="cookie" id="cookie" hidden role="region" aria-label=
 if(!s){b.hidden=false;}
 b.addEventListener('click',function(e){var v=e.target.getAttribute('data-consent');if(!v)return;
 try{localStorage.setItem('pc-consent',v);}catch(e){}
-if(v==='yes'&&window.gtag){gtag('consent','update',{analytics_storage:'granted'});}
+if(v==='yes'&&window.pcLoadGA){pcLoadGA();}
 b.hidden=true;});})();
 </script>""" if GA4_ID else ""
 STANDING_LINE = f"Every claim links to its source. Prices checked {CHECKED}."
@@ -75,7 +78,9 @@ NAV_HEAD = "<script>document.documentElement.classList.add('nav-js');</script>"
 NAV_JS = """<script>
 (function(){var b=document.querySelector('.nav-toggle'),n=document.getElementById('site-nav');if(!b||!n)return;
 function set(o){n.classList.toggle('open',o);b.setAttribute('aria-expanded',o?'true':'false');}
-b.addEventListener('click',function(){set(!n.classList.contains('open'));});
+// opening the menu moves focus to its first visible link: the links come before the button in the page, so Tab alone
+// would skip them (design/site-polish, 2 Nov 2026)
+b.addEventListener('click',function(){var o=!n.classList.contains('open');set(o);if(o){var f=[].filter.call(n.querySelectorAll('a,button,input'),function(x){return x.offsetParent;})[0];if(f)f.focus();}});
 n.addEventListener('click',function(e){if(e.target.closest('a'))set(false);});
 document.addEventListener('keydown',function(e){if(e.key==='Escape'&&n.classList.contains('open')){set(false);b.focus();}});})();
 (function(){var w=document.querySelector('.nav-goals'),b=w&&w.querySelector('.nav-goals-btn');if(!b)return;
@@ -134,7 +139,10 @@ var d=document.documentElement;if(!d.classList.contains('motion')||!window.gsap|
 window.pcMotion=true;gsap.registerPlugin(ScrollTrigger);
 var css=getComputedStyle(d),ms=function(n){{return parseFloat(css.getPropertyValue('--motion-'+n))/1000;}};
 var rise=parseFloat(css.getPropertyValue('--motion-rise'));
-ScrollTrigger.batch('.sec-hd, .tbl tbody tr, .criteria li, .creators li',{{start:'top 92%',once:true,
+// table rows rise only in tables of up to 25 rows; a long data table (letters, sellers, legal) shows at once, since one
+// trigger per row cost seconds of layout on phones (design/site-polish, 2 Nov 2026). Without :has the rows are not pre-hidden.
+var sel='.sec-hd, .criteria li, .creators li';try{{if(document.querySelector('.tbl tbody:not(:has(> tr:nth-child(26))) > tr'))sel+=', .tbl tbody:not(:has(> tr:nth-child(26))) > tr';}}catch(e){{}}
+ScrollTrigger.batch(sel,{{start:'top 92%',once:true,
 onEnter:function(els){{gsap.fromTo(els,{{opacity:0,y:rise}},{{opacity:1,y:0,duration:ms('reveal'),ease:'power2.out',stagger:ms('stagger'),overwrite:true}});}}}});
 }});
 </script>"""
@@ -2335,17 +2343,23 @@ def compare_items():
 
 
 COMPARE_JS = """<script>
-(function(){var D=JSON.parse(document.getElementById('cmp-data').textContent),f=document.getElementById('cmp-form'),a=f.elements.a,b=f.elements.b,
+(function(){var D={},f=document.getElementById('cmp-form'),a=f.elements.a,b=f.elements.b,
 out=document.getElementById('cmp-out'),p=new URLSearchParams(location.search);
-if(D[p.get('a')])a.value=p.get('a');if(D[p.get('b')])b.value=p.get('b');
 function draw(){var x=D[a.value],y=D[b.value];if(!x||!y){out.innerHTML='<p class="cmp-note">Choose two to see them side by side.</p>';return;}
 if(x.k!==y.k){out.innerHTML='<p class="cmp-note">Choose two clinic plans or two sellers: a plan and a seller do not share the same facts.</p>';return;}
 var h='<table class="cmp"><caption class="vh">'+a.options[a.selectedIndex].text+' and '+b.options[b.selectedIndex].text+'</caption><thead><tr><td></td><th scope="col">'+x.h+'</th><th scope="col">'+y.h+'</th></tr></thead><tbody>';
 x.c.forEach(function(c,i){h+='<tr><th scope="row">'+c[0]+'</th><td>'+c[1]+'</td><td>'+y.c[i][1]+'</td></tr>';});
 out.innerHTML=h+'</tbody></table>';}
 f.addEventListener('submit',function(e){e.preventDefault();history.replaceState(null,'','/compare/?a='+encodeURIComponent(a.value)+'&b='+encodeURIComponent(b.value));draw();});
-out.hidden=false;draw();})();
+out.hidden=false;out.innerHTML='<p class="cmp-note">Loading the plans and sellers.</p>';
+// the facts load once, after the page (/compare/data.json, about 90 KB), so the page itself stays small (design/site-polish)
+fetch('/compare/data.json').then(function(r){return r.json();}).then(function(d){D=d;
+if(D[p.get('a')])a.value=p.get('a');if(D[p.get('b')])b.value=p.get('b');draw();})
+.catch(function(){out.innerHTML='<p class="cmp-note">The comparison could not load. Open each seller from <a href="/sellers/">the sellers we track</a>.</p>';});})();
 </script>"""
+
+
+COMPARE_DATA = ""
 
 
 def compare_page():
@@ -2357,7 +2371,8 @@ def compare_page():
     select = lambda name, label: (f'<div class="cmp-field"><label for="cmp-{name}">{label}</label><select class="input" id="cmp-{name}" name="{name}">'
                                   f'<option value="">Choose a plan or seller</option>{groups}</select></div>')
     checked = max([r["last_seen"] for r in PLANS if r.get("last_seen")] + [r["score_checked_on"] for r in PROFILES.values() if r.get("score_checked_on")], default="")
-    blob = json.dumps(data, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")
+    global COMPARE_DATA
+    COMPARE_DATA = json.dumps(data, ensure_ascii=False, separators=(",", ":"))
     return f"""
 <section class="section letters-hd">
   <div class="wrap">
@@ -2377,7 +2392,6 @@ def compare_page():
     <p class="small" style="margin-top:16px">Checks are facts we hold about the seller, not a safety or quality grade. <a href="/how-we-rate/">How we rate</a></p>
   </div>
 </section>
-<script type="application/json" id="cmp-data">{blob}</script>
 {COMPARE_JS}
 """
 
@@ -2426,6 +2440,8 @@ def main():
         "with evidence, FDA status and price per month for each goal. We compare; we never sell.\n\n"
         + "".join(f"- [{t}]({SITE}{p}): {d}\n" for p, _, t, d, *_ in PAGES if p not in NOINDEX))
     # the search index (pages.md, Every page, Header, Search): one entry per page, substance and seller
+    if COMPARE_DATA:
+        (DIST / "compare" / "data.json").write_text(COMPARE_DATA, encoding="utf-8")
     (DIST / "search-index.json").write_text(json.dumps(search_index(), ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
     # lastmod: the newest data date of this build, the database pull when connected, else the hand-checked date (owner, Q1 a, 2 Nov 2026)
     lastmod = max(DATA["checked"], (DATA.get("pulled_at") or "")[:10])

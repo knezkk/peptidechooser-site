@@ -23,7 +23,7 @@ p { margin: 0 0 1em; }
 
 /* Notice bar */
 .notice { background: var(--paper-2); font-size: var(--small-size); color: var(--ink-2); border-bottom: 1px solid var(--line); }
-.notice .wrap { min-height: 36px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.notice .wrap { min-height: 36px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; padding-top: 6px; padding-bottom: 6px; } /* text never touches the bar's edges */
 .notice .more { white-space: nowrap; }
 
 /* Header */
@@ -478,7 +478,8 @@ body > .crumbs { width: -moz-available; width: -webkit-fill-available; width: st
   .board.rx > :nth-child(n+3) { animation-delay: 120ms; }
   .flow .stamp { animation: pc-land var(--motion-base) ease-out var(--motion-draw) both; }
   .landed .stamp { animation: none; }
-  html.motion .sec-hd, html.motion .tbl tbody tr, html.motion .criteria li, html.motion .creators li { opacity: 0; }
+  html.motion .sec-hd, html.motion .criteria li, html.motion .creators li { opacity: 0; }
+  html.motion .tbl tbody:not(:has(> tr:nth-child(26))) > tr { opacity: 0; } /* short tables only: a long table shows at once */
 }
 @keyframes pc-rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 @keyframes pc-land { from { opacity: 0; transform: scale(1.15); } to { opacity: 1; transform: none; } }

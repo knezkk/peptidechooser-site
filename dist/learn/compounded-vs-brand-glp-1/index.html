@@ -30,11 +30,12 @@ setTimeout(function(){if(!window.pcMotion)d.classList.remove('motion');},3000);}
 <script>document.documentElement.classList.add('nav-js');</script>
 <script>
 window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}
-gtag('consent','default',{ad_storage:'denied',ad_user_data:'denied',ad_personalization:'denied',analytics_storage:'denied',wait_for_update:500});
-try{if(localStorage.getItem('pc-consent')==='yes'){gtag('consent','update',{analytics_storage:'granted'});}}catch(e){}
-gtag('js',new Date());gtag('config','G-12CV2HEYW6',{anonymize_ip:true});
+gtag('consent','default',{ad_storage:'denied',ad_user_data:'denied',ad_personalization:'denied',analytics_storage:'denied'});
+window.pcLoadGA=function(){if(window.pcGA)return;window.pcGA=1;gtag('consent','update',{analytics_storage:'granted'});
+gtag('js',new Date());gtag('config','G-12CV2HEYW6',{anonymize_ip:true});var s=document.createElement('script');s.async=true;
+s.src='https://www.googletagmanager.com/gtag/js?id=G-12CV2HEYW6';document.head.appendChild(s);};
+try{if(localStorage.getItem('pc-consent')==='yes')pcLoadGA();}catch(e){}
 </script>
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-12CV2HEYW6"></script>
 </head>
 <body>
 <a class="skip" href="#main">Skip to content</a>
@@ -114,13 +115,15 @@ gtag('js',new Date());gtag('config','G-12CV2HEYW6',{anonymize_ip:true});
 if(!s){b.hidden=false;}
 b.addEventListener('click',function(e){var v=e.target.getAttribute('data-consent');if(!v)return;
 try{localStorage.setItem('pc-consent',v);}catch(e){}
-if(v==='yes'&&window.gtag){gtag('consent','update',{analytics_storage:'granted'});}
+if(v==='yes'&&window.pcLoadGA){pcLoadGA();}
 b.hidden=true;});})();
 </script>
 <script>
 (function(){var b=document.querySelector('.nav-toggle'),n=document.getElementById('site-nav');if(!b||!n)return;
 function set(o){n.classList.toggle('open',o);b.setAttribute('aria-expanded',o?'true':'false');}
-b.addEventListener('click',function(){set(!n.classList.contains('open'));});
+// opening the menu moves focus to its first visible link: the links come before the button in the page, so Tab alone
+// would skip them (design/site-polish, 2 Nov 2026)
+b.addEventListener('click',function(){var o=!n.classList.contains('open');set(o);if(o){var f=[].filter.call(n.querySelectorAll('a,button,input'),function(x){return x.offsetParent;})[0];if(f)f.focus();}});
 n.addEventListener('click',function(e){if(e.target.closest('a'))set(false);});
 document.addEventListener('keydown',function(e){if(e.key==='Escape'&&n.classList.contains('open')){set(false);b.focus();}});})();
 (function(){var w=document.querySelector('.nav-goals'),b=w&&w.querySelector('.nav-goals-btn');if(!b)return;
@@ -169,7 +172,10 @@ var d=document.documentElement;if(!d.classList.contains('motion')||!window.gsap|
 window.pcMotion=true;gsap.registerPlugin(ScrollTrigger);
 var css=getComputedStyle(d),ms=function(n){return parseFloat(css.getPropertyValue('--motion-'+n))/1000;};
 var rise=parseFloat(css.getPropertyValue('--motion-rise'));
-ScrollTrigger.batch('.sec-hd, .tbl tbody tr, .criteria li, .creators li',{start:'top 92%',once:true,
+// table rows rise only in tables of up to 25 rows; a long data table (letters, sellers, legal) shows at once, since one
+// trigger per row cost seconds of layout on phones (design/site-polish, 2 Nov 2026). Without :has the rows are not pre-hidden.
+var sel='.sec-hd, .criteria li, .creators li';try{if(document.querySelector('.tbl tbody:not(:has(> tr:nth-child(26))) > tr'))sel+=', .tbl tbody:not(:has(> tr:nth-child(26))) > tr';}catch(e){}
+ScrollTrigger.batch(sel,{start:'top 92%',once:true,
 onEnter:function(els){gsap.fromTo(els,{opacity:0,y:rise},{opacity:1,y:0,duration:ms('reveal'),ease:'power2.out',stagger:ms('stagger'),overwrite:true});}});
 });
 </script>
