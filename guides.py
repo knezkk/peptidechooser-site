@@ -1,4 +1,5 @@
-"""The Learn section (design/pages.md, Learn and Guide; owner task 2 Nov 2026): /learn/ and six guides in plain words.
+"""The Learn section (design/pages.md, Learn and Guide; owner task 2 Nov 2026): /learn/ and its guides in plain words
+(six on 2 Nov 2026, four more on feat/learn-2).
 
 Guide texts are Tier 1 drafts (ODOBRENO SEO before they go public). Every number in them comes from data/site.json:
 the hand-checked rows, the database rows tools/pull_data.py writes (plans, letters_all, guide_stats) and the FDA and
@@ -13,7 +14,7 @@ from html import escape
 
 BUILD_DATE = date.today().isoformat()
 
-# The six guides, in the order /learn/, Home's card and the related strip list them.
+# The guides, in the order /learn/ and Home's card list them.
 GUIDES = [
     {"slug": "is-bpc-157-legal", "title": "Is BPC-157 legal in the US? What the FDA decided",
      "h1": "Is BPC-157 legal? What the FDA says in 2026.",
@@ -39,12 +40,37 @@ GUIDES = [
      "h1": "Peptides for hair loss: what has evidence, what does not.",
      "desc": "Finasteride and minoxidil are the FDA-approved hair loss options. What copper peptide serums and injectable peptides have behind them, and what clinics charge.",
      "line": "Finasteride and minoxidil next to copper peptides and injectables."},
+    # guides 7 to 10 (owner task 2 Nov 2026, feat/learn-2)
+    {"slug": "best-peptides-for-hair-growth", "title": "Best peptides for hair growth: what the evidence shows",
+     "h1": "Best peptides for hair growth: what the evidence in people shows.",
+     "desc": "GHK-Cu, PTD-DBM, biotin and injectable peptides sold for hair, next to finasteride and minoxidil: what each has been tested on, and what thicker means.",
+     "line": "Copper peptides, PTD-DBM, biotin and injectables, and what each was tested on."},
+    {"slug": "ghk-cu-for-hair", "title": "GHK-Cu for hair: what it is, the studies and how it is sold",
+     "h1": "GHK-Cu for hair: what it is, what the studies show, how it is sold.",
+     "desc": "GHK-Cu is a copper peptide sold in scalp serums and in research-use vials. Its FDA status, the hair studies, what a serum label tells you and what it costs.",
+     "line": "The copper peptide in serums and vials: status, studies, labels and prices."},
+    {"slug": "injectable-peptides-for-hair-growth", "title": "Injectable peptides for hair growth: legal status, evidence",
+     "h1": "Injectable peptides for hair growth: legal status and evidence.",
+     "desc": "BPC-157, TB-500 and GHK-Cu vials are sold for hair. Their FDA status from our database, the evidence in people, and what approved options cost.",
+     "line": "The vials sold for hair, their FDA status, and what approved options cost."},
+    {"slug": "compounded-semaglutide-price", "title": "Compounded semaglutide price: what clinics charge in 2026",
+     "h1": "Compounded semaglutide price: what online clinics charge.",
+     "desc": "Every compounded semaglutide plan at the online clinics we track, cheapest first, with its care fee and FDA letter, next to Wegovy and Ozempic plans.",
+     "line": "Every compounded semaglutide plan we track, with care fees and brand prices."},
 ]
+# Home's card shows the first six with "All guides" under them (owner task 2 Nov 2026: the first six when space is tight)
+HOME_CARD = 6
+# The related strip: guides on the same topic first, then the rest, at most RELATED_MAX (pages.md, Guide)
+TOPIC = {"is-bpc-157-legal": "legal", "are-peptides-safe": "legal", "how-to-read-a-coa": "legal",
+         "what-an-fda-warning-letter-means": "legal", "compounded-vs-brand-glp-1": "glp1",
+         "compounded-semaglutide-price": "glp1", "peptides-for-hair-loss-what-works": "hair",
+         "best-peptides-for-hair-growth": "hair", "ghk-cu-for-hair": "hair", "injectable-peptides-for-hair-growth": "hair"}
+RELATED_MAX = 5
 
 LEARN_TITLE = "Peptide guides in plain words | Peptide Chooser"
 LEARN_H1 = "Peptide guides in plain words"
-LEARN_DESC = ("Six short guides on peptides in the US: what is legal, what is safe to know, how to read a lab report, "
-              "compounded GLP-1s, FDA letters and hair loss.")
+LEARN_DESC = ("Ten short guides on peptides in the US: what is legal, what is safe to know, lab reports, GLP-1 prices, "
+              "FDA letters and peptides for hair.")
 
 # Outside pages the guides cite (fda.gov and MedlinePlus only, plus the sources already on the site, which build.py
 # hands over). The date is the page's own "Content current as of" where it shows one.
@@ -61,6 +87,28 @@ SOURCES = {
     "fda-letters": ("FDA, About Warning and Close-Out Letters, current as of 20 Mar 2024",
                     "https://www.fda.gov/inspections-compliance-enforcement-and-criminal-investigations/warning-letters/about-warning-and-close-out-letters"),
     "medline-minoxidil": ("MedlinePlus, Minoxidil Topical", "https://medlineplus.gov/druginfo/meds/a689003.html"),
+    # guides 7 to 10: PubMed, MedlinePlus and FDA only (owner task 2 Nov 2026)
+    "medline-minoxidil-oral": ("MedlinePlus, Minoxidil (tablets)", "https://medlineplus.gov/druginfo/meds/a682608.html"),
+    "medline-biotin": ("MedlinePlus Medical Encyclopedia, Pantothenic acid and biotin, reviewed 21 Jan 2025",
+                       "https://medlineplus.gov/ency/article/002410.htm"),
+    "fda-cosmetic-labels": ("FDA, Cosmetics Labeling Guide",
+                            "https://www.fda.gov/cosmetics/cosmetics-labeling-regulations/cosmetics-labeling-guide"),
+    "drugsfda-hair": ("Drugs@FDA, searched through openFDA for BPC-157, GHK-Cu (also as copper tripeptide and prezatide) and TB-500 "
+                      "(also as thymosin beta-4): no approved product, 2 Nov 2026", "https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm"),
+    "pm-kaufman": ("Kaufman KD et al., Finasteride in the treatment of men with androgenetic alopecia, J Am Acad Dermatol 39(4), 1998, PubMed 9777765",
+                   "https://pubmed.ncbi.nlm.nih.gov/9777765/"),
+    "pm-pyo": ("Pyo HK et al., The effect of tripeptide-copper complex on human hair growth in vitro, Arch Pharm Res 30(7), 2007, PubMed 17703734",
+               "https://pubmed.ncbi.nlm.nih.gov/17703734/"),
+    "pm-lee": ("Lee SH et al., Targeting of CXXC5 by a competing peptide stimulates hair regrowth and wound-induced hair neogenesis, "
+               "J Invest Dermatol 137(11), 2017, PubMed 28595998", "https://pubmed.ncbi.nlm.nih.gov/28595998/"),
+    "pm-patel": ("Patel DP et al., A review of the use of biotin for hair loss, Skin Appendage Disord 3(3), 2017, PubMed 28879195",
+                 "https://pubmed.ncbi.nlm.nih.gov/28879195/"),
+    "pm-pickart": ("Pickart L, Margolina A, Regenerative and protective actions of the GHK-Cu peptide in the light of the new gene data, "
+                   "Int J Mol Sci 19(7), 2018, PubMed 29986520", "https://pubmed.ncbi.nlm.nih.gov/29986520/"),
+    "pm-najafi": ("Najafi N et al., A systematic review of the mechanisms and therapeutic applications of GHK-Cu in topical microneedle "
+                  "delivery, Arch Intern Med Res 9(3), 2026, PubMed 42787770", "https://pubmed.ncbi.nlm.nih.gov/42787770/"),
+    "pm-inci": ("Skin Res Technol 32(8), 2026: a study naming the ingredient \"copper tripeptide-1 GHK-Cu\", PubMed 42573538",
+                "https://pubmed.ncbi.nlm.nih.gov/42573538/"),
 }
 
 
@@ -75,8 +123,9 @@ def nice(iso):
 
 
 def home_card():
-    """Home's "Guides in plain words" card (pages.md, Home, Learn): after "What the labels mean", the six titles as links."""
-    links = "".join(f'<li><a href="/learn/{g["slug"]}/">{g["title"]}</a></li>' for g in GUIDES)
+    """Home's "Guides in plain words" card (pages.md, Home, Learn): after "What the labels mean", the first six titles as
+    links and "All guides"."""
+    links = "".join(f'<li><a href="/learn/{g["slug"]}/">{g["title"]}</a></li>' for g in GUIDES[:HOME_CARD])
     return (f'<section class="learn-card" aria-labelledby="learn-card-h"><h2 id="learn-card-h">Guides in plain words</h2>'
             f'<ul>{links}</ul><a href="/learn/">All guides</a></section>')
 
@@ -143,6 +192,14 @@ def facts(b):
         "fin_plan": next((r for r in hair_plans if r["substance_slug"] == "finasteride" and r.get("product_kind") != "compounded"), None),
         "hair_comp": next((r for r in hair_plans if r.get("product_kind") == "compounded"), None),
         "bpc_window": len({r["seller_slug"] for r in b.seller_rows("bpc-157")}),
+        # guides 7 to 10: shops and middle price per mg per substance, the cheapest GHK-Cu listing in its seller window,
+        # the hair plans and every semaglutide plan at the clinics we track
+        "subs": gs.get("substances") or {},
+        "ghk_cheap": min((r for r in b.seller_rows("ghk-cu") if r.get("price_per_mg") is not None),
+                         key=lambda r: r["price_per_mg"], default=None),
+        "hair_plans": hair_plans,
+        "sema_comp": [r for r in plans if r["substance_slug"] == "semaglutide" and r.get("product_kind") == "compounded"],
+        "sema_brand": [r for r in plans if r["substance_slug"] == "semaglutide" and r.get("product_kind") in b.BRANDED],
     }
 
 
@@ -164,6 +221,17 @@ def known_sources(b, f):
     if f["letters"]:
         k["db-letters"] = (f"Peptide Chooser, FDA warning letters to peptide sellers, compounders and online clinics, "
                            f"checked {nice(f['letters_on'])}", b.LETTERS_URL, "own")
+    for slug in ("ghk-cu", "tb-500"):
+        st = b.db_status(slug)
+        if st:
+            k[f"db-{slug}"] = (f"FDA status of {b.substance_name(slug)} in the Peptide Chooser database, first seen {nice(st['seen'])}",
+                               st["url"], "link")
+    for r in f["hair_plans"] + f["sema_comp"] + f["sema_brand"]:
+        k[f"plan-{r['seller_slug']}-{r['plan_slug']}"] = (f"{b.seller_base(r['seller_name'])}, {r['plan_name']}, {nice(r['last_seen'])}",
+                                                          r["pricing_url"], "text")
+    hair = next(g for g in b.ALL_GOALS if g["slug"] == "hair")
+    for s in hair.get("sources", []):
+        k[f"hair-text-{s['n']}"] = (s["text"], s["url"], "text")  # a shop's page as plain text, never a link
     for key in ("comp_sema", "brand_sema", "comp_tirz", "brand_tirz", "fin_plan", "hair_comp"):
         r = f[key]
         if r:
@@ -481,9 +549,297 @@ def g_hair(b, f, N):
     return short, body, nxt
 
 
+pkey = lambda r: f"plan-{r['seller_slug']}-{r['plan_slug']}"  # a clinic plan's source key (known_sources)
+
+
+def shops_line(b, f, slug, N):
+    """"76 shops list GHK-Cu; the middle price is $0.65 per mg" from guide_stats, or "" without the database."""
+    s = f["subs"].get(slug)
+    if not s:
+        return ""
+    mid = f"; the middle price across their listings is {b.money(s['ppm_median'])} per mg" if s.get("ppm_median") is not None else ""
+    return f"{s['shops']} shops we track list {b.substance_name(slug)}{mid}.{N('db-sellers')}"
+
+
+def status_words(b, slug, N, plain=False):
+    """The database's status of a substance with its source ("Not approved: its nomination ... was withdrawn."), else "".
+    `plain` for the middle of a sentence: "not approved: its nomination ... was withdrawn." (an approved status keeps its case)."""
+    st = b.db_status(slug)
+    if not st:
+        return ""
+    key = "db-bpc" if slug == "bpc-157" else f"db-{slug}"
+    src = next((k for k, (_, u) in SOURCES.items() if u == st["url"]), key)
+    label = st["label"].lower() if plain and st["label"] == "Not approved" else st["label"]
+    return f"{label}: {st['sentence']}.{N(src)}"
+
+
+def plan_kind_words(r):
+    """What a hair or weight loss plan is, in plain words, from its product kind and substance."""
+    if r.get("product_kind") == "compounded":
+        return "Pharmacy-made mix, not FDA approved"
+    if r["substance_slug"] == "finasteride":
+        return "Finasteride, FDA approved for hair loss"
+    if r["substance_slug"] == "minoxidil" and (r.get("dosage_form") == "tablet" or "oral" in r["plan_slug"]):
+        return "Minoxidil tablet, a blood pressure medicine"
+    return "Minoxidil"
+
+
+def g_best(b, f, N):
+    hair = next(g for g in b.ALL_GOALS if g["slug"] == "hair")
+    inj = next((p for p in hair["peptides"] if p.get("substances")), None)
+    names = [b.substance_name(s) for s in (inj["substances"] if inj else [])]
+    short = (f"No peptide has been shown to grow hair in large trials in people. Finasteride and minoxidil, which are not "
+             f"peptides, are the FDA-approved options.{N('hair-1')}{N('medline-minoxidil')} Copper peptides have a lab study "
+             f"on hair follicles behind them, PTD-DBM has mouse and cell studies, and biotin has helped only people with a "
+             f"condition behind their hair loss.{N('pm-pyo')}{N('pm-lee')}{N('pm-patel')} Injectable research-use peptides "
+             "have no hair evidence in people that we could find.")
+    vials = (f"Research-use shops sell vials of {', '.join(names[:-1])} and {names[-1]} that are meant to be injected. "
+             if len(names) > 1 else "")
+    counts = " ".join(x for x in (shops_line(b, f, s, N) for s in (inj["substances"] if inj else [])) if x)
+    body = f"""
+<h2>Which peptides are sold for hair?</h2>
+<p>Four kinds of product come up when you search for hair peptides.</p>
+<ul>
+<li><strong>Copper peptides (GHK-Cu)</strong> in serums and shampoos, sold as cosmetics.{N('legal-5')}</li>
+<li><strong>PTD-DBM</strong>, a lab-made peptide that some scalp serums now list.</li>
+<li><strong>Biotin</strong>, often sold next to peptides. It is vitamin B7, not a peptide.{N('medline-biotin')}</li>
+<li><strong>Injectable peptides.</strong> {vials}{counts}</li>
+</ul>
+<p>The question for each one is the same: was it tested on hair in people, and what did the test measure?</p>
+
+<h2>What do copper peptides have behind them?</h2>
+<p>The study that hair pages quote, ours included, is from 2007. Researchers kept human hair follicles alive in a dish and added a copper peptide; the follicles grew longer.{N('pm-pyo')} The peptide in that study was AHK-Cu, a close relative of GHK-Cu, not GHK-Cu itself.{N('pm-pyo')}</p>
+<p>A 2026 review of the GHK-Cu research found four decades of lab and animal work, but called the studies in people thin: most trials were small and tested face creams.{N('pm-najafi')} We found no large trial of GHK-Cu for hair loss in people. Our <a href="/learn/ghk-cu-for-hair/">GHK-Cu guide</a> goes through it in more detail.</p>
+
+<h2>What is PTD-DBM?</h2>
+<p>PTD-DBM is a peptide built in a lab to block a protein called CXXC5, which slows a signal that hair follicles need to grow. In a 2017 study, mice treated with it regrew hair faster, and cells from human balding scalps showed more of the CXXC5 protein.{N('pm-lee')}</p>
+<p>That is a study in mice and in cells. We found no published trial in people that shows PTD-DBM grows hair.</p>
+
+<h2>Does biotin help hair grow?</h2>
+<p>Only in people who lack it. A lack of biotin can cause hair loss, skin rashes and brittle nails.{N('medline-biotin')} A 2017 review found 18 reported cases where biotin helped hair or nails, and every one of those people had an underlying condition. The authors found no good evidence for biotin in healthy people.{N('pm-patel')}</p>
+
+<h2>What about injectable peptides?</h2>
+<p>None of the vials sold for hair is FDA approved for any use, and we found no study in people that shows any of them grows hair. Our guide on <a href="/learn/injectable-peptides-for-hair-growth/">injectable peptides for hair growth</a> has the FDA status of each one.</p>
+
+<h2>Why do finasteride and minoxidil come first?</h2>
+<p>Because they were tested on hair in people, in large trials. In two one-year trials with 1,553 men, those who took finasteride 1 mg a day had 107 more hairs than the placebo group after one year, and 138 more after two years. The men on placebo kept losing hair.{N('pm-kaufman')}</p>
+<p>Minoxidil, put on the scalp, helps hair grow and slows balding, most in people under 40 whose hair loss is recent.{N('medline-minoxidil')} Both work only while you use them.{N('hair-1')}{N('medline-minoxidil')}</p>
+
+<h2>What does "and thickness" mean in hair studies?</h2>
+<p>Product pages say "thicker hair". Trials measure something you can check. The finasteride trials counted the hairs in a marked circle of scalp one inch across, compared photos judged by a panel of experts and asked the men and the doctors to rate the change.{N('pm-kaufman')}</p>
+<p>So when a product promises thicker hair, ask three things:</p>
+<ul>
+<li>Was it tested in people, in animals or in a dish?</li>
+<li>What was measured: a hair count, photos or only how people felt?</li>
+<li>How many people took part, and was there a group that got a dummy product?</li>
+</ul>
+<p>A cosmetic does not have to answer any of these before it is sold.{N('legal-5')} None of this is medical advice. A doctor or dermatologist can tell you which option fits your hair loss.</p>"""
+    nxt = (("/hair/", "Compare hair options"), ("/learn/peptides-for-hair-loss-what-works/", "Peptides for hair loss guide"))
+    return short, body, nxt
+
+
+def g_ghk(b, f, N):
+    hair = next(g for g in b.ALL_GOALS if g["slug"] == "hair")
+    serum = next((o for o in hair.get("options") or [] if o.get("substance") == "ghk-cu" and o.get("price")), None)
+    serum_src = next((n for n in (serum or {}).get("sources", []) if "price" in next(
+        (s["text"] for s in hair["sources"] if s["n"] == n), "")), None) if serum else None
+    # the short answer's sources first, so its footnotes read 1, 2, 3, 4
+    short = (f"GHK-Cu is a small copper peptide that the body makes, sold in scalp serums and in research-use vials.{N('pm-pickart')} "
+             f"Serums are cosmetics: legal to sell without FDA approval, and nobody has to show that they grow hair.{N('legal-5')} "
+             f"The hair evidence is one lab study on follicles, done with a close relative, AHK-Cu.{N('pm-pyo')} ")
+    status = status_words(b, "ghk-cu", N, plain=True)
+    short += (f"Injectable GHK-Cu is {status}" if status else f"Injectable GHK-Cu is not approved for any use.{N('drugsfda-hair')}")
+    price = ""
+    if serum:
+        note = serum["price_note"].split(",")[0]
+        price += (f"<p>A scalp serum with copper peptides costs about {serum['price']} for {serum['price_unit'].lstrip('/')} "
+                  f"({note}).{N(f'hair-text-{serum_src}') if serum_src else ''}</p>")
+    line = shops_line(b, f, "ghk-cu", N)
+    c = f["ghk_cheap"]
+    cheap = (f" The cheapest listing in our GHK-Cu window is {b.money(c['price_per_mg'])} per mg, for "
+             f"{c['amount_mg']:,g} mg at {b.usd(c['price_usd'])}.{N('db-sellers')}" if c and c.get("amount_mg") else "")
+    if line:
+        price += (f"<p>{line}{cheap} Those are research-use vials and powders, not serums. Our <a href=\"/hair/\">hair page</a> "
+                  "lists them with each shop's five checks; we never link to the shops.</p>")
+    body = f"""
+<h2>What is GHK-Cu?</h2>
+<p>GHK is a peptide of three amino acids (glycine, histidine and lysine). GHK-Cu is the same peptide carrying copper. The body makes it, and lab studies link it to skin repair and collagen.{N('pm-pickart')}</p>
+<p>Most of that work is in cells and animals. A 2026 review of the GHK-Cu research called the studies in people thin: most trials were small and tested face creams.{N('pm-najafi')}</p>
+
+<h2>Is GHK-Cu FDA approved?</h2>
+<p>No product with GHK-Cu is FDA approved for hair loss, or for anything else.{N('drugsfda-hair')} How it may be sold depends on what it is sold as.</p>
+<p>As a serum or shampoo, it is a cosmetic. Cosmetics do not need FDA approval before they are sold, and the maker does not have to show that they work.{N('legal-5')}</p>
+<p>As a powder or vial, it is sold by research-use shops.{' Our database records it as ' + status if status else ''} A research-use label means the product is not meant for people.</p>
+
+<h2>What do the studies show for hair?</h2>
+<p>The study that hair pages quote, ours included, is from 2007. Researchers kept human hair follicles alive in a dish and added a copper peptide; the follicles grew longer and the cells at their base grew more.{N('pm-pyo')}</p>
+<p>Two things to know about it. The peptide was AHK-Cu, a close relative of GHK-Cu, not GHK-Cu itself.{N('pm-pyo')} And a follicle in a dish is not a person: it tells you a peptide does something to cells, not that a serum on your scalp grows hair. We found no large trial of GHK-Cu for hair loss in people.</p>
+
+<h2>Serum or injection: what is the difference?</h2>
+<p>A serum goes on the scalp. It is a cosmetic, so its maker may sell it without proving any effect.{N('legal-5')}</p>
+<p>An injection is a vial of powder from a research-use shop, meant to be mixed and injected. It is not a medicine: no maker has sent the FDA the trial data that approval needs.{N('fda-approval')} We found no study in people that shows injected GHK-Cu grows hair. Our guide on <a href="/learn/injectable-peptides-for-hair-growth/">injectable peptides for hair growth</a> has more.</p>
+
+<h2>What should you look for on a serum label?</h2>
+<p>On a cosmetic label, the ingredients are listed from the largest amount to the smallest. Ingredients at 1% or less may follow in any order.{N('fda-cosmetic-labels')} So a copper peptide near the end of the list tells you little about how much is in the bottle.</p>
+<ul>
+<li>Look for the name: GHK-Cu often appears as copper tripeptide-1.{N('pm-inci')}</li>
+<li>If the label or the maker states the amount, note it, so you can compare two serums.</li>
+<li>A product meant to treat a disease or change how the body works is a drug under the law, even when it is sold as a cosmetic.{N('legal-5')} So a serum that promises to treat hair loss is making a drug claim.</li>
+<li>Before and after photos and "clinically tested" are marketing until you see the study.</li>
+</ul>
+
+<h2>What does GHK-Cu cost?</h2>
+{price or "<p>We show GHK-Cu prices on our hair page once the shops' prices are in our database.</p>"}
+<p>A low price per mg is not a sign of quality. Our guide on <a href="/learn/how-to-read-a-coa/">how to read a COA</a> shows what a lab report can and cannot tell you.</p>
+<p>None of this is medical advice. A doctor or dermatologist can tell you which option fits your hair loss.</p>"""
+    nxt = (("/hair/", "Compare hair options"), ("/learn/peptides-for-hair-loss-what-works/", "Peptides for hair loss guide"))
+    return short, body, nxt
+
+
+def plan_table(b, rows, N, kind):
+    """A table of clinic plans (the site's tbl part): clinic as text or our page, plan, what it is or the care fee, per
+    month, the FDA letter chip to our letters page and the day the price was checked. No link to any clinic site."""
+    trs = []
+    for r in rows:
+        n = r.get("fda_letter_count") or 0
+        letter = (f'<a class="chip chip-warn chip-link" href="{b.LETTERS_URL}">FDA letter {nice(r["last_fda_letter_date"])}</a>'
+                  if n and r.get("last_fda_letter_date") else '<span class="no-letter">none</span>')
+        what = plan_kind_words(r) if kind == "hair" else b.care_note(r)
+        ref = N(f"plan-{r['seller_slug']}-{r['plan_slug']}")
+        trs.append(f'<tr><td>{b.clinic_link(r["seller_slug"], b.seller_base(r["seller_name"]))}</td><td data-l="Plan">{r["plan_name"]}</td>'
+                   f'<td data-l="{"What it is" if kind == "hair" else "Care fee"}">{what}</td>'
+                   f'<td data-l="Per month"><span class="num">{b.usd(r["price_monthly"])}</span>{ref}</td>'
+                   f'<td data-l="FDA letter">{letter}</td><td data-l="Checked">{nice(r["last_seen"])}</td></tr>')
+    third = "What it is" if kind == "hair" else "Care fee"
+    return (f'<div class="tbl-wrap"><table class="tbl tbl-cards"><thead><tr><th scope="col">Clinic</th><th scope="col">Plan</th>'
+            f'<th scope="col">{third}</th><th scope="col">Per month</th><th scope="col">FDA letter</th><th scope="col">Checked</th>'
+            f'</tr></thead><tbody>{"".join(trs)}</tbody></table></div>')
+
+
+def g_inject(b, f, N):
+    hair = next(g for g in b.ALL_GOALS if g["slug"] == "hair")
+    inj = next((p for p in hair["peptides"] if p.get("substances")), None)
+    subs = inj["substances"] if inj else []
+    names = [b.substance_name(s) for s in subs]
+    listed = f"{', '.join(names[:-1])} and {names[-1]}" if len(names) > 1 else "".join(names)
+    plans = [r for r in f["hair_plans"] if r.get("product_kind") != "compounded"]
+    cheapest = plans[0] if plans else None
+    short = (f"Research-use shops sell {listed} in vials for hair. None is FDA approved for any use, and we found no trial in "
+             f"people that shows any of them grows hair.{N('drugsfda-hair')} "
+             + (f"The approved option finasteride starts at {b.usd(cheapest['price_monthly'])} a month at the online clinics we track "
+                f"({b.seller_base(cheapest['seller_name'])}).{N(pkey(cheapest))}"
+                if cheapest and cheapest["substance_slug"] == "finasteride" else ""))
+    rows = []
+    for s, name in zip(subs, names):
+        st = status_words(b, s, N)
+        line = shops_line(b, f, s, N)
+        rows.append(f"<li><strong>{name}</strong>: {st or 'Not approved for any use.' + N('drugsfda-hair')}"
+                    + (f" {line[0].upper()}{line[1:]}" if line else "") + "</li>")
+    review = next((r["note"] for r in b.LEGAL["rows"] if r.get("substances") == ["bpc-157"]), "")
+    letters = (f"<p>Of the {f['letters']} FDA warning letters on our <a href=\"{b.LETTERS_URL}\">letters page</a>, "
+               f"{f['ruo_letters']} went to research-use peptide shops.{N('db-letters')} Each letter names the products and the "
+               "claims the FDA objects to; you can read it in full on fda.gov.</p>") if f["letters"] else ""
+    table = plan_table(b, f["hair_plans"], N, "hair") if f["hair_plans"] else ""
+    july = (f"<p>In July 2026 the FDA's advisory committee on pharmacy compounding reviewed BPC-157 and TB-500: {review}.{N('legal-6')} "
+            'Our guide <a href="/learn/is-bpc-157-legal/">Is BPC-157 legal?</a> explains what that review means.</p>') if review else ""
+    body = f"""
+<h2>Which injectable peptides are sold for hair?</h2>
+<p>The hair vials we see at research-use shops are {listed}. They come as a powder in a vial, meant to be mixed with water and injected. The label says they are for research, not for people.</p>
+<p>They are not approved medicines. A medicine needs FDA approval first: its maker sends trial data, and the FDA checks that the benefits outweigh the risks.{N('fda-approval')} Nobody has done that for these peptides.</p>
+
+<h2>What is their FDA status?</h2>
+<p>From our database, with the FDA page behind each one:</p>
+<ul>{"".join(rows)}</ul>
+<p>The FDA lists BPC-157 among the substances that may be risky in pharmacy-made medicines: it may set off an immune reaction when given some ways, and there is little or no safety information on it in people.{N('fda-bulk-risks')}</p>
+{july}
+
+<h2>Is there any evidence they grow hair?</h2>
+<p>Not in people, as far as we could find. The hair study quoted for copper peptides was done on follicles in a dish, with AHK-Cu, a close relative of GHK-Cu.{N('pm-pyo')} The studies on BPC-157 are in animals and cells.{N('fda-bulk-risks')}</p>
+<p>A study in a dish or in mice tells you what a substance does to cells. It does not tell you what an injection does to your hair, or what it does to the rest of you.</p>
+<p>A price per mg does not tell you either. It says nothing about what is in the vial: a lab report covers one batch, tested once, and only if a lab outside the shop did the test. Our guide on <a href="/learn/how-to-read-a-coa/">how to read a COA</a> shows what to look for. Our <a href="/learn/best-peptides-for-hair-growth/">best peptides for hair growth</a> guide puts these vials next to serums, biotin and the approved options.</p>
+
+<h2>What has the FDA said to the shops?</h2>
+{letters}
+<p>A warning letter is the FDA's formal notice, not a court ruling.{N('fda-letters')} Our guide on <a href="/learn/what-an-fda-warning-letter-means/">what an FDA warning letter means</a> explains what follows one.</p>
+
+<h2>What do the approved options cost at online clinics?</h2>
+<p>Finasteride 1 mg is FDA approved for hair loss in men.{N('hair-1')} Minoxidil on the scalp is approved too, and sold without a prescription.{N('medline-minoxidil')} Minoxidil tablets are a blood pressure medicine; for hair, a prescriber decides whether they fit you.{N('medline-minoxidil-oral')}</p>
+{table}
+<p>Pharmacy-made mixes, such as finasteride and minoxidil in one capsule, are not themselves FDA-approved products.{N('fda-compounding')} A clinic with an FDA letter is still listed: the letter is public record.</p>
+<p>None of this is medical advice. A doctor or dermatologist can tell you which option fits your hair loss.</p>"""
+    nxt = (("/hair/", "Compare hair options"), ("/learn/is-bpc-157-legal/", "Is BPC-157 legal? guide"))
+    return short, body, nxt
+
+
+def g_sema_price(b, f, N):
+    comp, brand = f["sema_comp"], f["sema_brand"]
+    wl = next(g for g in b.ALL_GOALS if g["slug"] == "weight-loss")
+    ref = lambda r: N(f"plan-{r['seller_slug']}-{r['plan_slug']}")
+    rng = lambda rows: (f"{b.usd(rows[0]['price_monthly'])}" if len(rows) == 1 else
+                        f"{b.usd(rows[0]['price_monthly'])} to {b.usd(rows[-1]['price_monthly'])}")
+    wegovy = [r for r in brand if b.brand_base(r["plan_name"]) == "Wegovy"]
+    frm = "from " if len(comp) > 1 else ""
+    ozempic = [r for r in brand if b.other_use(wl, r)]
+    short = ((f"At the online clinics we track, compounded semaglutide costs {frm}{rng(comp)} a month ({len(comp)} plans){ref(comp[0])}"
+              + (f", against {rng(wegovy)} for Wegovy{ref(wegovy[0])}" if wegovy else "") + ". ") if comp else "") \
+        + (f"Compounded semaglutide is a pharmacy-made copy, not FDA approved, and the FDA does not check its safety, "
+           f"effectiveness or quality before it is sold.{N('fda-compounding')} The FDA has warned about dosing errors and "
+           f"about versions made from salt forms of semaglutide.{N('fda-glp1-concerns')}")
+    fees = [r for r in comp if r.get("membership_fee_monthly") not in (None, 0, 0.0) and float(r["membership_fee_monthly"]) > 0]
+    fee_ex = max(fees, key=lambda r: float(r["membership_fee_monthly"]), default=None)
+    unknown = sum(r.get("membership_fee_monthly") is None for r in comp)
+    allin = sum(r.get("membership_fee_monthly") is not None and float(r["membership_fee_monthly"]) == 0 for r in comp)
+    fee_p = ("<p>" + (f"Of the {len(comp)} plans, {allin} say{'s' if allin == 1 else ''} the price is all-in and {len(fees)} add{'s' if len(fees) == 1 else ''} a monthly fee. " if comp else "")
+             + (f"At {b.seller_base(fee_ex['seller_name'])}, {b.usd(fee_ex['price_monthly'])} for the medicine plus "
+                f"{b.usd(fee_ex['membership_fee_monthly'])} for care makes "
+                f"{b.usd(float(fee_ex['price_monthly']) + float(fee_ex['membership_fee_monthly']))} a month.{ref(fee_ex)} " if fee_ex else "")
+             + (f"For {unknown} plan{'s' if unknown != 1 else ''} the clinic's page did not show whether a fee is added, so ask before you sign up." if unknown else "")
+             + "</p>")
+    newest = max((r["last_seen"] for r in comp + brand), default=None)
+    brand_li = "".join(
+        f"<li>{b.seller_base(r['seller_name'])}, {r['plan_name']}: {b.usd(r['price_monthly'])}/mo, {b.care_note(r)}{ref(r)}"
+        + (f" (Ozempic is approved for {b.other_use(wl, r)}, not for weight loss)" if b.other_use(wl, r) else "") + "</li>" for r in brand)
+    body = f"""
+<h2>What is compounded semaglutide?</h2>
+<p>Semaglutide is the medicine in Wegovy.{N('legal-1')} Compounded semaglutide is a copy made by a pharmacy for a patient with a prescription. It is not FDA approved: the FDA does not check a compounded medicine's safety, effectiveness or quality before it is sold.{N('fda-compounding')}</p>
+<p>While semaglutide was in short supply, pharmacies could make copies of it. Semaglutide is no longer on the FDA's drug shortage list, and for state-licensed pharmacies the time the FDA allowed for copies ended on 22 April 2025.{N('fda-glp1-supply')} Online clinics still sell compounded plans. Our guide on <a href="/learn/compounded-vs-brand-glp-1/">compounded vs brand GLP-1</a> explains the rules.</p>
+
+<h2>What do online clinics charge for it?</h2>
+<p>Every compounded semaglutide plan at the online clinics we track, cheapest first. Prices are the clinics' published monthly prices{f", checked {nice(newest)}" if newest else ""}.</p>
+{plan_table(b, comp, N, "price") if comp else "<p>We show these prices once the clinic plans are in our database.</p>"}
+<p>A clinic with an FDA warning letter is still listed. The letter is public record, and the chip opens our <a href="{b.LETTERS_URL}">letters page</a>.</p>
+
+<h2>What is the care fee?</h2>
+<p>Many clinics charge for the medicine and for the care around it: the prescriber, the check-ins and messages. Some fold it into one price, some add it as a monthly membership.</p>
+{fee_p}
+
+<h2>What do Wegovy and Ozempic plans cost?</h2>
+<p>For contrast, the brand semaglutide plans at the same clinics:</p>
+<ul>{brand_li}</ul>
+<p>Wegovy is FDA approved for weight management.{N('legal-1')} A brand plan gets you that approved product.</p>
+
+<h2>What does a lower price not tell you?</h2>
+<ul>
+<li>The dose. Ask whether the price goes up when the dose goes up.</li>
+<li>The care fee, if it is charged on top.</li>
+<li>Which pharmacy makes it, and whether the clinic tells you.</li>
+<li>Whether it is semaglutide or a salt form. The FDA says salt forms such as semaglutide sodium and semaglutide acetate are different ingredients from the one in the approved drugs.{N('fda-glp1-concerns')}</li>
+<li>Whether the clinic has had an FDA warning letter. The table shows the newest one.</li>
+</ul>
+
+<h2>What has the FDA warned about?</h2>
+<p>The FDA has had reports of side effects, some needing a hospital stay, that may be linked to dosing errors with compounded semaglutide injections: patients measuring the wrong amount, and sometimes prescribers working out the dose wrong.{N('fda-glp1-concerns')}</p>
+<p>It has also had reports from people given compounded semaglutide in doses beyond the approved label. Most pharmacies do not have to report side effects to the FDA, so the FDA says these are likely under-reported.{N('fda-glp1-concerns')}</p>
+<p>None of this is medical advice. Your prescriber can tell you which medicine and which dose fit you.</p>"""
+    nxt = (("/weight-loss/", "Compare clinic prices"), ("/learn/compounded-vs-brand-glp-1/", "Compounded vs brand guide"))
+    return short, body, nxt
+
+
 TEXTS = {"is-bpc-157-legal": g_bpc, "are-peptides-safe": g_safe, "how-to-read-a-coa": g_coa,
          "compounded-vs-brand-glp-1": g_glp1, "what-an-fda-warning-letter-means": g_letter,
-         "peptides-for-hair-loss-what-works": g_hair}
+         "peptides-for-hair-loss-what-works": g_hair, "best-peptides-for-hair-growth": g_best,
+         "ghk-cu-for-hair": g_ghk, "injectable-peptides-for-hair-growth": g_inject,
+         "compounded-semaglutide-price": g_sema_price}
 
 
 def article_schema(b, g):
@@ -497,8 +853,9 @@ def article_schema(b, g):
 
 
 def related(slug):
-    """The related guides strip (pages.md, Guide): the other five guides as text links."""
-    items = "".join(f'<li><a href="/learn/{g["slug"]}/">{g["title"]}</a></li>' for g in GUIDES if g["slug"] != slug)
+    """The related guides strip (pages.md, Guide): up to five other guides as text links, those on the same topic first."""
+    others = sorted((g for g in GUIDES if g["slug"] != slug), key=lambda g: TOPIC[g["slug"]] != TOPIC[slug])
+    items = "".join(f'<li><a href="/learn/{g["slug"]}/">{g["title"]}</a></li>' for g in others[:RELATED_MAX])
     return (f'<section class="related" aria-labelledby="related-h"><h2 id="related-h" class="h-sources">Related guides</h2>'
             f'<ul>{items}</ul></section>')
 
@@ -536,7 +893,7 @@ def learn_body(b):
 
 
 def pages(b):
-    """/learn/ and the six guides as build.py PAGES rows: (path, file, title, description, body, schema, crumb)."""
+    """/learn/ and the guides as build.py PAGES rows: (path, file, title, description, body, schema, crumb)."""
     out = [("/learn/", "learn/index.html", LEARN_TITLE, LEARN_DESC, learn_body(b), "", [("/learn/", "Learn")])]
     for g in GUIDES:
         path = f"/learn/{g['slug']}/"
