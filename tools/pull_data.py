@@ -12,6 +12,8 @@ Reads the `site.*` views through the read-only role (peptide-data spec 0015) and
   - site.fda_letters_all -> "letters_all": every peptide-related letter or letter to a seller we know, for /fda-warning-letters/
   - site.sellers, site.seller_profile, site.products -> "guide_stats": the counts the guides in guides.py quote (shops we
                             check, those with a lab report in the last 12 months, shops that list BPC-157)
+  - site.letter_substances -> "letter_substances": the substances each FDA warning letter names, for /peptides/, the
+    compare pairs and the letters page's substance filter
   - site.seller_profile, site.seller_substances, site.seller_letters -> "seller_profiles", "seller_substances" (top 12 per
     seller, see top_substances), "seller_letters": the seller pages /sellers/ and /sellers/<slug>/
 
@@ -128,9 +130,14 @@ def main():
         return 0
     d = json.loads(DATA.read_text(encoding="utf-8"))
     d["db"] = rows("select * from site.catalog_counts")[0]
+    # fda_listing (the FDA's own wording, e.g. "GHK-Cu (except for injectable routes of administration)") is read once the
+    # data side adds the column; the site shows it when present and nothing when not (owner task 2 Nov 2026)
+    listing = rows("select count(*) as n from information_schema.columns where table_schema = 'site' "
+                   "and table_name = 'substance_status' and column_name = 'fda_listing'")[0]["n"]
     d["legal_db"] = rows(
         "select substance_slug, canonical_name, is_peptide, regime, status_value, scope, valid_from, "
-        "first_seen_by_us, source_id, source_url from site.substance_status order by substance_slug, regime")
+        f"first_seen_by_us, source_id, source_url{', fda_listing' if listing else ''} from site.substance_status "
+        "order by substance_slug, regime")
     d["approved_db"] = rows(
         "select substance_slug, brand_name, application_no, sponsor, approval_date, route, indications "
         "from site.approved_drugs order by substance_slug, approval_date")
@@ -174,6 +181,10 @@ def main():
     d["seller_letters"] = rows(
         "select seller_slug, letter_date, letter_url, letter_subject, issuing_office, match_kind from site.seller_letters "
         "order by seller_slug, letter_date desc")
+    # which substances each FDA warning letter names, with a short first-mention quote (owner task 2 Nov 2026)
+    d["letter_substances"] = rows(
+        "select letter_reference, letter_url, letter_date, substance_slug, substance_name, first_mention "
+        "from site.letter_substances order by letter_date desc, substance_slug")
     d["pulled_at"] = datetime.utcnow().isoformat(timespec="seconds") + "Z"
     DATA.write_text(json.dumps(d, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     print(f"pull_data: {len(d['legal_db'])} status rows, {len(d['approved_db'])} approvals, {len(d['plans'])} plans, "
