@@ -18,6 +18,7 @@ BANNED_WORDS = [
     r"\brevolutionary\b", r"\bclinically proven\b", r"\bdoctor[- ]approved\b", r"\brisk[- ]free\b",
     r"\bunlock\b", r"\bsupercharge\b", r"\bgame[- ]changer\b", r"\bdelve\b", r"\bcrucial\b", r"\bleverage\b",
     r"\bcomprehensive\b", r"\bensure\b", r"\butili[sz]e\b", r"\bin order to\b", r"\baffiliate link\b",
+    r"\blegit\b",
     r"\bcoming soon\b",
 ]
 BANNED_CHARS = {"—": "em dash", "–": "en dash"}
@@ -85,10 +86,44 @@ def pages():
     return out
 
 
-def check_words(P):
+# The one exception to the banned "legit" (owner decision 2 Nov 2026; pages.md, Rules that apply to every page): on a
+# /sellers/<slug>/ page, the H2 "Is <Name> legit? What we can check" and the fixed closing sentence under it.
+LEGIT_H2 = re.compile(r"Is [^<>]{1,80} legit\? What we can check")
+LEGIT_CLOSE = "These are the facts we hold; we do not call any seller legit or safe, and we never link to the shop."
+
+
+def legit_allowed(name, text, h2s):
+    """`text` with the allowed "legit" uses removed: only on a seller page, only the H2s that match exactly, and the
+    closing sentence."""
+    if not (name.startswith("sellers/") and name != "sellers/index.html"):
+        return text
+    for h in h2s:
+        if LEGIT_H2.fullmatch(h.strip()):
+            text = text.replace(h.strip(), " ")
+    return text.replace(LEGIT_CLOSE, " ")
+
+
+def legit_cases():
+    """The exception's own test cases, run with every check: allowed in the H2 on a seller page, banned anywhere else."""
     errs = []
+    bad = lambda name, text, h2s: bool(re.search(r"\blegit\b", legit_allowed(name, text, h2s), re.I))
+    h = "Is Iron Aminos legit? What we can check"
+    for name, text, h2s, want in (
+            ("sellers/iron-aminos/index.html", f"{h} Met: 192 lab reports.", [h], False),       # the H2 on a seller page
+            ("sellers/iron-aminos/index.html", f"x {LEGIT_CLOSE}", [], False),                  # the closing sentence
+            ("sellers/iron-aminos/index.html", "Iron Aminos is legit.", [], True),              # a claim in the text
+            ("sellers/iron-aminos/index.html", "Is it legit? Yes.", ["Is it legit? Yes."], True),  # another H2 wording
+            ("hair/index.html", h, [h], True),                                                  # the H2 off a seller page
+            ("sellers/index.html", h, [h], True)):                                              # the sellers index
+        if bad(name, text, h2s) != want:
+            errs.append(f"legit exception test failed: {name}: {text!r}")
+    return errs
+
+
+def check_words(P):
+    errs = legit_cases()
     for name, p in P.items():
-        text = " ".join(p.parts)
+        text = legit_allowed(name, " ".join(p.parts), [t for tag, t in p.h if tag == "h2"])
         for pat in BANNED_WORDS:
             for m in re.finditer(pat, text, re.I):
                 errs.append(f"{name}: banned word '{m.group(0)}'")
@@ -280,6 +315,7 @@ def check_parts(P):
                 errs.append(f"{name}: links to a seller ({href})")
         main = re.search(r'<main id="main">(.*?)</main>', html, re.S)
         text = re.sub(r"<[^>]+>", " ", re.sub(r"<script.*?</script>", "", main.group(1) if main else "", flags=re.S))
+        text = legit_allowed(name, text, [t for tag, t in P[name].h if tag == "h2"])
         for w in re.findall(r"\b(safe|trusted|best|legit)\b", text, re.I):
             errs.append(f"{name}: seller page says '{w}'")
         if name != "sellers/index.html":
@@ -325,7 +361,24 @@ def check_parts(P):
         m = DOSE.search(text)
         if m:
             errs.append(f"{name}: says a dose ({m.group(0)})")
-    for name in ("search/index.html", "compare/index.html", *(n for n in P if n.startswith("peptides/"))):
+    # Comparison pages (pages.md, Compare pairs; owner task 2 Nov 2026): both sides link to their page on our site, a
+    # substance pair carries each status source, and the sitemap holds every pair once (never b-vs-a beside a-vs-b).
+    pairs = [n for n in P if re.fullmatch(r"compare/[a-z0-9-]+-vs-[a-z0-9-]+/index.html", n)]
+    for name in pairs:
+        html = (DIST / name).read_text(encoding="utf-8")
+        heads = re.findall(r'<th scope="col"><a class="name" href="(/(?:peptides|sellers)/[^"/]+/)"', html)
+        if len(heads) != 2 or any(f'href="{h}"' not in html.split('id="compare-two"', 1)[-1].split("cmp-link")[0].split("</table>")[-1] for h in heads):
+            errs.append(f"{name}: does not link both sides to their pages")
+        if all(h.startswith("/peptides/") for h in heads) and len(re.findall(r'rel="nofollow">(?:FDA source|Source)</a>', html)) < 2:
+            errs.append(f"{name}: a substance without its status source")
+    sm = (DIST / "sitemap.xml").read_text(encoding="utf-8") if (DIST / "sitemap.xml").exists() else ""
+    seen = set()
+    for loc in re.findall(r"<loc>[^<]*/compare/([a-z0-9-]+)-vs-([a-z0-9-]+)/</loc>", sm):
+        key = frozenset(loc)
+        if key in seen:
+            errs.append(f"sitemap.xml: the pair {loc[0]} and {loc[1]} appears twice")
+        seen.add(key)
+    for name in ("search/index.html", "compare/index.html", *(n for n in P if n.startswith("peptides/") or n in pairs)):
         if name not in P:
             continue
         html = (DIST / name).read_text(encoding="utf-8")
