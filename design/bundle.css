@@ -156,10 +156,11 @@ body:has(.sellers-dlg[open]){overflow:hidden}
 @media (min-width:641px){.clinics-more{display:none}}
 .clinics-more{margin:12px 0 0}
 
-/* Header menu (pages.md, Every page, Header, 31 Oct 2026; up to 900px since 2 Nov 2026): under 900px the nav opens from a plain "Menu" button
+/* Header menu (pages.md, Every page, Header, 31 Oct 2026; up to 900px since 2 Nov 2026, up to 1179px with the search field,
+   owner task 2 Nov 2026): below 1180px the nav opens from a plain "Menu" button
    (btn-line btn-sm, no icon); .nav-js is set by the head script, so with JavaScript off the links stay a wrapped row */
 .nav-toggle{display:none}
-@media (max-width:900px){
+@media (max-width:1179px){
 .nav-js .nav-toggle{display:inline-flex}
 .nav-js .nav:not(.open){display:none}
 .nav-js .nav.open{flex-direction:column;align-items:stretch;border-top:1px solid var(--line);padding-top:6px}
@@ -186,7 +187,7 @@ html:not(.nav-js) .goal-menu{display:flex;flex-wrap:wrap}
 .nav-js .goal-menu{display:none;position:absolute;top:calc(100% + 6px);left:0;z-index:30;min-width:220px;padding:6px;background:var(--white);border:1px solid var(--line-strong);border-radius:var(--radius-panel);box-shadow:var(--shadow-card)}
 .nav-js .nav-goals.open .goal-menu{display:block}
 .nav-js .goal-menu a{display:flex;width:100%;box-sizing:border-box}
-@media (max-width:900px){
+@media (max-width:1179px){
 .nav-js .nav-goals{flex-direction:column;align-items:stretch}
 .nav-js .nav-goals-btn{display:none}
 .nav-js .nav-group{display:block;padding:8px 12px 2px}
@@ -230,6 +231,83 @@ html:not(.nav-js) .goal-menu{display:flex;flex-wrap:wrap}
 .sub-row{display:flex;flex-wrap:wrap;gap:8px}
 .sub-row .input{flex:1 1 220px;min-width:0}
 .subscribe .small{color:var(--ink-2)}
+/* Search (pages.md, Every page, Header, Search; owner task 2 Nov 2026): a plain input (Inputs) at the 44px touch height,
+   "Search a peptide or seller" as its placeholder and its label for screen readers; right of the links from 1180px, the
+   first item inside the Menu below. Typing opens the results list under the field: white, line-strong border,
+   radius-panel, shadow-card (the goal menu's frame), at most 8 rows; a row is the name (600), the type chip (chip-neutral:
+   Goal, Peptide, Seller, Page) and one ink-2 line; the chosen row (arrow keys) and a hovered row are neutral-tint.
+   Inside the Menu the list sits in the flow, without the shadow. The /search/ page shows the same rows, hairlines
+   between them, in one white frame under its own field and btn-ink "Search". */
+.head-search{position:relative;order:99;flex:1 1 200px;max-width:280px;min-width:0;margin:0 0 0 8px}
+.head-search .input{width:100%;min-height:var(--touch);padding:0 12px;font-size:15px}
+.search-list{position:absolute;top:calc(100% + 6px);right:0;z-index:30;width:min(420px,calc(100vw - 32px));margin:0;padding:6px;list-style:none;background:var(--white);border:1px solid var(--line-strong);border-radius:var(--radius-panel);box-shadow:var(--shadow-card);box-sizing:border-box}
+.search-list[hidden]{display:none}
+.head-search .input::-webkit-search-cancel-button{-webkit-appearance:none;appearance:none}
+.head-search .search-list a,.search-results a{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:start;gap:2px 12px;min-height:var(--touch);padding:8px 12px;border-radius:var(--radius-control);font:400 var(--ui-size) var(--font-text);color:var(--ink);text-decoration:none;white-space:normal;box-sizing:border-box;width:100%}
+.head-search .search-list [aria-selected="true"] a,.head-search .search-list a:hover,.search-results a:hover{background:var(--neutral-tint)}
+.search-name{font-weight:600;overflow-wrap:anywhere}
+.search-line{grid-column:1/-1;font-size:var(--small-size);line-height:1.4;color:var(--ink-2)}
+.search-none{padding:10px 12px;font-size:var(--small-size);color:var(--ink-2)}
+@media (max-width:1179px){
+.nav-js .head-search{order:0;flex:none;max-width:none;margin:6px 0 8px}
+.head-search .input{font-size:16px}
+.nav-js .search-list{position:static;width:auto;margin-top:6px;box-shadow:none}
+}
+html:not(.nav-js) .head-search{order:0;flex:1 1 100%;max-width:420px;margin:0 0 8px}
+.search-form{max-width:720px;margin-top:8px}
+.search-form>label{display:block;font-weight:600;font-size:var(--small-size);margin-bottom:6px}
+.search-row{display:flex;flex-wrap:wrap;gap:8px}
+.search-row .input{flex:1 1 260px;min-width:0}
+.search-js[hidden]{display:none}
+#sp-status{margin:16px 0 8px;color:var(--ink-2)}
+.search-results{list-style:none;margin:0;padding:0;background:var(--white);border:1px solid var(--line);border-radius:var(--radius-panel)}
+.search-results:empty{display:none}
+.search-results li+li{border-top:1px solid var(--line)}
+.search-results a{border-radius:0;padding:12px 16px}
+.search-nojs{margin:16px 0 0}
+
+/* Compare two (pages.md, Compare; owner task 2 Nov 2026): the two selects ("First", "Second") and btn-ink "Compare" in
+   one white card on the grey band; the result is one white table with two columns that share their rows: the row names
+   on the left in 13px ink-2 (the DataTable header style), each column headed by its name (a link to the seller page) and
+   a small ink-2 line under it, a 2px ink rule under the heads, hairlines between rows and between the two columns.
+   Under 640px each row name runs across the top and the two values stay side by side below it. */
+.cmp-form{display:flex;flex-wrap:wrap;align-items:flex-end;gap:12px 16px;padding:20px 24px;background:var(--white);border:1px solid var(--line);border-radius:var(--radius-panel)}
+.cmp-field{flex:1 1 280px;min-width:0}
+.cmp-field label{display:block;font-weight:600;font-size:var(--small-size);margin-bottom:6px}
+.cmp-field .input{width:100%;max-width:100%}
+.cmp-out{margin-top:24px}
+.cmp-out[hidden]{display:none}
+.cmp-note{margin:16px 0 0;color:var(--ink-2)}
+.cmp{width:100%;table-layout:fixed;border-collapse:separate;border-spacing:0;background:var(--white);border:1px solid var(--line);border-radius:var(--radius-panel);font:var(--ui-size) var(--font-text);color:var(--ink)}
+.cmp th,.cmp td{padding:14px 18px;text-align:left;vertical-align:top;border-top:1px solid var(--line);overflow-wrap:anywhere}
+.cmp thead th,.cmp thead td{border-top:0;border-bottom:2px solid var(--ink);padding-top:18px}
+.cmp thead td{width:20%}
+.cmp tbody tr:first-child>*{border-top:0}
+.cmp tr>:last-child{border-left:1px solid var(--line)}
+.cmp tbody th{font-weight:600;font-size:13px;color:var(--ink-2)}
+.cmp .name{font:700 18px/1.3 var(--font-text);color:var(--ink)}
+.cmp a.name{text-decoration:underline;text-underline-offset:.15em}
+.cmp-sub{display:block;margin-top:2px;font-size:var(--small-size);line-height:1.4;font-weight:400;color:var(--ink-2)}
+.cmp .num{font-weight:700;font-variant-numeric:tabular-nums}
+.cmp .score{display:flex;flex-direction:column;gap:6px}
+.cmp .score-n{font-weight:600}
+.cmp .score-marks{display:flex;flex-wrap:wrap;gap:4px}
+.cmp .score-marks .chip{font-weight:600;font-size:11px;padding:1px 5px;border:1px solid transparent;white-space:nowrap}
+.cmp .score-marks .mark-no{border:1px dashed var(--ink-muted)}
+.cmp-link{margin:24px 0 0}
+@media (max-width:640px){
+.cmp-form{padding:16px}
+.cmp,.cmp thead,.cmp tbody{display:block}
+.cmp tr{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+.cmp thead td{display:none}
+.cmp th,.cmp td{padding-left:14px;padding-right:14px}
+.cmp tbody th{grid-column:1/-1;padding-top:12px;padding-bottom:0;border-top:1px solid var(--line)}
+.cmp tbody tr:first-child th{border-top:0}
+.cmp tbody td{padding-top:6px;padding-bottom:12px;border-top:0}
+.cmp thead th:first-of-type{border-left:0}
+.cmp tbody td:nth-of-type(1){border-left:0}
+.cmp .name{font-size:16px}
+}
 
 /* Inputs */
 .input{min-height:48px;padding:0 14px;border:1.5px solid var(--line-strong);border-radius:var(--radius-control);font:16px var(--font-text);color:var(--ink);background:var(--white);box-sizing:border-box}
