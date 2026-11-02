@@ -1274,6 +1274,13 @@ def category_body(g, table, table_lede):
 </section>""" if legal else ""
     own = {f'src-{s["n"]}' for s in g.get("sources", [])}
     srcs += page_sources(opt_html + legal_html, own)
+    # Sources only when the page links one (never an empty heading; e.g. /muscle/, whose rows carry no footnote)
+    sources_html = f"""<section class="section" id="sources">
+  <div class="wrap">
+    <h2 class="h-sources">Sources</h2>
+    <ol class="small sources" style="padding-left:1.2em">{srcs}</ol>
+  </div>
+</section>""" if srcs else ""
     # The price pad only for a goal with a priced proven option and its source (skin and recovery have none yet).
     pad = f"""
       <div class="board rx" aria-label="Price pad">
@@ -1307,12 +1314,7 @@ def category_body(g, table, table_lede):
     </table></div>
   </div>
 </section>{legal_html}
-<section class="section" id="sources">
-  <div class="wrap">
-    <h2 class="h-sources">Sources</h2>
-    <ol class="small sources" style="padding-left:1.2em">{srcs}</ol>
-  </div>
-</section>
+{sources_html}
 <div class="wrap sellers-all">{windows}</div>
 {SELLERS_JS}
 """
