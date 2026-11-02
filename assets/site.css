@@ -37,8 +37,8 @@ p { margin: 0 0 1em; }
 .nav a:hover { background: var(--neutral-tint); color: var(--ink); }
 .nav a[aria-current="page"] { color: var(--clinic-text); }
 .head-cta { flex: none; }
-/* 761 to 900px: the five header items keep one row beside the logo and the button */
-@media (min-width: 761px) and (max-width: 900px) { .site-head .wrap { gap: 12px; } .nav a, .nav-goals-btn { padding: 0 8px; } }
+/* 901 to 1100px: the six header items keep one row beside the logo and the button */
+@media (min-width: 901px) and (max-width: 1100px) { .site-head .wrap { gap: 12px; } .nav a, .nav-goals-btn { padding: 0 8px; } }
 /* text for screen readers only (table headers of button columns) */
 .vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 .tbl th:has(.vh) { position: relative; } /* keeps the hidden text inside the scrolling table frame */
@@ -199,6 +199,29 @@ p { margin: 0 0 1em; }
 .rx-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line); }
 .stamp { display: inline-block; padding: 2px 8px; border: 1.5px solid var(--action-text); color: var(--action-text); border-radius: var(--radius-chip); font: 700 12px var(--font-text); }
 
+/* Background check card (pages.md, Seller): the price pad's frame without the ℞ mark; the score as a hero number, then
+   one row per check (its mark, then one plain line with its date), the Checked stamp and the note, then the no-link line */
+.board.check-card { background: var(--white); color: var(--ink); border: 1.5px solid var(--ink); border-radius: var(--radius-panel); padding: 22px 24px; }
+.check-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 14px; padding-bottom: 12px; border-bottom: 2px solid var(--ink); }
+.check-head h2 { font-size: var(--display-4-size); line-height: var(--display-4-lh); margin: 0; }
+.check-n { margin: 0; display: flex; align-items: baseline; gap: 6px; }
+.check-list { list-style: none; margin: 0; padding: 0; }
+.check-list li { display: grid; grid-template-columns: 124px minmax(0, 1fr); gap: 12px; align-items: baseline; padding: 10px 0; border-top: 1px solid var(--line); font-size: var(--small-size); line-height: var(--small-lh); }
+.check-list li:first-child { border-top: 0; }
+.check-list .chip { justify-self: start; }
+.check-nolink, .check-act { margin: 14px 0 0; font-size: var(--small-size); color: var(--ink-2); }
+.check-act { display: grid; justify-items: start; gap: 4px; }
+/* Seller page sections: the company ledger at reading width, the other sellers as one row of cards */
+.company-ledger { max-width: 720px; }
+.company-ledger .ledger > span:first-child { color: var(--ink-2); flex: none; }
+.company-ledger .ledger > span:last-child { text-align: right; overflow-wrap: anywhere; }
+.seller-cards { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
+.seller-cards li { display: grid; gap: 4px; }
+.seller-cards .small { color: var(--ink-2); }
+.tbl-sellers td:nth-child(n+3), .tbl-sellers th:nth-child(n+3), .tbl-sells td:nth-child(2), .tbl-sells th:nth-child(2) { white-space: nowrap; }
+.sellers-filter .small { flex-basis: 100%; margin: 0; }
+.tbl-cards tr[hidden] { display: none; } /* a filtered or not yet shown row stays hidden as a card on phones */
+
 /* Sections */
 .section { padding: 72px 0 0; }
 .section:last-of-type { padding-bottom: 72px; }
@@ -273,6 +296,7 @@ p { margin: 0 0 1em; }
 }
 
 @media (min-width: 760px) {
+  .seller-cards { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .foot-grid { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: 48px; }
   .criteria { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .glossary-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -347,7 +371,9 @@ p { margin: 0 0 1em; }
   .tbl-letters .subj, .tbl-letters .office { display: none; }
   .tbl-letters-all td.num { white-space: normal; width: 64px; } /* the date takes two short lines, the company gets the room */
   .tbl-letters .sub-phone { display: block; margin-top: 2px; font-size: var(--small-size); line-height: 1.4; color: var(--ink-2); font-weight: 400; }
-  /* Header under 760px: logo and "Compare by goal" on the first row, "Menu" under them; the open menu (or, with
+}
+@media (max-width: 900px) {
+  /* Header up to 900px (was 760px; owner task 2 Nov 2026, six items with Sellers): logo and "Compare by goal" on the first row, "Menu" under them; the open menu (or, with
      JavaScript off, the wrapped links) takes the full width below (pages.md, Every page, Header) */
   .site-head .wrap { flex-wrap: wrap; gap: 6px 16px; padding-top: 10px; padding-bottom: 10px; min-height: 0; }
   .site-head .brand { order: 1; }

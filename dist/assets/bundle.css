@@ -98,12 +98,13 @@ body:has(.sellers-dlg[open]){overflow:hidden}
    "N of 5 checks" (the number in tabular figures) and the five checks as small marks (11px) on one line from 641px (they wrap on phones): met chip-ok, not met
    chip-neutral with a 1px dashed ink-muted border (4.2:1 on the grey, so the state never rests on colour alone; owner
    answer Q1 a), the state also spoken (.vh). The note under the table says what the checks are and are not. On phones the
-   score line moves under the seller name. */
+   score line moves under the seller name. The same marks open each row of the seller page's Background check card
+   (pages.md, Seller; owner task 2 Nov 2026). */
 .sellers-dlg .score{display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px;margin-bottom:8px}
 .sellers-dlg .score-n{font-size:var(--small-size);font-weight:600;color:var(--ink);white-space:nowrap}
 .sellers-dlg .score-marks{display:flex;flex-wrap:wrap;gap:4px}
-.sellers-dlg .score-marks .chip{font-weight:600;font-size:11px;padding:1px 5px;border:1px solid transparent;white-space:nowrap}
-.sellers-dlg .score-marks .mark-no{border:1px dashed var(--ink-muted)}
+:is(.sellers-dlg .score-marks,.check-list) .chip{font-weight:600;font-size:11px;padding:1px 5px;border:1px solid transparent;white-space:nowrap}
+:is(.sellers-dlg .score-marks,.check-list) .mark-no{border:1px dashed var(--ink-muted)}
 @media (min-width:641px){.sellers-dlg .score-marks{flex-wrap:nowrap}.sellers-dlg .tbl th:nth-child(2){width:20%}}
 .dlg-foot+.dlg-score{margin-top:4px}
 @media (max-width:640px){
@@ -155,10 +156,10 @@ body:has(.sellers-dlg[open]){overflow:hidden}
 @media (min-width:641px){.clinics-more{display:none}}
 .clinics-more{margin:12px 0 0}
 
-/* Header menu (pages.md, Every page, Header, 31 Oct 2026): under 760px the nav opens from a plain "Menu" button
+/* Header menu (pages.md, Every page, Header, 31 Oct 2026; up to 900px since 2 Nov 2026): under 900px the nav opens from a plain "Menu" button
    (btn-line btn-sm, no icon); .nav-js is set by the head script, so with JavaScript off the links stay a wrapped row */
 .nav-toggle{display:none}
-@media (max-width:760px){
+@media (max-width:900px){
 .nav-js .nav-toggle{display:inline-flex}
 .nav-js .nav:not(.open){display:none}
 .nav-js .nav.open{flex-direction:column;align-items:stretch;border-top:1px solid var(--line);padding-top:6px}
@@ -185,7 +186,7 @@ html:not(.nav-js) .goal-menu{display:flex;flex-wrap:wrap}
 .nav-js .goal-menu{display:none;position:absolute;top:calc(100% + 6px);left:0;z-index:30;min-width:220px;padding:6px;background:var(--white);border:1px solid var(--line-strong);border-radius:var(--radius-panel);box-shadow:var(--shadow-card)}
 .nav-js .nav-goals.open .goal-menu{display:block}
 .nav-js .goal-menu a{display:flex;width:100%;box-sizing:border-box}
-@media (max-width:760px){
+@media (max-width:900px){
 .nav-js .nav-goals{flex-direction:column;align-items:stretch}
 .nav-js .nav-goals-btn{display:none}
 .nav-js .nav-group{display:block;padding:8px 12px 2px}

@@ -64,7 +64,7 @@ MOTION_HEAD = """<script>
 (function(d){if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;d.classList.add('motion');
 setTimeout(function(){if(!window.pcMotion)d.classList.remove('motion');},3000);})(document.documentElement);
 </script>"""
-# Design book, Every page, Header: under 760px the nav sits behind "Menu". The head script marks the page before it
+# Design book, Every page, Header: up to 900px the nav sits behind "Menu". The head script marks the page before it
 # paints, so the closed menu never flashes; with JavaScript off the mark is missing and the links show as a wrapped row.
 NAV_HEAD = "<script>document.documentElement.classList.add('nav-js');</script>"
 NAV_JS = """<script>
@@ -144,7 +144,9 @@ def nav_items(path):
     # letters (the letters page once it exists, else Home's section), How we rate, About. Learn comes back when guides exist.
     current = ' aria-current="page"'
     goals = "".join(f'<li><a href="{goal_href(g)}">{g["label"]}</a></li>' for g in ALL_GOALS)
-    items = [("/#legal", "Legal status"), (LETTERS_URL, "FDA letters"), ("/how-we-rate/", "How we rate"), ("/about/", "About")]
+    # "Sellers" after "Peptides by goal" once the seller pages exist (pages.md, Seller; owner task 2 Nov 2026)
+    items = [("/sellers/", "Sellers")] if PROFILES else []
+    items += [("/#legal", "Legal status"), (LETTERS_URL, "FDA letters"), ("/how-we-rate/", "How we rate"), ("/about/", "About")]
     return (f'<div class="nav-goals"><button type="button" class="nav-goals-btn" aria-expanded="false" aria-controls="goal-menu">Peptides by goal</button>'
             f'<span class="nav-group">Peptides by goal</span><ul class="goal-menu" id="goal-menu">{goals}</ul></div>'
             + "".join(f'<a href="{href}"{current if href == path else ""}>{label}</a>' for href, label in items))
@@ -161,7 +163,11 @@ def crumbs(items):
 
 
 def og_name(path):
-    return "home" if path == "/" else path.strip("/").replace("/", "-")
+    name = "home" if path == "/" else path.strip("/").replace("/", "-")
+    # a seller added to the database after tools/og.py last ran shares the /sellers/ image until og.py runs again
+    if path.startswith("/sellers/") and not (ROOT / "assets" / "og" / f"{name}.png").exists():
+        return "sellers"
+    return name
 
 
 FEED_LINK = '\n<link rel="alternate" type="application/rss+xml" title="FDA warning letters to peptide sellers" href="/fda-warning-letters/feed.xml">'
@@ -560,6 +566,8 @@ def figure_svg():
 # are plain text and nothing in the window links to a seller (owner, 31 Oct 2026; tools/check.py enforces it).
 PRODUCTS = DATA.get("products") or []
 SELLERS = {r["seller_slug"]: r for r in DATA.get("sellers") or []}
+# Seller pages (pages.md, Seller): one per seller in site.seller_profile, through tools/pull_data.py
+PROFILES = {r["seller_slug"]: r for r in DATA.get("seller_profiles") or []}
 
 
 def clean(t):
@@ -654,7 +662,10 @@ def seller_table(slug):
         price = money(r["price_usd"]) if r.get("price_usd") is not None else "unknown"
         ppm = (f'{money(r["price_per_mg"])}/mg' if r.get("price_per_mg") is not None else "blend" if r.get("is_blend") else "unknown")
         seller = clean(SELLERS.get(r["seller_slug"], {}).get("seller_name") or r["seller_name"])
-        trs.append(f'<tr><td><span class="name">{seller}</span></td><td data-l="Product">{name}<span class="sub">{size}</span></td>'
+        # the name opens our page on the seller when it has one (owner task 2 Nov 2026); never the seller's own site
+        name_html = (f'<a class="name" href="/sellers/{r["seller_slug"]}/">{seller}</a>' if r["seller_slug"] in PROFILES
+                     else f'<span class="name">{seller}</span>')
+        trs.append(f'<tr><td>{name_html}</td><td data-l="Product">{name}<span class="sub">{size}</span></td>'
                    f'<td data-l="Price"><span class="num">{price}</span></td><td data-l="Per mg"><span class="num">{ppm}</span></td>'
                    f'<td class="checks">{score_line(r)}{check_chips(r)}</td></tr>')
         seen = r.get("price_observed_at") or r.get("last_seen")
@@ -1482,6 +1493,361 @@ def category_body(g, table, table_lede):
 """
 
 
+# Seller pages (pages.md, Sellers and Seller; owner task, phase 4d, 2 Nov 2026): /sellers/ lists every seller in
+# site.seller_profile; /sellers/<slug>/ is one seller's profile. Built only from `seller_profiles` (never drawn empty).
+# Nothing on them links to a seller's site (tools/check.py enforces it); every sentence comes from a field, and a missing
+# field drops its sentence.
+SELLER_SUBS = {}
+for _r in DATA.get("seller_substances") or []:
+    SELLER_SUBS.setdefault(_r["seller_slug"], []).append(_r)
+SELLER_LETTERS = {}
+for _r in DATA.get("seller_letters") or []:
+    if _r.get("match_kind") == "domain_or_address":  # a name-only match is left out, as on Home's letters
+        SELLER_LETTERS.setdefault(_r["seller_slug"], []).append(_r)
+# seller_kind in plain words: in the short answer, in the index's Kind column, and the line under the check card
+KIND_WORDS = {"S1_RUO": ("research-use peptide shop", "Research-use shop", "Research-use seller. We do not link to it."),
+              "S4_SUPPLEMENT_COSMETIC": ("supplement and cosmetics shop", "Supplement and cosmetics shop",
+                                         "Supplement and cosmetics seller. We do not link to it.")}
+STATES = dict(x.split(":") for x in (
+    "AL:Alabama AK:Alaska AZ:Arizona AR:Arkansas CA:California CO:Colorado CT:Connecticut DE:Delaware DC:Washington, DC "
+    "FL:Florida GA:Georgia HI:Hawaii ID:Idaho IL:Illinois IN:Indiana IA:Iowa KS:Kansas KY:Kentucky LA:Louisiana ME:Maine "
+    "MD:Maryland MA:Massachusetts MI:Michigan MN:Minnesota MS:Mississippi MO:Missouri MT:Montana NE:Nebraska NV:Nevada "
+    "NH:New_Hampshire NJ:New_Jersey NM:New_Mexico NY:New_York NC:North_Carolina ND:North_Dakota OH:Ohio OK:Oklahoma "
+    "OR:Oregon PA:Pennsylvania RI:Rhode_Island SC:South_Carolina SD:South_Dakota TN:Tennessee TX:Texas UT:Utah "
+    "VT:Vermont VA:Virginia WA:Washington WV:West_Virginia WI:Wisconsin WY:Wyoming").replace("Washington, DC", "Washington,_DC").split())
+STATES = {k: v.replace("_", " ") for k, v in STATES.items()}
+EVIDENCE_WORDS = {"registry": "state registry", "fda_letter": "named in an FDA letter", "site": "the seller's own pages"}
+SELLERS_FIRST = 25
+
+
+def kind_words(r):
+    k = r.get("seller_kind") or ""
+    if k in KIND_WORDS:
+        return KIND_WORDS[k]
+    if "CLINIC" in k or "TELEHEALTH" in k:
+        return ("online clinic", "Online clinic", "")
+    if "PHARMACY" in k:
+        return ("pharmacy", "Pharmacy", "Pharmacy. We do not link to it.")
+    return ("seller", "Seller", "We do not link to it.")
+
+
+def is_clinic(r):
+    return kind_words(r)[0] == "online clinic"
+
+
+def per_mg(v):
+    """A price per mg as people read it: cents from $0.10 up, else two significant figures ($0.019)."""
+    return f"${v:,.2f}" if v >= 0.1 else f"${v:.2g}"
+
+
+def per_mg_range(lo, hi):
+    if lo is None:
+        return "unknown"
+    return per_mg(lo) if hi is None or per_mg(lo) == per_mg(hi) else f"{per_mg(lo)} to {per_mg(hi)}"
+
+
+def plural(n, word):
+    return f"{n} {word}{'' if n == 1 else 's'}"
+
+
+def sub_label(slug):
+    """A substance's own name (not an option's): the database's name for it, else the "Is it legal today?" row for it
+    alone, else the slug in readable case."""
+    db = next((r["canonical_name"] for r in LEGAL_DB or [] if r["substance_slug"] == slug), None)
+    row = next((r["peptide"] for r in LEGAL["rows"] if r.get("substances") == [slug]), None)
+    if db or row:
+        return db or row
+    parts = [p.upper() if (any(c.isdigit() for c in p) or len(p) <= 3) else p for p in slug.split("-")]
+    return "-".join(parts)[:1].upper() + "-".join(parts)[1:]
+
+
+# a substance links to the first goal page whose options carry it
+SUB_GOAL = {}
+for _g in ALL_GOALS:
+    if _g.get("page"):
+        for _p in _g["peptides"]:
+            for _s in subs_of(_p):
+                SUB_GOAL.setdefault(_s, _g)
+
+
+def seller_name(r):
+    return clean(r["seller_name"])
+
+
+def newest_letter(r):
+    return max((x["letter_date"] for x in SELLER_LETTERS.get(r["seller_slug"], [])), default=r.get("last_fda_letter_date"))
+
+
+def short_answer(r):
+    """The short answer (pages.md, Seller; Tier 1 template): one sentence per field, a missing field drops its sentence."""
+    name, (kind, _, _) = seller_name(r), kind_words(r)
+    state = STATES.get(r.get("entity_state") or "")
+    out = [f"{name} is a {kind}{' in ' + state if state else ''}."]
+    if r.get("product_count") is not None and r.get("substance_count") is not None:
+        price = f"; prices from {per_mg(r['price_per_mg_min'])}/mg" if r.get("price_per_mg_min") is not None else ""
+        out.append(f"It lists {plural(r['product_count'], 'product')} across {plural(r['substance_count'], 'substance')}{price}.")
+    if r.get("score_lab_testing") and r.get("coa_count") and r.get("newest_coa_date"):
+        out.append(f"Lab reports: {r['coa_count']}, the newest dated {nice_date(r['newest_coa_date'])}.")
+    elif r.get("score_lab_testing") is not None:
+        out.append("No lab reports found in the last 12 months.")
+    n = r.get("fda_letter_count")
+    if n == 0:
+        out.append("No FDA warning letter.")
+    elif n:
+        out.append(f"{plural(n, 'FDA warning letter')}, the newest on {nice_date(newest_letter(r))}.")
+    if r.get("entity_name"):
+        how = ", ".join(x for x in (STATES.get(r.get("entity_state") or ""), EVIDENCE_WORDS.get(r.get("entity_evidence") or "")) if x)
+        out.append(f"Registered company: {clean(r['entity_name'])}{' (' + how + ')' if how else ''}.")
+    else:
+        out.append("No registered company found.")
+    return out
+
+
+def seller_title(r):
+    """Title (Tier 1): the full pattern, shortened step by step to the 60 characters tools/check.py allows."""
+    name = seller_name(r)
+    for t in (f"{name} review: prices, lab reports, FDA letters | Peptide Chooser",
+              f"{name} review: prices, lab reports, FDA letters",
+              f"{name} review: prices and lab reports", f"{name} review | Peptide Chooser", f"{name} review"):
+        if len(t) <= 60:
+            return t
+    return t
+
+
+def seller_description(r):
+    """Meta description: the short answer's first two sentences; a third, fourth... joins while the text is under the
+    110 characters tools/check.py asks for and stays within 160."""
+    out = ""
+    for s in short_answer(r):
+        nxt = f"{out} {s}".strip()
+        if out and (len(out) >= 110 or len(nxt) > 160) and out.count(".") >= 2:
+            break
+        out = nxt
+    return out
+
+
+def check_lines(r):
+    """One plain line per check for the Background check card, each with its date."""
+    lab = (f"{plural(r['coa_count'], 'lab report')}, the newest dated {nice_date(r['newest_coa_date'])}."
+           if r.get("score_lab_testing") and r.get("newest_coa_date") else
+           f"No lab report in the last 12 months; the newest is dated {nice_date(r['newest_coa_date'])}."
+           if r.get("newest_coa_date") else "No lab report found.")
+    n = r.get("fda_letter_count") or 0
+    letter = ("No FDA warning letter to this seller." if r.get("score_no_fda_letter") else
+              f"{plural(n, 'FDA warning letter')}, the newest on {nice_date(newest_letter(r))}." if n else "FDA warning letter found.")
+    company = (f"{clean(r['entity_name'])}, {STATES.get(r.get('entity_state') or '', r.get('entity_state') or '')}: "
+               f"{r['registry_status']} in the state registry on {nice_date(r['registry_checked_on'])}."
+               if r.get("score_registered_company") and r.get("entity_name") and r.get("registry_status") and r.get("registry_checked_on")
+               else "Not found in a state registry.")
+    pages = [(k, t) for k, t in (("terms", "Terms"), ("privacy", "Privacy"), ("refund", "Refund"))]
+    seen = [r.get(f"{k}_seen") for k, _ in pages]
+    legal = ("Terms, privacy and refund pages found." if r.get("score_legal_pages") else
+             "Terms, privacy and refund pages: not checked yet." if all(s is None for s in seen) else
+             "Missing: " + ", ".join(t.lower() for (k, t), s in zip(pages, seen) if not s) + " page.")
+    seen_on = r.get("price_updated_at")
+    fresh = (f"Prices checked {nice_date(seen_on)}." if r.get("score_fresh_prices") and seen_on else
+             f"No recent price; the newest is from {nice_date(seen_on)}." if seen_on else "No price seen.")
+    return dict(zip([k for k, _ in SCORE_CHECKS], (lab, letter, company, legal, fresh)))
+
+
+def check_card(r):
+    """Background check card (pages.md, Seller): right of the H1 like the price pad, without the ℞ mark."""
+    lines = check_lines(r)
+    rows = "".join(
+        f'<li><span class="chip chip-{"ok" if r.get(k) else "neutral"} mark-{"yes" if r.get(k) else "no"}">{t}'
+        f'<span class="vh">: {"yes" if r.get(k) else "no"}</span></span><span class="check-line">{lines[k]}</span></li>'
+        for k, t in SCORE_CHECKS)
+    if is_clinic(r):
+        foot = '<p class="check-act"><span class="btn btn-action" role="button" aria-disabled="true">Online clinic</span><span class="paid">No paid link yet</span></p>'
+    else:
+        foot = f'<p class="check-nolink">{kind_words(r)[2]}</p>'
+    return f"""
+      <div class="board check-card" aria-labelledby="check-h">
+        <div class="check-head"><h2 id="check-h">Background check</h2><p class="check-n"><span class="num-xl">{r["score"]}</span> <span class="num-unit">of {len(SCORE_CHECKS)} checks</span></p></div>
+        <ul class="check-list">{rows}</ul>
+        <div class="rx-foot"><span class="stamp">Checked {nice_date(r["score_checked_on"])}</span><span class="fine">Checks are facts we hold about the seller, not a safety or quality grade.</span></div>
+        {foot}
+      </div>"""
+
+
+def seller_subs_section(r):
+    rows = SELLER_SUBS.get(r["seller_slug"], [])
+    if not rows:
+        return ""
+    trs = []
+    for s in rows:
+        g = SUB_GOAL.get(s["substance_slug"])
+        label = escape(sub_label(s["substance_slug"]))
+        name = f'<a class="name" href="/{g["slug"]}/">{label}</a>' if g else f'<span class="name">{label}</span>'
+        coa = '<span class="chip chip-ok">Yes</span>' if s.get("has_coa") else '<span class="chip chip-neutral">No</span>'
+        seen = s.get("newest_price_observed_at")
+        trs.append(f'<tr><td>{name}</td><td class="num" data-l="Listings">{s["listing_count"]}</td>'
+                   f'<td class="num" data-l="Per mg">{per_mg_range(s.get("price_per_mg_min"), s.get("price_per_mg_max"))}</td>'
+                   f'<td data-l="Lab report">{coa}</td><td class="num" data-l="Price checked">{nice_date(seen[:10]) if seen else "unknown"}</td></tr>')
+    total = r.get("substance_count") or len(rows)
+    lede = (f"The {len(rows)} substances with the most listings, of {total}." if total > len(rows)
+            else f"Every substance it lists, {plural(len(rows), 'substance')}.")
+    return f"""
+<section class="band-2" id="sells">
+  <div class="wrap">
+    <div class="sec-hd"><div><h2>What it sells</h2><p>{lede} A substance with a goal page links to it. We do not link to the products.</p></div></div>
+    <div class="tbl-wrap"><table class="tbl tbl-cards tbl-sells">
+      <thead><tr><th scope="col">Substance</th><th scope="col">Listings</th><th scope="col">Per mg</th><th scope="col">Lab report</th><th scope="col">Price checked</th></tr></thead>
+      <tbody>{"".join(trs)}</tbody>
+    </table></div>
+    <p class="small" style="margin-top:16px">Per mg is the price divided by the stated amount; blends and listings without an amount have none.</p>
+  </div>
+</section>"""
+
+
+def seller_letters_section(r):
+    rows = SELLER_LETTERS.get(r["seller_slug"], [])
+    if not rows:
+        return ""
+    trs = "".join(f'<tr><td class="num">{nice_date(x["letter_date"])}</td><td>{escape(clean(x["letter_subject"]))}</td>'
+                  f'<td><a href="{escape(x["letter_url"])}" rel="nofollow">FDA letter</a></td></tr>' for x in rows)
+    more = '<p class="small" style="margin-top:16px"><a href="/fda-warning-letters/">Every FDA warning letter to peptide sellers</a></p>' if LETTERS_ALL else ""
+    return f"""
+<section class="section" id="letters">
+  <div class="wrap">
+    <div class="sec-hd"><div><h2>FDA warning letters</h2><p>Letters the FDA sent to this seller, matched by its web address or street address.</p></div></div>
+    <div class="tbl-wrap"><table class="tbl tbl-letters">
+      <thead><tr><th scope="col">Date</th><th scope="col">Subject</th><th scope="col">Source</th></tr></thead>
+      <tbody>{trs}</tbody>
+    </table></div>
+    {more}
+  </div>
+</section>"""
+
+
+def company_source(r):
+    """The company's source: the FDA letter as a nofollow link; the state registry and the seller's own pages as plain
+    text (never a link to the seller)."""
+    url = r.get("entity_source_url") or ""
+    host = re.sub(r"^[a-z]+://", "", url).split("/")[0].lower()
+    if url.startswith("https://www.fda.gov/"):
+        return f'<a href="{escape(url)}" rel="nofollow">The FDA warning letter</a>'
+    if host.endswith("floridados.gov"):
+        return "Florida Department of State, Division of Corporations, corporate data file"
+    return f"The seller's own page: {escape(url)}" if url else ""
+
+
+def seller_company_section(r):
+    if not r.get("entity_name"):
+        return ""
+    rows = [("Name", escape(clean(r["entity_name"])))]
+    if r.get("entity_state"):
+        rows.append(("State", STATES.get(r["entity_state"], r["entity_state"])))
+    if r.get("entity_evidence") in EVIDENCE_WORDS:
+        rows.append(("Found in", EVIDENCE_WORDS[r["entity_evidence"]][:1].upper() + EVIDENCE_WORDS[r["entity_evidence"]][1:]))
+    if r.get("registry_status"):
+        rows.append(("Registry status", f'{r["registry_status"][:1].upper() + r["registry_status"][1:]}'
+                     + (f', checked {nice_date(r["registry_checked_on"])}' if r.get("registry_checked_on") else "")))
+    src = company_source(r)
+    if src:
+        rows.append(("Source", src))
+    led = "".join(f'<div class="ledger"><span>{k}</span><span>{v}</span></div>' for k, v in rows)
+    return f"""
+<section class="section" id="company">
+  <div class="wrap">
+    <div class="sec-hd"><div><h2>Company</h2><p>The company behind the shop, and where we found it.</p></div></div>
+    <div class="company-ledger">{led}</div>
+  </div>
+</section>"""
+
+
+def similar_sellers(r, n=3):
+    """Three sellers of the same kind with the closest score, then the most products, then by name."""
+    same = [x for x in PROFILES.values() if x["seller_slug"] != r["seller_slug"] and x.get("seller_kind") == r.get("seller_kind")]
+    same.sort(key=lambda x: (abs((x.get("score") or 0) - (r.get("score") or 0)), -(x.get("product_count") or 0), seller_name(x).lower()))
+    return same[:n]
+
+
+def similar_section(r):
+    cards = "".join(
+        f'<li class="panel-line"><a class="name" href="/sellers/{x["seller_slug"]}/">{seller_name(x)}</a>'
+        f'<span class="small">{x["score"]} of {len(SCORE_CHECKS)} checks</span><span class="small">{plural(x.get("product_count") or 0, "product")}</span></li>'
+        for x in similar_sellers(r))
+    return f"""
+<section class="section" id="other-sellers">
+  <div class="wrap">
+    <h2 class="h-sources">Compare other sellers</h2>
+    <ul class="seller-cards">{cards}</ul>
+    <p class="small" style="margin-top:16px"><a href="/sellers/">All sellers we track</a></p>
+  </div>
+</section>""" if cards else ""
+
+
+def seller_page(r):
+    answer = " ".join(short_answer(r))
+    seen = r.get("price_updated_at")
+    meta = (f'{AUTHOR}. Tracked since {nice_date(r["first_seen"])}.' if r.get("first_seen") else f"{AUTHOR}.") + \
+           (f" Prices checked {nice_date(seen[:10])}." if seen else "")
+    return f"""
+<section class="hero hero-goal seller-pg">
+  <div class="wrap">
+    <div class="hero-grid">
+      <div>
+        <h1>{seller_name(r)}: prices, checks and what we found.</h1>
+        <p class="small meta">{meta}</p>
+        <p class="intro">{answer}</p>
+      </div>{check_card(r)}
+    </div>
+  </div>
+</section>{seller_subs_section(r)}{seller_letters_section(r)}{seller_company_section(r)}{similar_section(r)}
+"""
+
+
+def sellers_order(x):
+    return (-(x.get("score") if x.get("score") is not None else -1), -(x.get("product_count") or 0), seller_name(x).lower())
+
+
+SELLERS_INDEX_JS = """<script>
+(function(){var tb=document.getElementById('sellers-table');if(!tb)return;var f=document.querySelector('.sellers-filter'),q=document.getElementById('sellers-q'),
+c=document.getElementById('sellers-clear'),m=document.querySelector('.sellers-more'),all=document.getElementById('sellers-all'),n=document.getElementById('sellers-n'),
+rows=[].slice.call(tb.tBodies[0].rows),open=false;
+function draw(){var s=q.value.trim().toLowerCase(),k=0;rows.forEach(function(r){var hit=!s||r.cells[0].textContent.toLowerCase().indexOf(s)>=0;
+r.hidden=!hit||(!open&&!s&&r.classList.contains('more'));if(hit)k++;});if(m)m.hidden=open||!!s;n.textContent=s?k+' of '+rows.length+' sellers match.':'';}
+f.hidden=false;if(m)m.hidden=false;q.addEventListener('input',draw);
+c.addEventListener('click',function(){q.value='';draw();q.focus();});
+if(all)all.addEventListener('click',function(){open=true;draw();});draw();})();
+</script>"""
+
+
+def sellers_index():
+    rows, more_cls = sorted(PROFILES.values(), key=sellers_order), ' class="more"'
+    trs = "".join(
+        f'<tr{more_cls if i >= SELLERS_FIRST else ""}><td><a class="name" href="/sellers/{r["seller_slug"]}/">{seller_name(r)}</a></td>'
+        f'<td data-l="Kind">{kind_words(r)[1]}</td><td class="num" data-l="Checks">{r["score"]} of {len(SCORE_CHECKS)}</td>'
+        f'<td class="num" data-l="Products">{r.get("product_count") or 0}</td><td class="num" data-l="Substances">{r.get("substance_count") or 0}</td>'
+        f'<td class="num" data-l="FDA letters">{r.get("fda_letter_count") or 0}</td></tr>'
+        for i, r in enumerate(rows))
+    checked = max((r["score_checked_on"] for r in rows if r.get("score_checked_on")), default="")
+    more = (f'<p class="legal-more sellers-more" hidden><button type="button" class="btn btn-line" id="sellers-all">Show all {len(rows)}</button></p>'
+            if len(rows) > SELLERS_FIRST else "")
+    return f"""
+<section class="section letters-hd">
+  <div class="wrap">
+    <h1>Peptide sellers we track</h1>
+    <p class="lede">Every shop in our database that sells peptides online, with its five checks, how many products and substances it lists, and its FDA warning letters. Each name opens our page on the seller; we do not link to the shops.</p>
+    <p class="letters-stamp">{f'<span class="stamp">Checked {nice_date(checked)}</span>' if checked else ""}<span class="small">{len(rows)} sellers, most checks first, then most products.</span></p>
+  </div>
+</section>
+<section class="band-2" id="sellers-list">
+  <div class="wrap">
+    <div class="legal-filter sellers-filter" hidden><label for="sellers-q">Filter by name</label><input class="input" id="sellers-q" type="text" autocomplete="off"><button type="button" class="btn btn-line btn-sm" id="sellers-clear">Clear</button><p class="small" id="sellers-n" aria-live="polite"></p></div>
+    <div class="tbl-wrap"><table class="tbl tbl-cards tbl-sellers" id="sellers-table"><caption class="vh">Sellers, most checks first</caption>
+      <thead><tr><th scope="col">Seller</th><th scope="col">Kind</th><th scope="col">Checks</th><th scope="col">Products</th><th scope="col">Substances</th><th scope="col">FDA letters</th></tr></thead>
+      <tbody>{trs}</tbody>
+    </table></div>
+    {more}
+    <p class="small" style="margin-top:16px">Checks are facts we hold about the seller, not a safety or quality grade. <a href="/how-we-rate/">How we rate</a></p>
+  </div>
+</section>
+{SELLERS_INDEX_JS}
+"""
+
+
 NOT_FOUND = """
 <section class="page"><div class="wrap prose">
 <h1>This page doesn't exist</h1>
@@ -1519,6 +1885,16 @@ for _g in ALL_GOALS:
     if _g.get("page"):
         PAGES.append((f"/{_g['slug']}/", f"{_g['slug']}/index.html", _g["title"], _g["description"],
                       category_page(_g), "", [(f"/{_g['slug']}/", _g["name"])]))
+
+if PROFILES:
+    PAGES.append(("/sellers/", "sellers/index.html", "Peptide sellers and their checks | Peptide Chooser",
+                  f"Every peptide seller in our database, {len(PROFILES)} in all, with five background checks, product and "
+                  "substance counts and FDA warning letters. We never link to them.",
+                  sellers_index(), "", [("/sellers/", "Sellers")]))
+    for _r in sorted(PROFILES.values(), key=lambda x: x["seller_slug"]):
+        PAGES.append((f"/sellers/{_r['seller_slug']}/", f"sellers/{_r['seller_slug']}/index.html", seller_title(_r),
+                      seller_description(_r), seller_page(_r), "",
+                      [("/sellers/", "Sellers"), (f"/sellers/{_r['seller_slug']}/", seller_name(_r))]))
 
 
 def main():
