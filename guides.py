@@ -183,10 +183,10 @@ def g_bpc(b, f, N):
     # The status sentence a reader sees on /recovery/ and in "Is it legal today?" (owner task 2 Nov 2026): the database's
     # status with its source, then the hand note on the July 2026 review; without the database, the hand row alone.
     st, hand = b.db_status("bpc-157"), next(r for r in b.LEGAL["rows"] if r.get("substances") == ["bpc-157"])
-    review = f"{hand['note'][0].upper()}{hand['note'][1:]}.{N('legal-6')}"
     if st:
         src = next((k for k, (_, u) in SOURCES.items() if u == st["url"]), "db-bpc")
-        status = f"{st['label']}: {st['sentence']}.{N(src)} {review}"
+        status = f"{st['label']}: {st['sentence']}.{N(src)}"
+        status += f" {hand['note'][0].upper()}{hand['note'][1:]}.{N('legal-6')}"
     else:
         status = f"{hand['status']}: {hand['note']}.{N('legal-6')}"
     short = (f"{status} "
