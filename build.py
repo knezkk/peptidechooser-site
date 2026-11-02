@@ -549,8 +549,15 @@ def db_status(slug):
     generic = row["canonical_name"].split()[0].title()
     brands = sorted({brand_base(a["brand_name"]) for a in APPROVED_DB if a["substance_slug"] == slug and a.get("brand_name")} - {generic})[:4]
     name = row["canonical_name"] + (f' ({", ".join(brands)})' if brands and chip == "ok" else "")
+    # the FDA's own wording for the substance, when the database has it (fda_listing; shown in small, never required)
+    listing = next((r.get("fda_listing") for r in LEGAL_DB or [] if r["substance_slug"] == slug and r.get("fda_listing")), "")
     return {"chip": chip, "label": label, "sentence": sentence, "name": name, "url": row["source_url"],
-            "seen": row["first_seen_by_us"]}
+            "seen": row["first_seen_by_us"], "listing": listing}
+
+
+def listing_html(s):
+    """The FDA's own wording for a substance in small under its status, when the database has it (fda_listing)."""
+    return f'<span class="listing">FDA listing: "{escape(s["listing"])}"</span>' if s and s.get("listing") else ""
 
 
 def status_chip(item, chip_key="chip", label_key="status"):
@@ -949,7 +956,7 @@ def legal_rows(only=None):
             note = (f'. {n[0].upper() + n[1:]}. <a class="ref" href="#src-{r["src"]}" aria-label="Source {r["src"]}">'
                     f'<sup>{r["src"]}</sup></a>') if r.get("note_with_db") else ""
             out.append(f'<tr><td>{legal_name([slug], s["name"])}</td><td><span class="chip chip-{s["chip"]}">{s["label"]}</span></td>'
-                       f'<td>{s["sentence"]}{" " + r["use"] if r.get("use") else ""} <a class="ref" href="{s["url"]}" rel="nofollow">FDA source</a>, {nice_date(s["seen"])}{note}</td></tr>')
+                       f'<td>{s["sentence"]}{" " + r["use"] if r.get("use") else ""} <a class="ref" href="{s["url"]}" rel="nofollow">FDA source</a>, {nice_date(s["seen"])}{note}{listing_html(s)}</td></tr>')
     # Every other substance with a database status gets its own row (owner, 1 Nov 2026: the table lists every substance
     # the database has a status for, plus the hand rows it lacks), then all rows are sorted by name.
     shown = {slug for r in LEGAL["rows"] for slug in r.get("substances", [])
@@ -960,7 +967,7 @@ def legal_rows(only=None):
             continue
         seen.append(s["seen"])
         out.append(f'<tr><td>{legal_name([slug], s["name"])}</td><td><span class="chip chip-{s["chip"]}">{s["label"]}</span></td>'
-                   f'<td>{s["sentence"]} <a class="ref" href="{s["url"]}" rel="nofollow">FDA source</a>, {nice_date(s["seen"])}</td></tr>')
+                   f'<td>{s["sentence"]} <a class="ref" href="{s["url"]}" rel="nofollow">FDA source</a>, {nice_date(s["seen"])}{listing_html(s)}</td></tr>')
     out.sort(key=lambda row: re.sub(r"<[^>]+>", "", row.split("</td>")[0]).strip().lower())
     checked = nice_date(max(seen)) if seen else nice_date(LEGAL["checked"])
     return out, checked
@@ -976,6 +983,18 @@ LEGAL_ROWS = "".join(r if i < 12 else r.replace("<tr>", '<tr class="more">', 1) 
 # tools/pull_data.py (site.fda_letters), newest first. Without `letters` in site.json the section is not drawn (never drawn empty).
 LETTERS = DATA.get("letters") or []
 LETTERS_ALL = DATA.get("letters_all") or []
+# Which substances each letter names (site.letter_substances; owner task 2 Nov 2026): per substance its letters, newest first,
+# one row per letter, and per letter its substances. Only letters on the letters page count.
+LETTER_SUBS_ON = "letter_substances" in DATA
+_on_page = {r["letter_url"] for r in LETTERS_ALL}
+LETTER_SUBS, SUBS_OF_LETTER = {}, {}
+for _r in sorted(DATA.get("letter_substances") or [], key=lambda r: (r["letter_date"] or "", r["letter_url"]), reverse=True):
+    if _r["letter_url"] not in _on_page:
+        continue
+    if all(x["letter_url"] != _r["letter_url"] for x in LETTER_SUBS.get(_r["substance_slug"], [])):
+        LETTER_SUBS.setdefault(_r["substance_slug"], []).append(_r)
+    SUBS_OF_LETTER.setdefault(_r["letter_url"], []).append(_r["substance_slug"])
+LETTER_CO = {r["letter_url"]: r["company_name"] for r in LETTERS_ALL}
 LETTERS_URL = "/fda-warning-letters/" if LETTERS_ALL else "/#letters"
 # Under Home's letters table (pages.md, Home, owner answer Q2 a, 2 Nov 2026): with the letters page, "See all N letters"
 # and then "M of them went to sellers in our database."; without it, the old count line alone.
@@ -1027,7 +1046,7 @@ def letters_all_rows():
         seller = f'<span class="co-seller">In our database: {escape(clean(r["seller_name"]))}</span>' if r.get("seller_slug") and r.get("seller_name") else ""
         subj = escape(clean(r["letter_subject"]))
         out.append(
-            f'<tr{more if i >= LETTERS_FIRST else ""} data-year="{r["letter_date"][:4]}"><td class="num">{nice_date(r["letter_date"])}</td>'
+            f'<tr{more if i >= LETTERS_FIRST else ""} data-year="{r["letter_date"][:4]}" data-subs="{" ".join(SUBS_OF_LETTER.get(r["letter_url"], []))}"><td class="num">{nice_date(r["letter_date"])}</td>'
             f'<td><span class="name">{escape(clean(r["company_name"]))}</span>{seller}<span class="sub-phone">{subj.replace("/", "/<wbr>")}</span></td>'
             f'<td class="subj">{subj.replace("/", "/<wbr>")}</td>{office_cell(r.get("issuing_office"))}'
             f'<td><a href="{escape(r["letter_url"])}" rel="nofollow">FDA letter</a></td></tr>')
@@ -1035,20 +1054,29 @@ def letters_all_rows():
 
 
 LETTERS_YEARS = sorted({r["letter_date"][:4] for r in LETTERS_ALL}, reverse=True)
+# The substance filter (pages.md, Letters; owner task 2 Nov 2026): every substance a letter names, most letters first
+SUB_NAME = {r["substance_slug"]: clean(r["substance_name"] or r["substance_slug"]) for r in DATA.get("letter_substances") or []}
+SUB_COUNTS = sorted(((slug, len(v)) for slug, v in LETTER_SUBS.items()), key=lambda x: (-x[1], SUB_NAME[x[0]].lower()))
+SUB_SELECT = ('<div class="legal-filter sub-filter"><label for="letters-sub">Substance</label><select class="input" id="letters-sub">'
+              '<option value="">Any substance</option>'
+              + "".join(f'<option value="{slug}">{escape(SUB_NAME[slug])} ({n})</option>' for slug, n in SUB_COUNTS)
+              + "</select></div>") if SUB_COUNTS else ""
 YEAR_CHIPS = "".join(
     f'<button type="button" class="year-chip" data-year="{y}" aria-pressed="false">{y} <span>{sum(r["letter_date"][:4] == y for r in LETTERS_ALL)}<span class="vh"> letters</span></span></button>'
     for y in LETTERS_YEARS)
 LETTERS_PAGE_JS = """<script>
 (function(){var tb=document.getElementById('letters-table');if(!tb)return;var f=document.querySelector('.letters-filter'),q=document.getElementById('letters-q'),
 c=document.getElementById('letters-clear'),m=document.querySelector('.letters-more'),all=document.getElementById('letters-all'),n=document.getElementById('letters-n'),
-chips=[].slice.call(document.querySelectorAll('.year-chip')),rows=[].slice.call(tb.tBodies[0].rows),open=false;
-function draw(){var s=q.value.trim().toLowerCase(),ys=chips.filter(function(x){return x.getAttribute('aria-pressed')==='true';}).map(function(x){return x.getAttribute('data-year');}),k=0;
-rows.forEach(function(r){var hit=(!s||r.cells[1].textContent.toLowerCase().indexOf(s)>=0)&&(!ys.length||ys.indexOf(r.getAttribute('data-year'))>=0);
-r.hidden=!hit||(!open&&!s&&!ys.length&&r.classList.contains('more'));if(hit)k++;});
-if(m)m.hidden=open||!!s||ys.length>0;n.textContent=(s||ys.length)?k+' of '+rows.length+' letters match.':'';}
-f.hidden=false;if(m)m.hidden=false;q.addEventListener('input',draw);
+chips=[].slice.call(document.querySelectorAll('.year-chip')),rows=[].slice.call(tb.tBodies[0].rows),open=false,sb=document.getElementById('letters-sub');
+var P=new URLSearchParams(location.search);if(sb&&P.get('sub')&&sb.querySelector('option[value="'+P.get('sub')+'"]'))sb.value=P.get('sub');if(P.get('q'))q.value=P.get('q');
+function draw(){var s=q.value.trim().toLowerCase(),u=sb?sb.value:'',ys=chips.filter(function(x){return x.getAttribute('aria-pressed')==='true';}).map(function(x){return x.getAttribute('data-year');}),k=0;
+rows.forEach(function(r){var hit=(!s||r.cells[1].textContent.toLowerCase().indexOf(s)>=0)&&(!ys.length||ys.indexOf(r.getAttribute('data-year'))>=0)
+&&(!u||(' '+r.getAttribute('data-subs')+' ').indexOf(' '+u+' ')>=0);
+r.hidden=!hit||(!open&&!s&&!u&&!ys.length&&r.classList.contains('more'));if(hit)k++;});
+if(m)m.hidden=open||!!s||!!u||ys.length>0;n.textContent=(s||u||ys.length)?k+' of '+rows.length+' letters match.':'';}
+f.hidden=false;if(m)m.hidden=false;q.addEventListener('input',draw);if(sb)sb.addEventListener('change',draw);
 chips.forEach(function(x){x.addEventListener('click',function(){x.setAttribute('aria-pressed',x.getAttribute('aria-pressed')==='true'?'false':'true');draw();});});
-c.addEventListener('click',function(){q.value='';chips.forEach(function(x){x.setAttribute('aria-pressed','false');});draw();q.focus();});
+c.addEventListener('click',function(){q.value='';if(sb)sb.value='';chips.forEach(function(x){x.setAttribute('aria-pressed','false');});draw();q.focus();});
 if(all)all.addEventListener('click',function(){open=true;draw();});draw();})();
 </script>"""
 # Get new letters (pages.md, Letters, owner 2 Nov 2026): one white card under the explanation line with the RSS feed and a
@@ -1106,6 +1134,7 @@ LETTERS_PAGE = f"""
   <div class="wrap">
     <div class="letters-filter" hidden>
       <div class="legal-filter"><label for="letters-q">Filter by company</label><input class="input" id="letters-q" type="text" autocomplete="off"><button type="button" class="btn btn-line btn-sm" id="letters-clear">Clear</button></div>
+      {SUB_SELECT}
       <div class="year-chips" role="group" aria-labelledby="letters-years"><span id="letters-years">Year</span>{YEAR_CHIPS}</div>
       <p class="small" id="letters-n" aria-live="polite"></p>
     </div>
@@ -1494,7 +1523,11 @@ def category_page(g):
     return category_body(g, table, f'{g["options_checked"]} options checked on the same rule. Rows that are not approved for human use carry no price and no seller.')
 
 
-KIND_CHIP = {"brand": ("ok", "Brand"), "compounded": ("warn", "Compounded"), "program": ("neutral", "Program")}
+KIND_CHIP = {"brand": ("ok", "Brand"), "compounded": ("warn", "Compounded"), "program": ("neutral", "Program"),
+             # owner task 2 Nov 2026: "other" (a membership or a bundle) is never called compounded; "generic" (an approved
+             # medicine under its own name) renders once the data side sends it
+             "other": ("neutral", "Other"), "generic": ("ok", "Generic")}
+KIND_NOTE = {"other": "a membership or a bundle, see the clinic's page"}
 
 
 def plan_chip(g, r):
@@ -1502,12 +1535,19 @@ def plan_chip(g, r):
     2 Nov 2026: Ozempic is approved for diabetes, not weight loss), else the KIND_CHIP of its kind."""
     use = other_use(g, r)
     chip, label = ("info", f"Brand, {use}") if use else KIND_CHIP[plan_kind(r)]
-    return f'<span class="chip chip-{chip}">{label}</span>'
+    note = KIND_NOTE.get(plan_kind(r), "") if not use else ""
+    return f'<span class="chip chip-{chip}">{label}</span>' + (f'<span class="sub">{note}</span>' if note else "")
 
 
 def plan_kind(r):
-    """"program" for a plan that names no medication, "brand" for branded or oral_branded, else "compounded"."""
-    return "program" if not r["substance_slug"] else "brand" if r.get("product_kind") in BRANDED else "compounded"
+    """"program" for a plan that names no medication, "brand" for branded or oral_branded, "other" and "generic" as the
+    data names them, else "compounded"."""
+    k = r.get("product_kind")
+    if k in ("other", "generic"):  # the data's own kind first: Ivim's membership names no medicine and is still "other"
+        return k
+    if not r["substance_slug"]:
+        return "program"
+    return "brand" if k in BRANDED else "compounded"
 
 
 def care_note(r):
@@ -1612,7 +1652,8 @@ def category_body(g, table, table_lede):
     if pad_plan:
         # The pad shows a clinic plan when the goal has no hand-checked generic price (pages.md, Category; owner task 2 Nov 2026).
         r = pad_plan
-        what = {"brand": "FDA-approved brand", "compounded": "Compounded, not FDA approved", "program": "A program; the medicine is not named"}[plan_kind(r)]
+        what = {"brand": "FDA-approved brand", "compounded": "Compounded, not FDA approved", "program": "A program; the medicine is not named",
+                "other": "A membership or a bundle", "generic": "FDA-approved generic"}[plan_kind(r)]
         care = care_note(r)
         pad = f"""
       <div class="board rx" aria-label="Price pad">
@@ -2305,7 +2346,8 @@ def search_index():
         names |= {p["name"] for g in ALL_GOALS for p in g["peptides"] if subs_of(p) == [slug]}
         names |= {sub_label(slug), slug.replace("-", " ")}
         out.append({"type": "Peptide", "name": s["name"], "aliases": sorted(names - {s["name"]}),
-                    "url": f"/peptides/{slug}/", "line": f"{s['label']}: {s['sentence']}"})
+                    "url": f"/peptides/{slug}/", "line": f"{s['label']}: {s['sentence']}"
+                    + (f' FDA listing: "{s["listing"]}".' if s.get("listing") else "")})
     for r in sorted(CLINIC_PROFILES.values(), key=sellers_order):
         out.append({"type": "Clinic", "name": seller_name(r), "aliases": [r["domain"]] if r.get("domain") else [],
                     "url": f"/sellers/{r['seller_slug']}/", "line": f"Online clinic, {card_count(r)}, {r['score']} of {len(SCORE_CHECKS)} checks"})
@@ -2363,7 +2405,8 @@ def compare_plan(r):
     return {"k": "plan", "h": f'{who}<span class="cmp-sub">{escape(r["plan_name"])}</span>', "c": [
         ("Per month", f'<span class="num">{usd(r["price_monthly"])}/mo</span>'),
         ("Care fee", care),
-        ("What it is", f'<span class="chip chip-{chip}">{label}</span>'),
+        ("What it is", f'<span class="chip chip-{chip}">{label}</span>'
+                       + (f'<span class="cmp-sub">{KIND_NOTE[plan_kind(r)]}</span>' if not use and plan_kind(r) in KIND_NOTE else "")),
         ("Substance", escape(sub_label(r["substance_slug"])) if r.get("substance_slug") else "Names no medication"),
         ("FDA letter", letter),
         ("Prices checked", nice_date(r["last_seen"]))]}
@@ -2596,6 +2639,9 @@ def pep_answer(slug):
         out.append(f'The lowest price at the {plural(n, "shop")} shown below is {per_mg(low["price_per_mg"])}/mg '
                    f'({clinic_link(low["seller_slug"], clean(SELLERS.get(low["seller_slug"], {}).get("seller_name") or low["seller_name"]), True)})'
                    f'{", checked " + nice_date(seen) if seen else ""}.')
+    n = len(LETTER_SUBS.get(slug, []))
+    if n:  # the count of letters that name it (owner task 2 Nov 2026), linking the section below
+        out.append(f'<a href="#letters">{plural(n, "FDA warning letter")}</a> name{"s" if n == 1 else ""} it.')
     p = pep_low_plan(slug) if pep_group(s) == "approved" else None
     if p:
         out.append(f'The lowest monthly plan that is not compounded, at the online clinics we track, is {usd(p["price_monthly"])} '
@@ -2768,14 +2814,51 @@ def pep_plans_section(slug):
     return clinic_section(g, rows).replace('id="clinics"', 'id="sold"', 1)
 
 
-def pep_letters_section():
-    """FDA warning letters: site.fda_letters_all carries no substance tags, so the page links the letters page."""
+PEP_LETTERS_SHOWN = 10
+
+
+def quote_text(q):
+    """A letter's first mention as the site shows it: clean spacing, and the FDA's own short bracket marks without their
+    brackets ("eye[,]" -> "eye,", "[GLP-1]" -> "GLP-1"), which the placeholder check would read as a template gap."""
+    return re.sub(r"\[([^\[\]]{1,40})\]", r"\1", clean(q))
+
+
+def pep_letters_section(slug):
+    """FDA warning letters that name the substance (site.letter_substances; pages.md, Peptide): the count, then up to ten
+    newest as the letters page's table (date, company, the first mention in small, the letter on fda.gov), and the link
+    to the letters page filtered to the substance. Without the data: the link to the letters page alone."""
     if not LETTERS_ALL:
         return ""
-    return f"""
+    name = pep_short(slug)
+    if not LETTER_SUBS_ON:
+        return f"""
 <section class="section" id="letters">
   <div class="wrap">
     <div class="sec-hd"><div><h2>FDA warning letters</h2><p>Our letters list is by company, not by substance. The letters page lists all {len(LETTERS_ALL)}, each with its subject and a link to fda.gov; filter it by a company name.</p></div><a href="/fda-warning-letters/">FDA warning letters</a></div>
+  </div>
+</section>"""
+    rows = LETTER_SUBS.get(slug, [])
+    if not rows:
+        return f"""
+<section class="section" id="letters">
+  <div class="wrap">
+    <div class="sec-hd"><div><h2>FDA warning letters</h2><p>No FDA warning letter we track names {escape(name)}.</p></div><a href="/fda-warning-letters/">FDA warning letters</a></div>
+  </div>
+</section>"""
+    trs = "".join(
+        f'<tr><td class="num">{nice_date(r["letter_date"])}</td><td><span class="name">{escape(clean(LETTER_CO.get(r["letter_url"], "")))}</span>'
+        + (f'<span class="sub-quote">"{escape(quote_text(r["first_mention"]))}"</span>' if r.get("first_mention") else "")
+        + f'</td><td><a href="{escape(r["letter_url"])}" rel="nofollow">FDA letter</a></td></tr>' for r in rows[:PEP_LETTERS_SHOWN])
+    shown = (f" The {PEP_LETTERS_SHOWN} newest are below." if len(rows) > PEP_LETTERS_SHOWN else "")
+    return f"""
+<section class="section" id="letters">
+  <div class="wrap">
+    <div class="sec-hd"><div><h2>FDA warning letters</h2><p>{plural(len(rows), "FDA warning letter")} name{"s" if len(rows) == 1 else ""} {escape(name)}.{shown} Each quote is where the letter first names it.</p></div></div>
+    <div class="tbl-wrap"><table class="tbl tbl-letters tbl-pep-letters">
+      <thead><tr><th scope="col">Date</th><th scope="col">Company</th><th scope="col">Source</th></tr></thead>
+      <tbody>{trs}</tbody>
+    </table></div>
+    <p class="small" style="margin-top:16px"><a href="/fda-warning-letters/?sub={slug}">See all on the letters page</a></p>
   </div>
 </section>"""
 
@@ -2804,11 +2887,11 @@ def pep_page(slug):
         <h1>{escape(pep_name(slug))}</h1>
         {pep_chips(slug, s)}
         <p class="small meta"><a href="/about/">{AUTHOR}</a>. {STANDING_LINE.replace(CHECKED, nice_date(pep_checked(slug)))}</p>
-        <p class="intro">{" ".join(pep_answer(slug))}</p>
+        <p class="intro">{" ".join(pep_answer(slug))}</p>{f'<p class="small pep-listing">FDA listing: "{escape(s["listing"])}"</p>' if s.get("listing") else ""}
       </div>{pep_facts(slug, s)}
     </div>
   </div>
-</section>{evidence}{sold}{pep_letters_section()}
+</section>{evidence}{sold}{pep_letters_section(slug)}
 <section class="section pep-foot">
   <div class="wrap">
     {pep_guides(slug)}
@@ -2974,7 +3057,9 @@ def cmp_sub_cell(slug, goals):
          if plan else "No plan we track" if approved else "Not applicable"),
         ", ".join(pep_forms(slug)) or "Unknown",
         opt["does"] if opt else "Not on this goal page",
-        f'<a href="/fda-warning-letters/">FDA warning letters</a><span class="cmp-sub">listed by company, not by substance</span>' if LETTERS_ALL else "Not listed by substance",
+        ((f'<a href="/fda-warning-letters/?sub={slug}">{plural(len(LETTER_SUBS.get(slug, [])), "letter")}</a><span class="cmp-sub">name{"s" if len(LETTER_SUBS.get(slug, [])) == 1 else ""} it</span>'
+          if LETTER_SUBS.get(slug) else "None we track names it") if LETTER_SUBS_ON else
+         f'<a href="/fda-warning-letters/">FDA warning letters</a><span class="cmp-sub">listed by company, not by substance</span>') if LETTERS_ALL else "Not listed by substance",
         ", ".join(f'<a href="/learn/{g["slug"]}/">{g["title"]}</a>' for g in guides_) or "No guide names it",
     ]
 
