@@ -126,6 +126,35 @@ body:has(.sellers-dlg[open]){overflow:hidden}
 .sellers-dlg .tbl td[data-l]::before{content:attr(data-l) ": ";color:var(--ink-2);font-size:var(--small-size)}
 }
 
+/* Clinic table (pages.md, Category, weight loss; owner task 2 Nov 2026): one row per clinic plan. What it is: chip-ok
+   "Brand", chip-warn "Compounded", chip-neutral "Program". The price in tabular figures with "+ $N/mo care" or "all-in"
+   under it in ink-2. FDA letter: a chip-warn link "FDA letter <date>" to the letters page, underlined because it is a
+   link, or "none" in ink-2. The last cell holds the disabled Online clinic button. Under 640px each row is a card (as
+   in the seller window), the clinic first, the labels from data-l. */
+.chip-link{text-decoration:underline;text-underline-offset:.15em}
+.chip-link:hover{text-decoration-thickness:2px}
+.chip-link:focus-visible{outline:3px solid var(--clinic);outline-offset:2px}
+.tbl-clinics .num{font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
+.tbl-clinics .sub{display:block;font-size:var(--small-size);line-height:1.4;color:var(--ink-2)}
+.tbl-clinics .no-letter{color:var(--ink-2)}
+.tbl-clinics td.act{text-align:right}
+@media (max-width:640px){
+.tbl-cards thead{display:none}
+.tbl-wrap:has(.tbl-cards){border:0;background:none;overflow:visible}
+.tbl-cards,.tbl-cards tbody,.tbl-cards tr,.tbl-cards td{display:block;width:auto;min-width:0}
+.tbl.tbl-cards{min-width:0}
+.tbl-cards tr{border:1px solid var(--line);border-radius:var(--radius-panel);background:var(--white);padding:12px 14px;margin-bottom:10px}
+.tbl-cards td,.tbl-cards tr:last-child td{padding:0;border:0}
+.tbl-cards td+td{margin-top:6px}
+.tbl-cards td[data-l]::before{content:attr(data-l) ": ";color:var(--ink-2);font-size:var(--small-size)}
+.tbl-clinics td.act{text-align:left;margin-top:10px}
+.tbl-clinics .sub{display:inline;margin-left:6px}
+}
+/* On phones, with JavaScript, the first 10 plans show, then btn-line "Show all N" (owner answer Q2 a, 2 Nov 2026); from 641px every row shows and the button is not drawn. */
+@media (max-width:640px){.clip .tbl-clinics tr.more{display:none}}
+@media (min-width:641px){.clinics-more{display:none}}
+.clinics-more{margin:12px 0 0}
+
 /* Header menu (pages.md, Every page, Header, 31 Oct 2026): under 760px the nav opens from a plain "Menu" button
    (btn-line btn-sm, no icon); .nav-js is set by the head script, so with JavaScript off the links stay a wrapped row */
 .nav-toggle{display:none}

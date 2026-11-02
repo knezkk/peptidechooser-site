@@ -4,6 +4,7 @@ Reads the `site.*` views through the read-only role (peptide-data spec 0015) and
   - site.catalog_counts  -> "db": options and sellers counted, newest price date
   - site.substance_status, site.approved_drugs -> "legal_db": status per substance with its source and date
   - site.plan_prices     -> "plans": telehealth plan prices per seller, with the date the page was last seen
+                            and the seller's FDA warning letters (fda_letter_count, last_fda_letter_date)
   - site.products        -> "products": research-use listings for the substances the site shows (see keep_products)
   - site.sellers         -> "sellers": the seller rows those listings point to, with their background check and their
                             five-check score (score, score_* yes/no, score_checked_on)
@@ -101,7 +102,8 @@ def main():
     d["plans"] = rows(
         "select seller_slug, seller_name, plan_slug, plan_name, product_kind, dosage_form, substance_slug, "
         "pharmacy_partner, price_monthly, price_first_month, membership_fee_monthly, consult_fee, "
-        "commitment_months, observed_at, last_seen, pricing_url from site.plan_prices order by seller_slug, plan_slug")
+        "commitment_months, observed_at, last_seen, pricing_url, fda_letter_count, last_fda_letter_date "
+        "from site.plan_prices order by seller_slug, plan_slug")
     products = rows(
         "select seller_slug, seller_name, seller_status, product_name, variant_title, product_url, substance_slug, is_blend, "
         "amount_mg, form, price_usd, price_per_mg, price_observed_at, first_seen, last_seen, has_coa, coa_count from site.products")
