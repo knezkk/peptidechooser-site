@@ -149,6 +149,24 @@ html:not(.nav-js) .goal-menu{display:flex;flex-wrap:wrap}
 .legal-filter label{font-weight:600;font-size:var(--small-size)}
 .legal-filter .input{flex:1 1 220px;max-width:360px}
 .legal-more{margin:16px 0 0}
+/* Letters filter (pages.md, Letters, 1 Nov 2026): the Legal filter labelled "Filter by company", then one year chip per
+   year, none pressed (every year shows); pressing chips narrows the table to those years, "Clear" resets both. The year
+   chip is a toggle button with the chip's 4px corners at the 44px touch height: white with a line-strong border, the
+   pressed one clinic-tint with a clinic border (blue is ours). The count after the year is ink-2. JavaScript only. */
+.letters-filter{margin-bottom:16px}
+.letters-filter[hidden],.letters-more[hidden]{display:none}
+.letters-filter .legal-filter{margin-bottom:12px}
+.year-chips{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.year-chips>span{font-weight:600;font-size:var(--small-size);margin-right:4px}
+.year-chip{min-height:var(--touch);padding:0 14px;border:1.5px solid var(--line-strong);border-radius:var(--radius-chip);background:var(--white);color:var(--ink);font:700 14px var(--font-text);cursor:pointer;transition:background-color var(--motion-quick),border-color var(--motion-quick)}
+.year-chip span{font-weight:400;color:var(--ink-2)}
+.year-chip:hover{background:var(--neutral-tint)}
+.year-chip[aria-pressed="true"]{background:var(--clinic-tint);border-color:var(--clinic);color:var(--clinic-text)}
+.year-chip[aria-pressed="true"] span{color:var(--clinic-text)}
+.year-chip:focus-visible{outline:3px solid var(--clinic);outline-offset:2px}
+#letters-n{margin:12px 0 0}
+#letters-n:empty{display:none}
+.letters-more,.letters-all{margin:16px 0 0}
 
 /* Inputs */
 .input{min-height:48px;padding:0 14px;border:1.5px solid var(--line-strong);border-radius:var(--radius-control);font:16px var(--font-text);color:var(--ink);background:var(--white);box-sizing:border-box}

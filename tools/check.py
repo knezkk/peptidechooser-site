@@ -210,6 +210,29 @@ def check_parts(P):
                     errs.append(f"{name}: seller window links to a seller ({href})")
             if "btn-action" in m.group(1):
                 errs.append(f"{name}: Visit button inside the seller window")
+    # The letters page (pages.md, Letters): every row has a date, a company, a subject and its fda.gov letter; the only
+    # links leaving the site go to fda.gov, so no seller domain is linked anywhere on the page.
+    if "fda-warning-letters/index.html" in P:
+        name = "fda-warning-letters/index.html"
+        html = (DIST / name).read_text(encoding="utf-8")
+        for a in P[name].links:
+            href = a.get("href", "")
+            host = re.sub(r"^www\.", "", re.sub(r"^[a-z]+://", "", href).split("/")[0].lower()) if href.startswith("http") else ""
+            if host and host not in ("fda.gov", "fonts.googleapis.com"):
+                errs.append(f"{name}: link leaves for {host}, only fda.gov is allowed ({href})")
+            if host and any(host == d or host.endswith("." + d) for d in seller_domains()):
+                errs.append(f"{name}: links to a seller ({href})")
+        body = re.search(r'<table[^>]*id="letters-table".*?<tbody>(.*?)</tbody>', html, re.S)
+        rows = re.findall(r"<tr[^>]*>(.*?)</tr>", body.group(1), re.S) if body else []
+        if not rows:
+            errs.append(f"{name}: no letter rows")
+        for i, r in enumerate(rows, 1):
+            cells = re.findall(r"<td[^>]*>(.*?)</td>", r, re.S)
+            text = [re.sub(r"<[^>]+>", "", c).strip() for c in cells]
+            if len(cells) < 5 or not text[0] or not text[1] or not text[2]:
+                errs.append(f"{name}: row {i} without a date, a company or a subject")
+            elif not re.search(r'href="https://www\.fda\.gov/[^"]+"[^>]*rel="nofollow"', cells[4]):
+                errs.append(f"{name}: row {i} without its nofollow fda.gov letter")
     return errs
 
 
@@ -239,6 +262,13 @@ def check_data(P):
             errs.append(f"letters {r.get('seller_slug')}: no fda.gov source")
         if not r.get("letter_date") or not r.get("seller_name") or not r.get("letter_subject"):
             errs.append(f"letters {r.get('seller_slug')}: no date, seller name or subject")
+    for r in d.get("letters_all") or []:
+        if not (r.get("letter_url") or "").startswith("https://www.fda.gov/"):
+            errs.append(f"letters_all {r.get('company_name')}: no fda.gov source")
+        if not r.get("letter_date") or not r.get("company_name") or not r.get("letter_subject"):
+            errs.append(f"letters_all {r.get('letter_url')}: no date, company or subject")
+    if d.get("letters_all") and len(d["letters_all"]) != d.get("letters_all_total"):
+        errs.append("letters_all_total does not match the rows in letters_all")
     return errs
 
 

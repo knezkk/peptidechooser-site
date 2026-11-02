@@ -117,6 +117,18 @@ p { margin: 0 0 1em; }
 .fh-goal { grid-area: h1; } .flow .figure { grid-area: fig; } .flow .goal-list { grid-area: list; align-self: start; }
 .fh-compare { grid-area: h2; } .flow-compare { grid-area: cmp; }
 .tbl-letters .sub-phone { display: none; }
+/* Letters page (pages.md, Letters): H1, the one-sentence explanation with its FDA link, the Checked stamp; the table in
+   the grey band. The seller we matched sits under the company name in ink-2; the office is ink-2 at small size. */
+.letters-hd { padding-top: 56px; }
+.letters-hd h1 { max-width: 24ch; margin-bottom: 16px; }
+.letters-hd .lede { max-width: 62ch; margin: 0 0 16px; }
+.letters-hd .lede a { color: var(--clinic); }
+.letters-stamp { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin: 0; }
+.letters-stamp .small { color: var(--ink-2); }
+.letters-hd + .band-2 { margin-top: 48px; }
+.tbl-letters .co-seller { display: block; margin-top: 2px; font-size: var(--small-size); line-height: 1.4; color: var(--ink-2); font-weight: 400; }
+.tbl-letters td.office { font-size: var(--small-size); color: var(--ink-2); }
+.tbl-letters-all td.num, .tbl-letters-all td:last-child { white-space: nowrap; }
 /* Goal page (/hair/, pages.md, Category): the step 2 card alone, under the hero text and price pad */
 .chooser.flow-solo { grid-template-columns: minmax(0, 1fr); grid-template-areas: "h2" "cmp"; margin-top: 40px; background: none; border: 0; box-shadow: none; padding: 0; }
 .flow-hd { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; padding-bottom: 10px; border-bottom: 1px solid var(--line); }
@@ -321,7 +333,8 @@ p { margin: 0 0 1em; }
   .tbl-letters td:last-child { white-space: nowrap; }
   .tbl-letters th, .tbl-letters td { padding: 12px 10px; }
   /* phones: the subject moves under the seller's name, so the four columns fit without scrolling inside the frame */
-  .tbl-letters .subj { display: none; }
+  .tbl-letters .subj, .tbl-letters .office { display: none; }
+  .tbl-letters-all td.num { white-space: normal; width: 64px; } /* the date takes two short lines, the company gets the room */
   .tbl-letters .sub-phone { display: block; margin-top: 2px; font-size: var(--small-size); line-height: 1.4; color: var(--ink-2); font-weight: 400; }
   /* Header under 760px: logo and "Compare by goal" on the first row, "Menu" under them; the open menu (or, with
      JavaScript off, the wrapped links) takes the full width below (pages.md, Every page, Header) */
