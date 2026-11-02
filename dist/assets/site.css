@@ -268,8 +268,15 @@ p { margin: 0 0 1em; }
 .prose h2:first-of-type { margin-top: 40px; }
 .prose ul, .prose ol { padding-left: 1.2em; }
 .prose li { margin-bottom: 8px; }
-.prose a { color: var(--clinic); }
+.prose a:not(.btn) { color: var(--clinic); } /* a button keeps its own colours (Contact, 404) */
 .btn-row { display: flex; flex-wrap: wrap; gap: 10px; margin: 24px 0 32px; }
+
+/* Short pages (owner answer Q3 a, 2 Nov 2026): the footer sits at the bottom of the window; main takes the spare height.
+   The breadcrumb is a body child with auto side margins, so it is told to stretch to the frame like any .wrap. */
+body { display: flex; flex-direction: column; min-height: 100vh; }
+body > * { flex-shrink: 0; }
+#main { flex: 1 0 auto; }
+body > .crumbs { width: -moz-available; width: -webkit-fill-available; width: stretch; }
 
 /* Footer */
 .site-foot { background: var(--ink); color: var(--ink-on-dark); padding: 56px 0 48px; margin-top: 72px; font-size: var(--small-size); }
