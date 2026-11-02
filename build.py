@@ -1085,7 +1085,6 @@ fromHash();window.addEventListener('hashchange',fromHash);})();
 # What we track (owner task 2 Nov 2026): the counts the trust pages and Home's sellers card show, all from site.json;
 # each line is drawn only when its data is there (never a placeholder).
 N_SELLERS = len(PROFILES)
-N_SELLERS_TOP = sum(1 for r in PROFILES.values() if (r.get("score") or 0) >= 4)
 N_CLINICS = len({r["seller_slug"] for r in PLANS})
 N_LETTERS = DATA.get("letters_all_total") or len(LETTERS_ALL)
 N_STATUS = len({r["substance_slug"] for r in LEGAL_DB or []})
@@ -1097,7 +1096,7 @@ SCORE_ON = max((r["score_checked_on"] for r in PROFILES.values() if r.get("score
 SELLERS_HOME = f"""
 <section class="section" id="sellers-home">
   <div class="wrap">
-    <div class="sec-hd"><div><h2>Sellers we track</h2><p>{N_SELLERS} shops that sell peptides online, each with five background checks. {N_SELLERS_TOP} of them meet 4 or 5 of the 5 checks.{f" Checked {nice_date(SCORE_ON)}." if SCORE_ON else ""}</p></div></div>
+    <div class="sec-hd"><div><h2>Sellers we track</h2><p>{N_SELLERS} shops that sell peptides online, each with five background checks.{f" Checked {nice_date(SCORE_ON)}." if SCORE_ON else ""}</p></div></div>
     <p class="letters-all"><a class="btn btn-line" href="/sellers/">See all sellers</a></p>
   </div>
 </section>
@@ -1127,13 +1126,13 @@ HOME = f"""
       <dl class="glossary-list">{GLOSSARY}</dl>
     </section>
     <section class="rate-strip" aria-labelledby="rate-h">
-      <div class="rate-hd"><h2 id="rate-h">How we rate</h2><p>Every product and seller is judged on the same five criteria. We publish them so you can check our work.</p><a href="/how-we-rate/">Read the full method</a></div>
+      <div class="rate-hd"><h2 id="rate-h">How we rate</h2><p>Every seller gets the same five checks, in this order. They are facts we hold about the seller, not a safety grade.</p><a href="/how-we-rate/">Read the full method</a></div>
       <ul class="criteria">
-        <li><h3>Evidence</h3><p>What human studies show for the use you care about, not what a molecule does in a dish.</p></li>
-        <li><h3>Regulatory status</h3><p>FDA approval, cosmetic or research labeling, and any FDA warning letters sent to the seller.</p></li>
-        <li><h3>Lab testing</h3><p>Whether a third-party certificate of analysis exists and matches the batch you would receive.</p></li>
-        <li><h3>Real price</h3><p>Price per month or per milligram, calculated the same way for every seller so the numbers compare.</p></li>
-        <li><h3>Transparency</h3><p>Who runs the company, where it ships from, and whether paid placements are labeled.</p></li>
+        <li><h3>Lab reports</h3><p>A lab report dated in the last 12 months.</p></li>
+        <li><h3>No FDA letter</h3><p>No FDA warning letter matched to its web or street address.</p></li>
+        <li><h3>Company found</h3><p>The business behind the shop found in a state registry.</p></li>
+        <li><h3>Legal pages</h3><p>A terms page and a privacy or refund page, seen in the last 30 days.</p></li>
+        <li><h3>Fresh prices</h3><p>A price per milligram seen in the last 30 days.</p></li>
       </ul>
       <nav class="trust-links" aria-label="How we work"><a href="/disclosure/">How we make money</a><a href="/about/">Who checks our facts</a><a href="/corrections/">Mistakes we fixed</a><a href="#sources">Sources</a></nav>
     </section>
@@ -1242,7 +1241,7 @@ HOW = f"""
 <section class="page"><div class="wrap prose">
 <h1>How we rate peptide products and sellers</h1>
 <p class="lede">We judge every seller by the same five checks and build every goal page by the same rule. The checks are facts we hold about a seller, not a safety grade.</p>
-<p class="small meta">{AUTHOR}. Last updated {CHECKED}. Every claim links to its source. Prices checked {STAMP_CHECKED}.</p>
+<p class="small meta">{AUTHOR}. Last updated {STAMP_CHECKED}. Every claim links to its source. Prices checked {STAMP_CHECKED}.</p>
 <h2>The five seller checks</h2>
 <p>{f'We track <a href="/sellers/">{N_SELLERS} sellers</a>. ' if N_SELLERS else ""}Every seller page and every price window shows a line such as "3 of 5 checks". These are the five, in the order the seller page shows them. We recompute all five each time we pull our data, and the seller page shows the date as "Checked" and a date{f"; the last pull was on {PULLED}" if PULLED else ""}.</p>
 <h3>Lab reports</h3>
