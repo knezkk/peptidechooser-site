@@ -1778,7 +1778,8 @@ def g_letters_year(b, f, N):
     top = [(s, c) for s, c in subs.most_common() if c][:6]
     named = len({x["letter_url"] for v in b.LETTER_SUBS.values() for x in v if (x.get("letter_date") or "").startswith(year)})
     subj = Counter(re.sub(r"\s*\([^)]*\)$", "", b.clean(r["letter_subject"])) for r in rows if r.get("letter_subject")).most_common(4)
-    sub_words = and_list(f"{b.pep_short(s)} ({c})" for s, c in top[:3])
+    low = lambda n: n if any(ch.isdigit() or ch == "+" for ch in n) or n.isupper() else n.lower()  # "semaglutide", "BPC-157"
+    sub_words = and_list(f"{low(b.pep_short(s))} ({c})" for s, c in top[:3])
     short = (f"From 1 January to {nice(on)}, the FDA sent {n} warning letters that our letters page tracks to peptide sellers, "
              f"compounders and online clinics.{N('db-letters')} "
              f"{kinds[0][1]} went to {kinds[0][0].lower()}. "
