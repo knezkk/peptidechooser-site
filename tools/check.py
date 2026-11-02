@@ -325,7 +325,24 @@ def check_parts(P):
         m = DOSE.search(text)
         if m:
             errs.append(f"{name}: says a dose ({m.group(0)})")
-    for name in ("search/index.html", "compare/index.html", *(n for n in P if n.startswith("peptides/"))):
+    # Comparison pages (pages.md, Compare pairs; owner task 2 Nov 2026): both sides link to their page on our site, a
+    # substance pair carries each status source, and the sitemap holds every pair once (never b-vs-a beside a-vs-b).
+    pairs = [n for n in P if re.fullmatch(r"compare/[a-z0-9-]+-vs-[a-z0-9-]+/index.html", n)]
+    for name in pairs:
+        html = (DIST / name).read_text(encoding="utf-8")
+        heads = re.findall(r'<th scope="col"><a class="name" href="(/(?:peptides|sellers)/[^"/]+/)"', html)
+        if len(heads) != 2 or any(f'href="{h}"' not in html.split('id="compare-two"', 1)[-1].split("cmp-link")[0].split("</table>")[-1] for h in heads):
+            errs.append(f"{name}: does not link both sides to their pages")
+        if all(h.startswith("/peptides/") for h in heads) and len(re.findall(r'rel="nofollow">(?:FDA source|Source)</a>', html)) < 2:
+            errs.append(f"{name}: a substance without its status source")
+    sm = (DIST / "sitemap.xml").read_text(encoding="utf-8") if (DIST / "sitemap.xml").exists() else ""
+    seen = set()
+    for loc in re.findall(r"<loc>[^<]*/compare/([a-z0-9-]+)-vs-([a-z0-9-]+)/</loc>", sm):
+        key = frozenset(loc)
+        if key in seen:
+            errs.append(f"sitemap.xml: the pair {loc[0]} and {loc[1]} appears twice")
+        seen.add(key)
+    for name in ("search/index.html", "compare/index.html", *(n for n in P if n.startswith("peptides/") or n in pairs)):
         if name not in P:
             continue
         html = (DIST / name).read_text(encoding="utf-8")
