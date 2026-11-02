@@ -1,5 +1,7 @@
-"""Draws one og:image per page from its title (design book: Pages and buttons, Share image).
-Run after build.py: python3 tools/og.py   -> writes assets/og/<name>.png (1200x630), then rebuild.
+"""Draws one og:image per page from its title (design book: Pages and buttons, Share image), and the favicons from the
+logo mark (design book: README, Logo).
+Run after build.py: python3 tools/og.py   -> writes assets/og/<name>.png (1200x630) and assets/favicon-16.png,
+favicon-32.png, apple-touch-icon.png (180), icon-512.png, then rebuild.
 """
 import json
 from pathlib import Path
@@ -9,15 +11,15 @@ ROOT = Path(__file__).resolve().parent.parent
 pages = json.loads((ROOT / "dist" / "pages.json").read_text())
 tokens = json.loads((ROOT / "design" / "tokens.json").read_text())
 col = {t["name"]: t["value"] for t in tokens["color"]["tokens"]}
-mark = (ROOT / "assets" / "mark.svg").read_text()
+mark = (ROOT / "assets" / "logo.svg").read_text()
 
 TEMPLATE = """<!doctype html><html><head><meta charset="utf-8">
-<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,800&family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,800&family=Public+Sans:wght@800&family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
 <style>
 body{{margin:0;width:1200px;height:630px;background:{paper};color:{ink};font-family:"Atkinson Hyperlegible",Arial,sans-serif;display:flex;flex-direction:column;justify-content:space-between;padding:64px;box-sizing:border-box;border-bottom:16px solid {mark}}}
 .t{{font:800 64px/1.05 "Bricolage Grotesque",Arial,sans-serif;letter-spacing:-0.02em;max-width:1000px;overflow-wrap:anywhere}}
-.b{{display:flex;align-items:center;gap:16px;font:700 32px "Bricolage Grotesque",Arial,sans-serif}}
-.b svg{{width:56px;height:56px}}
+.b{{display:flex;align-items:center;gap:16px;font:800 32px "Public Sans",Arial,sans-serif;letter-spacing:-0.015em}}
+.b svg{{height:32px;width:auto}}
 .s{{font-size:22px;color:{ink2};margin-top:16px}}
 </style></head><body>
 <div class="b">{svg}<span>Peptide Chooser</span></div>
@@ -36,4 +38,14 @@ with sync_playwright() as p:
         pg.wait_for_timeout(600)
         pg.screenshot(path=str(out / f"{name}.png"))
         print("og", name)
+    # Favicons (README, Logo): the mark alone. 16 and 32 on a clear background, filling the 56 grid; the apple touch icon
+    # (180) and the manifest icon (512) on white with half the mark's height as clear space on every side.
+    icons = [("favicon-16.png", 16, "1 1 54 54", "transparent"), ("favicon-32.png", 32, "1 1 54 54", "transparent"),
+             ("apple-touch-icon.png", 180, "-7 -7 70 70", col["white"]), ("icon-512.png", 512, "-7 -7 70 70", col["white"])]
+    for name, size, vb, bg in icons:
+        pg = b.new_page(viewport={"width": size, "height": size})
+        svg = mark.replace('viewBox="3 18 50 20"', f'viewBox="{vb}" width="{size}" height="{size}" style="display:block"')
+        pg.set_content(f'<body style="margin:0;background:{bg}">{svg}</body>')
+        pg.screenshot(path=str(ROOT / "assets" / name), omit_background=bg == "transparent")
+        print("icon", name)
     b.close()
