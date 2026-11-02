@@ -304,6 +304,13 @@ body > .crumbs { width: -moz-available; width: -webkit-fill-available; width: st
 .foot-links { display: flex; flex-wrap: wrap; gap: 8px 20px; list-style: none; margin: 0; padding: 0; }
 .foot-links a, .site-foot a { color: var(--white); }
 .site-foot p { max-width: 62ch; }
+/* Footer Browse column (pages.md, Every page): a small heading over the section links, the trust links beside it */
+.foot-h { font: 600 var(--small-size)/1.4 var(--font-text); color: var(--ink-on-dark); margin: 0 0 10px; }
+/* Home: "Sellers we track" and "Popular comparisons" side by side from 760px (pages.md, Home) */
+.home-cards { display: grid; gap: 48px; }
+.home-pairs { margin: 0; }
+/* 404: the goal pages, then the sections, as two lines of links (pages.md, 404) */
+.prose ul.nf-links { list-style: none; padding: 0; display: flex; flex-wrap: wrap; gap: 4px 20px; }
 .site-foot .trust { border-top: 1px solid var(--line-dark); margin-top: 24px; padding-top: 16px; display: flex; flex-wrap: wrap; gap: 8px 24px; }
 
 /* Creators, trust row */
@@ -330,7 +337,8 @@ body > .crumbs { width: -moz-available; width: -webkit-fill-available; width: st
 
 @media (min-width: 760px) {
   .seller-cards { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .foot-grid { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: 48px; }
+  .foot-grid { grid-template-columns: minmax(0, 5fr) minmax(0, 3fr) minmax(0, 3fr); gap: 48px; }
+  .home-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
   .criteria { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .glossary-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .creators { grid-template-columns: repeat(2, minmax(0, 1fr)); }
