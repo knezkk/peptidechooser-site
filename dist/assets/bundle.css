@@ -303,6 +303,9 @@ html:not(.nav-js) .head-search{order:0;flex:1 1 100%;max-width:420px;margin:0 0 
 .cmp .score-marks .chip{font-weight:600;font-size:11px;padding:1px 5px;border:1px solid transparent;white-space:nowrap}
 .cmp .score-marks .mark-no{border:1px dashed var(--ink-muted)}
 .cmp-link{margin:24px 0 0}
+/* "Compared with" (pages.md, Compare pairs): one line of links on a /peptides/ page and a clinic page */
+.compared{margin:0 0 32px;max-width:72ch;font-size:var(--small-size);line-height:var(--small-lh);color:var(--ink-2)}
+.compared strong{color:var(--ink)}
 @media (max-width:640px){
 .cmp-form{padding:16px}
 .cmp,.cmp thead,.cmp tbody{display:block}
