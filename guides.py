@@ -196,6 +196,8 @@ SOURCES = {
     "medline-osteoarthritis": ("MedlinePlus, Osteoarthritis", "https://medlineplus.gov/osteoarthritis.html"),
     "fda-wl-list": ("FDA, Warning Letters (the searchable list), current as of 27 Oct 2026",
                     "https://www.fda.gov/inspections-compliance-enforcement-and-criminal-investigations/compliance-actions-and-activities/warning-letters"),
+    "fda-503a-list": ("FDA, 503A Categories Update for Interim Policy on Compounding Using Bulk Drug Substances (the category lists)",
+                      "https://www.fda.gov/media/94155/download"),
     "pm-kaufman": ("Kaufman KD et al., Finasteride in the treatment of men with androgenetic alopecia, J Am Acad Dermatol 39(4), 1998, PubMed 9777765",
                    "https://pubmed.ncbi.nlm.nih.gov/9777765/"),
     "pm-pyo": ("Pyo HK et al., The effect of tripeptide-copper complex on human hair growth in vitro, Arch Pharm Res 30(7), 2007, PubMed 17703734",
@@ -1562,21 +1564,35 @@ def g_clinic_shop(b, f, N):
     return short, body, nxt
 
 
+# A substance whose FDA lists differ by route: the route each row covers, as the FDA names it (peptide-data confirmed both
+# GHK-Cu rows are current, owner answer Q1, 2 Nov 2026)
+ROUTE = {("ghk-cu", "fda_503a_category"): "except for injectable routes",
+         ("ghk-cu", "fda_nomination_withdrawn"): "for injectable routes"}
+
+
 def g_503a(b, f, N):
     rows = b.LEGAL_DB or []
+
     def names(regime, value):
         out = sorted({r["substance_slug"] for r in rows if r["regime"] == regime and r["status_value"] == value})
-        return and_list([pep_link(b, s, b.pep_short(s)) for s in out])
-    lists = [("Category 1", names("fda_503a_category", "category_1")),
-             ("Category 2", names("fda_503a_category", "category_2")),
-             ("Category 3", names("fda_503a_category", "category_3")),
-             ("On the FDA's list of substances that may be risky to compound", names("fda_cat2_safety", "category_2")),
-             ("Nomination withdrawn", names("fda_nomination_withdrawn", "withdrawn"))]
-    where = "".join(f"<li><strong>{h}</strong>: {n}</li>" for h, n in lists if n)
+        return and_list([pep_link(b, s, b.pep_short(s)) + (f" ({ROUTE[(s, regime)]})" if (s, regime) in ROUTE else "") for s in out])
     short = ("A 503A pharmacy is an ordinary state-licensed pharmacy that makes medicines for one patient at a time, on a "
              f"prescription.{N('fda-503a')} It may use a raw ingredient only if the law allows it, for example from the FDA's 503A bulks "
              f"list; while the FDA reviews nominated ingredients, it sorts them into three categories, and only category 1 may be used, "
              f"under conditions.{N('fda-503a')} A compounded medicine is never FDA approved.{N('fda-compounding')}")
+    # the lists after the short answer, so its footnotes read in order; the 503A categories cite the FDA's list, the others its risk page
+    lists = [("Category 1", names("fda_503a_category", "category_1"), "fda-503a-list"),
+             ("Category 2", names("fda_503a_category", "category_2"), "fda-503a-list"),
+             ("Category 3", names("fda_503a_category", "category_3"), "fda-503a-list"),
+             ("On the FDA's list of substances that may be risky to compound", names("fda_cat2_safety", "category_2"), "fda-bulk-risks"),
+             ("Nomination withdrawn", names("fda_nomination_withdrawn", "withdrawn"), "fda-bulk-risks")]
+    where = "".join(f"<li><strong>{h}</strong>: {n}.{N(src)}</li>" for h, n, src in lists if n)
+    ghk = {r["regime"] for r in rows if r["substance_slug"] == "ghk-cu"}
+    routes = (f"<p>A substance can sit in two lists when the FDA treats its routes of use apart. GHK-Cu is the example: GHK-Cu "
+              f"\"except for injectable routes of administration\" is in category 1,{N('fda-503a-list')} and GHK-Cu \"for injectable "
+              f"routes of administration\" is among the substances whose nomination was withdrawn.{N('fda-bulk-risks')} So the category 1 "
+              "policy covers GHK-Cu that is not injected; for shots, the nomination was withdrawn and the policy does not apply.</p>"
+              ) if {"fda_503a_category", "fda_nomination_withdrawn"} <= ghk else ""
     body = f"""
 <h2>What is a 503A pharmacy?</h2>
 <p>Section 503A of the federal drug law covers state-licensed pharmacies and doctors who compound: they mix a medicine for a patient who has a prescription.{N('fda-503a')} Outsourcing facilities work under a different section, 503B, with their own list.{N('fda-glp1-supply')}</p>
@@ -1594,7 +1610,8 @@ def g_503a(b, f, N):
 <h2>Where do the peptides we track sit?</h2>
 <p>From our database, which reads the FDA's lists:</p>
 <ul>{where}</ul>
-<p>A substance can appear in more than one list, for example for one route of use and not another. Each peptide's page on our site shows the status that applies and the FDA page behind it.</p>
+{routes}
+<p>Each peptide's page on our site shows the status that applies and the FDA page behind it.</p>
 
 <h2>What do "category 1" and "nomination withdrawn" mean for a buyer?</h2>
 <p><strong>Category 1</strong> means a pharmacy may make a medicine with the ingredient for a patient with a prescription, under the FDA's conditions, while the review goes on.{N('fda-503a')} It does not mean the FDA approved it or found that it works.{N('fda-compounding')}</p>
