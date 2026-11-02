@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="3 18 50 20" role="img" aria-label="Peptide Chooser">
+  <!-- The mark (design/README.md, Logo): two circles joined by two short bars, a peptide bond; the right circle is the
+       chosen one. Drawn on the 56 by 56 grid; the view box is the mark itself, clear space is added where it is placed. -->
+  <path d="M22 25H34M22 31H34" fill="none" stroke="#ffffff" stroke-width="3" stroke-linecap="square"/>
+  <circle cx="13" cy="28" r="10" fill="#ffffff"/>
+  <circle cx="43" cy="28" r="10" fill="#ffe066"/>
+</svg>

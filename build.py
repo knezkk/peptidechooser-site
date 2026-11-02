@@ -19,6 +19,7 @@ AUTHOR = "Peptide Chooser editorial team"
 DATA = json.loads((ROOT / "data" / "site.json").read_text(encoding="utf-8"))
 TOKENS = json.loads((ROOT / "design" / "tokens.json").read_text(encoding="utf-8"))
 LIVE_GOALS = [g for g in DATA["goals"] if g.get("live")]
+COLOR = {t["name"]: t["value"] for t in TOKENS["color"]["tokens"]}
 
 
 def nice_date(iso):
@@ -168,7 +169,10 @@ def page(path, title, description, body, schema="", crumb=None):
 <meta property="og:image" content="{og}">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="theme-color" content="#1a2330">
-<link rel="icon" href="/assets/mark.svg" type="image/svg+xml">
+<link rel="icon" href="/assets/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="icon" href="/assets/favicon-16.png" sizes="16x16" type="image/png">
+<link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" sizes="180x180">
+<link rel="manifest" href="/site.webmanifest">
 {FONTS}
 <link rel="stylesheet" href="/assets/tokens.css">
 <link rel="stylesheet" href="/assets/bundle.css">
@@ -183,7 +187,7 @@ def page(path, title, description, body, schema="", crumb=None):
 <div class="notice"><div class="wrap"><span>We compare, we don't sell.</span><span class="more">Some links pay us. <a href="/disclosure/">How we make money</a></span></div></div>
 <header class="site-head">
   <div class="wrap">
-    <a class="brand" href="/"><img src="/assets/mark.svg" alt="" width="32" height="32">Peptide Chooser</a>
+    <a class="brand" href="/"><img src="/assets/logo.svg" alt="" width="50" height="20">Peptide Chooser</a>
     <nav class="nav" id="site-nav" aria-label="Main">{nav_items(path)}</nav>
     <div class="head-cta"><a class="btn btn-ink" href="/#goals">Compare by goal</a></div>
     <button type="button" class="btn btn-line btn-sm nav-toggle" aria-expanded="false" aria-controls="site-nav">Menu</button>
@@ -197,7 +201,7 @@ def page(path, title, description, body, schema="", crumb=None):
   <div class="wrap">
     <div class="foot-grid">
       <div>
-        <a class="brand" href="/"><img src="/assets/mark-on-dark.svg" alt="" width="28" height="28">Peptide Chooser</a>
+        <a class="brand" href="/"><img src="/assets/logo-dark.svg" alt="" width="50" height="20">Peptide Chooser</a>
         <p>An independent comparison site for people in the United States. We do not sell peptides or any other product. Not medical advice. Talk to a doctor before starting any treatment.</p>
       </div>
       <ul class="foot-links">
@@ -221,7 +225,7 @@ def page(path, title, description, body, schema="", crumb=None):
 
 ORG_SCHEMA = f"""<script type="application/ld+json">
 {{"@context":"https://schema.org","@graph":[
-{{"@type":"Organization","@id":"{SITE}/#org","name":"Peptide Chooser","url":"{SITE}/","logo":"{SITE}/assets/mark.svg","email":"{EMAIL}"}},
+{{"@type":"Organization","@id":"{SITE}/#org","name":"Peptide Chooser","url":"{SITE}/","logo":"{SITE}/assets/icon-512.png","email":"{EMAIL}"}},
 {{"@type":"WebSite","@id":"{SITE}/#site","url":"{SITE}/","name":"Peptide Chooser","publisher":{{"@id":"{SITE}/#org"}}}}
 ]}}
 </script>"""
@@ -1245,6 +1249,12 @@ def main():
         target.write_text(page(path, title, desc, body, schema, crumb), encoding="utf-8")
     (DIST / "404.html").write_text(page("/404", "Page not found | Peptide Chooser",
                                         "This page does not exist on Peptide Chooser. Go to the home page or compare peptide options by goal; the link may be old or mistyped.", NOT_FOUND), encoding="utf-8")
+    # Web app manifest (design book, README, Logo): the name and the icons drawn from the mark by tools/og.py.
+    (DIST / "site.webmanifest").write_text(json.dumps({
+        "name": "Peptide Chooser", "short_name": "Peptide Chooser", "start_url": "/", "display": "browser",
+        "background_color": COLOR["white"], "theme_color": COLOR["white"],
+        "icons": [{"src": "/assets/apple-touch-icon.png", "sizes": "180x180", "type": "image/png"},
+                  {"src": "/assets/icon-512.png", "sizes": "512x512", "type": "image/png"}]}, indent=2) + "\n")
     (DIST / "CNAME").write_text("peptidechooser.com\n")
     (DIST / ".nojekyll").write_text("")
     (DIST / "robots.txt").write_text(f"User-agent: *\nAllow: /\nDisallow: /out/\nSitemap: {SITE}/sitemap.xml\n")

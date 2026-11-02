@@ -6,12 +6,16 @@ The design system for Peptide Chooser (peptidechooser.com), the human peptide co
 
 ## Logo
 
-The mark is a peptide chain: three green links ending in one yellow link, on an `ink` square with 4px corners (`assets/Logos`); it keeps its own colours. Next to it the name "Peptide Chooser" in Public Sans 800 (`font-brand`), in `ink` (on white) or `white` (on the ink footer). The mark is never redrawn, recoloured, rotated, shadowed or animated.
+**The mark (owner decision, 2 Nov 2026):** two circles joined by two short bars, a peptide bond; the right circle is the chosen one. It keeps its own colours and is never redrawn, recoloured, rotated, shadowed or animated.
 
-- `peptide-chooser-mark.svg`: on light backgrounds (header, favicon, social image).
-- `peptide-chooser-mark-on-dark.svg`: paper square, for the ink footer and dark panels.
-- Header: mark 30px tall, 10px gap to the name at 20px. Footer: mark 28px. Favicon: the mark alone. Smallest use 16px.
-- Clear space around the mark and name: at least half the mark's height. Nothing else on that line except the nav.
+- **Construction** on a 56 by 56 grid: left circle centre (13, 28), radius 10; right circle centre (43, 28), radius 10; two bars from x 22 to x 34 at y 25 and y 31, 3 units thick, square ends. The mark itself spans x 3 to 53 and y 18 to 38 (50 by 20), and the files are framed on it (`viewBox="3 18 50 20"`), so a mark set at 20px tall is 20px of circle, not 20px of empty frame.
+- **On light** (`assets/logo.svg`): left circle and bars `ink` (#0f1d2b), right circle `clinic` (#0b5cad).
+- **On dark** (`assets/logo-dark.svg`, the ink footer and dark panels): left circle and bars `white`, right circle `mark` (#ffe066).
+- **Clear space:** half the mark's height on every side; nothing else inside it.
+- **Minimum size:** 16px wide.
+- **Wordmark:** "Peptide Chooser" in Public Sans 800 (`font-brand`), sentence case, `ink` on white and `white` on ink, 10px from the mark (half the mark's height), on the same line, never stacked.
+- **Sizes:** header mark 20px tall beside the name at 20px (18px tall beside 17px under 640px); footer mark 20px tall. Share images (`tools/og.py`): mark 32px tall beside the name at 32px, 16px apart.
+- **Favicons** (`tools/og.py`, from `assets/logo.svg`): 16 and 32px on a clear background, the mark filling the 56 grid; the apple touch icon (180px) and the manifest icon (512px) on `white` with the clear space on every side. `build.py` links them and writes `/site.webmanifest`.
 
 ## The job
 
@@ -155,3 +159,4 @@ Built and previewed: Button, Chip, DataTable, Price, SectionHeading. Built on th
 | 2 Nov 2026 | Letters page `/fda-warning-letters/` (owner task, 1 Nov 2026): Home's parts (grey band, DataTable, the Legal filter as "Filter by company", Checked stamp) plus one new part, the **year chip** (a toggle button with chip corners at 44px, white with `line-strong`, pressed `clinic-tint` with a `clinic` border; bundle.css, Letters filter). Home's letters section gets `btn-line` "See all N letters"; the nav's "FDA letters" goes to the page. | ODOBRENO DIZAJN - Karlo - 2. 11. 2026; ODOBRENO SEO - Karlo - 2. 11. 2026 |
 | 2 Nov 2026 | Cookie bar on phones (owner task, 1 Nov 2026): under 640px the shorter sentence beside Accept and Reject as `btn-sm` side by side on the right; 74px tall at 390px (was 123px). | ODOBRENO DIZAJN - Karlo - 2. 11. 2026; ODOBRENO SEO - Karlo - 2. 11. 2026 |
 | 2 Nov 2026 | Letters leftovers (owner answers Q1 a, Q2 a, Q3 a, Q4 a): under Home's letters table "See all N letters" first, then "M of them went to sellers in our database."; the Office column on /fda-warning-letters/ shows the short form ("CDER") with the full name as its title. | ODOBRENO DIZAJN - Karlo - 2. 11. 2026; ODOBRENO SEO - Karlo - 2. 11. 2026 |
+| 2 Nov 2026 | New logo mark (owner decision): two circles joined by two short bars (`ink` and `clinic`; on dark `white` and `mark`), framed on the mark; header and footer at 20px tall, favicons 16, 32 and 180px plus a 512px manifest icon, share images redrawn with the mark and the Public Sans wordmark. The old chain mark (`mark.svg`, `mark-on-dark.svg`) is removed. | ODOBRENO DIZAJN - Karlo - 2. 11. 2026; ODOBRENO SEO - Karlo - 2. 11. 2026 |
