@@ -527,14 +527,15 @@ def seller_rows(slug):
 
 # The seller score (pages.md, Seller window, owner 2 Nov 2026): five yes/no checks from site.sellers, in this order, with
 # the short name each mark carries. Facts we hold about the seller, never a safety or quality grade.
-SCORE_CHECKS = [("score_lab_testing", "Lab tests"), ("score_no_fda_letter", "No FDA letter"),
+SCORE_CHECKS = [("score_lab_testing", "Lab reports"), ("score_no_fda_letter", "No FDA letter"),
                 ("score_registered_company", "Company found"), ("score_legal_pages", "Legal pages"),
                 ("score_fresh_prices", "Fresh prices")]
 
 
 def score_line(r):
-    """"N of 5 checks" with the five checks as small marks in one line: met chip-ok, not met chip-neutral (the state is
-    also spoken). Nothing when the seller has no score yet."""
+    """"N of 5 checks" with the five checks as small marks in one line: met chip-ok, not met chip-neutral with a dashed
+    ink-muted border, so the state never rests on colour alone (owner answer Q1 a, 2 Nov 2026; it is also spoken).
+    Nothing when the seller has no score yet."""
     s = SELLERS.get(r["seller_slug"], {})
     if s.get("score") is None:
         return ""
@@ -548,7 +549,7 @@ def check_chips(r):
     """The six-point background check of one seller row: a chip each, never a blank."""
     s = SELLERS.get(r["seller_slug"], {})
     chip = lambda k, t: f'<span class="chip chip-{k}">{t}</span>'
-    coa = chip("ok", f"COA: yes ({r.get('coa_count') or 0})") if r.get("has_coa") else chip("warn", "COA: no")
+    coa = chip("ok", f"This product: COA yes ({r.get('coa_count') or 0})") if r.get("has_coa") else chip("warn", "This product: no COA")
     n = s.get("fda_letter_count")
     letters = chip("neutral", "FDA warning letters: unknown") if n is None else (
         chip("ok", "FDA warning letters: none") if n == 0 else chip("warn", f"FDA warning letters: {n}"))
