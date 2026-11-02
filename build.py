@@ -126,10 +126,10 @@ def goal_href(g):
 def nav_items(path):
     # Design book, Pages and buttons, Header (owner, 1 Nov 2026): "Peptides by goal" (a menu of the seven goals: a goal
     # with its own page links there, the others to Home with the goal chosen, /#goals-<slug>), then Legal status, FDA
-    # letters, How we rate, About. Learn comes back when guides exist.
+    # letters (the letters page once it exists, else Home's section), How we rate, About. Learn comes back when guides exist.
     current = ' aria-current="page"'
     goals = "".join(f'<li><a href="{goal_href(g)}">{g["label"]}</a></li>' for g in ALL_GOALS)
-    items = [("/#legal", "Legal status"), ("/#letters", "FDA letters"), ("/how-we-rate/", "How we rate"), ("/about/", "About")]
+    items = [("/#legal", "Legal status"), (LETTERS_URL, "FDA letters"), ("/how-we-rate/", "How we rate"), ("/about/", "About")]
     return (f'<div class="nav-goals"><button type="button" class="nav-goals-btn" aria-expanded="false" aria-controls="goal-menu">Peptides by goal</button>'
             f'<span class="nav-group">Peptides by goal</span><ul class="goal-menu" id="goal-menu">{goals}</ul></div>'
             + "".join(f'<a href="{href}"{current if href == path else ""}>{label}</a>' for href, label in items))
@@ -742,6 +742,8 @@ LEGAL_ROWS = "".join(r if i < 12 else r.replace("<tr>", '<tr class="more">', 1) 
 # Latest FDA warning letters (pages.md, Home, after "Is it legal today?"): from site.seller_enforcement through
 # tools/pull_data.py (site.fda_letters), newest first. Without `letters` in site.json the section is not drawn (never drawn empty).
 LETTERS = DATA.get("letters") or []
+LETTERS_ALL = DATA.get("letters_all") or []
+LETTERS_URL = "/fda-warning-letters/" if LETTERS_ALL else "/#letters"
 LETTER_ROWS = "".join(
     f'<tr><td class="num">{nice_date(r["letter_date"])}</td><td><span class="name">{escape(r["seller_name"])}</span>'
     f'<span class="sub-phone">{escape(r["letter_subject"]).replace("/", "/<wbr>")}</span></td><td class="subj">{escape(r["letter_subject"])}</td><td><a href="{escape(r["letter_url"])}" rel="nofollow">FDA letter</a></td></tr>' for r in LETTERS)
@@ -754,9 +756,79 @@ LETTERS_SECTION = f"""
       <tbody>{LETTER_ROWS}</tbody>
     </table></div>
     {f'<p class="small" style="margin-top:16px">{DATA["letters_total"]} letters to sellers in our database since {nice_date(DATA["letters_oldest"])}.</p>' if DATA.get("letters_total") and DATA.get("letters_oldest") else ""}
+    {f'<p class="letters-all"><a class="btn btn-line" href="/fda-warning-letters/">See all {len(LETTERS_ALL)} letters</a></p>' if LETTERS_ALL else ""}
   </div>
 </section>
 """ if LETTERS else ""
+
+# The letters page (pages.md, Letters, owner 1 Nov 2026): every letter in `letters_all` (site.fda_letters_all through
+# tools/pull_data.py: peptide-related or sent to a seller we know), newest first. With JavaScript, a company filter and one
+# chip per year above the table, and the first 25 rows until "Show all N"; without it, the whole table. Not built without
+# `letters_all` (never drawn empty); the nav's "FDA letters" then keeps pointing at Home's section.
+FDA_ABOUT_LETTERS = "https://www.fda.gov/inspections-compliance-enforcement-and-criminal-investigations/warning-letters/about-warning-and-close-out-letters"
+LETTERS_FIRST = 25
+
+
+def office(t):
+    """The issuing office as the FDA writes it, one spelling per office ("Center for ... | CDER" reads "(CDER)")."""
+    return re.sub(r"\s*\|\s*([A-Z]+)$", r" (\1)", clean(t or ""))
+
+
+def letters_all_rows():
+    out, more = [], ' class="more"'
+    for i, r in enumerate(LETTERS_ALL):
+        seller = f'<span class="co-seller">In our database: {escape(clean(r["seller_name"]))}</span>' if r.get("seller_slug") and r.get("seller_name") else ""
+        subj = escape(clean(r["letter_subject"]))
+        out.append(
+            f'<tr{more if i >= LETTERS_FIRST else ""} data-year="{r["letter_date"][:4]}"><td class="num">{nice_date(r["letter_date"])}</td>'
+            f'<td><span class="name">{escape(clean(r["company_name"]))}</span>{seller}<span class="sub-phone">{subj.replace("/", "/<wbr>")}</span></td>'
+            f'<td class="subj">{subj.replace("/", "/<wbr>")}</td><td class="office">{escape(office(r.get("issuing_office")))}</td>'
+            f'<td><a href="{escape(r["letter_url"])}" rel="nofollow">FDA letter</a></td></tr>')
+    return "".join(out)
+
+
+LETTERS_YEARS = sorted({r["letter_date"][:4] for r in LETTERS_ALL}, reverse=True)
+YEAR_CHIPS = "".join(
+    f'<button type="button" class="year-chip" data-year="{y}" aria-pressed="false">{y} <span>{sum(r["letter_date"][:4] == y for r in LETTERS_ALL)}<span class="vh"> letters</span></span></button>'
+    for y in LETTERS_YEARS)
+LETTERS_PAGE_JS = """<script>
+(function(){var tb=document.getElementById('letters-table');if(!tb)return;var f=document.querySelector('.letters-filter'),q=document.getElementById('letters-q'),
+c=document.getElementById('letters-clear'),m=document.querySelector('.letters-more'),all=document.getElementById('letters-all'),n=document.getElementById('letters-n'),
+chips=[].slice.call(document.querySelectorAll('.year-chip')),rows=[].slice.call(tb.tBodies[0].rows),open=false;
+function draw(){var s=q.value.trim().toLowerCase(),ys=chips.filter(function(x){return x.getAttribute('aria-pressed')==='true';}).map(function(x){return x.getAttribute('data-year');}),k=0;
+rows.forEach(function(r){var hit=(!s||r.cells[1].textContent.toLowerCase().indexOf(s)>=0)&&(!ys.length||ys.indexOf(r.getAttribute('data-year'))>=0);
+r.hidden=!hit||(!open&&!s&&!ys.length&&r.classList.contains('more'));if(hit)k++;});
+if(m)m.hidden=open||!!s||ys.length>0;n.textContent=(s||ys.length)?k+' of '+rows.length+' letters match.':'';}
+f.hidden=false;if(m)m.hidden=false;q.addEventListener('input',draw);
+chips.forEach(function(x){x.addEventListener('click',function(){x.setAttribute('aria-pressed',x.getAttribute('aria-pressed')==='true'?'false':'true');draw();});});
+c.addEventListener('click',function(){q.value='';chips.forEach(function(x){x.setAttribute('aria-pressed','false');});draw();q.focus();});
+if(all)all.addEventListener('click',function(){open=true;draw();});draw();})();
+</script>"""
+LETTERS_PAGE = f"""
+<section class="section letters-hd">
+  <div class="wrap">
+    <h1>FDA warning letters to peptide sellers and online clinics</h1>
+    <p class="lede">A warning letter is the FDA's formal notice that it found what it believes are significant violations of the law; the company is asked to reply within 15 business days. It is public record. <a href="{FDA_ABOUT_LETTERS}" rel="nofollow">What the FDA says about warning letters</a></p>
+    <p class="letters-stamp"><span class="stamp">Checked {nice_date(DATA["pulled_at"][:10]) if DATA.get("pulled_at") else ""}</span><span class="small">{len(LETTERS_ALL)} letters since {nice_date(DATA["letters_all_oldest"]) if DATA.get("letters_all_oldest") else ""}, newest first. Each links to the letter on fda.gov.</span></p>
+  </div>
+</section>
+<section class="band-2" id="letters-list">
+  <div class="wrap">
+    <div class="letters-filter" hidden>
+      <div class="legal-filter"><label for="letters-q">Filter by company</label><input class="input" id="letters-q" type="text" autocomplete="off"><button type="button" class="btn btn-line btn-sm" id="letters-clear">Clear</button></div>
+      <div class="year-chips" role="group" aria-labelledby="letters-years"><span id="letters-years">Year</span>{YEAR_CHIPS}</div>
+      <p class="small" id="letters-n" aria-live="polite"></p>
+    </div>
+    <div class="tbl-wrap"><table class="tbl tbl-letters tbl-letters-all" id="letters-table"><caption class="vh">FDA warning letters, newest first</caption>
+      <thead><tr><th scope="col">Date</th><th scope="col">Company</th><th scope="col" class="subj">Subject</th><th scope="col" class="office">Office</th><th scope="col">Source</th></tr></thead>
+      <tbody>{letters_all_rows()}</tbody>
+    </table></div>
+    {f'<p class="letters-more" hidden><button type="button" class="btn btn-line" id="letters-all">Show all {len(LETTERS_ALL)}</button></p>' if len(LETTERS_ALL) > LETTERS_FIRST else ""}
+    <p class="small" style="margin-top:16px">Company names are as the FDA lists them. "In our database" names the seller we matched the letter to.</p>
+  </div>
+</section>
+{LETTERS_PAGE_JS}
+""" if LETTERS_ALL else ""
 FIGURE = figure_svg()
 GOAL_CHIPS, STEP_COMPARE, GOAL_TITLES = rail()
 def chip_title(t):
@@ -1127,6 +1199,12 @@ PAGES = [
     ("/corrections/", "corrections/index.html", "Mistakes we fixed | Peptide Chooser",
      "Every factual error Peptide Chooser has corrected, with the date, what was wrong and what changed. Send corrections with a source and we list the fix here.", CORRECTIONS, "", [("/corrections/", "Corrections")]),
 ]
+
+if LETTERS_ALL:
+    _d = DATA["pulled_at"][:10]
+    PAGES.append(("/fda-warning-letters/", "fda-warning-letters/index.html", "FDA warning letters to peptide sellers | Peptide Chooser",
+                  f"Every FDA warning letter to peptide sellers, compounders and online clinics in our database, with its date, subject and fda.gov link. Checked {nice_date(_d)}.",
+                  LETTERS_PAGE, "", [("/fda-warning-letters/", "FDA warning letters")]))
 
 for _g in LIVE_GOALS:
     if _g.get("page"):
