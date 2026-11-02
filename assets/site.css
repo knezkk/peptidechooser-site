@@ -218,6 +218,7 @@ p { margin: 0 0 1em; }
 .check-list li:first-child { border-top: 0; }
 .check-list .chip { justify-self: start; }
 .check-nolink, .check-act { margin: 14px 0 0; font-size: var(--small-size); color: var(--ink-2); }
+.seller-kind { margin: -4px 0 12px; } /* the seller page's kind chip under the H1 (pages.md, Seller; owner answer Q2 b) */
 .check-nolab { margin: 4px 0 0; font-size: var(--small-size); line-height: var(--small-lh); color: var(--ink-2); } /* a clinic: why the lab-report check is never met */
 .check-act { display: grid; justify-items: start; gap: 4px; }
 /* Seller page sections: the company ledger at reading width, the other sellers as one row of cards */

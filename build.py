@@ -2048,6 +2048,7 @@ def seller_page(r):
     <div class="hero-grid">
       <div>
         <h1>{seller_name(r)}: prices, checks and what we found.</h1>
+        <p class="seller-kind"><span class="chip chip-neutral">{kind_words(r)[1]}</span></p>
         <p class="small meta">{meta}</p>
         <p class="intro">{answer}</p>
       </div>{check_card(r)}
