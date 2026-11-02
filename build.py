@@ -2047,13 +2047,25 @@ def compare_plan(r):
         ("Prices checked", nice_date(r["last_seen"]))]}
 
 
+PPM_LOW, PPM_HIGH = 0.01, 100
+
+
+def compare_ppm(r):
+    """The seller's price per mg range from listings between $0.01 and $100/mg: its own lowest and highest, and those of
+    its top substances; a value outside the band is a misread unit until the database fixes it (owner, 2 Nov 2026, the
+    seller pages' Q6 a rule widened to the top). (None, None) when nothing is left."""
+    vals = [r.get("price_per_mg_min"), r.get("price_per_mg_max")]
+    vals += [x.get(k) for x in SELLER_SUBS.get(r["seller_slug"], []) for k in ("price_per_mg_min", "price_per_mg_max")]
+    vals = [v for v in vals if v is not None and PPM_LOW <= v <= PPM_HIGH]
+    return (min(vals), max(vals)) if vals else (None, None)
+
+
 def compare_seller(r):
     """One seller's column: the head (a link to its page) and the seven rows (pages.md, Compare)."""
     marks = "".join(f'<span class="chip chip-{"ok" if r.get(k) else "neutral"} mark-{"yes" if r.get(k) else "no"}">{t}'
                     f'<span class="vh">: {"yes" if r.get(k) else "no"}</span></span>' for k, t in SCORE_CHECKS)
-    lo, hi = r.get("price_per_mg_min"), r.get("price_per_mg_max")
-    # no price under $0.01/mg: those minimums are data errors until the database fixes them (owner answer Q6 a, seller pages)
-    ppm = per_mg_range(lo, hi) if lo is None or lo >= 0.01 else f"up to {per_mg(hi)}" if hi is not None else "unknown"
+    ppm = per_mg_range(*compare_ppm(r))
+    ppm = ppm[:1].upper() + ppm[1:]
     n = r.get("fda_letter_count")
     letters = ("None" if n == 0 else "Unknown" if n is None else
                f"{n}, the newest on {nice_date(newest_letter(r))}" if newest_letter(r) else str(n))
