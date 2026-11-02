@@ -147,9 +147,14 @@ onEnter:function(els){{gsap.fromTo(els,{{opacity:0,y:rise}},{{opacity:1,y:0,dura
 }});
 </script>"""
 
-FONTS = ('<link rel="preconnect" href="https://fonts.googleapis.com">'
-         '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>'
-         '<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">')
+# Public Sans served from our own site (owner answer Q1 a, 2 Nov 2026; SIL Open Font License, assets/fonts/OFL.txt): one
+# variable file per character set, the Latin one preloaded, so the first paint waits on no other server.
+FONT_FACE = "".join(
+    f"@font-face{{font-family:'Public Sans';font-style:normal;font-weight:100 900;font-display:swap;"
+    f"src:url(/assets/fonts/public-sans-{sub}.woff2) format('woff2');unicode-range:{rng}}}"
+    for sub, rng in (("latin-ext", "U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF"), ("latin", "U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD")))
+FONTS = ('<link rel="preload" href="/assets/fonts/public-sans-latin.woff2" as="font" type="font/woff2" crossorigin>'
+         f'<style>{FONT_FACE}</style>')
 
 
 def tokens_css():
@@ -2412,6 +2417,9 @@ def main():
     for f in (ROOT / "assets").iterdir():
         if f.is_file():
             shutil.copy(f, DIST / "assets" / f.name)
+    (DIST / "assets" / "fonts").mkdir()
+    for f in (ROOT / "assets" / "fonts").iterdir():
+        shutil.copy(f, DIST / "assets" / "fonts" / f.name)
     for f in (ROOT / "assets" / "og").glob("*.png"):
         shutil.copy(f, DIST / "assets" / "og" / f.name)
     (DIST / "assets" / "tokens.css").write_text(tokens_css(), encoding="utf-8")
