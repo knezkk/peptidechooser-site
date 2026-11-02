@@ -2843,7 +2843,8 @@ def cmp_slugify(t):
 
 
 def cmp_sub_pairs():
-    """{(a, b): [goals they share]} for every two substances with a page on one goal page, a < b."""
+    """{(a, b): [goals they share]} for every two substances with a page on one goal page and the same kind of status
+    (both FDA approved, both not approved, or both cosmetic; owner answer Q1 b, 2 Nov 2026), a < b."""
     out = {}
     for g in ALL_GOALS:
         if not g.get("page"):
@@ -2851,7 +2852,8 @@ def cmp_sub_pairs():
         subs = sorted({s for p in g["peptides"] for s in subs_of(p) if s in PEPTIDE_SLUGS})
         for i, a in enumerate(subs):
             for b in subs[i + 1:]:
-                out.setdefault((a, b), []).append(g)
+                if pep_group(pep_status(a)) == pep_group(pep_status(b)):
+                    out.setdefault((a, b), []).append(g)
     return out
 
 
@@ -3000,7 +3002,7 @@ def cmp_body(h1, checked, answer, table, links, pre, note):
   <div class="wrap">
     {table}
     <p class="small" style="margin-top:16px">Our pages on each: {more}. We do not link to the shops or the clinics.</p>
-    <p class="cmp-link"><a class="btn btn-line" href="/compare/{pre}">Compare any two</a></p>
+    {f'<p class="cmp-link"><a class="btn btn-line" href="/compare/{pre}">Compare any two</a></p>' if pre else ""}
   </div>
 </section>
 """
