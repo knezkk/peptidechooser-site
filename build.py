@@ -494,7 +494,7 @@ def plan_line(g, cls, r=None):
     if not r:
         return ""
     sid, n = plan_ref(g, r)
-    return (f'<span class="{cls}">Online clinics from {usd(r["price_monthly"])}/mo ({seller_base(r["seller_name"])})'
+    return (f'<span class="{cls}">Online clinics from {usd(r["price_monthly"])}/mo ({clinic_link(r["seller_slug"], seller_base(r["seller_name"]), True)})'
             f'<sup><a class="ref" href="#{sid}" aria-label="Source {n}">{n}</a></sup></span>')
 
 # Numbers from the database (tools/pull_data.py writes these keys when SITE_DATABASE_URL is set). Without them the
@@ -622,6 +622,19 @@ PRODUCTS = DATA.get("products") or []
 SELLERS = {r["seller_slug"]: r for r in DATA.get("sellers") or []}
 # Seller pages (pages.md, Seller): one per seller in site.seller_profile, through tools/pull_data.py
 PROFILES = {r["seller_slug"]: r for r in DATA.get("seller_profiles") or []}
+# Shops and clinics (peptide-data decision 26; pages.md, Rules that apply to every page): a shop lists products
+# (product_count > 0), a clinic only plans (product_count 0). Every list of shops takes SHOPS; a clinic is never in one.
+SHOPS = {k: r for k, r in PROFILES.items() if (r.get("product_count") or 0) > 0}
+CLINIC_PROFILES = {k: r for k, r in PROFILES.items() if k not in SHOPS}
+
+
+def clinic_link(seller_slug, name, inline=False):
+    """A clinic's name as a link to its page on our site when it has one, else plain text; never the clinic's own site.
+    `inline` for a name inside a line of text (no name style)."""
+    if seller_slug in PROFILES:
+        return f'<a href="/sellers/{seller_slug}/">{name}</a>' if inline else f'<a class="name" href="/sellers/{seller_slug}/">{name}</a>'
+    return name if inline else f'<span class="name">{name}</span>'
+
 
 
 def clean(t):
@@ -654,7 +667,7 @@ def seller_rows(slug):
     (owner, 2 Nov 2026); a seller without a score goes last."""
     key = lambda r: (r.get("price_per_mg") is None, r.get("price_per_mg") or 0, r.get("price_usd") or 0, r["seller_slug"])
     best = {}
-    for r in sorted((r for r in PRODUCTS if r["substance_slug"] == slug), key=key):
+    for r in sorted((r for r in PRODUCTS if r["substance_slug"] == slug and r["seller_slug"] not in CLINIC_PROFILES), key=key):
         best.setdefault(r["seller_slug"], r)
     def order(r):
         s = SELLERS.get(r["seller_slug"], {})
@@ -719,7 +732,7 @@ def seller_table(slug):
         # the name opens our page on the seller when it has one (owner task 2 Nov 2026); never the seller's own site
         name_html = (f'<a class="name" href="/sellers/{r["seller_slug"]}/">{seller}</a>' if r["seller_slug"] in PROFILES
                      else f'<span class="name">{seller}</span>')
-        trs.append(f'<tr><td>{name_html}</td><td data-l="Product">{name}<span class="sub">{size}</span></td>'
+        trs.append(f'<tr data-seller="{r["seller_slug"]}"><td>{name_html}</td><td data-l="Product">{name}<span class="sub">{size}</span></td>'
                    f'<td data-l="Price"><span class="num">{price}</span></td><td data-l="Per mg"><span class="num">{ppm}</span></td>'
                    f'<td class="checks">{score_line(r)}{check_chips(r)}</td></tr>')
         seen = r.get("price_observed_at") or r.get("last_seen")
@@ -1138,12 +1151,13 @@ fromHash();window.addEventListener('hashchange',fromHash);})();
 
 # What we track (owner task 2 Nov 2026): the counts the trust pages and Home's sellers card show, all from site.json;
 # each line is drawn only when its data is there (never a placeholder).
-N_SELLERS = len(PROFILES)
+N_SELLERS = len(SHOPS)
+N_CLINIC_PAGES = len(CLINIC_PROFILES)
 N_CLINICS = len({r["seller_slug"] for r in PLANS})
 N_LETTERS = DATA.get("letters_all_total") or len(LETTERS_ALL)
 N_STATUS = len({r["substance_slug"] for r in LEGAL_DB or []})
 PULLED = nice_date(DATA["pulled_at"][:10]) if DATA.get("pulled_at") else ""
-SCORE_ON = max((r["score_checked_on"] for r in PROFILES.values() if r.get("score_checked_on")), default="")
+SCORE_ON = max((r["score_checked_on"] for r in SHOPS.values() if r.get("score_checked_on")), default="")
 
 # Sellers we track (pages.md, Home, under "Latest FDA warning letters"): the letters block's look, one line and
 # btn-line "See all sellers". No seller names on Home.
@@ -1154,7 +1168,7 @@ SELLERS_HOME = f"""
     <p class="letters-all"><a class="btn btn-line" href="/sellers/">See all sellers</a></p>
   </div>
 </section>
-""" if PROFILES else ""
+""" if SHOPS else ""
 
 HOME = f"""
 <section class="hero hero-clinic">
@@ -1251,8 +1265,9 @@ CORRECTIONS = f"""
 """
 
 # What we track (pages.md, Trust pages, About; owner task 2 Nov 2026): one line per count that site.json holds.
-_track = [f'<li><a href="/sellers/">{N_SELLERS} sellers</a> that sell peptides online, each with its five checks.</li>' if N_SELLERS else "",
-          f"<li>{N_CLINICS} online clinics with plan prices.</li>" if N_CLINICS else "",
+_track = [f'<li><a href="/sellers/">{N_SELLERS} shops</a> that sell peptides online, each with its five checks.</li>' if N_SELLERS else "",
+          (f'<li><a href="/sellers/#clinics">{N_CLINICS} online clinics</a> with plan prices, each with its five checks.</li>' if N_CLINIC_PAGES
+           else f"<li>{N_CLINICS} online clinics with plan prices.</li>") if N_CLINICS else "",
           (f'<li><a href="/fda-warning-letters/">{N_LETTERS} FDA warning letters</a> to peptide sellers, compounders and online clinics.</li>'
            if LETTERS_ALL else f"<li>{N_LETTERS} FDA warning letters to peptide sellers, compounders and online clinics.</li>") if N_LETTERS else "",
           f"<li>{N_STATUS} substances with an FDA status, each with its source.</li>" if N_STATUS else ""]
@@ -1298,7 +1313,7 @@ HOW = f"""
 <p class="lede">We judge every seller by the same five checks and build every goal page by the same rule. The checks are facts we hold about a seller, not a safety grade.</p>
 <p class="small meta">{AUTHOR}. Last updated {STAMP_CHECKED}. Every claim links to its source. Prices checked {STAMP_CHECKED}.</p>
 <h2>The five seller checks</h2>
-<p>{f'We track <a href="/sellers/">{N_SELLERS} sellers</a>. ' if N_SELLERS else ""}Every seller page and every price window shows a line such as "3 of 5 checks". These are the five, in the order the seller page shows them. We recompute all five each time we pull our data, and the seller page shows the date as "Checked" and a date{f"; the last pull was on {PULLED}" if PULLED else ""}.</p>
+<p>{f'We track <a href="/sellers/">{N_SELLERS} shops{f" and {N_CLINIC_PAGES} online clinics" if N_CLINIC_PAGES else ""}</a>. ' if N_SELLERS else ""}Every seller page and every price window shows a line such as "3 of 5 checks". These are the five, in the order the seller page shows them. We recompute all five each time we pull our data, and the seller page shows the date as "Checked" and a date{f"; the last pull was on {PULLED}" if PULLED else ""}.</p>
 <h3>Lab reports</h3>
 <p>Met when the seller has published at least one lab report (a certificate of analysis) dated in the last 12 months, for any of its products. We read the reports on the seller's own pages. A miss means we found no report from the last 12 months; it does not mean a product failed a test. A lab report shows what one batch contained on the day it was tested, not that a product is safe or that it works.</p>
 <h3>No FDA letter</h3>
@@ -1487,7 +1502,7 @@ def clinic_section(g, rows):
                   if n and r.get("last_fda_letter_date") else '<span class="no-letter">none</span>')
         # on phones the first CLINICS_FIRST rows show until "Show all N" (owner answer Q2 a, 2 Nov 2026; bundle.css, Clinic table)
         more = ' class="more"' if i >= CLINICS_FIRST else ""
-        trs.append(f'<tr{more}><td><span class="name">{seller_base(r["seller_name"])}</span></td><td data-l="Plan">{r["plan_name"]}</td>'
+        trs.append(f'<tr{more}><td>{clinic_link(r["seller_slug"], seller_base(r["seller_name"]))}</td><td data-l="Plan">{r["plan_name"]}</td>'
                    f'<td>{plan_chip(g, r)}</td>'
                    f'<td data-l="Per month"><span class="num">{usd(r["price_monthly"])}</span>{f"<span class=sub>{care}</span>" if care else ""}</td>'
                    f'<td data-l="FDA letter">{letter}</td>'
@@ -1563,7 +1578,7 @@ def category_body(g, table, table_lede):
       <div class="board rx" aria-label="Price pad">
         <div class="rx-head"><span class="rx-mark" aria-hidden="true">&#8478;</span><h2>Cheapest clinic plan, per month</h2></div>
         <p class="hero-num"><span class="num-xl">{usd(r["price_monthly"])}</span> <span class="num-unit">/mo from</span>{pad_ref}</p>
-        <div class="ledger"><span>{r["plan_name"]}, {seller_base(r["seller_name"])}</span></div>
+        <div class="ledger"><span>{r["plan_name"]}, {clinic_link(r["seller_slug"], seller_base(r["seller_name"]), True)}</span></div>
         <div class="rx-foot"><span class="stamp">Checked {nice_date(max(x["last_seen"] for x in plans))}</span><span class="fine">{what}{", " + care if care else ""}. Not a prescription.</span></div>
       </div>"""
     windows = "".join({window_key(p): seller_window(p) for p in g["peptides"] if has_window(p)}.values())
@@ -1721,12 +1736,47 @@ def short_answer(r):
 def seller_title(r):
     """Title (Tier 1): the full pattern, shortened step by step to the 60 characters tools/check.py allows."""
     name = seller_name(r)
+    if r["seller_slug"] in CLINIC_PROFILES:
+        base = re.sub(r"\s*\(.*\)", "", name).strip()
+        for t in (f"{name} review: plans, prices and checks | Peptide Chooser", f"{base} review: plans, prices and checks | Peptide Chooser",
+                  f"{base} review: plans, prices and checks", f"{base} review | Peptide Chooser"):
+            if len(t) <= 60:
+                return t
+        return f"{base} review"
     for t in (f"{name} review: prices, lab reports, FDA letters | Peptide Chooser",
               f"{name} review: prices, lab reports, FDA letters",
               f"{name} review: prices and lab reports", f"{name} review | Peptide Chooser", f"{name} review"):
         if len(t) <= 60:
             return t
     return t
+
+
+def clinic_description(r):
+    """Clinic meta description (owner task 2 Nov 2026: 150 to 160 characters), from data. Facts in a fixed order (the
+    clinic and every medicine it prescribes, the lowest monthly price with its care fee, the FDA letters, the check date,
+    the tracking date); the first version from 150 to 160 characters wins, trying the clinic's short name and "N medicines"
+    before dropping facts from the end. Never a partial list of medicines."""
+    plans, base = clinic_plan_rows(r), seller_base(seller_name(r))
+    subs = sorted({sub_label(p["substance_slug"]) for p in plans if p["substance_slug"]}, key=str.lower)
+    n = r.get("fda_letter_count") or 0
+    letters = "No FDA warning letter." if not n else f"{plural(n, 'FDA warning letter')}, the newest {nice_date(newest_letter(r))}."
+    fee = plans[0].get("membership_fee_monthly") if plans else None
+    care = "care fee not known" if fee is None else "no care fee" if float(fee) == 0 else f"plus {usd(fee)}/mo care"
+    price = f"{plural(len(plans), 'plan')} from {usd(plans[0]['price_monthly'])}/mo, {care}." if plans else ""
+    on = nice_date(r["score_checked_on"]) if r.get("score_checked_on") else ""
+    score = f"{r['score']} of {len(SCORE_CHECKS)} checks met on {on}." if on else ""
+    checked = f"{r['score']} of {len(SCORE_CHECKS)} checks met." if on else ""
+    since = f"Tracked since {nice_date(r['first_seen'])}." if r.get("first_seen") else ""
+    whats = ([subs[0] if len(subs) == 1 else ", ".join(subs[:-1]) + " and " + subs[-1], f"{len(subs)} medicines"] if len(subs) > 1
+             else [subs[0]] if subs else [""])
+    tries = []
+    for what in whats:
+        for name in (seller_name(r), base):
+            first = f"{name} is an online clinic{' that prescribes ' + what if what else ''}."
+            for parts in ((first, price, letters, score, since), (first, price, letters, checked, since), (first, price, letters, score),
+                          (first, price, letters, since), (first, price, letters, checked), (first, price, letters)):
+                tries.append(" ".join(x for x in parts if x))
+    return next((t for t in tries if 150 <= len(t) <= 160), next((t for t in tries if len(t) <= 160), tries[-1]))
 
 
 def seller_description(r):
@@ -1743,7 +1793,7 @@ def seller_description(r):
 
 def check_lines(r):
     """One plain line per check for the Background check card, each with its date."""
-    lab = (f"{plural(r['coa_count'], 'lab report')}, the newest dated {nice_date(r['newest_coa_date'])}."
+    lab = "None found." if r["seller_slug"] in CLINIC_PROFILES else (f"{plural(r['coa_count'], 'lab report')}, the newest dated {nice_date(r['newest_coa_date'])}."
            if r.get("score_lab_testing") and r.get("newest_coa_date") else
            f"No lab report in the last 12 months; the newest is dated {nice_date(r['newest_coa_date'])}."
            if r.get("newest_coa_date") else "No lab report found.")
@@ -1765,6 +1815,9 @@ def check_lines(r):
     return dict(zip([k for k, _ in SCORE_CHECKS], (lab, letter, company, legal, fresh)))
 
 
+CLINIC_LAB_LINE = '<p class="check-nolab">Online clinics prescribe; they do not publish lab reports, so a clinic meets at most 4 of the 5 checks.</p>'
+
+
 def check_card(r):
     """Background check card (pages.md, Seller): right of the H1 like the price pad, without the ℞ mark."""
     lines = check_lines(r)
@@ -1779,7 +1832,7 @@ def check_card(r):
     return f"""
       <div class="board check-card" aria-labelledby="check-h">
         <div class="check-head"><h2 id="check-h">Background check</h2><p class="check-n"><span class="num-xl">{r["score"]}</span> <span class="num-unit">of {len(SCORE_CHECKS)} checks</span></p></div>
-        <ul class="check-list">{rows}</ul>
+        <ul class="check-list">{rows}</ul>{CLINIC_LAB_LINE if r["seller_slug"] in CLINIC_PROFILES else ""}
         <div class="rx-foot"><span class="stamp">Checked {nice_date(r["score_checked_on"])}</span><span class="fine">Checks are facts we hold about the seller, not a safety or quality grade.</span></div>
         {foot}
       </div>"""
@@ -1873,28 +1926,119 @@ def seller_company_section(r):
 
 def similar_sellers(r, n=3):
     """Three sellers of the same kind with the closest score, then the most products, then by name."""
-    same = [x for x in PROFILES.values() if x["seller_slug"] != r["seller_slug"] and x.get("seller_kind") == r.get("seller_kind")]
+    group = CLINIC_PROFILES if r["seller_slug"] in CLINIC_PROFILES else SHOPS
+    same = [x for x in group.values() if x["seller_slug"] != r["seller_slug"] and x.get("seller_kind") == r.get("seller_kind")]
     same.sort(key=lambda x: (abs((x.get("score") or 0) - (r.get("score") or 0)), -(x.get("product_count") or 0), seller_name(x).lower()))
     return same[:n]
+
+
+def card_count(x):
+    """A card's second line: "61 products" for a shop, "6 plans from $70/mo" for a clinic."""
+    if x["seller_slug"] in CLINIC_PROFILES:
+        plans = clinic_plan_rows(x)
+        low = min((float(p["price_monthly"]) for p in plans if p.get("price_monthly") is not None), default=None)
+        return plural(len(plans), "plan") + (f" from {usd(low)}/mo" if low is not None else "")
+    return plural(x.get("product_count") or 0, "product")
 
 
 def similar_section(r):
     cards = "".join(
         f'<li class="panel-line"><a class="name" href="/sellers/{x["seller_slug"]}/">{seller_name(x)}</a>'
-        f'<span class="small">{x["score"]} of {len(SCORE_CHECKS)} checks</span><span class="small">{plural(x.get("product_count") or 0, "product")}</span></li>'
+        f'<span class="small">{x["score"]} of {len(SCORE_CHECKS)} checks</span><span class="small">{card_count(x)}</span></li>'
         for x in similar_sellers(r))
     return f"""
 <section class="section" id="other-sellers">
   <div class="wrap">
-    <h2 class="h-sources">Compare other sellers</h2>
+    <h2 class="h-sources">Compare other {"clinics" if r["seller_slug"] in CLINIC_PROFILES else "sellers"}</h2>
     <ul class="seller-cards">{cards}</ul>
     <p class="small" style="margin-top:16px"><a href="/sellers/">All sellers we track</a></p>
   </div>
 </section>""" if cards else ""
 
 
+# Clinic profile (pages.md, Seller, clinics; owner task 2 Nov 2026): the Seller page type for a seller with plans and no
+# products. Plans from site.plan_prices; no price per mg anywhere; the lab-report check is never met (clinics publish none).
+def clinic_plan_rows(r):
+    return sorted((p for p in PLANS if p["seller_slug"] == r["seller_slug"] and p.get("price_monthly") is not None),
+                  key=lambda p: (float(p["price_monthly"]), p["plan_name"]))
+
+
+def plan_goal(p):
+    """The goal whose clinic plans carry the plan's medication (for the "Brand, diabetes" chip), else {}."""
+    return next((g for g in ALL_GOALS if p["substance_slug"] in ((g.get("clinic_plans") or {}).get("substances") or [])), {})
+
+
+def care_words(p):
+    fee = p.get("membership_fee_monthly")
+    return "care fee not known" if fee is None else "no separate care fee" if float(fee) == 0 else f"plus {usd(fee)} a month for care"
+
+
+def cheapest_elsewhere(p):
+    """The lowest monthly price for the same medication and kind at another clinic, or None."""
+    if not p["substance_slug"]:
+        return None
+    rows = [x for x in PLANS if x["seller_slug"] != p["seller_slug"] and x["substance_slug"] == p["substance_slug"]
+            and plan_kind(x) == plan_kind(p) and x.get("price_monthly") is not None]
+    return min(rows, key=lambda x: (float(x["price_monthly"]), x["seller_name"]), default=None)
+
+
+def clinic_answer(r):
+    """The clinic short answer (Tier 1 template): one sentence per field, a missing field drops its sentence."""
+    plans, name = clinic_plan_rows(r), seller_name(r)
+    subs = sorted({sub_label(p["substance_slug"]) for p in plans if p["substance_slug"]}, key=str.lower)
+    what = (subs[0] if len(subs) == 1 else ", ".join(subs[:-1]) + " and " + subs[-1]) if subs else ""
+    out = [f"{name} is an online clinic{' that prescribes ' + what if what else ''}."]
+    if plans:
+        low = plans[0]
+        out.append(f"It has {plural(len(plans), 'plan')} on its price page; the lowest is {usd(low['price_monthly'])} a month "
+                   f"({clean(low['plan_name'])}), {care_words(low)}." if len(plans) > 1 else
+                   f"It has one plan on its price page, {clean(low['plan_name'])}, at {usd(low['price_monthly'])} a month, {care_words(low)}.")
+    n = r.get("fda_letter_count")
+    if n == 0:
+        out.append("No FDA warning letter.")
+    elif n:
+        out.append(f"{plural(n, 'FDA warning letter')}, the newest on {nice_date(newest_letter(r))}.")
+    if shown_company(r) and r.get("entity_evidence") == "registry":
+        out.append(f"Registered company: {clean(r['entity_name'])}.")
+    elif shown_company(r) and r.get("entity_evidence") == "fda_letter":
+        out.append(f"Company named in an FDA letter: {clean(r['entity_name'])}.")
+    else:
+        out.append("No registered company found.")
+    return out
+
+
+def clinic_plans_section(r):
+    plans = clinic_plan_rows(r)
+    if not plans:
+        return ""
+    trs = []
+    for p in plans:
+        other = cheapest_elsewhere(p)
+        elsewhere = (f'<span class="num">{usd(other["price_monthly"])}</span><span class="sub">{clinic_link(other["seller_slug"], seller_base(other["seller_name"]))}</span>'
+                     if other else '<span class="sub">no other clinic</span>' if p["substance_slug"] else '<span class="sub">no medication named</span>')
+        fee = p.get("membership_fee_monthly")
+        trs.append(f'<tr><td><span class="name">{clean(p["plan_name"])}</span></td><td data-l="What it is">{plan_chip(plan_goal(p), p)}</td>'
+                   f'<td class="num" data-l="Per month">{usd(p["price_monthly"])}</td>'
+                   f'<td data-l="Care fee">{"not known" if fee is None else "none" if float(fee) == 0 else usd(fee) + "/mo"}</td>'
+                   f'<td data-l="Cheapest elsewhere">{elsewhere}</td>'
+                   f'<td data-l="Prices checked">{nice_date(p["last_seen"])}</td></tr>')
+    return f"""
+<section class="band-2" id="plans">
+  <div class="wrap">
+    <div class="sec-hd"><div><h2>Plans and prices</h2><p>Every plan on the clinic's price page, cheapest first, with the lowest price for the same medication and kind at another clinic we track.</p></div></div>
+    <div class="tbl-wrap"><table class="tbl tbl-cards tbl-clinics tbl-plans">
+      <thead><tr><th scope="col">Plan</th><th scope="col">What it is</th><th scope="col">Per month</th><th scope="col">Care fee</th><th scope="col">Cheapest elsewhere</th><th scope="col">Prices checked</th></tr></thead>
+      <tbody>{"".join(trs)}</tbody>
+    </table></div>
+    <p class="small" style="margin-top:16px">Per month is the clinic's published monthly price for the plan; the care fee is its monthly membership, when it shows one.</p>
+    <p class="cmp-link"><a class="btn btn-ink" href="/compare/?a=p.{r["seller_slug"]}.{plans[0]["plan_slug"]}">Compare with another clinic</a></p>
+  </div>
+</section>"""
+
+
 def seller_page(r):
-    answer = " ".join(short_answer(r))
+    clinic = r["seller_slug"] in CLINIC_PROFILES
+    answer = " ".join(clinic_answer(r) if clinic else short_answer(r))
     seen = r.get("price_updated_at")
     meta = (f'{AUTHOR}. Tracked since {nice_date(r["first_seen"])}.' if r.get("first_seen") else f"{AUTHOR}.") + \
            (f" Prices checked {nice_date(seen[:10])}." if seen else "")
@@ -1909,7 +2053,7 @@ def seller_page(r):
       </div>{check_card(r)}
     </div>
   </div>
-</section>{seller_subs_section(r)}{seller_letters_section(r)}{seller_company_section(r)}{similar_section(r)}
+</section>{clinic_plans_section(r) if clinic else seller_subs_section(r)}{seller_letters_section(r)}{seller_company_section(r)}{similar_section(r)}
 """
 
 
@@ -1930,22 +2074,24 @@ if(all)all.addEventListener('click',function(){open=true;draw();});draw();})();
 
 
 def sellers_index():
-    rows, more_cls = sorted(PROFILES.values(), key=sellers_order), ' class="more"'
+    rows, more_cls = sorted(SHOPS.values(), key=sellers_order), ' class="more"'
     trs = "".join(
         f'<tr{more_cls if i >= SELLERS_FIRST else ""}><td><a class="name" href="/sellers/{r["seller_slug"]}/">{seller_name(r)}</a></td>'
         f'<td data-l="Kind">{kind_words(r)[1]}</td><td class="num" data-l="Checks">{r["score"]} of {len(SCORE_CHECKS)}</td>'
         f'<td class="num" data-l="Products">{r.get("product_count") or 0}</td><td class="num" data-l="Substances">{r.get("substance_count") or 0}</td>'
         f'<td class="num" data-l="FDA letters">{r.get("fda_letter_count") or 0}</td></tr>'
         for i, r in enumerate(rows))
-    checked = max((r["score_checked_on"] for r in rows if r.get("score_checked_on")), default="")
+    checked = max((r["score_checked_on"] for r in PROFILES.values() if r.get("score_checked_on")), default="")
+    clinics = sorted(CLINIC_PROFILES.values(), key=lambda r: (-(r.get("score") or 0), seller_name(r).lower()))
+    counts = f"{plural(len(rows), 'shop')}{' and ' + plural(len(clinics), 'online clinic') if clinics else ''}"
     more = (f'<p class="legal-more sellers-more" hidden><button type="button" class="btn btn-line" id="sellers-all">Show all {len(rows)}</button></p>'
             if len(rows) > SELLERS_FIRST else "")
     return f"""
 <section class="section letters-hd">
   <div class="wrap">
     <h1>Peptide sellers we track</h1>
-    <p class="lede">Every shop in our database that sells peptides online, with its five checks, how many products and substances it lists, and its FDA warning letters. Each name opens our page on the seller; we do not link to the shops.</p>
-    <p class="letters-stamp">{f'<span class="stamp">Checked {nice_date(checked)}</span>' if checked else ""}<span class="small">{len(rows)} sellers, most checks first, then most products.</span></p>
+    <p class="lede">{counts}: every shop in our database that sells peptides online, with its five checks, how many products and substances it lists, and its FDA warning letters{", then the online clinics with their plans" if clinics else ""}. Each name opens our page on the seller; we do not link to the shops or the clinics.</p>
+    <p class="letters-stamp">{f'<span class="stamp">Checked {nice_date(checked)}</span>' if checked else ""}<span class="small">Shops: most checks first, then most products.</span></p>
   </div>
 </section>
 <section class="band-2" id="sellers-list">
@@ -1959,9 +2105,33 @@ def sellers_index():
     {COMPARE_LINK}
     <p class="small" style="margin-top:16px">Checks are facts we hold about the seller, not a safety or quality grade. <a href="/how-we-rate/">How we rate</a></p>
   </div>
-</section>
+</section>{clinics_directory(clinics)}
 {SELLERS_INDEX_JS}
 """
+
+
+def clinics_directory(clinics):
+    """"Online clinics" on /sellers/ (pages.md, Sellers; owner task 2 Nov 2026): one row per clinic page, under the shops."""
+    if not clinics:
+        return ""
+    trs = []
+    for r in clinics:
+        plans = clinic_plan_rows(r)
+        low = min((float(p["price_monthly"]) for p in plans), default=None)
+        trs.append(f'<tr><td><a class="name" href="/sellers/{r["seller_slug"]}/">{seller_name(r)}</a></td>'
+                   f'<td class="num" data-l="Plans">{len(plans)}</td><td class="num" data-l="From">{usd(low) + "/mo" if low is not None else "unknown"}</td>'
+                   f'<td class="num" data-l="Checks">{r["score"]} of {len(SCORE_CHECKS)}</td><td class="num" data-l="FDA letters">{r.get("fda_letter_count") or 0}</td>'
+                   f'<td class="num" data-l="Checked">{nice_date(r["score_checked_on"]) if r.get("score_checked_on") else "unknown"}</td></tr>')
+    return f"""
+<section class="section" id="clinics">
+  <div class="wrap">
+    <div class="sec-hd"><div><h2>Online clinics</h2><p>{plural(len(clinics), 'online clinic')} with plan prices, most checks first. Clinics prescribe and publish no lab reports, so a clinic meets at most 4 of the 5 checks.</p></div></div>
+    <div class="tbl-wrap"><table class="tbl tbl-cards tbl-sellers" id="clinics-table"><caption class="vh">Online clinics, most checks first</caption>
+      <thead><tr><th scope="col">Clinic</th><th scope="col">Plans</th><th scope="col">From</th><th scope="col">Checks</th><th scope="col">FDA letters</th><th scope="col">Checked</th></tr></thead>
+      <tbody>{"".join(trs)}</tbody>
+    </table></div>
+  </div>
+</section>"""
 
 
 NOT_FOUND = """
@@ -2006,8 +2176,10 @@ for _g in ALL_GOALS:
 
 if PROFILES:
     PAGES.append(("/sellers/", "sellers/index.html", "Peptide sellers and their checks | Peptide Chooser",
-                  f"Every peptide seller in our database, {len(PROFILES)} in all, with five background checks, product and "
-                  "substance counts and FDA warning letters. We never link to them.",
+                  (f"The {len(SHOPS)} peptide shops and {len(CLINIC_PROFILES)} online clinics in our database, each with five background "
+                   "checks, products or plans and FDA warning letters. We never link to them.") if CLINIC_PROFILES else
+                  (f"Every peptide seller in our database, {len(PROFILES)} in all, with five background checks, product and "
+                   "substance counts and FDA warning letters. We never link to them."),
                   sellers_index(),
                   # ItemList (owner task 2 Nov 2026): one item per seller page on our site, never the seller's own domain
                   item_list_schema("Peptide sellers and their checks",
@@ -2015,7 +2187,7 @@ if PROFILES:
                   [("/sellers/", "Sellers")]))
     for _r in sorted(PROFILES.values(), key=lambda x: x["seller_slug"]):
         PAGES.append((f"/sellers/{_r['seller_slug']}/", f"sellers/{_r['seller_slug']}/index.html", seller_title(_r),
-                      seller_description(_r), seller_page(_r), "",
+                      clinic_description(_r) if _r["seller_slug"] in CLINIC_PROFILES else seller_description(_r), seller_page(_r), "",
                       [("/sellers/", "Sellers"), (f"/sellers/{_r['seller_slug']}/", seller_name(_r))]))
 
 
@@ -2023,7 +2195,7 @@ if PROFILES:
 # /search-index.json holds one entry per page, substance with a database status and seller; the header field and /search/
 # filter it in the page. /compare/ puts two clinic plans or two sellers side by side from data embedded in the page.
 NOINDEX = {"/search/"}
-TYPE_ORDER = {"Goal": 0, "Peptide": 1, "Seller": 2, "Page": 3}
+TYPE_ORDER = {"Goal": 0, "Peptide": 1, "Seller": 2, "Clinic": 3, "Page": 4}
 
 
 def search_index():
@@ -2052,7 +2224,10 @@ def search_index():
         g = SUB_GOAL.get(slug)
         out.append({"type": "Peptide", "name": s["name"], "aliases": sorted(names - {s["name"]}),
                     "url": f"/{g['slug']}/" if g else "/#legal", "line": f"{s['label']}: {s['sentence']}"})
-    for r in sorted(PROFILES.values(), key=sellers_order):
+    for r in sorted(CLINIC_PROFILES.values(), key=sellers_order):
+        out.append({"type": "Clinic", "name": seller_name(r), "aliases": [r["domain"]] if r.get("domain") else [],
+                    "url": f"/sellers/{r['seller_slug']}/", "line": f"Online clinic, {card_count(r)}, {r['score']} of {len(SCORE_CHECKS)} checks"})
+    for r in sorted(SHOPS.values(), key=sellers_order):
         out.append({"type": "Seller", "name": seller_name(r), "aliases": [r["domain"]] if r.get("domain") else [],
                     "url": f"/sellers/{r['seller_slug']}/", "line": f"{kind_words(r)[1]}, {r['score']} of {len(SCORE_CHECKS)} checks"})
     return sorted(out, key=lambda e: (TYPE_ORDER[e["type"]], e["name"].lower()))
@@ -2153,7 +2328,7 @@ def compare_items():
     """Every priced clinic plan ("<clinic>: <plan>", by clinic) and every seller page (by name), keyed for the URL."""
     plans = sorted((r for r in PLANS if r.get("price_monthly") is not None),
                    key=lambda r: (seller_base(r["seller_name"]).lower(), r["plan_name"].lower()))
-    sellers = sorted(PROFILES.values(), key=lambda r: seller_name(r).lower())
+    sellers = sorted(SHOPS.values(), key=lambda r: seller_name(r).lower())
     return ([(f'p.{r["seller_slug"]}.{r["plan_slug"]}', f'{seller_base(r["seller_name"])}: {r["plan_name"]}', compare_plan(r)) for r in plans],
             [(f's.{r["seller_slug"]}', seller_name(r), compare_seller(r)) for r in sellers])
 

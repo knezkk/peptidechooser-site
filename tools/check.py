@@ -148,7 +148,7 @@ def check_seo(P):
                     and "fonts.googleapis" not in href:
                 errs.append(f"{name}: external link without rel ({href})")
             if href.startswith("/") and not href.startswith("//") and "#" not in href and not href.startswith("/out/"):
-                target = DIST / href.strip("/")
+                target = DIST / href.split("?")[0].strip("/")  # /compare/?a=... is the /compare/ page
                 if not (target / "index.html").exists() and not target.exists():
                     errs.append(f"{name}: internal link to missing page {href}")
     return errs
@@ -235,6 +235,10 @@ def check_parts(P):
                     errs.append(f"{name}: seller window links to a seller ({href})")
             if "btn-action" in m.group(1):
                 errs.append(f"{name}: Visit button inside the seller window")
+            # A price window lists shops only (pages.md, Rules that apply to every page): no clinic in it.
+            for slug in clinic_slugs():
+                if f"/sellers/{slug}/" in m.group(1) or f'data-seller="{slug}"' in m.group(1):
+                    errs.append(f"{name}: clinic {slug} inside a price window")
             # The seller score is facts, never a verdict (owner, 2 Nov 2026): no "safe", "trusted" or "best" in the window.
             for w in re.findall(r"\b(safe|trusted|best)\b", re.sub(r"<[^>]+>", " ", m.group(1)), re.I):
                 errs.append(f"{name}: seller window says '{w}'")
@@ -295,7 +299,7 @@ def check_parts(P):
             errs.append(f"search-index.json: does not parse ({e})")
             idx = []
         for e in idx:
-            if set(e) != {"type", "name", "aliases", "url", "line"} or e.get("type") not in ("Goal", "Peptide", "Seller", "Page") \
+            if set(e) != {"type", "name", "aliases", "url", "line"} or e.get("type") not in ("Goal", "Peptide", "Seller", "Clinic", "Page") \
                     or not e.get("name") or not e.get("line"):
                 errs.append(f"search-index.json: bad entry {e}")
                 continue
@@ -343,6 +347,12 @@ def check_parts(P):
             if not link.startswith("https://www.fda.gov/") or guid != link or not it.findtext("title") or not it.findtext("pubDate"):
                 errs.append(f"feed.xml: item without its fda.gov link, title or date ({link})")
     return errs
+
+
+def clinic_slugs():
+    """The online clinics site.json knows: seller pages with no products (peptide-data decision 26)."""
+    d = json.loads((ROOT / "data" / "site.json").read_text(encoding="utf-8"))
+    return {r["seller_slug"] for r in d.get("seller_profiles") or [] if not (r.get("product_count") or 0)}
 
 
 def seller_domains():

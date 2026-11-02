@@ -106,8 +106,10 @@ def guide_stats():
     """The counts the guides quote (guides.py; owner task 2 Nov 2026), with the day they were counted. site.json keeps only
     ten listings per substance, so these cannot be counted from its rows."""
     r = rows(
-        "select (select count(*) from site.sellers) as sellers, "
-        "(select count(*) from site.seller_profile where newest_coa_date >= current_date - interval '12 months') as sellers_coa_12m, "
+        # shops only (product_count > 0): since peptide-data decision 26 the online clinics are site.sellers rows too
+        "select (select count(*) from site.sellers where product_count > 0) as sellers, "
+        "(select count(*) from site.seller_profile where product_count > 0 "
+        "and newest_coa_date >= current_date - interval '12 months') as sellers_coa_12m, "
         "(select count(distinct seller_slug) from site.products where substance_slug = 'bpc-157') as bpc_sellers")[0]
     r["checked_on"] = date.today().isoformat()
     return r
