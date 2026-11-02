@@ -2092,9 +2092,14 @@ def legit_section(r):
     """"Is <Name> legit? What we can check" (pages.md, Seller; owner task 2 Nov 2026): right after the short answer, the five
     checks in the seller page's order, each "Met:" or "Not met:" with the check card's fact, then the closing sentence."""
     lines = check_lines(r)
+    # a check that has not run yet says so, not "Not met" (owner answer Q3 b, 2 Nov 2026): today the legal pages, while
+    # terms, privacy and refund are all unknown
+    unrun = {"score_legal_pages": "Terms, privacy and refund pages."} if all(
+        r.get(f"{x}_seen") is None for x in ("terms", "privacy", "refund")) and not r.get("score_legal_pages") else {}
+    state = lambda k: "Not checked yet" if k in unrun else "Met" if r.get(k) else "Not met"
     items = "".join(
         f'<li><span class="chip chip-{"ok" if r.get(k) else "neutral"} mark-{"yes" if r.get(k) else "no"}">{t}</span>'
-        f'<span class="check-line">{"Met" if r.get(k) else "Not met"}: {lines[k]}</span></li>'
+        f'<span class="check-line">{state(k)}: {unrun.get(k, lines[k])}</span></li>'
         for k, t in SCORE_CHECKS)
     return f"""
 <section class="section legit" id="legit">
