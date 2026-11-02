@@ -549,8 +549,10 @@ def db_status(slug):
     generic = row["canonical_name"].split()[0].title()
     brands = sorted({brand_base(a["brand_name"]) for a in APPROVED_DB if a["substance_slug"] == slug and a.get("brand_name")} - {generic})[:4]
     name = row["canonical_name"] + (f' ({", ".join(brands)})' if brands and chip == "ok" else "")
-    # the FDA's own wording for the substance, when the database has it (fda_listing; shown in small, never required)
-    listing = next((r.get("fda_listing") for r in LEGAL_DB or [] if r["substance_slug"] == slug and r.get("fda_listing")), "")
+    # the FDA's own wording, from the same row as the status shown (fda_listing; shown in small, never required). GHK-Cu has
+    # two rows with two wordings ("except for injectable" on category 1, "for injectable" on the withdrawn nomination);
+    # another row's wording under this status would pair the wrong facts.
+    listing = row.get("fda_listing") or ""
     return {"chip": chip, "label": label, "sentence": sentence, "name": name, "url": row["source_url"],
             "seen": row["first_seen_by_us"], "listing": listing}
 
