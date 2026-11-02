@@ -149,6 +149,9 @@ def og_name(path):
     return "home" if path == "/" else path.strip("/").replace("/", "-")
 
 
+FEED_LINK = '\n<link rel="alternate" type="application/rss+xml" title="FDA warning letters to peptide sellers" href="/fda-warning-letters/feed.xml">'
+
+
 def page(path, title, description, body, schema="", crumb=None):
     canonical = SITE + path
     og = f"{SITE}/assets/og/{og_name(path)}.png"
@@ -159,7 +162,7 @@ def page(path, title, description, body, schema="", crumb=None):
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{title}</title>
 <meta name="description" content="{description}">
-<link rel="canonical" href="{canonical}">
+<link rel="canonical" href="{canonical}">{FEED_LINK if LETTERS_ALL and path in ("/", "/fda-warning-letters/") else ""}
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Peptide Chooser">
 <meta property="og:title" content="{title}">
@@ -804,12 +807,55 @@ chips.forEach(function(x){x.addEventListener('click',function(){x.setAttribute('
 c.addEventListener('click',function(){q.value='';chips.forEach(function(x){x.setAttribute('aria-pressed','false');});draw();q.focus();});
 if(all)all.addEventListener('click',function(){open=true;draw();});draw();})();
 </script>"""
+# Get new letters (pages.md, Letters, owner 2 Nov 2026): one white card under the explanation line with the RSS feed and a
+# plain form that posts to Buttondown (double opt-in, set in the Buttondown account). Not drawn while
+# `newsletter.buttondown` in data/site.json is empty (never drawn empty).
+BUTTONDOWN = (DATA.get("newsletter") or {}).get("buttondown", "")
+FEED_PATH = "/fda-warning-letters/feed.xml"
+FEED_N = 50
+SUBSCRIBE_BOX = f"""<section class="subscribe" aria-labelledby="sub-h">
+      <h2 id="sub-h">Get new letters</h2>
+      <p>New FDA warning letters to peptide sellers, by email or RSS. No ads, no selling of data.</p>
+      <form class="sub-form" action="https://buttondown.com/api/emails/embed-subscribe/{escape(BUTTONDOWN)}" method="post" target="_blank">
+        <label for="sub-email">Your email</label>
+        <div class="sub-row"><input class="input" type="email" id="sub-email" name="email" autocomplete="email" required><button class="btn btn-ink" type="submit">Subscribe</button><a class="btn btn-line" href="{FEED_PATH}">RSS feed</a></div>
+      </form>
+      <p class="small">Double opt-in. Unsubscribe in one click.</p>
+    </section>""" if BUTTONDOWN else ""
+
+
+def rss_date(iso):
+    d = date.fromisoformat(iso)
+    return d.strftime("%a, %d %b %Y 00:00:00 +0000")
+
+
+def letters_feed():
+    """RSS 2.0 of the newest FEED_N letters on the letters page (owner, 2 Nov 2026): title "<company>: <subject>", the link
+    and guid are the letter on fda.gov, the description holds the date, company, subject, office and our seller match."""
+    items = []
+    for r in LETTERS_ALL[:FEED_N]:
+        company, subj = clean(r["company_name"]), clean(r["letter_subject"])
+        desc = f"{nice_date(r['letter_date'])}. {company}. {subj}. {office(r.get('issuing_office'))}."
+        if r.get("seller_slug") and r.get("seller_name"):
+            desc += f" In our database: {clean(r['seller_name'])}."
+        items.append(f"<item><title>{escape(company)}: {escape(subj)}</title><link>{escape(r['letter_url'])}</link>"
+                     f"<guid isPermaLink=\"true\">{escape(r['letter_url'])}</guid><pubDate>{rss_date(r['letter_date'])}</pubDate>"
+                     f"<description>{escape(desc)}</description></item>")
+    built = rss_date(DATA["pulled_at"][:10]) if DATA.get("pulled_at") else rss_date(LETTERS_ALL[0]["letter_date"])
+    return ('<?xml version="1.0" encoding="UTF-8"?>\n<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel>'
+            f'<title>FDA warning letters to peptide sellers (Peptide Chooser)</title><link>{SITE}/fda-warning-letters/</link>'
+            f'<atom:link href="{SITE}{FEED_PATH}" rel="self" type="application/rss+xml"/>'
+            '<description>New FDA warning letters to peptide sellers, compounders and online clinics, with a link to each letter on fda.gov.</description>'
+            f'<language>en-us</language><lastBuildDate>{built}</lastBuildDate>{"".join(items)}</channel></rss>\n')
+
+
 LETTERS_PAGE = f"""
 <section class="section letters-hd">
   <div class="wrap">
     <h1>FDA warning letters to peptide sellers and online clinics</h1>
     <p class="lede">A warning letter is the FDA's formal notice that it found what it believes are significant violations of the law; the company is asked to reply within 15 business days. It is public record. <a href="{FDA_ABOUT_LETTERS}" rel="nofollow">What the FDA says about warning letters</a></p>
     <p class="letters-stamp"><span class="stamp">Checked {nice_date(DATA["pulled_at"][:10]) if DATA.get("pulled_at") else ""}</span><span class="small">{len(LETTERS_ALL)} letters since {nice_date(DATA["letters_all_oldest"]) if DATA.get("letters_all_oldest") else ""}, newest first. Each links to the letter on fda.gov.</span></p>
+    {SUBSCRIBE_BOX}
   </div>
 </section>
 <section class="band-2" id="letters-list">
@@ -1070,6 +1116,12 @@ DISCLOSURE = f"""
 </div></section>
 """
 
+# The newsletter paragraph (owner, 2 Nov 2026; Tier 1): only while the subscribe box exists.
+PRIVACY_NEWSLETTER = ('<li><strong>Email alerts, only if you sign up.</strong> If you sign up for new FDA warning letters, we ask only for your email '
+                      'address. Buttondown, our email provider, stores it and sends the emails on our behalf; when you sign up it also records '
+                      'technical data such as your IP address, under its own <a href="https://buttondown.com/legal/privacy" rel="nofollow noopener">privacy policy</a>. '
+                      'You get a confirmation email first, and nothing is sent until you confirm (double opt-in). Every email has a link to '
+                      'unsubscribe in one click; after that we send nothing more. We never sell or share the list.</li>\n') if BUTTONDOWN and LETTERS_ALL else ""
 PRIVACY = f"""
 <section class="page"><div class="wrap prose">
 <h1>Privacy policy</h1>
@@ -1080,7 +1132,7 @@ PRIVACY = f"""
 <li><strong>Email you send us.</strong> If you contact us, we receive your email address and whatever you include in your message. We use it only to reply.</li>
 <li><strong>Server logs.</strong> Our hosting provider (GitHub Pages) may record technical data such as IP address, browser type and the pages requested, for security and to operate the service. We do not use this data to identify you.</li>
 <li><strong>Analytics, only if you accept.</strong> We use Google Analytics 4 to count visits and see which pages people find useful. It runs only after you press "Accept" on the cookie notice. If you press "Reject", no analytics cookie is set and nothing is sent to Google. Google processes this data under its own <a href="https://policies.google.com/privacy" rel="nofollow noopener">privacy policy</a>. We do not use advertising trackers, and we do not sell or share visitor data.</li>
-</ul>
+{PRIVACY_NEWSLETTER}</ul>
 <h2>Cookies</h2>
 <p>The site sets one small value in your browser to remember your cookie choice. Google Analytics sets its own cookies (named _ga and similar) only after you accept. You can change your mind by clearing the site's data in your browser; the notice will then appear again.</p>
 <h2>Paid links</h2>
@@ -1231,6 +1283,8 @@ def main():
         target.write_text(page(path, title, desc, body, schema, crumb), encoding="utf-8")
     (DIST / "404.html").write_text(page("/404", "Page not found | Peptide Chooser",
                                         "This page does not exist on Peptide Chooser. Go to the home page or compare peptide options by goal; the link may be old or mistyped.", NOT_FOUND), encoding="utf-8")
+    if LETTERS_ALL:
+        (DIST / "fda-warning-letters" / "feed.xml").write_text(letters_feed(), encoding="utf-8")
     (DIST / "CNAME").write_text("peptidechooser.com\n")
     (DIST / ".nojekyll").write_text("")
     (DIST / "robots.txt").write_text(f"User-agent: *\nAllow: /\nDisallow: /out/\nSitemap: {SITE}/sitemap.xml\n")
