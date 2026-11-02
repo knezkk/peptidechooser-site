@@ -734,19 +734,25 @@ def rail():
     return "".join(chips), "".join(compare), f'<span class="goal-t">: {ALL_GOALS[0]["panel_title"]}</span>'
 
 
-def legal_rows():
+def legal_rows(only=None):
     """"Is it legal today?": each hand-written row, or, when the database has a status for its substances, one row per
-    substance from the database with its own source link and the date we first saw that status."""
+    substance from the database with its own source link and the date we first saw that status. `only` keeps the rows
+    for those substances (a goal page shows the rows for its own options)."""
+    keep = lambda slugs: only is None or bool(set(slugs) & only)
     hand = lambda r: (f'<tr><td><span class="name">{r["peptide"]}</span></td><td><span class="chip chip-{r["chip"]}">{r["status"]}</span></td>'
                       f'<td>{r["note"]} <a class="ref" href="#src-{r["src"]}" aria-label="Source {r["src"]}"><sup>{r["src"]}</sup></a></td></tr>')
     out, seen = [], []
     for r in LEGAL["rows"]:
+        if not keep(r.get("substances", [])):
+            continue
         found = [db_status(slug) for slug in r.get("substances", [])] if LEGAL_DB else []
         if not found or not all(found):
             if not r.get("db_only"):  # a db_only row (finasteride, minoxidil) is shown only from the database
                 out.append(hand(r))  # a row switches to the database only when every substance in it has a status there
             continue
-        for s in found:
+        for slug, s in zip(r["substances"], found):
+            if not keep([slug]):
+                continue
             seen.append(s["seen"])
             # A row marked note_with_db keeps its hand-written note (e.g. the July 2026 PCAC proposal) as a second sentence.
             n = r.get("note_each", r.get("note", ""))  # the note for one substance when a grouped row splits ("them" -> "it")
@@ -760,7 +766,7 @@ def legal_rows():
              if all(db_status(x) for x in r.get("substances", [])) and LEGAL_DB}
     for slug in sorted({r["substance_slug"] for r in LEGAL_DB or []} - shown):
         s = db_status(slug)
-        if not s:
+        if not s or not keep([slug]):
             continue
         seen.append(s["seen"])
         out.append(f'<tr><td><span class="name">{s["name"]}</span></td><td><span class="chip chip-{s["chip"]}">{s["label"]}</span></td>'
@@ -771,6 +777,8 @@ def legal_rows():
 
 
 LEGAL_LIST, LEGAL_CHECKED = legal_rows()
+LEGAL_NOTE = ("Approved means the FDA approved a product containing it for a stated use. Not approved means no approved product "
+              "exists; buying it for yourself is not a crime in the US, but nobody has checked what is in the vial.")
 # The first 12 rows show; the rest carry class "more" and stay hidden until "Show all N" (only with JavaScript).
 LEGAL_ROWS = "".join(r if i < 12 else r.replace("<tr>", '<tr class="more">', 1) for i, r in enumerate(LEGAL_LIST))
 
@@ -1043,7 +1051,7 @@ HOME = f"""
       <tbody>{LEGAL_ROWS}</tbody>
     </table></div>
     {f'<p class="legal-more" hidden><button type="button" class="btn btn-line btn-sm" id="legal-all">Show all {len(LEGAL_LIST)}</button></p>' if len(LEGAL_LIST) > 12 else ""}
-    <p class="small" style="margin-top:16px">Approved means the FDA approved a product containing it for a stated use. Not approved means no approved product exists; buying it for yourself is not a crime in the US, but nobody has checked what is in the vial.</p>
+    <p class="small" style="margin-top:16px">{LEGAL_NOTE}</p>
   </div>
 </section>
 
@@ -1208,7 +1216,24 @@ def page_sources(rows_html, own):
     return "".join(out)
 
 
+def peptide_table(g):
+    """"Every option, side by side" for a goal with no hand-checked `options` table: its step 2 rows, each with the three
+    lay lines (does; status chip and status_plain; how). No evidence or price column: those need checked data that the
+    goal does not have yet, and nothing is typed into the page to fill them (pages.md, Category)."""
+    rows = []
+    for p in g["peptides"]:
+        rows.append(f"""<tr>
+  <td><span class="name">{p["name"]}</span>{alt_chip(p)}<span class="opt-does">{p["does"]}{refs(p, g["slug"])}</span></td>
+  <td>{status_chip(p)}<span class="opt-status">{plain_status(p)}</span></td>
+  <td>{p["how"]}</td>
+</tr>""")
+    return ('<thead><tr><th scope="col">Option</th><th scope="col">FDA status</th><th scope="col">How you get it</th></tr></thead>'
+            f'<tbody>{"".join(rows)}</tbody>')
+
+
 def category_page(g):
+    if not g.get("options"):
+        return category_body(g, peptide_table(g), f"{len(g['peptides'])} options, each with its FDA status and how you get it.")
     rows = []
     for o in g["options"]:
         src_refs = (" <sup>" + ", ".join(f'<a href="#src-{n}">{n}</a>' for n in o["sources"]) + "</sup>") if o["sources"] else ""
@@ -1221,13 +1246,42 @@ def category_page(g):
   <td>{price}</td>
   <td>{o["how_plain"]}</td>
 </tr>""")
-    srcs = "".join(f'<li id="src-{s["n"]}">{s["text"]}: <a href="{s["url"]}" rel="nofollow">{s["url"]}</a></li>' for s in g["sources"])
+    table = ('<thead><tr><th scope="col">Option</th><th scope="col">FDA status for hair loss</th><th scope="col">Evidence in people</th><th scope="col">Price from</th><th scope="col">How you get it</th></tr></thead>\n'
+             f'      <tbody>{"".join(rows)}</tbody>')
+    return category_body(g, table, f'{g["options_checked"]} options checked on the same five criteria. Rows that are not approved for human use carry no price and no seller.')
+
+
+def category_body(g, table, table_lede):
+    srcs = "".join(f'<li id="src-{s["n"]}">{s["text"]}: <a href="{s["url"]}" rel="nofollow">{s["url"]}</a></li>' for s in g.get("sources", []))
     # The Clinic intake look (owner, 31 Oct 2026): Home's parts on the goal page. Title, H1, description and URL stay as
     # they are (Search Console impressions); the hero keeps the price pad with its Checked stamp, the step 2 option rows
     # follow, the options table sits in the grey band.
     opt_html = "".join(option_rows(g))
-    own = {f'src-{s["n"]}' for s in g["sources"]}
-    srcs += page_sources(opt_html, own)
+    # "Is it legal today?" on the page (pages.md, Category; a goal with `legal_section`): Home's rows for the substances
+    # of this goal's options, with Home's line under them; the heading line in the flow then links here.
+    subs = {x for p in g["peptides"] for x in subs_of(p)}
+    legal, legal_checked = legal_rows(subs) if g.get("legal_section") else ([], "")
+    legal_html = f"""
+<section class="section" id="legal">
+  <div class="wrap">
+    <div class="sec-hd"><div><h2>Is it legal today?</h2><p>FDA status of the peptides on this page, each with its source. Checked {legal_checked}.</p></div></div>
+    <div class="tbl-wrap"><table class="tbl tbl-legal">
+      <thead><tr><th scope="col">Peptide</th><th scope="col">Status</th><th scope="col">What that means</th></tr></thead>
+      <tbody>{"".join(legal)}</tbody>
+    </table></div>
+    <p class="small" style="margin-top:16px">{LEGAL_NOTE}</p>
+  </div>
+</section>""" if legal else ""
+    own = {f'src-{s["n"]}' for s in g.get("sources", [])}
+    srcs += page_sources(opt_html + legal_html, own)
+    # The price pad only for a goal with a priced proven option and its source (skin and recovery have none yet).
+    pad = f"""
+      <div class="board rx" aria-label="Price pad">
+        <div class="rx-head"><span class="rx-mark" aria-hidden="true">&#8478;</span><h2>Cheapest proven option, per month</h2></div>
+        <p class="hero-num"><span class="num-xl">${g["price_from_usd"]}</span> <span class="num-unit">/mo from</span></p>
+        <div class="ledger"><span>{g["best_option"]}</span></div>
+        <div class="rx-foot"><span class="stamp">Checked {STAMP_CHECKED}</span><span class="fine">{g["price_note"]}. Not a prescription.</span></div>
+      </div>""" if g.get("price_from_usd") is not None and g.get("price_source") else ""
     windows = "".join({window_key(p): seller_window(p) for p in g["peptides"] if has_window(p)}.values())
     return f"""
 <section class="hero hero-goal">
@@ -1237,29 +1291,22 @@ def category_page(g):
         <h1>{g["h1"]}</h1>
         <p class="small meta">{AUTHOR}. Last updated {CHECKED}. Every claim links to its source. Prices checked {STAMP_CHECKED}.</p>
         <p class="intro">{g["short_answer"]}</p>
-      </div>
-      <div class="board rx" aria-label="Price pad">
-        <div class="rx-head"><span class="rx-mark" aria-hidden="true">&#8478;</span><h2>Cheapest proven option, per month</h2></div>
-        <p class="hero-num"><span class="num-xl">${g["price_from_usd"]}</span> <span class="num-unit">/mo from</span></p>
-        <div class="ledger"><span>{g["best_option"]}</span></div>
-        <div class="rx-foot"><span class="stamp">Checked {STAMP_CHECKED}</span><span class="fine">{g["price_note"]}. Not a prescription.</span></div>
-      </div>
+      </div>{pad}
     </div>
     <div class="chooser flow flow-solo">
-      <div class="flow-hd fh-compare"><h2>Compare the options</h2><a class="step-legal" href="/#legal"><strong>Is it legal today?</strong></a></div>
+      <div class="flow-hd fh-compare"><h2>Compare the options</h2><a class="step-legal" href="{"#legal" if legal else "/#legal"}"><strong>Is it legal today?</strong></a></div>
       <div class="flow-compare"><div class="step-panel"><p class="goal-for">{g["for"]}</p><ul class="opts">{opt_html}</ul></div></div>
     </div>
   </div>
 </section>
 <section class="band-2" id="options">
   <div class="wrap">
-    <div class="sec-hd"><div><h2>Every option, side by side</h2><p>{g["options_checked"]} options checked on the same five criteria. Rows that are not approved for human use carry no price and no seller.</p></div></div>
+    <div class="sec-hd"><div><h2>Every option, side by side</h2><p>{table_lede}</p></div></div>
     <div class="tbl-wrap"><table class="tbl">
-      <thead><tr><th scope="col">Option</th><th scope="col">FDA status for hair loss</th><th scope="col">Evidence in people</th><th scope="col">Price from</th><th scope="col">How you get it</th></tr></thead>
-      <tbody>{"".join(rows)}</tbody>
+      {table}
     </table></div>
   </div>
-</section>
+</section>{legal_html}
 <section class="section" id="sources">
   <div class="wrap">
     <h2 class="h-sources">Sources</h2>
@@ -1304,7 +1351,7 @@ if LETTERS_ALL:
                   f"Every FDA warning letter to peptide sellers, compounders and online clinics in our database, with its date, subject and fda.gov link. Checked {nice_date(_d)}.",
                   LETTERS_PAGE, "", [("/fda-warning-letters/", "FDA warning letters")]))
 
-for _g in LIVE_GOALS:
+for _g in ALL_GOALS:
     if _g.get("page"):
         PAGES.append((f"/{_g['slug']}/", f"{_g['slug']}/index.html", _g["title"], _g["description"],
                       category_page(_g), "", [(f"/{_g['slug']}/", _g["name"])]))
