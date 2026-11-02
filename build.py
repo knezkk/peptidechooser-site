@@ -1223,8 +1223,11 @@ N_STATUS = len({r["substance_slug"] for r in LEGAL_DB or []})
 PULLED = nice_date(DATA["pulled_at"][:10]) if DATA.get("pulled_at") else ""
 SCORE_ON = max((r["score_checked_on"] for r in SHOPS.values() if r.get("score_checked_on")), default="")
 # Home's hero counts (pages.md, Home; owner task 2 Nov 2026): one sentence, only when every count and the pull date are there.
-HERO_COUNTS = (f" {len(PROFILES)} sellers, {len(PEPTIDE_SLUGS)} substances and {N_LETTERS} FDA warning letters, checked {PULLED}."
-               if PROFILES and PEPTIDE_SLUGS and N_LETTERS and PULLED else "")
+# owner answer Q1 c (2 Nov 2026): shops and online clinics counted apart, as on /sellers/
+_ns, _nc = len(SHOPS), len(CLINIC_PROFILES)
+HERO_COUNTS = (f" {_ns} shop{'' if _ns == 1 else 's'}, {f'{_nc} online clinic' + ('' if _nc == 1 else 's') + ', ' if _nc else ''}"
+               f"{len(PEPTIDE_SLUGS)} substances and {N_LETTERS} FDA warning letters, checked {PULLED}."
+               if SHOPS and PEPTIDE_SLUGS and N_LETTERS and PULLED else "")
 
 # Sellers we track (pages.md, Home, under "Latest FDA warning letters"): the letters block's look, one line and
 # btn-line "See all sellers". No seller names on Home.
