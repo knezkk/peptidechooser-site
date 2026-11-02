@@ -285,6 +285,7 @@ def page(path, title, description, body, schema="", crumb=None):
         <a class="brand" href="/"><img src="/assets/logo-dark.svg" alt="" width="50" height="20">Peptide Chooser</a>
         <p>An independent comparison site for people in the United States. We do not sell peptides or any other product. Not medical advice. Talk to a doctor before starting any treatment.</p>
       </div>
+      {foot_browse()}
       <ul class="foot-links">
         <li><a href="/about/">About</a></li>
         <li><a href="/how-we-rate/">How we rate</a></li>
@@ -1192,14 +1193,19 @@ N_LETTERS = DATA.get("letters_all_total") or len(LETTERS_ALL)
 N_STATUS = len({r["substance_slug"] for r in LEGAL_DB or []})
 PULLED = nice_date(DATA["pulled_at"][:10]) if DATA.get("pulled_at") else ""
 SCORE_ON = max((r["score_checked_on"] for r in SHOPS.values() if r.get("score_checked_on")), default="")
+# Home's hero counts (pages.md, Home; owner task 2 Nov 2026): one sentence, only when every count and the pull date are there.
+HERO_COUNTS = (f" {len(PROFILES)} sellers, {len(PEPTIDE_SLUGS)} substances and {N_LETTERS} FDA warning letters, checked {PULLED}."
+               if PROFILES and PEPTIDE_SLUGS and N_LETTERS and PULLED else "")
 
 # Sellers we track (pages.md, Home, under "Latest FDA warning letters"): the letters block's look, one line and
 # btn-line "See all sellers". No seller names on Home.
 SELLERS_HOME = f"""
 <section class="section" id="sellers-home">
-  <div class="wrap">
+  <div class="wrap home-cards">
+    <div class="home-card">
     <div class="sec-hd"><div><h2>Sellers we track</h2><p>{N_SELLERS} shops that sell peptides online, each with five background checks.{f" Checked {nice_date(SCORE_ON)}." if SCORE_ON else ""}</p></div></div>
     <p class="letters-all"><a class="btn btn-line" href="/sellers/">See all sellers</a></p>
+    </div><!--compare-card-->
   </div>
 </section>
 """ if SHOPS else ""
@@ -1221,7 +1227,7 @@ HOME = f"""
   <div class="wrap">
     <div class="hero-pair">
     <p class="what-is"><strong>What is a peptide?</strong> A short chain of amino acids. Some are approved medicines (semaglutide, bremelanotide), some are cosmetics in creams, and many are sold online with no approval and no testing. This site tells you which is which, what it costs, and what the proven alternative is.</p>
-    <p class="lede hero-after">For each goal we put peptide products next to the FDA-approved alternatives and show what the evidence says, what it costs per month and how you would get it. We compare; we never sell.</p>
+    <p class="lede hero-after">For each goal we put peptide products next to the FDA-approved alternatives and show what the evidence says, what it costs per month and how you would get it. We compare; we never sell.{HERO_COUNTS}</p>
     </div>
     <section class="glossary" aria-labelledby="glossary-h">
       <h2 id="glossary-h">What the labels mean</h2>
@@ -2210,12 +2216,15 @@ def clinics_directory(clinics):
 </section>"""
 
 
-NOT_FOUND = """
+# 404 (pages.md, 404; owner task 2 Nov 2026): the goal pages, then the sections that exist, and the search line.
+_NF_MORE = [("/sellers/", "Sellers we track", PROFILES), ("/peptides/", "Peptides A to Z", PEPTIDE_SLUGS), ("/learn/", "Guides", True)]
+NOT_FOUND = f"""
 <section class="page"><div class="wrap prose">
 <h1>This page doesn't exist</h1>
-<p class="lede">The link may be old or mistyped.</p>
+<p class="lede">The link may be old or mistyped. Try the search above.</p>
 <div class="btn-row"><a class="btn btn-ink" href="/">Go to the home page</a></div>
-<p><a href="/#goals">Compare by goal</a></p>
+<ul class="nf-links">{"".join(f'<li><a href="{goal_href(g)}">{g["label"]}</a></li>' for g in ALL_GOALS)}</ul>
+<ul class="nf-links">{"".join(f'<li><a href="{u}">{t}</a></li>' for u, t, ok in _NF_MORE if ok)}</ul>
 </div></section>
 """
 
@@ -3157,6 +3166,60 @@ def cmp_links_in():
 cmp_links_in()
 
 
+# Home, footer and llms.txt catch up with the site (pages.md, Home, Every page, 404; owner task 2 Nov 2026). Built after
+# every other page so they list only what this build has.
+def built(path):
+    return any(p[0] == path for p in PAGES)
+
+
+def foot_browse():
+    """The footer's Browse column: each section this build has, then Home's legal table."""
+    items = [("/peptides/", "Peptides A to Z"), ("/sellers/", "Sellers"), ("/compare/", "Compare"), ("/learn/", "Guides"),
+             ("/fda-warning-letters/", "FDA warning letters")]
+    links = "".join(f'<li><a href="{u}">{t}</a></li>' for u, t in items if built(u))
+    return (f'<nav class="foot-browse" aria-labelledby="foot-browse-h"><h2 class="foot-h" id="foot-browse-h">Browse</h2>'
+            f'<ul class="foot-links">{links}<li><a href="/#legal">Legal status</a></li></ul></nav>')
+
+
+HOME_PAIRS = 6
+
+
+def home_compare_card():
+    """Home's Compare card beside "Sellers we track": the six pairs with the most shops or plans, and "Compare any two"."""
+    if not built("/compare/"):
+        return ""
+    top = sorted(CMP_PAGES, key=lambda x: (-x[3], x[1].lower()))[:HOME_PAIRS]
+    items = "".join(f'<li><a href="{p}">{escape(t)}</a></li>' for p, t, *_ in top)
+    pairs = f'<div class="related home-pairs"><ul>{items}</ul></div>' if top else ""
+    return f"""
+    <div class="home-card">
+    <div class="sec-hd"><div><h2>Popular comparisons</h2><p>Two plans, two sellers or two substances side by side, from our data.</p></div></div>
+    {pairs}
+    <p class="letters-all"><a class="btn btn-line" href="/compare/">Compare any two</a></p>
+    </div>"""
+
+
+for _i, _pg in enumerate(PAGES):
+    if _pg[0] == "/":
+        PAGES[_i] = _pg[:4] + (_pg[4].replace("<!--compare-card-->", home_compare_card(), 1),) + _pg[5:]
+
+LLMS_SECTIONS = [("/sellers/", "Sellers and online clinics"), ("/peptides/", "Peptides"), ("/compare/", "Comparisons"),
+                 ("/learn/", "Guides"), ("/fda-warning-letters/", "FDA warning letters")]
+
+
+def llms_sections():
+    """llms.txt (pages.md, Every page): the pages by section, each heading with its page count from this build."""
+    goal_paths = {goal_href(g) for g in ALL_GOALS if g.get("page")}
+    groups = {"Home and goals": [], **{name: [] for _, name in LLMS_SECTIONS}, "About the site": []}
+    for p, _, t, d, *_ in PAGES:
+        if p in NOINDEX:
+            continue
+        name = ("Home and goals" if p in goal_paths or p == "/" else
+                next((n for pre, n in LLMS_SECTIONS if p.startswith(pre)), "About the site"))
+        groups[name].append(f"- [{t}]({SITE}{p}): {d}\n")
+    return "".join(f"\n## {name} ({plural(len(rows), 'page')})\n\n" + "".join(rows) for name, rows in groups.items() if rows)
+
+
 def main():
     if DIST.exists():
         shutil.rmtree(DIST)
@@ -3193,7 +3256,7 @@ def main():
     (DIST / "llms.txt").write_text(
         "# Peptide Chooser\n\n> An independent US comparison site: peptide products next to FDA-approved alternatives, "
         "with evidence, FDA status and price per month for each goal. We compare; we never sell.\n\n"
-        + "".join(f"- [{t}]({SITE}{p}): {d}\n" for p, _, t, d, *_ in PAGES if p not in NOINDEX))
+        + llms_sections())
     # the search index (pages.md, Every page, Header, Search): one entry per page, substance and seller
     if COMPARE_DATA:
         (DIST / "compare" / "data.json").write_text(COMPARE_DATA, encoding="utf-8")
