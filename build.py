@@ -350,16 +350,71 @@ SOURCES_HOME += "".join(f'<li id="src-plan-{slug}">{seller_base(r["seller_name"]
                         f'<a href="{r["pricing_url"]}" rel="nofollow">{r["pricing_url"]}</a></li>' for slug, r in GOAL_PLANS.items())
 
 
-def plan_line(g, cls):
-    """"Online clinics from $25/mo (Strut Health)" with its footnote, or "" for a goal with no plan row."""
-    r = GOAL_PLANS.get(g["slug"])
+def usd(v):
+    """$60, $149.50, $74.99: whole dollars without cents."""
+    v = float(v)
+    return f"${v:,.0f}" if v == int(v) else f"${v:,.2f}"
+
+
+# A goal's clinic plans (pages.md, Category, weight loss; owner task 2 Nov 2026): the rows of site.plan_prices whose
+# substance is one of the goal's `clinic_plans.substances`, and, with `programs`, the plans that name no medication.
+BRANDED = ("branded", "oral_branded")
+
+
+def clinic_plans(g):
+    cp = g.get("clinic_plans")
+    if not cp:
+        return []
+    rows = [r for r in PLANS if r.get("price_monthly") is not None
+            and (r["substance_slug"] in cp["substances"] or (r["substance_slug"] is None and cp.get("programs")))]
+    return sorted(rows, key=lambda r: (float(r["price_monthly"]), r["seller_name"], r["plan_name"]))
+
+
+def row_plan(g, p):
+    """The plan behind an option row's "Online clinics from" line on a goal with clinic plans: an FDA-approved row, the
+    cheapest brand plan (branded or oral_branded) of its substance; the compounded row (`plan_kind`), the cheapest
+    compounded plan of the goal's approved substances. None for other rows."""
+    rows = clinic_plans(g)
+    if p.get("plan_kind") == "compounded":
+        subs = {x["substance"] for x in g["peptides"] if x.get("substance") and x["status"].startswith("FDA approved")}
+        found = [r for r in rows if r.get("product_kind") == "compounded" and r["substance_slug"] in subs]
+    elif p.get("substance") and p["status"].startswith("FDA approved"):
+        found = [r for r in rows if r["substance_slug"] == p["substance"] and r.get("product_kind") in BRANDED]
+    else:
+        return None
+    return found[0] if found else None
+
+
+# Plans shown on a row or a price pad that are not a goal's GOAL_PLANS plan get their own source after the plan sources.
+plan_key = lambda r: f'{r["seller_slug"]}-{r["plan_slug"]}'
+EXTRA_PLANS = {}
+for _g in ALL_GOALS:
+    _rows = clinic_plans(_g)
+    for _r in [row_plan(_g, _p) for _p in _g["peptides"]] + _rows[:1]:
+        if _r and _r is not GOAL_PLANS.get(_g["slug"]):
+            EXTRA_PLANS.setdefault(plan_key(_r), _r)
+_n1 = _n0 + len(GOAL_PLANS)
+EXTRA_REF = {k: _n1 + i + 1 for i, k in enumerate(EXTRA_PLANS)}
+SOURCES_HOME += "".join(f'<li id="src-plan-{k}">{seller_base(r["seller_name"])}, {r["plan_name"]}, {nice_date(r["last_seen"])}: '
+                        f'<a href="{r["pricing_url"]}" rel="nofollow">{r["pricing_url"]}</a></li>' for k, r in EXTRA_PLANS.items())
+
+
+def plan_ref(g, r):
+    """The source id and number of a plan row."""
+    if r is GOAL_PLANS.get(g["slug"]):
+        return f"src-plan-{g['slug']}", PLAN_REF[g["slug"]]
+    return f"src-plan-{plan_key(r)}", EXTRA_REF[plan_key(r)]
+
+
+def plan_line(g, cls, r=None):
+    """"Online clinics from $25/mo (Strut Health)" with its footnote: the goal's plan, or the plan row given; "" when
+    there is none."""
+    r = r or GOAL_PLANS.get(g["slug"])
     if not r:
         return ""
-    usd = float(r["price_monthly"])
-    usd = f"{usd:.0f}" if usd == int(usd) else f"{usd:.2f}"
-    n = PLAN_REF[g["slug"]]
-    return (f'<span class="{cls}">Online clinics from ${usd}/mo ({seller_base(r["seller_name"])})'
-            f'<sup><a class="ref" href="#src-plan-{g["slug"]}" aria-label="Source {n}">{n}</a></sup></span>')
+    sid, n = plan_ref(g, r)
+    return (f'<span class="{cls}">Online clinics from {usd(r["price_monthly"])}/mo ({seller_base(r["seller_name"])})'
+            f'<sup><a class="ref" href="#{sid}" aria-label="Source {n}">{n}</a></sup></span>')
 
 # Numbers from the database (tools/pull_data.py writes these keys when SITE_DATABASE_URL is set). Without them the
 # page renders the hand-written statuses and dates above, unchanged.
@@ -700,8 +755,9 @@ def option_rows(g):
         # The price and the goal's cheapest online-clinic plan are the last items of the "how" line, with their
         # footnotes; the right side of the row keeps only the button (owner, 1 Nov 2026).
         plan = GOAL_PLANS.get(slug)
-        cost = price_sentence(p, pad) + (
-            " " + plan_line(g, "plan-in").replace(")<sup>", ").<sup>", 1) if plan and p.get("substance") == plan["substance_slug"] else "")
+        # a goal with clinic plans (weight loss) gives each row its own plan (row_plan); the others keep the goal's one plan
+        rp = row_plan(g, p) if g.get("clinic_plans") else (plan if plan and p.get("substance") == plan["substance_slug"] else None)
+        cost = price_sentence(p, pad) + (" " + plan_line(g, "plan-in", rp).replace(")<sup>", ").<sup>", 1) if rp else "")
         sb = sellers_button(p)
         act = (f'<span class="pick-act">{sb}{visit(g, small=True)}</span>' if p in approved else
                f'<span class="pick-act">{sb}</span>' if sb else
@@ -1251,6 +1307,53 @@ def category_page(g):
     return category_body(g, table, f'{g["options_checked"]} options checked on the same five criteria. Rows that are not approved for human use carry no price and no seller.')
 
 
+KIND_CHIP = {"brand": ("ok", "Brand"), "compounded": ("warn", "Compounded"), "program": ("neutral", "Program")}
+
+
+def plan_kind(r):
+    """"program" for a plan that names no medication, "brand" for branded or oral_branded, else "compounded"."""
+    return "program" if not r["substance_slug"] else "brand" if r.get("product_kind") in BRANDED else "compounded"
+
+
+def care_note(r):
+    """"+ $99/mo care" when the plan adds a monthly membership, "all-in" when it adds none; "" when the fee is not known."""
+    fee = r.get("membership_fee_monthly")
+    return "" if fee is None else "all-in" if float(fee) == 0 else f"+ {usd(fee)}/mo care"
+
+
+def clinic_section(g, rows):
+    """"Online clinic prices" (pages.md, Category, weight loss; owner task 2 Nov 2026): one row per plan, cheapest first;
+    the clinic in plain text (no link to any clinic site), its FDA letter linking to our letters page, and the disabled
+    "Online clinic" button until a paid link exists per seller. Stacked cards on phones (bundle.css, Clinic table)."""
+    if not rows:
+        return ""
+    newest = max(r["last_seen"] for r in rows)
+    trs = []
+    for r in rows:
+        chip, label = KIND_CHIP[plan_kind(r)]
+        care = care_note(r)
+        n = r.get("fda_letter_count") or 0
+        letter = (f'<a class="chip chip-warn chip-link" href="{LETTERS_URL}">FDA letter {nice_date(r["last_fda_letter_date"])}</a>'
+                  if n and r.get("last_fda_letter_date") else '<span class="no-letter">none</span>')
+        trs.append(f'<tr><td><span class="name">{seller_base(r["seller_name"])}</span></td><td data-l="Plan">{r["plan_name"]}</td>'
+                   f'<td><span class="chip chip-{chip}">{label}</span></td>'
+                   f'<td data-l="Per month"><span class="num">{usd(r["price_monthly"])}</span>{f"<span class=sub>{care}</span>" if care else ""}</td>'
+                   f'<td data-l="FDA letter">{letter}</td>'
+                   f'<td class="act"><span class="pick-act"><span class="btn btn-action btn-sm" role="button" aria-disabled="true">Online clinic</span>'
+                   f'<span class="paid">No paid link yet</span></span></td></tr>')
+    return f"""
+<section class="band-2" id="clinics">
+  <div class="wrap">
+    <div class="sec-hd"><div><h2>Online clinic prices</h2><p>{len(rows)} plans at the online clinics we track, cheapest first.</p></div></div>
+    <div class="tbl-wrap"><table class="tbl tbl-cards tbl-clinics">
+      <thead><tr><th scope="col">Clinic</th><th scope="col">Plan</th><th scope="col">What it is</th><th scope="col">Per month</th><th scope="col">FDA letter</th><th scope="col"><span class="vh">Online clinic</span></th></tr></thead>
+      <tbody>{"".join(trs)}</tbody>
+    </table></div>
+    <p class="small" style="margin-top:16px">Prices are the clinics' published monthly prices on {nice_date(newest)}; "from" prices are the lowest shown. A clinic with an FDA warning letter is still listed; the letter is public record.</p>
+  </div>
+</section>"""
+
+
 def category_body(g, table, table_lede):
     srcs = "".join(f'<li id="src-{s["n"]}">{s["text"]}: <a href="{s["url"]}" rel="nofollow">{s["url"]}</a></li>' for s in g.get("sources", []))
     # The Clinic intake look (owner, 31 Oct 2026): Home's parts on the goal page. Title, H1, description and URL stay as
@@ -1272,8 +1375,16 @@ def category_body(g, table, table_lede):
     <p class="small" style="margin-top:16px">{LEGAL_NOTE}</p>
   </div>
 </section>""" if legal else ""
+    plans = clinic_plans(g)
+    # the pad's clinic plan (a goal with clinic plans and no hand-checked price): the cheapest, with its source
+    pad_plan = plans[0] if plans and not g.get("price_source") else None
+    pad_sid, pad_n = plan_ref(g, pad_plan) if pad_plan else ("", 0)
+    pad_ref = f'<sup><a class="ref" href="#{pad_sid}" aria-label="Source {pad_n}">{pad_n}</a></sup>' if pad_plan else ""
     own = {f'src-{s["n"]}' for s in g.get("sources", [])}
-    srcs += page_sources(opt_html + legal_html, own)
+    srcs += page_sources(opt_html + legal_html + pad_ref, own)
+    if plans:
+        # no link to any clinic site on a page with clinic plans: the plan sources show their address as plain text
+        srcs = re.sub(r'(<li value="\d+" id="src-plan-[^"]+">.*?)<a href="([^"]+)" rel="nofollow">\2</a>', r"\1\2", srcs)
     # Sources only when the page links one (never an empty heading; e.g. /muscle/, whose rows carry no footnote)
     sources_html = f"""<section class="section" id="sources">
   <div class="wrap">
@@ -1289,6 +1400,18 @@ def category_body(g, table, table_lede):
         <div class="ledger"><span>{g["best_option"]}</span></div>
         <div class="rx-foot"><span class="stamp">Checked {STAMP_CHECKED}</span><span class="fine">{g["price_note"]}. Not a prescription.</span></div>
       </div>""" if g.get("price_from_usd") is not None and g.get("price_source") else ""
+    if pad_plan:
+        # The pad shows a clinic plan when the goal has no hand-checked generic price (pages.md, Category; owner task 2 Nov 2026).
+        r = pad_plan
+        what = {"brand": "FDA-approved brand", "compounded": "Compounded, not FDA approved", "program": "A program; the medicine is not named"}[plan_kind(r)]
+        care = care_note(r)
+        pad = f"""
+      <div class="board rx" aria-label="Price pad">
+        <div class="rx-head"><span class="rx-mark" aria-hidden="true">&#8478;</span><h2>Cheapest clinic plan, per month</h2></div>
+        <p class="hero-num"><span class="num-xl">{usd(r["price_monthly"])}</span> <span class="num-unit">/mo from</span>{pad_ref}</p>
+        <div class="ledger"><span>{r["plan_name"]}, {seller_base(r["seller_name"])}</span></div>
+        <div class="rx-foot"><span class="stamp">Checked {nice_date(max(x["last_seen"] for x in plans))}</span><span class="fine">{what}{", " + care if care else ""}. Not a prescription.</span></div>
+      </div>"""
     windows = "".join({window_key(p): seller_window(p) for p in g["peptides"] if has_window(p)}.values())
     return f"""
 <section class="hero hero-goal">
@@ -1313,7 +1436,7 @@ def category_body(g, table, table_lede):
       {table}
     </table></div>
   </div>
-</section>{legal_html}
+</section>{legal_html}{clinic_section(g, plans)}
 {sources_html}
 <div class="wrap sellers-all">{windows}</div>
 {SELLERS_JS}

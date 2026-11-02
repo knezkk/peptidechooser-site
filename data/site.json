@@ -226,6 +226,21 @@
       "slug": "weight-loss",
       "name": "Weight loss",
       "label": "Weight loss",
+      "page": true,
+      "title": "Weight loss peptides vs Wegovy, Zepbound | Peptide Chooser",
+      "h1": "Peptides for weight loss, compared with the approved shots.",
+      "description": "Wegovy and Zepbound are FDA approved for weight loss; compounded copies and retatrutide are not. Online clinic prices compared, with any FDA letter shown.",
+      "short_answer": "Two weekly shots are FDA approved for weight management, semaglutide (Wegovy) and tirzepatide (Zepbound), both on prescription. Online clinics also sell compounded copies, cheaper and not checked by the FDA batch by batch. Retatrutide is still in trials and sold only by research-use shops. Below: what each option costs at the clinics we track, and which clinics have an FDA warning letter.",
+      "legal_section": true,
+      "clinic_plans": {
+        "substances": [
+          "semaglutide",
+          "tirzepatide",
+          "liraglutide",
+          "orforglipron"
+        ],
+        "programs": true
+      },
       "map": {
         "x": 50,
         "y": 40
@@ -261,7 +276,8 @@
           "does": "Pharmacy-made copies sold by online clinics, often cheaper. Not checked by the FDA batch by batch.",
           "how": "Prescription through the clinic.",
           "status_plain": "Not FDA approved; pharmacy-made.",
-          "no_link": "Not FDA approved; we do not link"
+          "no_link": "Not FDA approved; we do not link",
+          "plan_kind": "compounded"
         },
         {
           "name": "Retatrutide",
