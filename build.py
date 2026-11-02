@@ -5,10 +5,14 @@ Numbers source: data/site.json. Nothing numeric is typed into a template.
 """
 from pathlib import Path
 import json
+import os
+import sys
 import re
 from html import escape
 import shutil
 from datetime import date
+
+import guides
 
 ROOT = Path(__file__).parent
 DIST = ROOT / "dist"
@@ -16,7 +20,8 @@ SITE = "https://peptidechooser.com"
 EMAIL = "hello@peptidechooser.com"
 AUTHOR = "Peptide Chooser editorial team"
 
-DATA = json.loads((ROOT / "data" / "site.json").read_text(encoding="utf-8"))
+# SITE_JSON points at another data file (a local preview with database rows); the deploy always reads data/site.json.
+DATA = json.loads(Path(os.environ.get("SITE_JSON") or ROOT / "data" / "site.json").read_text(encoding="utf-8"))
 TOKENS = json.loads((ROOT / "design" / "tokens.json").read_text(encoding="utf-8"))
 LIVE_GOALS = [g for g in DATA["goals"] if g.get("live")]
 COLOR = {t["name"]: t["value"] for t in TOKENS["color"]["tokens"]}
@@ -141,10 +146,10 @@ def goals_strip(heading, skip=None):
 def nav_items(path):
     # Design book, Pages and buttons, Header (owner, 1 Nov 2026): "Peptides by goal" (a menu of the seven goals: a goal
     # with its own page links there, the others to Home with the goal chosen, /#goals-<slug>), then Legal status, FDA
-    # letters (the letters page once it exists, else Home's section), How we rate, About. Learn comes back when guides exist.
+    # letters (the letters page once it exists, else Home's section), How we rate, About; Learn (/learn/, the guides; owner task 2 Nov 2026) after FDA letters.
     current = ' aria-current="page"'
     goals = "".join(f'<li><a href="{goal_href(g)}">{g["label"]}</a></li>' for g in ALL_GOALS)
-    items = [("/#legal", "Legal status"), (LETTERS_URL, "FDA letters"), ("/how-we-rate/", "How we rate"), ("/about/", "About")]
+    items = [("/#legal", "Legal status"), (LETTERS_URL, "FDA letters"), ("/learn/", "Learn"), ("/how-we-rate/", "How we rate"), ("/about/", "About")]
     return (f'<div class="nav-goals"><button type="button" class="nav-goals-btn" aria-expanded="false" aria-controls="goal-menu">Peptides by goal</button>'
             f'<span class="nav-group">Peptides by goal</span><ul class="goal-menu" id="goal-menu">{goals}</ul></div>'
             + "".join(f'<a href="{href}"{current if href == path else ""}>{label}</a>' for href, label in items))
@@ -255,6 +260,14 @@ def breadcrumb_schema(items):
     return ('<script type="application/ld+json">'
             + json.dumps({"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": els})
             + "</script>")
+
+
+def item_list_schema(name, items):
+    """ItemList JSON-LD (owner task 2 Nov 2026: on the letters page, and on /sellers/ once it exists): items are (name, url)."""
+    els = [{"@type": "ListItem", "position": i, "name": n, "url": u} for i, (n, u) in enumerate(items, start=1)]
+    return ('<script type="application/ld+json">'
+            + json.dumps({"@context": "https://schema.org", "@type": "ItemList", "name": name,
+                          "numberOfItems": len(els), "itemListElement": els}) + "</script>")
 
 
 def visit(g, small=False):
@@ -1094,6 +1107,7 @@ HOME = f"""
       <h2 id="glossary-h">What the labels mean</h2>
       <dl class="glossary-list">{GLOSSARY}</dl>
     </section>
+    {guides.home_card()}
     <section class="rate-strip" aria-labelledby="rate-h">
       <div class="rate-hd"><h2 id="rate-h">How we rate</h2><p>Every product and seller is judged on the same five criteria. We publish them so you can check our work.</p><a href="/how-we-rate/">Read the full method</a></div>
       <ul class="criteria">
@@ -1513,7 +1527,9 @@ if LETTERS_ALL:
     _d = DATA["pulled_at"][:10]
     PAGES.append(("/fda-warning-letters/", "fda-warning-letters/index.html", "FDA warning letters to peptide sellers | Peptide Chooser",
                   f"Every FDA warning letter to peptide sellers, compounders and online clinics in our database, with its date, subject and fda.gov link. Checked {nice_date(_d)}.",
-                  LETTERS_PAGE, "", [("/fda-warning-letters/", "FDA warning letters")]))
+                  LETTERS_PAGE, item_list_schema("FDA warning letters to peptide sellers and online clinics",
+                                                 [(f'{clean(r["company_name"])}: {clean(r["letter_subject"])}', r["letter_url"]) for r in LETTERS_ALL]),
+                  [("/fda-warning-letters/", "FDA warning letters")]))
 
 for _g in ALL_GOALS:
     if _g.get("page"):
@@ -1562,6 +1578,10 @@ def main():
         f'<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">{urls}</urlset>\n')
     (DIST / "pages.json").write_text(json.dumps([{"path": p[0], "title": p[2]} for p in PAGES] + [{"path": "/404", "title": "Page not found | Peptide Chooser"}]))
     print("built", len(PAGES) + 1, "pages")
+
+
+# The Learn section (pages.md, Learn and Guide): /learn/ and the guides, from guides.py, which reads this module's helpers.
+PAGES += guides.pages(sys.modules[__name__])
 
 
 if __name__ == "__main__":

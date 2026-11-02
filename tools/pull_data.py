@@ -10,6 +10,8 @@ Reads the `site.*` views through the read-only role (peptide-data spec 0015) and
                             five-check score (score, score_* yes/no, score_checked_on)
   - site.fda_letters    -> "letters": the newest FDA warning letters to sellers in the database (see letters_rows)
   - site.fda_letters_all -> "letters_all": every peptide-related letter or letter to a seller we know, for /fda-warning-letters/
+  - site.sellers, site.seller_profile, site.products -> "guide_stats": the counts the guides in guides.py quote (shops we
+                            check, those with a lab report in the last 12 months, shops that list BPC-157)
 
 Everything else in site.json (hand-checked prices with their sources, texts, goals) is left untouched.
 Run before build.py:  SITE_DATABASE_URL=postgres://site_reader:...@host:5432/postgres python3 tools/pull_data.py
@@ -87,6 +89,17 @@ def letters_all_rows():
         "where peptide_related or seller_slug is not null order by letter_date desc nulls last, company_name")
 
 
+def guide_stats():
+    """The counts the guides quote (guides.py; owner task 2 Nov 2026), with the day they were counted. site.json keeps only
+    ten listings per substance, so these cannot be counted from its rows."""
+    r = rows(
+        "select (select count(*) from site.sellers) as sellers, "
+        "(select count(*) from site.seller_profile where newest_coa_date >= current_date - interval '12 months') as sellers_coa_12m, "
+        "(select count(distinct seller_slug) from site.products where substance_slug = 'bpc-157') as bpc_sellers")[0]
+    r["checked_on"] = date.today().isoformat()
+    return r
+
+
 def main():
     if not URL:
         print("pull_data: SITE_DATABASE_URL not set, site.json left as it is")
@@ -123,6 +136,7 @@ def main():
     # the count and the oldest date the letters page and Home's "See all N letters" show
     d["letters_all_total"] = len(d["letters_all"])
     d["letters_all_oldest"] = min((r["letter_date"] for r in d["letters_all"] if r["letter_date"]), default=None)
+    d["guide_stats"] = guide_stats()
     d["pulled_at"] = datetime.utcnow().isoformat(timespec="seconds") + "Z"
     DATA.write_text(json.dumps(d, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     print(f"pull_data: {len(d['legal_db'])} status rows, {len(d['approved_db'])} approvals, {len(d['plans'])} plans, "
