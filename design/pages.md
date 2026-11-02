@@ -204,7 +204,7 @@ Builds the Peptide page type above from data. A page exists for every substance 
 - **Search:** a substance entry opens its /peptides/ page. Sitemap, llms.txt and `tools/og.py` include every page.
 - **Checks** (`tools/check.py`): every /peptides/<slug>/ page opens its short answer with the status and its source link; no page says a dose (an amount with "per day/week/dose/kg" and the like, or "take/inject N"); no /peptides/ page links to a seller's domain.
 
-## Compare pairs `/compare/<a>-vs-<b>/` (owner task 2 Nov 2026; pending ODOBRENO DIZAJN and ODOBRENO SEO)
+## Compare pairs `/compare/<a>-vs-<b>/` (owner task 2 Nov 2026; ODOBRENO DIZAJN and ODOBRENO SEO - Karlo - 2. 11. 2026)
 
 Builds the Compare page type above as static, indexable pages from the data /compare/ uses. One page per pair: the two URL names in alphabetical order joined by "-vs-", never b-vs-a (`tools/check.py` fails a sitemap with a pair twice). No shop pairs. No link to a shop or a clinic.
 
