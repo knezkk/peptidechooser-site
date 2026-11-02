@@ -167,6 +167,19 @@ html:not(.nav-js) .goal-menu{display:flex;flex-wrap:wrap}
 #letters-n{margin:12px 0 0}
 #letters-n:empty{display:none}
 .letters-more,.letters-all{margin:16px 0 0}
+/* Get new letters (pages.md, Letters, 2 Nov 2026): one white card (line border, radius-panel) under the explanation line:
+   an h2 at display-3 size, one sentence, the labelled email input with btn-ink "Subscribe" and btn-line "RSS feed" on one
+   row (wrapping under 640px, where both buttons go full width), and one small line under it. Not drawn without the
+   Buttondown name in data/site.json. */
+.subscribe{margin-top:24px;max-width:640px;padding:20px 24px;background:var(--white);border:1px solid var(--line);border-radius:var(--radius-panel)}
+.subscribe h2{font-size:var(--display-3-size);line-height:var(--display-3-lh);margin:0 0 6px}
+.subscribe p{margin:0}
+.subscribe>p:first-of-type{color:var(--ink-2)}
+.sub-form{margin:16px 0 10px}
+.sub-form label{display:block;font-weight:600;font-size:var(--small-size);margin-bottom:6px}
+.sub-row{display:flex;flex-wrap:wrap;gap:8px}
+.sub-row .input{flex:1 1 220px;min-width:0}
+.subscribe .small{color:var(--ink-2)}
 
 /* Inputs */
 .input{min-height:48px;padding:0 14px;border:1.5px solid var(--line-strong);border-radius:var(--radius-control);font:16px var(--font-text);color:var(--ink);background:var(--white);box-sizing:border-box}

@@ -233,6 +233,21 @@ def check_parts(P):
                 errs.append(f"{name}: row {i} without a date, a company or a subject")
             elif not re.search(r'href="https://www\.fda\.gov/[^"]+"[^>]*rel="nofollow"', cells[4]):
                 errs.append(f"{name}: row {i} without its nofollow fda.gov letter")
+    # The letters feed (pages.md, Letters): it parses as XML and every item links to the letter on fda.gov.
+    feed = DIST / "fda-warning-letters" / "feed.xml"
+    if feed.exists():
+        import xml.etree.ElementTree as ET
+        try:
+            items = ET.parse(feed).getroot().findall("./channel/item")
+        except ET.ParseError as e:
+            errs.append(f"feed.xml: not valid XML ({e})")
+            items = []
+        if feed.exists() and not items and not any(e.startswith("feed.xml") for e in errs):
+            errs.append("feed.xml: no items")
+        for it in items:
+            link, guid = it.findtext("link") or "", it.findtext("guid") or ""
+            if not link.startswith("https://www.fda.gov/") or guid != link or not it.findtext("title") or not it.findtext("pubDate"):
+                errs.append(f"feed.xml: item without its fda.gov link, title or date ({link})")
     return errs
 
 

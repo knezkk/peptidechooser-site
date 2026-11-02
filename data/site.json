@@ -1,5 +1,8 @@
 {
   "ga4_id": "G-12CV2HEYW6",
+  "newsletter": {
+    "buttondown": "peptidechooser"
+  },
   "checked": "2026-10-30",
   "goals": [
     {
