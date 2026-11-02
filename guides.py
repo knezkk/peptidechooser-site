@@ -270,8 +270,12 @@ def known_sources(b, f):
     hair = next(g for g in b.ALL_GOALS if g["slug"] == "hair")
     for s in hair.get("sources", []):
         k[f"hair-{s['n']}"] = (s["text"], s["url"], "link")
-    if f["sellers"]:
-        k["db-sellers"] = (f"Peptide Chooser database: the research-use and cosmetic peptide shops we check, {nice(f['stats_on'])}. "
+    # registered whenever shop data is there, not only with the guide counts: sentences on shop prices and clinic plans cite
+    # it too, and a cited source that is missing stopped the whole build (owner, 2 Nov 2026). Dated by the counts, else
+    # by the data pull.
+    on = f["stats_on"] or (b.DATA.get("pulled_at") or "")[:10]
+    if (f["sellers"] or b.SHOPS or b.PRODUCTS) and on:
+        k["db-sellers"] = (f"Peptide Chooser database: the research-use and cosmetic peptide shops we check, {nice(on)}. "
                            "Their prices and checks are in the seller windows on our goal pages", "/recovery/", "own")
     st = b.db_status("bpc-157")
     if st:
