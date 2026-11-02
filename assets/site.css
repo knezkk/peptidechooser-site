@@ -52,7 +52,7 @@ p { margin: 0 0 1em; }
 .tbl th:has(.vh) { position: relative; } /* keeps the hidden text inside the scrolling table frame */
 
 /* Breadcrumbs */
-.crumbs { font-size: var(--small-size); color: var(--ink-2); padding: 16px 0 0; }
+.crumbs { font-size: var(--small-size); color: var(--ink-2); padding-top: 16px; } /* top only: the side padding stays the .wrap's, so the trail lines up with the page text */
 .crumbs a { color: var(--ink-2); }
 .crumbs span { margin: 0 6px; }
 
