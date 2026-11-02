@@ -37,8 +37,16 @@ p { margin: 0 0 1em; }
 .nav a:hover { background: var(--neutral-tint); color: var(--ink); }
 .nav a[aria-current="page"] { color: var(--clinic-text); }
 .head-cta { flex: none; }
-/* 901 to 1100px: the six header items keep one row beside the logo and the button */
-@media (min-width: 901px) and (max-width: 1100px) { .site-head .wrap { gap: 12px; } .nav a, .nav-goals-btn { padding: 0 8px; } }
+/* 1180 to 1599px: the six header items and the search field keep one row beside the logo and the button (owner task 2 Nov 2026;
+   901 to 1100px before the field) */
+@media (min-width: 1180px) and (max-width: 1599px) {
+  .site-head .wrap { gap: 12px; }
+  .nav > a, .nav-goals-btn { padding: 0 5px; }
+  .head-search { margin-left: 4px; }
+  .head-search .input { font-size: 14px; padding: 0 8px; }
+}
+.site-head .brand, .nav-goals { flex: none; }
+@media (min-width: 1180px) { .nav { flex: 1 1 auto; justify-content: flex-end; } }
 /* text for screen readers only (table headers of button columns) */
 .vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 .tbl th:has(.vh) { position: relative; } /* keeps the hidden text inside the scrolling table frame */
@@ -260,7 +268,7 @@ p { margin: 0 0 1em; }
 .prose h2:first-of-type { margin-top: 40px; }
 .prose ul, .prose ol { padding-left: 1.2em; }
 .prose li { margin-bottom: 8px; }
-.prose a { color: var(--clinic); }
+.prose a:not(.btn) { color: var(--clinic); } /* a button keeps its own colours (Contact, 404) */
 .btn-row { display: flex; flex-wrap: wrap; gap: 10px; margin: 24px 0 32px; }
 /* Guide pages (pages.md, Guide): the related strip and the sources sit under "What to do next" at the sources heading's size. */
 .prose h2.h-sources { font: var(--display-4-weight) var(--display-4-size)/var(--display-4-lh) var(--font-display); margin: 48px 0 12px; padding: 0; border: 0; }
@@ -271,6 +279,13 @@ p { margin: 0 0 1em; }
 /* Home's guides card sits in the grey band after "What the labels mean"; two columns of links from 760px. */
 .learn-card { margin-top: 48px; }
 @media (min-width: 760px) { .learn-card ul { columns: 2; column-gap: 32px; } .learn-card li { break-inside: avoid; } }
+
+/* Short pages (owner answer Q3 a, 2 Nov 2026): the footer sits at the bottom of the window; main takes the spare height.
+   The breadcrumb is a body child with auto side margins, so it is told to stretch to the frame like any .wrap. */
+body { display: flex; flex-direction: column; min-height: 100vh; }
+body > * { flex-shrink: 0; }
+#main { flex: 1 0 auto; }
+body > .crumbs { width: -moz-available; width: -webkit-fill-available; width: stretch; }
 
 /* Footer */
 .site-foot { background: var(--ink); color: var(--ink-on-dark); padding: 56px 0 48px; margin-top: 72px; font-size: var(--small-size); }
@@ -381,8 +396,8 @@ p { margin: 0 0 1em; }
   .tbl-letters-all td.num { white-space: normal; width: 64px; } /* the date takes two short lines, the company gets the room */
   .tbl-letters .sub-phone { display: block; margin-top: 2px; font-size: var(--small-size); line-height: 1.4; color: var(--ink-2); font-weight: 400; }
 }
-@media (max-width: 900px) {
-  /* Header up to 900px (was 760px; owner task 2 Nov 2026, six items with Sellers): logo and "Compare by goal" on the first row, "Menu" under them; the open menu (or, with
+@media (max-width: 1179px) {
+  /* Header up to 1179px (900px before the search field, 760px before Sellers; owner tasks 2 Nov 2026): logo and "Compare by goal" on the first row, "Menu" under them; the open menu (or, with
      JavaScript off, the wrapped links) takes the full width below (pages.md, Every page, Header) */
   .site-head .wrap { flex-wrap: wrap; gap: 6px 16px; padding-top: 10px; padding-bottom: 10px; min-height: 0; }
   .site-head .brand { order: 1; }

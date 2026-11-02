@@ -85,6 +85,46 @@ w.addEventListener('click',function(e){if(e.target.closest('a'))set(false);});
 document.addEventListener('click',function(e){if(w.classList.contains('open')&&!w.contains(e.target))set(false);});
 document.addEventListener('keydown',function(e){if(e.key==='Escape'&&w.classList.contains('open')){set(false);b.focus();}});})();
 </script>"""
+# Design book, Every page, Header, Search (owner task 2 Nov 2026): a plain field right of the links on wide screens, the first
+# item inside the phone Menu. Typing filters /search-index.json in the page (no library): at most 8 results under the field,
+# arrow keys move, Enter opens the chosen one (none chosen: the form goes to /search/), Escape closes. With JavaScript off
+# the form submits to /search/?q=... . window.pcSearch is shared with the /search/ page.
+SEARCH_FORM = ('<form class="head-search" role="search" action="/search/" method="get">'
+               '<label class="vh" for="hs-q">Search a peptide or seller</label>'
+               '<input class="input" id="hs-q" name="q" type="search" placeholder="Search a peptide or seller" autocomplete="off" '
+               'role="combobox" aria-expanded="false" aria-controls="hs-list" aria-autocomplete="list">'
+               '<ul class="search-list" id="hs-list" role="listbox" aria-label="Search results" hidden></ul></form>')
+SEARCH_JS = """<script>
+(function(){var idx=null,wait=[],ORDER={Goal:0,Peptide:1,Seller:2,Page:3};
+function load(cb){if(idx)return cb(idx);wait.push(cb);if(wait.length>1)return;
+fetch('/search-index.json').then(function(r){return r.json();}).then(function(d){idx=d;var w=wait;wait=[];w.forEach(function(f){f(d);});}).catch(function(){wait=[];});}
+function c(s){return String(s||'').toLowerCase().replace(/[^a-z0-9]+/g,'');}
+function score(f,k){var cf=c(f);if(cf.indexOf(k)===0)return 3;var ws=String(f).toLowerCase().split(/[^a-z0-9]+/).filter(Boolean);
+for(var i=1;i<ws.length;i++){if(c(ws.slice(i).join('')).indexOf(k)===0)return 2;}return cf.indexOf(k)>=0?1:0;}
+function find(d,q,n){var k=c(q);if(!k)return[];var out=[];
+d.forEach(function(e){var s=score(e.name,k)*2;(e.aliases||[]).forEach(function(a){s=Math.max(s,score(a,k)*2-1);});if(s>0)out.push([s,e]);});
+out.sort(function(x,y){return y[0]-x[0]||ORDER[x[1].type]-ORDER[y[1].type]||x[1].name.length-y[1].name.length||(x[1].name<y[1].name?-1:1);});
+return out.slice(0,n).map(function(x){return x[1];});}
+function row(e,tab){var li=document.createElement('li'),a=document.createElement('a');a.href=e.url;if(!tab)a.tabIndex=-1;
+[['search-name',e.name],['chip chip-neutral',e.type],['search-line',e.line]].forEach(function(p){var s=document.createElement('span');s.className=p[0];s.textContent=p[1];a.appendChild(s);});
+li.appendChild(a);return li;}
+window.pcSearch={load:load,find:find,row:row};
+var f=document.querySelector('.head-search');if(!f)return;var inp=f.querySelector('input'),list=f.querySelector('.search-list'),res=[],act=-1;
+function close(){list.hidden=true;inp.setAttribute('aria-expanded','false');inp.removeAttribute('aria-activedescendant');act=-1;}
+function draw(){var v=inp.value.trim();if(!v){close();return;}load(function(d){if(inp.value.trim()!==v)return;res=find(d,v,8);list.textContent='';act=-1;
+inp.removeAttribute('aria-activedescendant');
+if(!res.length){var li=document.createElement('li');li.className='search-none';li.textContent='No match. Press Enter to search every page.';list.appendChild(li);}
+res.forEach(function(e,i){var li=row(e);li.id='hs-o'+i;li.setAttribute('role','option');li.setAttribute('aria-selected','false');list.appendChild(li);});
+list.hidden=false;inp.setAttribute('aria-expanded','true');});}
+function mark(i){var o=list.querySelectorAll('[role=option]');if(!o.length)return;act=(i+o.length)%o.length;
+for(var j=0;j<o.length;j++)o[j].setAttribute('aria-selected',j===act?'true':'false');inp.setAttribute('aria-activedescendant',o[act].id);o[act].scrollIntoView({block:'nearest'});}
+inp.addEventListener('input',draw);inp.addEventListener('focus',function(){load(function(){});if(inp.value.trim())draw();});
+inp.addEventListener('keydown',function(e){if(e.key==='ArrowDown'){e.preventDefault();if(list.hidden)draw();else mark(act+1);}
+else if(e.key==='ArrowUp'){e.preventDefault();if(!list.hidden)mark(act-1);}
+else if(e.key==='Enter'&&!list.hidden&&act>=0&&res[act]){e.preventDefault();location.href=res[act].url;}
+else if(e.key==='Escape'&&!list.hidden){e.preventDefault();e.stopPropagation();close();}});
+document.addEventListener('click',function(e){if(!f.contains(e.target))close();});})();
+</script>"""
 GSAP = "https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5"
 MOTION_JS = f"""<script defer src="{GSAP}/gsap.min.js"></script>
 <script defer src="{GSAP}/ScrollTrigger.min.js"></script>
@@ -187,7 +227,7 @@ def page(path, title, description, body, schema="", crumb=None):
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{title}</title>
-<meta name="description" content="{description}">
+<meta name="description" content="{description}">{'<meta name="robots" content="noindex">' if path in NOINDEX else ""}
 <link rel="canonical" href="{canonical}">{FEED_LINK if LETTERS_ALL and path in ("/", "/fda-warning-letters/") else ""}
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Peptide Chooser">
@@ -216,7 +256,7 @@ def page(path, title, description, body, schema="", crumb=None):
 <header class="site-head">
   <div class="wrap">
     <a class="brand" href="/"><img src="/assets/logo.svg" alt="" width="50" height="20">Peptide Chooser</a>
-    <nav class="nav" id="site-nav" aria-label="Main">{nav_items(path)}</nav>
+    <nav class="nav" id="site-nav" aria-label="Main">{SEARCH_FORM}{nav_items(path)}</nav>
     <div class="head-cta"><a class="btn btn-ink" href="/#goals">Compare by goal</a></div>
     <button type="button" class="btn btn-line btn-sm nav-toggle" aria-expanded="false" aria-controls="site-nav">Menu</button>
   </div>
@@ -245,6 +285,7 @@ def page(path, title, description, body, schema="", crumb=None):
 </footer>
 {COOKIE_BAR}
 {NAV_JS}
+{SEARCH_JS}
 {MOTION_JS}
 </body>
 </html>
@@ -1095,6 +1136,26 @@ if(m&&root.querySelector('.goal-item[data-goal="'+m[1]+'"]')){pick(m[1]);root.sc
 fromHash();window.addEventListener('hashchange',fromHash);})();
 </script>"""
 
+# What we track (owner task 2 Nov 2026): the counts the trust pages and Home's sellers card show, all from site.json;
+# each line is drawn only when its data is there (never a placeholder).
+N_SELLERS = len(PROFILES)
+N_CLINICS = len({r["seller_slug"] for r in PLANS})
+N_LETTERS = DATA.get("letters_all_total") or len(LETTERS_ALL)
+N_STATUS = len({r["substance_slug"] for r in LEGAL_DB or []})
+PULLED = nice_date(DATA["pulled_at"][:10]) if DATA.get("pulled_at") else ""
+SCORE_ON = max((r["score_checked_on"] for r in PROFILES.values() if r.get("score_checked_on")), default="")
+
+# Sellers we track (pages.md, Home, under "Latest FDA warning letters"): the letters block's look, one line and
+# btn-line "See all sellers". No seller names on Home.
+SELLERS_HOME = f"""
+<section class="section" id="sellers-home">
+  <div class="wrap">
+    <div class="sec-hd"><div><h2>Sellers we track</h2><p>{N_SELLERS} shops that sell peptides online, each with five background checks.{f" Checked {nice_date(SCORE_ON)}." if SCORE_ON else ""}</p></div></div>
+    <p class="letters-all"><a class="btn btn-line" href="/sellers/">See all sellers</a></p>
+  </div>
+</section>
+""" if PROFILES else ""
+
 HOME = f"""
 <section class="hero hero-clinic">
   <div class="wrap">
@@ -1120,13 +1181,13 @@ HOME = f"""
     </section>
     {guides.home_card()}
     <section class="rate-strip" aria-labelledby="rate-h">
-      <div class="rate-hd"><h2 id="rate-h">How we rate</h2><p>Every product and seller is judged on the same five criteria. We publish them so you can check our work.</p><a href="/how-we-rate/">Read the full method</a></div>
+      <div class="rate-hd"><h2 id="rate-h">How we rate</h2><p>Every seller gets the same five checks, in this order. They are facts we hold about the seller, not a safety grade.</p><a href="/how-we-rate/">Read the full method</a></div>
       <ul class="criteria">
-        <li><h3>Evidence</h3><p>What human studies show for the use you care about, not what a molecule does in a dish.</p></li>
-        <li><h3>Regulatory status</h3><p>FDA approval, cosmetic or research labeling, and any FDA warning letters sent to the seller.</p></li>
-        <li><h3>Lab testing</h3><p>Whether a third-party certificate of analysis exists and matches the batch you would receive.</p></li>
-        <li><h3>Real price</h3><p>Price per month or per milligram, calculated the same way for every seller so the numbers compare.</p></li>
-        <li><h3>Transparency</h3><p>Who runs the company, where it ships from, and whether paid placements are labeled.</p></li>
+        <li><h3>Lab reports</h3><p>A lab report dated in the last 12 months.</p></li>
+        <li><h3>No FDA letter</h3><p>No FDA warning letter matched to its web or street address.</p></li>
+        <li><h3>Company found</h3><p>The business behind the shop found in a state registry.</p></li>
+        <li><h3>Legal pages</h3><p>A terms page and a privacy or refund page, seen in the last 30 days.</p></li>
+        <li><h3>Fresh prices</h3><p>A price per milligram seen in the last 30 days.</p></li>
       </ul>
       <nav class="trust-links" aria-label="How we work"><a href="/disclosure/">How we make money</a><a href="/about/">Who checks our facts</a><a href="/corrections/">Mistakes we fixed</a><a href="#sources">Sources</a></nav>
     </section>
@@ -1158,7 +1219,7 @@ HOME = f"""
 </section>
 
 {LETTERS_SECTION}
-
+{SELLERS_HOME}
 <section class="section" id="learn">
   <div class="wrap">
     <div class="sec-hd"><div><h2>Who to follow</h2><p>{CREATORS["note"]}</p></div></div>
@@ -1189,6 +1250,18 @@ CORRECTIONS = f"""
 </div></section>
 """
 
+# What we track (pages.md, Trust pages, About; owner task 2 Nov 2026): one line per count that site.json holds.
+_track = [f'<li><a href="/sellers/">{N_SELLERS} sellers</a> that sell peptides online, each with its five checks.</li>' if N_SELLERS else "",
+          f"<li>{N_CLINICS} online clinics with plan prices.</li>" if N_CLINICS else "",
+          (f'<li><a href="/fda-warning-letters/">{N_LETTERS} FDA warning letters</a> to peptide sellers, compounders and online clinics.</li>'
+           if LETTERS_ALL else f"<li>{N_LETTERS} FDA warning letters to peptide sellers, compounders and online clinics.</li>") if N_LETTERS else "",
+          f"<li>{N_STATUS} substances with an FDA status, each with its source.</li>" if N_STATUS else ""]
+ABOUT_TRACK = (f"""<h2>What we track</h2>
+<ul>
+{"".join(x + chr(10) for x in _track if x)}</ul>
+<p>{f"Last data pull: {PULLED}. " if PULLED else ""}The data comes from the sellers' public pages, the FDA and state business registries, read by our own crawler. Items marked for review are checked by a person before they are published.</p>
+""" if any(_track) else "")
+
 ABOUT = f"""
 <section class="page"><div class="wrap prose">
 <h1>About Peptide Chooser</h1>
@@ -1202,7 +1275,7 @@ ABOUT = f"""
 <li>Show the source and date behind every claim, including FDA status and warning letters.</li>
 <li>Include FDA-approved alternatives when they are the better-supported option.</li>
 </ul>
-<h2>What we do not do</h2>
+{ABOUT_TRACK}<h2>What we do not do</h2>
 <ul>
 <li>We do not sell peptides or any other product.</li>
 <li>We do not give personal medical advice or dosing instructions.</li>
@@ -1217,25 +1290,38 @@ ABOUT = f"""
 </div></section>
 """
 
+# How we rate (pages.md, Trust pages; owner task 2 Nov 2026): the five seller checks exactly as the seller pages and
+# the price windows show them (site.sellers in peptide-data), then the goal page rule. URL, title and H1 unchanged.
 HOW = f"""
 <section class="page"><div class="wrap prose">
 <h1>How we rate peptide products and sellers</h1>
-<p class="lede">Every product and seller is judged on the same five criteria. We publish them so you can check our work.</p>
-<p class="small meta">{AUTHOR}. Last updated {CHECKED}. {STANDING_LINE}</p>
-<h2>1. Evidence</h2>
-<p>We look for human studies on the specific use you are reading about. Lab and animal results are reported as such and never presented as proof that something works in people.</p>
-<h2>2. Regulatory status</h2>
-<p>We state whether a product is FDA-approved for that use, sold as a cosmetic or supplement, compounded by a pharmacy, or labeled for research only. We check the FDA's public warning letter database for every seller we list and link the letter when one exists.</p>
-<h2>3. Lab testing</h2>
-<p>We record whether a seller publishes a certificate of analysis (COA), which lab issued it, its date, and whether it is tied to a specific batch. A COA that cannot be matched to a batch counts for less.</p>
-<h2>4. Real price</h2>
-<p>Sellers quote prices in different ways. We convert them to a common unit, such as price per milligram or price per 30 days of use, so the numbers can be compared directly.</p>
-<h2>5. Transparency</h2>
-<p>We look at who owns the company, where it ships from, its return policy, and whether it labels paid promotions.</p>
-<h2>What does not affect a rating</h2>
-<p>Whether a seller pays us a commission. Paid links are labeled and sellers without an affiliate program are rated and listed the same way.</p>
+<p class="lede">We judge every seller by the same five checks and build every goal page by the same rule. The checks are facts we hold about a seller, not a safety grade.</p>
+<p class="small meta">{AUTHOR}. Last updated {STAMP_CHECKED}. Every claim links to its source. Prices checked {STAMP_CHECKED}.</p>
+<h2>The five seller checks</h2>
+<p>{f'We track <a href="/sellers/">{N_SELLERS} sellers</a>. ' if N_SELLERS else ""}Every seller page and every price window shows a line such as "3 of 5 checks". These are the five, in the order the seller page shows them. We recompute all five each time we pull our data, and the seller page shows the date as "Checked" and a date{f"; the last pull was on {PULLED}" if PULLED else ""}.</p>
+<h3>Lab reports</h3>
+<p>Met when the seller has published at least one lab report (a certificate of analysis) dated in the last 12 months, for any of its products. We read the reports on the seller's own pages. A miss means we found no report from the last 12 months; it does not mean a product failed a test. A lab report shows what one batch contained on the day it was tested, not that a product is safe or that it works.</p>
+<h3>No FDA letter</h3>
+<p>Met when the FDA's public list of warning letters holds no letter matched to the seller by its web address or street address. A letter that only shares a company name is not counted, because names repeat. A miss means the FDA sent the seller at least one warning letter; the seller page links each one.{f' We keep every letter to peptide sellers, compounders and online clinics, {N_LETTERS} so far, on our <a href="/fda-warning-letters/">FDA warning letters</a> page.' if LETTERS_ALL and N_LETTERS else ""}</p>
+<h3>Company found</h3>
+<p>Met when we find the business behind the shop in a state business registry, matched with high confidence. A miss means we did not find it. We do not search every state's registry yet, so a real company can still show as not found. When an FDA letter names the company, the seller page says so, but that alone does not meet this check.</p>
+<h3>Legal pages</h3>
+<p>Met when the seller's site has a terms page and a privacy or refund page, seen by our crawler in the last 30 days. A miss means we did not see those pages in that time. Having them says nothing about what they promise.</p>
+<h3>Fresh prices</h3>
+<p>Met when our own price crawl saw at least one price per milligram on the seller's site in the last 30 days. A miss means our prices for this seller are older than that, so read them with care.</p>
+<h3>What the score does not tell you</h3>
+<p>A seller with 5 of 5 can still sell a product that is not approved for any use. A seller with 0 of 5 is one where we found none of the five facts, not one where we found five problems; only a missed "No FDA letter" check means we found something against the seller. Read the checks one by one.</p>
+<h2>How a goal page is built</h2>
+<ul>
+<li>When the FDA has approved a treatment for the goal, it is listed first.</li>
+<li>Research-use peptides are shown with one sentence on their FDA status. We never link to a research-use seller: the price window lists the shops by name, and each name opens our page on that seller.</li>
+<li>Online clinics get a grey "Online clinic" button with "No paid link yet" under it until we have a paid link with that clinic. A paid link is a green button with "Paid link" under it.</li>
+<li>Every price shows the date we checked it, and every claim links to its source.</li>
+</ul>
+<h2>What does not change a check</h2>
+<p>Paid links, partnership requests and a seller asking us. A seller with a paid link is checked the same way as one without, and no one can buy a higher score or a better place on a page.</p>
 <h2>Corrections</h2>
-<p>If you find an error, email <a href="mailto:{EMAIL}">{EMAIL}</a> with the page and the source. We correct confirmed errors and note the date of the change.</p>
+<p>If you find an error, email <a href="mailto:{EMAIL}">{EMAIL}</a> with the page and the source. We correct confirmed errors, note the date of the change and list it on our <a href="/corrections/">corrections page</a>.</p>
 </div></section>
 """
 
@@ -1350,7 +1436,7 @@ def category_page(g):
 </tr>""")
     table = ('<thead><tr><th scope="col">Option</th><th scope="col">FDA status for hair loss</th><th scope="col">Evidence in people</th><th scope="col">Price from</th><th scope="col">How you get it</th></tr></thead>\n'
              f'      <tbody>{"".join(rows)}</tbody>')
-    return category_body(g, table, f'{g["options_checked"]} options checked on the same five criteria. Rows that are not approved for human use carry no price and no seller.')
+    return category_body(g, table, f'{g["options_checked"]} options checked on the same rule. Rows that are not approved for human use carry no price and no seller.')
 
 
 KIND_CHIP = {"brand": ("ok", "Brand"), "compounded": ("warn", "Compounded"), "program": ("neutral", "Program")}
@@ -1377,6 +1463,9 @@ def care_note(r):
 
 
 CLINICS_FIRST = 10
+# "Compare any two" (btn-line) under the clinic table and under the sellers table; /compare/ is built when plans or sellers exist
+COMPARE_LINK = ('<p class="cmp-link"><a class="btn btn-line" href="/compare/">Compare any two</a></p>'
+                if DATA.get("plans") or DATA.get("seller_profiles") else "")
 # With JavaScript the clinic table is clipped on phones (CSS hides tr.more under .clip) and "Show all N" opens it; without
 # JavaScript every row shows and the button stays hidden.
 CLINICS_JS = """<script>(function(){var s=document.getElementById('clinics'),m=s&&s.querySelector('.clinics-more');if(!m)return;
@@ -1414,6 +1503,7 @@ def clinic_section(g, rows):
     </table></div>
     {f'<p class="clinics-more" hidden><button type="button" class="btn btn-line" id="clinics-all">Show all {len(rows)}</button></p>{CLINICS_JS}' if len(rows) > CLINICS_FIRST else ""}
     <p class="small" style="margin-top:16px">Prices are the clinics' published monthly prices on {nice_date(newest)}; "from" prices are the lowest shown. A clinic with an FDA warning letter is still listed; the letter is public record.</p>
+    {COMPARE_LINK}
   </div>
 </section>"""
 
@@ -1866,6 +1956,7 @@ def sellers_index():
       <tbody>{trs}</tbody>
     </table></div>
     {more}
+    {COMPARE_LINK}
     <p class="small" style="margin-top:16px">Checks are facts we hold about the seller, not a safety or quality grade. <a href="/how-we-rate/">How we rate</a></p>
   </div>
 </section>
@@ -1889,7 +1980,7 @@ PAGES = [
     ("/about/", "about/index.html", "About Peptide Chooser",
      "Peptide Chooser is an independent site that compares peptide products and sellers for people in the United States.", ABOUT, "", [("/about/", "About")]),
     ("/how-we-rate/", "how-we-rate/index.html", "How we rate peptide products and sellers | Peptide Chooser",
-     "The five criteria Peptide Chooser uses to rate every peptide product and seller: evidence, FDA status, lab testing, real price and transparency.", HOW, "", [("/how-we-rate/", "How we rate")]),
+     "The five checks Peptide Chooser runs on every peptide seller (lab reports, FDA letters, company, legal pages, fresh prices) and how each goal page is built.", HOW, "", [("/how-we-rate/", "How we rate")]),
     ("/contact/", "contact/index.html", "Contact | Peptide Chooser",
      "Email Peptide Chooser for corrections with a source, questions about a listing, press and partnerships. We cannot answer personal medical questions.", CONTACT, "", [("/contact/", "Contact")]),
     ("/disclosure/", "disclosure/index.html", "Affiliate and medical disclosure | Peptide Chooser",
@@ -1928,6 +2019,202 @@ if PROFILES:
                       [("/sellers/", "Sellers"), (f"/sellers/{_r['seller_slug']}/", seller_name(_r))]))
 
 
+# Site search and "Compare any two" (pages.md, Every page, Header, Search; Search; Compare; owner task 2 Nov 2026).
+# /search-index.json holds one entry per page, substance with a database status and seller; the header field and /search/
+# filter it in the page. /compare/ puts two clinic plans or two sellers side by side from data embedded in the page.
+NOINDEX = {"/search/"}
+TYPE_ORDER = {"Goal": 0, "Peptide": 1, "Seller": 2, "Page": 3}
+
+
+def search_index():
+    """{type, name, aliases, url, line} per page we have (not /search/ or the seller pages, which are Seller entries), per
+    substance with a database status and per seller page. `line` is one plain line: the goal page, the substance's status,
+    the seller's kind and "N of 5 checks"."""
+    out = []
+    goal_pages = {f"/{g['slug']}/": g for g in ALL_GOALS if g.get("page")}
+    for path, _, title, desc, *_ in PAGES:
+        if path in NOINDEX or path.startswith("/sellers/") and path != "/sellers/":
+            continue
+        g = goal_pages.get(path)
+        if g:
+            out.append({"type": "Goal", "name": g["label"], "aliases": sorted({g["name"], g["short"], g["slug"].replace("-", " ")} - {g["label"]}),
+                        "url": path, "line": f"Goal page: {plural(len(g['peptides']), 'option')} with FDA status and prices"})
+        else:
+            out.append({"type": "Page", "name": "Home" if path == "/" else title.replace(" | Peptide Chooser", ""), "aliases": [],
+                        "url": path, "line": desc.split(". ")[0].rstrip(".") + "."})
+    for slug in sorted({r["substance_slug"] for r in LEGAL_DB or []}):
+        s = db_status(slug)
+        if not s:
+            continue
+        names = {r["peptide"] for r in LEGAL["rows"] if slug in (r.get("substances") or [])}
+        names |= {p["name"] for g in ALL_GOALS for p in g["peptides"] if subs_of(p) == [slug]}
+        names |= {sub_label(slug), slug.replace("-", " ")}
+        g = SUB_GOAL.get(slug)
+        out.append({"type": "Peptide", "name": s["name"], "aliases": sorted(names - {s["name"]}),
+                    "url": f"/{g['slug']}/" if g else "/#legal", "line": f"{s['label']}: {s['sentence']}"})
+    for r in sorted(PROFILES.values(), key=sellers_order):
+        out.append({"type": "Seller", "name": seller_name(r), "aliases": [r["domain"]] if r.get("domain") else [],
+                    "url": f"/sellers/{r['seller_slug']}/", "line": f"{kind_words(r)[1]}, {r['score']} of {len(SCORE_CHECKS)} checks"})
+    return sorted(out, key=lambda e: (TYPE_ORDER[e["type"]], e["name"].lower()))
+
+
+SEARCH_PAGE_JS = """<script>
+document.addEventListener('DOMContentLoaded',function(){var S=window.pcSearch,f=document.getElementById('sp-form'),inp=document.getElementById('sp-q'),
+ol=document.getElementById('sp-results'),st=document.getElementById('sp-status');if(!S||!f)return;f.querySelector('.search-js').hidden=false;
+inp.value=new URLSearchParams(location.search).get('q')||'';
+function draw(){var v=inp.value.trim();S.load(function(d){var r=S.find(d,v,50);ol.textContent='';r.forEach(function(e){ol.appendChild(S.row(e,true));});
+st.textContent=!v?'Type a peptide, a goal or a seller.':r.length?r.length+(r.length===1?' result':' results')+' for "'+v+'".':'Nothing found for "'+v+'". Browse by goal instead.';});}
+inp.addEventListener('input',draw);
+f.addEventListener('submit',function(e){e.preventDefault();history.replaceState(null,'','/search/'+(inp.value.trim()?'?q='+encodeURIComponent(inp.value.trim()):''));draw();});
+draw();});
+</script>"""
+
+
+def search_page():
+    return f"""
+<section class="section letters-hd search-pg">
+  <div class="wrap">
+    <h1>Search</h1>
+    <form class="search-form" id="sp-form" action="/search/" method="get" role="search">
+      <label for="sp-q">Search a peptide, a goal or a seller</label>
+      <div class="search-row"><input class="input" id="sp-q" name="q" type="search" autocomplete="off"><button class="btn btn-ink" type="submit">Search</button></div>
+      <div class="search-js" hidden><p class="small" id="sp-status" aria-live="polite"></p><ol class="search-results" id="sp-results"></ol></div>
+      <noscript><p class="search-nojs">Search needs JavaScript; browse by goal instead.</p></noscript>
+    </form>
+  </div>
+</section>{goals_strip("Browse by goal")}
+{SEARCH_PAGE_JS}
+"""
+
+
+def plan_other_use(r):
+    return next((u for g in ALL_GOALS for u in [other_use(g, r)] if u), "")
+
+
+def compare_plan(r):
+    """One clinic plan's column: the head and the six rows (pages.md, Compare)."""
+    seller = escape(seller_base(r["seller_name"]))
+    who = (f'<a class="name" href="/sellers/{r["seller_slug"]}/">{seller}</a>' if r["seller_slug"] in PROFILES
+           else f'<span class="name">{seller}</span>')
+    use = plan_other_use(r)
+    chip, label = ("info", f"Brand, {use}") if use else KIND_CHIP[plan_kind(r)]
+    n = r.get("fda_letter_count") or 0
+    letter = (f'<a class="chip chip-warn chip-link" href="{LETTERS_URL}">FDA letter {nice_date(r["last_fda_letter_date"])}</a>'
+              if n and r.get("last_fda_letter_date") else "None")
+    fee = r.get("membership_fee_monthly")
+    care = "Not known" if fee is None else "None, all-in" if float(fee) == 0 else f"{usd(fee)}/mo"
+    return {"k": "plan", "h": f'{who}<span class="cmp-sub">{escape(r["plan_name"])}</span>', "c": [
+        ("Per month", f'<span class="num">{usd(r["price_monthly"])}/mo</span>'),
+        ("Care fee", care),
+        ("What it is", f'<span class="chip chip-{chip}">{label}</span>'),
+        ("Substance", escape(sub_label(r["substance_slug"])) if r.get("substance_slug") else "Names no medication"),
+        ("FDA letter", letter),
+        ("Prices checked", nice_date(r["last_seen"]))]}
+
+
+PPM_LOW, PPM_HIGH = 0.01, 100
+
+
+def compare_ppm(r):
+    """The seller's price per mg range from listings between $0.01 and $100/mg: its own lowest and highest, and those of
+    its top substances; a value outside the band is a misread unit until the database fixes it (owner, 2 Nov 2026, the
+    seller pages' Q6 a rule widened to the top). (None, None) when nothing is left."""
+    vals = [r.get("price_per_mg_min"), r.get("price_per_mg_max")]
+    vals += [x.get(k) for x in SELLER_SUBS.get(r["seller_slug"], []) for k in ("price_per_mg_min", "price_per_mg_max")]
+    vals = [v for v in vals if v is not None and PPM_LOW <= v <= PPM_HIGH]
+    return (min(vals), max(vals)) if vals else (None, None)
+
+
+def compare_seller(r):
+    """One seller's column: the head (a link to its page) and the seven rows (pages.md, Compare)."""
+    marks = "".join(f'<span class="chip chip-{"ok" if r.get(k) else "neutral"} mark-{"yes" if r.get(k) else "no"}">{t}'
+                    f'<span class="vh">: {"yes" if r.get(k) else "no"}</span></span>' for k, t in SCORE_CHECKS)
+    ppm = per_mg_range(*compare_ppm(r))
+    ppm = ppm[:1].upper() + ppm[1:]
+    n = r.get("fda_letter_count")
+    letters = ("None" if n == 0 else "Unknown" if n is None else
+               f"{n}, the newest on {nice_date(newest_letter(r))}" if newest_letter(r) else str(n))
+    state = STATES.get(r.get("entity_state") or "", r.get("entity_state") or "")
+    company = ("No registered company found" if not shown_company(r) else
+               f'{escape(clean(r["entity_name"]))}{", " + state if state else ""}'
+               f'<span class="cmp-sub">{"State registry" if r["entity_evidence"] == "registry" else "Named in an FDA letter"}</span>')
+    return {"k": "seller", "h": f'<a class="name" href="/sellers/{r["seller_slug"]}/">{escape(seller_name(r))}</a><span class="cmp-sub">{kind_words(r)[1]}</span>', "c": [
+        ("Checks", f'<span class="score"><span class="score-n"><span class="num">{r["score"]}</span> of {len(SCORE_CHECKS)} checks</span>'
+                   f'<span class="score-marks">{marks}</span></span>'),
+        ("Products", str(r.get("product_count") or 0)),
+        ("Substances", str(r.get("substance_count") or 0)),
+        ("Per mg", ppm),
+        ("FDA letters", letters),
+        ("Company", company),
+        ("Tracked since", nice_date(r["first_seen"]) if r.get("first_seen") else "Unknown")]}
+
+
+def compare_items():
+    """Every priced clinic plan ("<clinic>: <plan>", by clinic) and every seller page (by name), keyed for the URL."""
+    plans = sorted((r for r in PLANS if r.get("price_monthly") is not None),
+                   key=lambda r: (seller_base(r["seller_name"]).lower(), r["plan_name"].lower()))
+    sellers = sorted(PROFILES.values(), key=lambda r: seller_name(r).lower())
+    return ([(f'p.{r["seller_slug"]}.{r["plan_slug"]}', f'{seller_base(r["seller_name"])}: {r["plan_name"]}', compare_plan(r)) for r in plans],
+            [(f's.{r["seller_slug"]}', seller_name(r), compare_seller(r)) for r in sellers])
+
+
+COMPARE_JS = """<script>
+(function(){var D=JSON.parse(document.getElementById('cmp-data').textContent),f=document.getElementById('cmp-form'),a=f.elements.a,b=f.elements.b,
+out=document.getElementById('cmp-out'),p=new URLSearchParams(location.search);
+if(D[p.get('a')])a.value=p.get('a');if(D[p.get('b')])b.value=p.get('b');
+function draw(){var x=D[a.value],y=D[b.value];if(!x||!y){out.innerHTML='<p class="cmp-note">Choose two to see them side by side.</p>';return;}
+if(x.k!==y.k){out.innerHTML='<p class="cmp-note">Choose two clinic plans or two sellers: a plan and a seller do not share the same facts.</p>';return;}
+var h='<table class="cmp"><caption class="vh">'+a.options[a.selectedIndex].text+' and '+b.options[b.selectedIndex].text+'</caption><thead><tr><td></td><th scope="col">'+x.h+'</th><th scope="col">'+y.h+'</th></tr></thead><tbody>';
+x.c.forEach(function(c,i){h+='<tr><th scope="row">'+c[0]+'</th><td>'+c[1]+'</td><td>'+y.c[i][1]+'</td></tr>';});
+out.innerHTML=h+'</tbody></table>';}
+f.addEventListener('submit',function(e){e.preventDefault();history.replaceState(null,'','/compare/?a='+encodeURIComponent(a.value)+'&b='+encodeURIComponent(b.value));draw();});
+out.hidden=false;draw();})();
+</script>"""
+
+
+def compare_page():
+    plans, sellers = compare_items()
+    data = {k: v for k, _, v in plans + sellers}
+    opts = lambda items: "".join(f'<option value="{k}">{escape(label)}</option>' for k, label, _ in items)
+    groups = ((f'<optgroup label="Clinic plans">{opts(plans)}</optgroup>' if plans else "")
+              + (f'<optgroup label="Sellers">{opts(sellers)}</optgroup>' if sellers else ""))
+    select = lambda name, label: (f'<div class="cmp-field"><label for="cmp-{name}">{label}</label><select class="input" id="cmp-{name}" name="{name}">'
+                                  f'<option value="">Choose a plan or seller</option>{groups}</select></div>')
+    checked = max([r["last_seen"] for r in PLANS if r.get("last_seen")] + [r["score_checked_on"] for r in PROFILES.values() if r.get("score_checked_on")], default="")
+    blob = json.dumps(data, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")
+    return f"""
+<section class="section letters-hd">
+  <div class="wrap">
+    <h1>Compare any two plans or sellers</h1>
+    <p class="lede">Pick two online clinic plans or two peptide sellers and see them side by side: price and care fee for a plan; the five checks, products, price per mg and FDA letters for a seller. Seller names open our page on the seller; we do not link to the shops.</p>
+    <p class="letters-stamp">{f'<span class="stamp">Checked {nice_date(checked)}</span>' if checked else ""}<span class="small">{plural(len(plans), "clinic plan")} and {plural(len(sellers), "seller")}.</span></p>
+  </div>
+</section>
+<section class="band-2" id="compare-two">
+  <div class="wrap">
+    <form class="cmp-form" id="cmp-form" action="/compare/" method="get">
+      {select("a", "First")}{select("b", "Second")}
+      <button class="btn btn-ink" type="submit">Compare</button>
+    </form>
+    <noscript><p class="cmp-note">The side by side view needs JavaScript. Without it, open each seller from <a href="/sellers/">the sellers we track</a>.</p></noscript>
+    <div class="cmp-out" id="cmp-out" aria-live="polite" hidden></div>
+    <p class="small" style="margin-top:16px">Checks are facts we hold about the seller, not a safety or quality grade. <a href="/how-we-rate/">How we rate</a></p>
+  </div>
+</section>
+<script type="application/json" id="cmp-data">{blob}</script>
+{COMPARE_JS}
+"""
+
+
+PAGES.append(("/search/", "search/index.html", "Search | Peptide Chooser",
+              "Search Peptide Chooser for a peptide, a goal or a seller: FDA status, background checks and prices from our data, each with a link to its page.",
+              search_page(), "", [("/search/", "Search")]))
+if PLANS or PROFILES:
+    PAGES.append(("/compare/", "compare/index.html", "Compare any two plans or sellers | Peptide Chooser",
+                  "Put two online clinic plans or two peptide sellers side by side: monthly price, care fee, five background checks and FDA warning letters, from our data.",
+                  compare_page(), "", [("/compare/", "Compare any two")]))
+
+
 def main():
     if DIST.exists():
         shutil.rmtree(DIST)
@@ -1961,10 +2248,12 @@ def main():
     (DIST / "llms.txt").write_text(
         "# Peptide Chooser\n\n> An independent US comparison site: peptide products next to FDA-approved alternatives, "
         "with evidence, FDA status and price per month for each goal. We compare; we never sell.\n\n"
-        + "".join(f"- [{t}]({SITE}{p}): {d}\n" for p, _, t, d, *_ in PAGES))
+        + "".join(f"- [{t}]({SITE}{p}): {d}\n" for p, _, t, d, *_ in PAGES if p not in NOINDEX))
+    # the search index (pages.md, Every page, Header, Search): one entry per page, substance and seller
+    (DIST / "search-index.json").write_text(json.dumps(search_index(), ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
     # lastmod: the newest data date of this build, the database pull when connected, else the hand-checked date (owner, Q1 a, 2 Nov 2026)
     lastmod = max(DATA["checked"], (DATA.get("pulled_at") or "")[:10])
-    urls = "".join(f"<url><loc>{SITE}{p[0]}</loc><lastmod>{lastmod}</lastmod></url>" for p in PAGES)
+    urls = "".join(f"<url><loc>{SITE}{p[0]}</loc><lastmod>{lastmod}</lastmod></url>" for p in PAGES if p[0] not in NOINDEX)
     (DIST / "sitemap.xml").write_text(
         f'<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">{urls}</urlset>\n')
     (DIST / "pages.json").write_text(json.dumps([{"path": p[0], "title": p[2]} for p in PAGES] + [{"path": "/404", "title": "Page not found | Peptide Chooser"}]))
