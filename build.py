@@ -1381,7 +1381,7 @@ def category_page(g):
 </tr>""")
     table = ('<thead><tr><th scope="col">Option</th><th scope="col">FDA status for hair loss</th><th scope="col">Evidence in people</th><th scope="col">Price from</th><th scope="col">How you get it</th></tr></thead>\n'
              f'      <tbody>{"".join(rows)}</tbody>')
-    return category_body(g, table, f'{g["options_checked"]} options checked on the same five criteria. Rows that are not approved for human use carry no price and no seller.')
+    return category_body(g, table, f'{g["options_checked"]} options checked on the same rule. Rows that are not approved for human use carry no price and no seller.')
 
 
 KIND_CHIP = {"brand": ("ok", "Brand"), "compounded": ("warn", "Compounded"), "program": ("neutral", "Program")}
