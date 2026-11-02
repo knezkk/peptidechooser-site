@@ -44,6 +44,8 @@ class Text(HTMLParser):
         if tag == "meta":
             if a.get("name") == "description":
                 self.meta["description"] = a.get("content", "")
+            if a.get("name") == "robots":
+                self.meta["robots"] = a.get("content", "")
             if a.get("property") == "og:image":
                 self.og = a.get("content", "")
         if tag == "link" and a.get("rel") == "canonical":
@@ -132,8 +134,11 @@ def check_seo(P):
             errs.append(f"{name}: no og:image")
         elif not (DIST / p.og.replace(SITE + "/", "")).exists():
             errs.append(f"{name}: og:image file missing {p.og}")
-        if name != "404.html" and f"<loc>{SITE}{path}</loc>" not in sitemap:
+        noindex = "noindex" in p.meta.get("robots", "")
+        if name != "404.html" and not noindex and f"<loc>{SITE}{path}</loc>" not in sitemap:
             errs.append(f"{name}: not in sitemap")
+        if noindex and f"<loc>{SITE}{path}</loc>" in sitemap:
+            errs.append(f"{name}: noindex page in the sitemap")
         for a in p.links:
             href = a.get("href", "")
             rel = a.get("rel", "")
@@ -255,6 +260,53 @@ def check_parts(P):
                 errs.append(f"{name}: Background check card without its five marks")
             if "Checks are facts we hold about the seller, not a safety or quality grade." not in html:
                 errs.append(f"{name}: no note that the checks are facts, not a grade")
+    # Search and Compare any two (pages.md, Every page, Header, Search; Search; Compare; owner task 2 Nov 2026): the index
+    # parses, stays under 150 KB and every entry has its five fields and a page that exists; /search/ is noindex; neither
+    # page nor the index links to a seller's site.
+    idx_file = DIST / "search-index.json"
+    if not idx_file.exists():
+        errs.append("search-index.json: missing")
+    else:
+        if idx_file.stat().st_size > 150_000:
+            errs.append(f"search-index.json: {idx_file.stat().st_size} bytes, over 150 KB")
+        try:
+            idx = json.loads(idx_file.read_text(encoding="utf-8"))
+        except ValueError as e:
+            errs.append(f"search-index.json: does not parse ({e})")
+            idx = []
+        for e in idx:
+            if set(e) != {"type", "name", "aliases", "url", "line"} or e.get("type") not in ("Goal", "Peptide", "Seller", "Page") \
+                    or not e.get("name") or not e.get("line"):
+                errs.append(f"search-index.json: bad entry {e}")
+                continue
+            url = e["url"].split("#")[0]
+            if not url.startswith("/") or not ((DIST / url.strip("/") / "index.html").exists() or url == "/"):
+                errs.append(f"search-index.json: {e['name']} points to a missing page {e['url']}")
+            if "://" in e["url"]:
+                errs.append(f"search-index.json: {e['name']} links off the site")
+    if "search/index.html" in P and "noindex" not in P["search/index.html"].meta.get("robots", ""):
+        errs.append("search/index.html: not noindex")
+    for name in ("search/index.html", "compare/index.html"):
+        if name not in P:
+            continue
+        html = (DIST / name).read_text(encoding="utf-8")
+        for href in [a.get("href", "") for a in P[name].links] + re.findall(r'href=\\?"([^"\\]+)', html):
+            host = re.sub(r"^www\.", "", re.sub(r"^[a-z]+://", "", href).split("/")[0].lower()) if "://" in href else ""
+            if host and any(host == d or host.endswith("." + d) for d in seller_domains()):
+                errs.append(f"{name}: links to a seller ({href})")
+    if "compare/index.html" in P:
+        html = (DIST / "compare/index.html").read_text(encoding="utf-8")
+        m = re.search(r'<script type="application/json" id="cmp-data">(.*?)</script>', html, re.S)
+        try:
+            data = json.loads(m.group(1)) if m else {}
+        except ValueError:
+            data = {}
+            errs.append("compare/index.html: comparison data does not parse")
+        if not data:
+            errs.append("compare/index.html: no plans or sellers to compare")
+        for k, v in data.items():
+            if v.get("k") == "seller" and f'href="/sellers/{k[2:]}/"' not in v.get("h", ""):
+                errs.append(f"compare/index.html: seller {k} does not link to its page")
     # The letters feed (pages.md, Letters): it parses as XML and every item links to the letter on fda.gov.
     feed = DIST / "fda-warning-letters" / "feed.xml"
     if feed.exists():
