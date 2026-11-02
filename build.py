@@ -744,6 +744,13 @@ LEGAL_ROWS = "".join(r if i < 12 else r.replace("<tr>", '<tr class="more">', 1) 
 LETTERS = DATA.get("letters") or []
 LETTERS_ALL = DATA.get("letters_all") or []
 LETTERS_URL = "/fda-warning-letters/" if LETTERS_ALL else "/#letters"
+# Under Home's letters table (pages.md, Home, owner answer Q2 a, 2 Nov 2026): with the letters page, "See all N letters"
+# and then "M of them went to sellers in our database."; without it, the old count line alone.
+LETTERS_FOOT = (f'<p class="letters-all"><a class="btn btn-line" href="/fda-warning-letters/">See all {len(LETTERS_ALL)} letters</a></p>'
+                + (f'<p class="small" style="margin-top:12px">{DATA["letters_total"]} of them went to sellers in our database.</p>' if DATA.get("letters_total") else "")
+                if LETTERS_ALL else
+                f'<p class="small" style="margin-top:16px">{DATA["letters_total"]} letters to sellers in our database since {nice_date(DATA["letters_oldest"])}.</p>'
+                if DATA.get("letters_total") and DATA.get("letters_oldest") else "")
 LETTER_ROWS = "".join(
     f'<tr><td class="num">{nice_date(r["letter_date"])}</td><td><span class="name">{escape(r["seller_name"])}</span>'
     f'<span class="sub-phone">{escape(r["letter_subject"]).replace("/", "/<wbr>")}</span></td><td class="subj">{escape(r["letter_subject"])}</td><td><a href="{escape(r["letter_url"])}" rel="nofollow">FDA letter</a></td></tr>' for r in LETTERS)
@@ -755,8 +762,7 @@ LETTERS_SECTION = f"""
       <thead><tr><th scope="col">Date</th><th scope="col">Seller</th><th scope="col" class="subj">Subject</th><th scope="col">Source</th></tr></thead>
       <tbody>{LETTER_ROWS}</tbody>
     </table></div>
-    {f'<p class="small" style="margin-top:16px">{DATA["letters_total"]} letters to sellers in our database since {nice_date(DATA["letters_oldest"])}.</p>' if DATA.get("letters_total") and DATA.get("letters_oldest") else ""}
-    {f'<p class="letters-all"><a class="btn btn-line" href="/fda-warning-letters/">See all {len(LETTERS_ALL)} letters</a></p>' if LETTERS_ALL else ""}
+    {LETTERS_FOOT}
   </div>
 </section>
 """ if LETTERS else ""
@@ -774,6 +780,14 @@ def office(t):
     return re.sub(r"\s*\|\s*([A-Z]+)$", r" (\1)", clean(t or ""))
 
 
+def office_cell(t):
+    """The Office column (owner, 2 Nov 2026): the short form in brackets at the end of the name ("CDER"), the full name
+    as its title; the full name alone when it has no bracket."""
+    full = office(t)
+    m = re.search(r"\(([^()]+)\)$", full)
+    return f'<td class="office" title="{escape(full)}">{escape(m.group(1))}</td>' if m else f'<td class="office">{escape(full)}</td>'
+
+
 def letters_all_rows():
     out, more = [], ' class="more"'
     for i, r in enumerate(LETTERS_ALL):
@@ -782,7 +796,7 @@ def letters_all_rows():
         out.append(
             f'<tr{more if i >= LETTERS_FIRST else ""} data-year="{r["letter_date"][:4]}"><td class="num">{nice_date(r["letter_date"])}</td>'
             f'<td><span class="name">{escape(clean(r["company_name"]))}</span>{seller}<span class="sub-phone">{subj.replace("/", "/<wbr>")}</span></td>'
-            f'<td class="subj">{subj.replace("/", "/<wbr>")}</td><td class="office">{escape(office(r.get("issuing_office")))}</td>'
+            f'<td class="subj">{subj.replace("/", "/<wbr>")}</td>{office_cell(r.get("issuing_office"))}'
             f'<td><a href="{escape(r["letter_url"])}" rel="nofollow">FDA letter</a></td></tr>')
     return "".join(out)
 
