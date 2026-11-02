@@ -326,6 +326,19 @@ html:not(.nav-js) .head-search{order:0;flex:1 1 100%;max-width:420px;margin:0 0 
 .learn-card a{color:var(--clinic)}
 .learn-card>a{display:inline-block;margin-top:12px;font-weight:600}
 
+/* Peptide page (pages.md, Peptide; owner task 2 Nov 2026). Under the H1 one row: the status chip, the prescription or
+   research-use chip, the Checked stamp. The Facts card is the Background check card's frame (no score, no ℞ mark) with
+   one ledger row per fact: the name in ink-2 in a 132px column, the value beside it, hairlines between. */
+.pep-chips{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;margin:-4px 0 12px}
+.facts-list{list-style:none;margin:0;padding:0}
+.facts-list li{display:grid;grid-template-columns:132px minmax(0,1fr);gap:12px;align-items:baseline;padding:10px 0;border-top:1px solid var(--line);font-size:var(--small-size);line-height:var(--small-lh)}
+.facts-list li:first-child{border-top:0}
+.facts-list li>span:first-child{color:var(--ink-2)}
+.facts-list .chip{justify-self:start}
+.pep-group:not(:first-child){margin-top:56px}
+.tbl-sold td.num,.tbl-peptides td.num{white-space:nowrap}
+.pep-foot .related{margin-bottom:40px}
+
 /* Inputs */
 .input{min-height:48px;padding:0 14px;border:1.5px solid var(--line-strong);border-radius:var(--radius-control);font:16px var(--font-text);color:var(--ink);background:var(--white);box-sizing:border-box}
 .input:focus-visible{outline:3px solid var(--clinic);outline-offset:1px}

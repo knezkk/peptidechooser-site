@@ -889,12 +889,33 @@ def rail():
     return "".join(chips), "".join(compare), f'<span class="goal-t">: {ALL_GOALS[0]["panel_title"]}</span>'
 
 
+# Peptide pages (pages.md, Peptide; owner task 2 Nov 2026): one page per substance with a status, from the database or
+# from its own hand-written "Is it legal today?" row. Defined here because the legal tables link each name to its page.
+def hand_legal(slug):
+    """The hand-written legal row that carries the substance and a status (not a db_only row), or None."""
+    return next((r for r in LEGAL["rows"] if slug in (r.get("substances") or []) and r.get("status") and not r.get("db_only")), None)
+
+
+PEPTIDE_SLUGS = sorted({r["substance_slug"] for r in LEGAL_DB or [] if db_status(r["substance_slug"])}
+                       | {s for r in LEGAL["rows"] for s in r.get("substances") or [] if not db_status(s) and hand_legal(s)})
+
+
+def legal_name(slugs, name):
+    """A legal table's name cell: a link to the substance's page when the row is one substance with a page."""
+    if len(slugs) == 1 and slugs[0] in PEPTIDE_SLUGS:
+        return f'<a class="name" href="/peptides/{slugs[0]}/">{name}</a>'
+    return f'<span class="name">{name}</span>'
+
+
+ALL_SUBSTANCES = '<a href="/peptides/">All substances</a>'
+
+
 def legal_rows(only=None):
     """"Is it legal today?": each hand-written row, or, when the database has a status for its substances, one row per
     substance from the database with its own source link and the date we first saw that status. `only` keeps the rows
     for those substances (a goal page shows the rows for its own options)."""
     keep = lambda slugs: only is None or bool(set(slugs) & only)
-    hand = lambda r: (f'<tr><td><span class="name">{r["peptide"]}</span></td><td><span class="chip chip-{r["chip"]}">{r["status"]}</span></td>'
+    hand = lambda r: (f'<tr><td>{legal_name(r.get("substances") or [], r["peptide"])}</td><td><span class="chip chip-{r["chip"]}">{r["status"]}</span></td>'
                       f'<td>{r["note"]} <a class="ref" href="#src-{r["src"]}" aria-label="Source {r["src"]}"><sup>{r["src"]}</sup></a></td></tr>')
     out, seen = [], []
     for r in LEGAL["rows"]:
@@ -913,7 +934,7 @@ def legal_rows(only=None):
             n = r.get("note_each", r.get("note", ""))  # the note for one substance when a grouped row splits ("them" -> "it")
             note = (f'. {n[0].upper() + n[1:]}. <a class="ref" href="#src-{r["src"]}" aria-label="Source {r["src"]}">'
                     f'<sup>{r["src"]}</sup></a>') if r.get("note_with_db") else ""
-            out.append(f'<tr><td><span class="name">{s["name"]}</span></td><td><span class="chip chip-{s["chip"]}">{s["label"]}</span></td>'
+            out.append(f'<tr><td>{legal_name([slug], s["name"])}</td><td><span class="chip chip-{s["chip"]}">{s["label"]}</span></td>'
                        f'<td>{s["sentence"]}{" " + r["use"] if r.get("use") else ""} <a class="ref" href="{s["url"]}" rel="nofollow">FDA source</a>, {nice_date(s["seen"])}{note}</td></tr>')
     # Every other substance with a database status gets its own row (owner, 1 Nov 2026: the table lists every substance
     # the database has a status for, plus the hand rows it lacks), then all rows are sorted by name.
@@ -924,7 +945,7 @@ def legal_rows(only=None):
         if not s or not keep([slug]):
             continue
         seen.append(s["seen"])
-        out.append(f'<tr><td><span class="name">{s["name"]}</span></td><td><span class="chip chip-{s["chip"]}">{s["label"]}</span></td>'
+        out.append(f'<tr><td>{legal_name([slug], s["name"])}</td><td><span class="chip chip-{s["chip"]}">{s["label"]}</span></td>'
                    f'<td>{s["sentence"]} <a class="ref" href="{s["url"]}" rel="nofollow">FDA source</a>, {nice_date(s["seen"])}</td></tr>')
     out.sort(key=lambda row: re.sub(r"<[^>]+>", "", row.split("</td>")[0]).strip().lower())
     checked = nice_date(max(seen)) if seen else nice_date(LEGAL["checked"])
@@ -1221,7 +1242,7 @@ HOME = f"""
 
 <section class="band-2" id="legal">
   <div class="wrap">
-    <div class="sec-hd"><div><h2>Is it legal today?</h2><p>FDA status of the peptides people ask about most, each with its source. Checked {LEGAL_CHECKED}.</p></div></div>
+    <div class="sec-hd"><div><h2>Is it legal today?</h2><p>FDA status of the peptides people ask about most, each with its source. Checked {LEGAL_CHECKED}.</p></div>{ALL_SUBSTANCES}</div>
     <div class="legal-filter" hidden><label for="legal-q">Filter by name</label><input class="input" id="legal-q" type="text" autocomplete="off"><button type="button" class="btn btn-line btn-sm" id="legal-clear">Clear</button></div>
     <div class="tbl-wrap"><table class="tbl tbl-legal" id="legal-table">
       <thead><tr><th scope="col">Peptide</th><th scope="col">Status</th><th scope="col">What that means</th></tr></thead>
@@ -1536,7 +1557,7 @@ def category_body(g, table, table_lede):
     legal_html = f"""
 <section class="section" id="legal">
   <div class="wrap">
-    <div class="sec-hd"><div><h2>Is it legal today?</h2><p>FDA status of the peptides on this page, each with its source. Checked {legal_checked}.</p></div></div>
+    <div class="sec-hd"><div><h2>Is it legal today?</h2><p>FDA status of the peptides on this page, each with its source. Checked {legal_checked}.</p></div>{ALL_SUBSTANCES}</div>
     <div class="tbl-wrap"><table class="tbl tbl-legal">
       <thead><tr><th scope="col">Peptide</th><th scope="col">Status</th><th scope="col">What that means</th></tr></thead>
       <tbody>{"".join(legal)}</tbody>
@@ -2206,7 +2227,7 @@ def search_index():
     out = []
     goal_pages = {f"/{g['slug']}/": g for g in ALL_GOALS if g.get("page")}
     for path, _, title, desc, *_ in PAGES:
-        if path in NOINDEX or path.startswith("/sellers/") and path != "/sellers/":
+        if path in NOINDEX or path.startswith("/sellers/") and path != "/sellers/" or path.startswith("/peptides/") and path != "/peptides/":
             continue
         g = goal_pages.get(path)
         if g:
@@ -2215,16 +2236,13 @@ def search_index():
         else:
             out.append({"type": "Page", "name": "Home" if path == "/" else title.replace(" | Peptide Chooser", ""), "aliases": [],
                         "url": path, "line": desc.split(". ")[0].rstrip(".") + "."})
-    for slug in sorted({r["substance_slug"] for r in LEGAL_DB or []}):
-        s = db_status(slug)
-        if not s:
-            continue
+    for slug in PEPTIDE_SLUGS:  # a substance goes to its own page (owner task 2 Nov 2026)
+        s = pep_status(slug)
         names = {r["peptide"] for r in LEGAL["rows"] if slug in (r.get("substances") or [])}
         names |= {p["name"] for g in ALL_GOALS for p in g["peptides"] if subs_of(p) == [slug]}
         names |= {sub_label(slug), slug.replace("-", " ")}
-        g = SUB_GOAL.get(slug)
         out.append({"type": "Peptide", "name": s["name"], "aliases": sorted(names - {s["name"]}),
-                    "url": f"/{g['slug']}/" if g else "/#legal", "line": f"{s['label']}: {s['sentence']}"})
+                    "url": f"/peptides/{slug}/", "line": f"{s['label']}: {s['sentence']}"})
     for r in sorted(CLINIC_PROFILES.values(), key=sellers_order):
         out.append({"type": "Clinic", "name": seller_name(r), "aliases": [r["domain"]] if r.get("domain") else [],
                     "url": f"/sellers/{r['seller_slug']}/", "line": f"Online clinic, {card_count(r)}, {r['score']} of {len(SCORE_CHECKS)} checks"})
@@ -2389,6 +2407,406 @@ if PLANS or PROFILES:
     PAGES.append(("/compare/", "compare/index.html", "Compare any two plans or sellers | Peptide Chooser",
                   "Put two online clinic plans or two peptide sellers side by side: monthly price, care fee, five background checks and FDA warning letters, from our data.",
                   compare_page(), "", [("/compare/", "Compare any two")]))
+
+
+# Peptide pages (pages.md, Peptide and Peptides; owner task 2 Nov 2026): /peptides/ and one page per substance in
+# PEPTIDE_SLUGS, everything from data; a missing fact drops its block. No dose anywhere, no link to a shop or a clinic.
+REGIME_WORDS = {"fda_approval": "Drugs@FDA", "fda_503a_category": "503A list", "fda_cat2_safety": "Category 2 list",
+                "fda_nomination_withdrawn": "503A nomination", "fda_shortage": "Shortage list"}
+VALUE_WORDS = {"approved": "approved", "category_1": "category 1", "category_2": "category 2", "category_3": "category 3",
+               "withdrawn": "withdrawn", "in_shortage": "in shortage", "to_be_discontinued": "to be discontinued"}
+# forms read off the shops' product names and the clinics' plan forms (only words we find; nothing is guessed)
+FORM_WORDS = [("nasal spray", "nasal spray"), ("spray", "spray"), ("capsule", "capsule"), ("serum", "serum"), ("cream", "cream"),
+              ("tablet", "tablet"), ("powder", "powder"), ("vial", "vial"), ("pen", "pen")]
+PLAN_FORMS = {"injection_vial": "vial", "pen": "pen", "tablet": "tablet", "capsule": "capsule", "topical": "topical", "solution": "topical"}
+
+
+def pep_status(slug):
+    """The substance's status as the legal tables show it: the database's, else its own hand-written row, with the
+    source url and the date. None without either."""
+    s = db_status(slug)
+    if s:
+        return dict(s, hand=False)
+    r = hand_legal(slug)
+    if not r:
+        return None
+    src = next(x for x in LEGAL["sources"] if x["n"] == r["src"])
+    name = re.sub(r"\s*\(.*\)", "", r["peptide"]) if r.get("substances") == [slug] else substance_name(slug)
+    return {"chip": r["chip"], "label": r["status"], "sentence": r["note"], "name": name, "url": src["url"],
+            "seen": LEGAL["checked"], "hand": True}
+
+
+def pep_name(slug):
+    """The page's name: the database's name for the substance, else the hand row's (without its brands)."""
+    s = pep_status(slug)
+    db = next((r["canonical_name"] for r in LEGAL_DB or [] if r["substance_slug"] == slug), None)
+    return db or s["name"]
+
+
+def pep_short(slug):
+    """The name for titles: without a bracket ("TB-500 (thymosin beta-4 fragment 17-23)" -> "TB-500")."""
+    return re.sub(r"\s*\(.*\)", "", pep_name(slug)).strip()
+
+
+def pep_group(s):
+    return "approved" if s["label"] == "FDA approved" else "cosmetic" if s["chip"] == "info" else "not"
+
+
+def pep_goals(slug):
+    """(goal, option) for every option row on a goal page that carries the substance, in the goals' order."""
+    return [(g, p) for g in ALL_GOALS if g.get("page") for p in g["peptides"] if slug in subs_of(p)]
+
+
+def pep_shops(slug):
+    """The window's rows (shops only, the same ten), never for an FDA-approved substance (no window there)."""
+    s = pep_status(slug)
+    return [] if pep_group(s) == "approved" else seller_rows(slug)
+
+
+def pep_low_shop(slug):
+    """The lowest price per mg among the shops shown, within the /compare/ band ($0.01 to $100/mg), or None."""
+    rows = [r for r in pep_shops(slug) if r.get("price_per_mg") is not None and PPM_LOW <= r["price_per_mg"] <= PPM_HIGH]
+    return min(rows, key=lambda r: (r["price_per_mg"], r["seller_slug"]), default=None)
+
+
+def pep_plans(slug):
+    return sorted((r for r in PLANS if r["substance_slug"] == slug and r.get("price_monthly") is not None),
+                  key=lambda r: (float(r["price_monthly"]), r["seller_name"], r["plan_name"]))
+
+
+def pep_low_plan(slug):
+    """The cheapest plan that is not compounded: a pharmacy-made copy is not the approved product (the goal pages' rule,
+    owner 31 Oct 2026). None without one."""
+    return next((r for r in pep_plans(slug) if r.get("product_kind") != "compounded"), None)
+
+
+def pep_forms(slug):
+    names = [clean(f'{r["product_name"]} {r.get("variant_title") or ""}').lower() for r in pep_shops(slug)]
+    found = []
+    for n in names:
+        for word, form in FORM_WORDS:
+            if word in n and form not in found and not (form == "spray" and "nasal spray" in found):
+                found.append(form)
+                break
+    found += [PLAN_FORMS[r["dosage_form"]] for r in pep_plans(slug) if PLAN_FORMS.get(r.get("dosage_form") or "")]
+    return list(dict.fromkeys(found))
+
+
+def pep_rx(slug, s):
+    """Prescription needed, from the status: an approved medicine needs one unless the goal page sells it over the counter."""
+    group = pep_group(s)
+    if group == "approved":
+        otc = any("over the counter" in p["how"].lower() for _, p in pep_goals(slug) if subs_of(p) == [slug])
+        return ("No, sold over the counter", "Over the counter") if otc else ("Yes", "Prescription")
+    if group == "cosmetic":
+        return "No, sold as a cosmetic", ""
+    if s["label"] == "Pharmacy-made":
+        return "Yes, when a pharmacy compounds it", "Prescription"
+    return "Not applicable: not approved for use in people", "Research-use"
+
+
+def pep_db_rows(slug):
+    return [r for r in LEGAL_DB or [] if r["substance_slug"] == slug]
+
+
+def pep_answer(slug):
+    """The short answer, one sentence per fact, each with its link; a missing fact drops its sentence."""
+    s = pep_status(slug)
+    host = "FDA source" if "fda.gov" in s["url"] else "Source"
+    out = [f'{s["label"]}: {s["sentence"]}. <a href="{escape(s["url"])}" rel="nofollow">{host}</a>, {nice_date(s["seen"])}.']
+    goals = list(dict.fromkeys(g["slug"] for g, _ in pep_goals(slug)))
+    if goals:
+        gs = [next(g for g in ALL_GOALS if g["slug"] == x) for x in goals]
+        links = [f'<a href="/{g["slug"]}/">{g["name"].lower()}</a>' for g in gs]
+        joined = links[0] if len(links) == 1 else ", ".join(links[:-1]) + " and " + links[-1]
+        out.append(f'Our {joined} page{"s list" if len(links) > 1 else " lists"} it.')
+    low = pep_low_shop(slug)
+    if low:
+        n = len({r["seller_slug"] for r in pep_shops(slug)})
+        seen = low.get("price_observed_at") or low.get("last_seen")
+        out.append(f'The lowest price at the {plural(n, "shop")} shown below is {per_mg(low["price_per_mg"])}/mg '
+                   f'({clinic_link(low["seller_slug"], clean(SELLERS.get(low["seller_slug"], {}).get("seller_name") or low["seller_name"]), True)})'
+                   f'{", checked " + nice_date(seen) if seen else ""}.')
+    p = pep_low_plan(slug) if pep_group(s) == "approved" else None
+    if p:
+        out.append(f'The lowest monthly plan that is not compounded, at the online clinics we track, is {usd(p["price_monthly"])} '
+                   f'({clinic_link(p["seller_slug"], seller_base(p["seller_name"]), True)}, {clean(p["plan_name"])}), checked {nice_date(p["last_seen"])}.')
+    return out
+
+
+def pep_checked(slug):
+    s = pep_status(slug)
+    dates = [s["seen"]] + [r.get("price_observed_at") or r.get("last_seen") or "" for r in pep_shops(slug)]
+    dates += [r["last_seen"] for r in pep_plans(slug)] if pep_group(s) == "approved" else []
+    return max(d for d in dates if d)
+
+
+def pep_title(slug):
+    n = pep_short(slug)
+    for t in (f"{n}: FDA status, prices and where it is sold | Peptide Chooser", f"{n}: FDA status, prices and where it is sold",
+              f"{n}: FDA status and prices | Peptide Chooser", f"{n}: FDA status and prices"):
+        if len(t) <= 60:
+            return t
+    return n
+
+
+def pep_description(slug):
+    """110 to 160 characters from the same facts: status, the price, the goal pages, the check date."""
+    s, n = pep_status(slug), pep_short(slug)
+    parts = [f'{n}: {s["label"]}, {s["sentence"]}.']
+    low = pep_low_shop(slug)
+    plan = pep_low_plan(slug) if pep_group(s) == "approved" else None
+    if low:
+        parts.append(f'Lowest shop price {per_mg(low["price_per_mg"])}/mg.')
+    elif plan:
+        parts.append(f'Online clinic plans from {usd(plan["price_monthly"])} a month.')
+    goals = list(dict.fromkeys(g["name"].lower() for g, _ in pep_goals(slug)))
+    if goals:
+        parts.append(f'On our {" and ".join(goals[:2])} page{"s" if len(goals[:2]) > 1 else ""}.')
+    brands = sorted({brand_base(a["brand_name"]) for a in APPROVED_DB if a["substance_slug"] == slug and a.get("brand_name")}
+                    - {n.split()[0].title()})
+    if brands and pep_group(s) == "approved":
+        parts.append(f'Approved brand{"s" if len(brands) > 1 else ""}: {", ".join(brands[:3])}.')
+    parts.append(f"Checked {nice_date(pep_checked(slug))}.")
+    parts.append("We compare and never sell.")
+    out = parts[0]
+    for x in parts[1:]:
+        if len(out) + 1 + len(x) <= 160:
+            out += " " + x
+    return out
+
+
+def pep_chips(slug, s):
+    rx = pep_rx(slug, s)[1]
+    rx = f'<span class="chip chip-neutral">{rx}</span>' if rx else ""
+    return (f'<p class="pep-chips"><span class="chip chip-{s["chip"]}">{s["label"]}</span>{rx}'
+            f'<span class="stamp">Checked {nice_date(pep_checked(slug))}</span></p>')
+
+
+def pep_facts(slug, s):
+    """The facts ledger in the Background check card's frame: FDA status and every open list entry in the database's
+    words, the approved brands, forms, prescription needed, first seen by us."""
+    rows = [("FDA status", f'<span class="chip chip-{s["chip"]}">{s["label"]}</span>')]
+    for r in sorted(pep_db_rows(slug), key=lambda r: r["regime"]):
+        if r["regime"] not in REGIME_WORDS:
+            continue
+        v = VALUE_WORDS.get(r["status_value"], r["status_value"].replace("_", " "))
+        scope = f' ({r["scope"]})' if r.get("scope") and r["regime"] != "fda_approval" else ""
+        since = f', since {nice_date(r["valid_from"])}' if r.get("valid_from") else ""
+        rows.append((REGIME_WORDS[r["regime"]], f'{v}{scope}{since}'))
+    brands = sorted({brand_base(a["brand_name"]) for a in APPROVED_DB if a["substance_slug"] == slug and a.get("brand_name")}
+                    - {pep_short(slug).split()[0].title()})
+    if brands and pep_group(s) == "approved":
+        rows.append(("Approved brands", ", ".join(brands)))
+    forms = pep_forms(slug)
+    if forms:
+        rows.append(("Forms sold", ", ".join(forms)))
+    rows.append(("Prescription needed", pep_rx(slug, s)[0]))
+    first = min((r["first_seen_by_us"] for r in pep_db_rows(slug) if r.get("first_seen_by_us")), default=None)
+    if first:
+        rows.append(("First seen by us", nice_date(first)))
+    li = "".join(f'<li><span>{k}</span><span>{v}</span></li>' for k, v in rows)
+    return f"""
+      <aside class="board check-card facts-card" aria-labelledby="facts-h">
+        <div class="check-head"><h2 id="facts-h">Facts</h2></div>
+        <ul class="facts-list">{li}</ul>
+        <p class="check-nolink">Facts from the FDA lists and our data. Not medical advice.</p>
+      </aside>"""
+
+
+class PepSources:
+    """The page's numbered sources: the status source first, then each outside source the evidence rows use."""
+    def __init__(self):
+        self.items = []
+
+    def n(self, text, url):
+        key = (text, url)
+        if key not in self.items:
+            self.items.append(key)
+        return self.items.index(key) + 1
+
+    def ref(self, text, url):
+        k = self.n(text, url)
+        return f'<a class="ref" href="#src-{k}" aria-label="Source {k}"><sup>{k}</sup></a>'
+
+    def html(self):
+        return "".join(f'<li id="src-{i}">{escape(t)}: <a href="{escape(u)}" rel="nofollow">{escape(u)}</a></li>'
+                       for i, (t, u) in enumerate(self.items, start=1))
+
+
+def pep_evidence(slug, src):
+    """One row per goal page option that carries the substance: the goal, the option, its evidence chip (from the goal's
+    checked options table when it has one) and the line that page shows for it, with that page's sources."""
+    trs = []
+    for g, p in pep_goals(slug):
+        o = next((o for o in g.get("options") or [] if o["name"] == p["name"] or o.get("substance") == slug and subs_of(p) == [slug]
+                  or subs_of(p) == [slug] and sub_label(slug).lower().split()[0] in o["name"].lower()), None)
+        chip = f'<span class="chip chip-{o["evidence_chip"]}">{o["evidence"]}</span>' if o else '<span class="small">Not rated</span>'
+        refs_ = [(x["text"], x["url"]) for x in g.get("sources", []) if o and x["n"] in o["sources"]]
+        refs_ += [(x["text"], x["url"]) for x in LEGAL["sources"] if x["n"] in (p.get("src") or [])]
+        sup = "".join(src.ref(t, u) for t, u in refs_)
+        trs.append(f'<tr><td><a class="name" href="/{g["slug"]}/">{g["name"]}</a><span class="note">{p["name"]}</span></td>'
+                   f'<td data-l="Evidence in people">{chip}</td><td data-l="What the goal page says">{p["does"]}{sup}</td></tr>')
+    if not trs:
+        return ""
+    return f"""
+<section class="band-2" id="evidence">
+  <div class="wrap">
+    <div class="sec-hd"><div><h2>Evidence by goal</h2><p>What each goal page that lists it says, word for word, with its sources. The evidence rating comes from a goal page's checked options table; a goal without one shows "Not rated".</p></div></div>
+    <div class="tbl-wrap"><table class="tbl tbl-cards tbl-evidence">
+      <thead><tr><th scope="col">Goal</th><th scope="col">Evidence in people</th><th scope="col">What the goal page says</th></tr></thead>
+      <tbody>{"".join(trs)}</tbody>
+    </table></div>
+  </div>
+</section>"""
+
+
+def pep_shops_section(slug):
+    rows = pep_shops(slug)
+    if not rows:
+        return ""
+    trs, newest = [], ""
+    for r in rows:
+        seller = clean(SELLERS.get(r["seller_slug"], {}).get("seller_name") or r["seller_name"])
+        name = clinic_link(r["seller_slug"], seller)
+        size = f'{r["amount_mg"]:g} mg' if r.get("amount_mg") else "unknown"
+        price = money(r["price_usd"]) if r.get("price_usd") is not None else "unknown"
+        ppm = (f'{money(r["price_per_mg"])}/mg' if r.get("price_per_mg") is not None else "blend" if r.get("is_blend") else "unknown")
+        seen = r.get("price_observed_at") or r.get("last_seen") or ""
+        newest = max(newest, seen)
+        trs.append(f'<tr><td>{name}</td><td class="num" data-l="Size">{size}</td><td class="num" data-l="Price">{price}</td>'
+                   f'<td class="num" data-l="Per mg">{ppm}</td><td data-l="Checks">{score_line(r) or "not checked yet"}</td></tr>')
+    return f"""
+<section class="section" id="sold">
+  <div class="wrap">
+    <div class="sec-hd"><div><h2>Where it is sold</h2><p>The {plural(len(rows), "shop")} in the price window on our goal pages, each with its cheapest listing by price per mg, most checks first. Research-use sellers; we do not link to them.{" Prices checked " + nice_date(newest) + "." if newest else ""}</p></div></div>
+    <div class="tbl-wrap"><table class="tbl tbl-cards tbl-sold">
+      <thead><tr><th scope="col">Shop</th><th scope="col">Size</th><th scope="col">Price</th><th scope="col">Per mg</th><th scope="col">Checks</th></tr></thead>
+      <tbody>{"".join(trs)}</tbody>
+    </table></div>
+    <p class="small" style="margin-top:16px">Price per mg is the price divided by the stated amount. Checks are facts we hold about the seller, not a safety or quality grade. <a href="/how-we-rate/">How we rate</a></p>
+  </div>
+</section>"""
+
+
+def pep_plans_section(slug):
+    """An approved medicine: the clinic table of the goal page whose plans carry it (Category, weight loss), filtered to
+    the substance; else the clinic plans of the substance in the same table."""
+    rows = pep_plans(slug)
+    if not rows:
+        return ""
+    g = next((g for g in ALL_GOALS if slug in ((g.get("clinic_plans") or {}).get("substances") or [])), None) or SUB_GOAL.get(slug) or {}
+    return clinic_section(g, rows).replace('id="clinics"', 'id="sold"', 1)
+
+
+def pep_letters_section():
+    """FDA warning letters: site.fda_letters_all carries no substance tags, so the page links the letters page."""
+    if not LETTERS_ALL:
+        return ""
+    return f"""
+<section class="section" id="letters">
+  <div class="wrap">
+    <div class="sec-hd"><div><h2>FDA warning letters</h2><p>Our letters list is by company, not by substance. The letters page lists all {len(LETTERS_ALL)}, each with its subject and a link to fda.gov; filter it by a company name.</p></div><a href="/fda-warning-letters/">FDA warning letters</a></div>
+  </div>
+</section>"""
+
+
+def pep_guides(slug):
+    words = {pep_short(slug).lower(), slug.replace("-", " ")}
+    found = [g for g in guides.GUIDES if any(w in g["title"].lower() for w in words)]
+    if not found:
+        return ""
+    items = "".join(f'<li><a href="/learn/{g["slug"]}/">{g["title"]}</a></li>' for g in found)
+    return (f'<section class="related" aria-labelledby="guides-h"><h2 id="guides-h" class="h-sources">Guides</h2>'
+            f'<ul>{items}</ul></section>')
+
+
+def pep_page(slug):
+    s = pep_status(slug)
+    src = PepSources()
+    src.n(f'{"FDA" if "fda.gov" in s["url"] else "Source"}, status of {pep_short(slug)}, {nice_date(s["seen"])}', s["url"])
+    evidence = pep_evidence(slug, src)
+    sold = pep_plans_section(slug) if pep_group(s) == "approved" else pep_shops_section(slug)
+    return f"""
+<section class="hero hero-goal seller-pg pep-pg">
+  <div class="wrap">
+    <div class="hero-grid">
+      <div>
+        <h1>{escape(pep_name(slug))}</h1>
+        {pep_chips(slug, s)}
+        <p class="small meta"><a href="/about/">{AUTHOR}</a>. {STANDING_LINE.replace(CHECKED, nice_date(pep_checked(slug)))}</p>
+        <p class="intro">{" ".join(pep_answer(slug))}</p>
+      </div>{pep_facts(slug, s)}
+    </div>
+  </div>
+</section>{evidence}{sold}{pep_letters_section()}
+<section class="section pep-foot">
+  <div class="wrap">
+    {pep_guides(slug)}
+    <section class="pep-sources" aria-labelledby="sources-h"><h2 id="sources-h" class="h-sources">Sources</h2>
+    <ol class="small sources">{src.html()}</ol></section>
+  </div>
+</section>
+"""
+
+
+PEP_GROUPS = [("approved", "FDA approved", "Approved medicines: an FDA-approved product exists for a stated use."),
+              ("not", "Not approved", "No approved product; research-use shops sell most of them, and some may be made by pharmacies."),
+              ("cosmetic", "Cosmetic", "Sold in creams and serums; cosmetics do not need FDA approval.")]
+
+
+def pep_low(slug):
+    s = pep_status(slug)
+    low = pep_low_shop(slug)
+    if low:
+        return f'{per_mg(low["price_per_mg"])}/mg'
+    plan = pep_low_plan(slug) if pep_group(s) == "approved" else None
+    return f'{usd(plan["price_monthly"])}/mo' if plan else "none shown"
+
+
+def peptides_index():
+    sections = []
+    for key, label, line in PEP_GROUPS:
+        slugs = sorted((x for x in PEPTIDE_SLUGS if pep_group(pep_status(x)) == key), key=lambda x: pep_name(x).lower())
+        if not slugs:
+            continue
+        trs = "".join(
+            f'<tr><td><a class="name" href="/peptides/{x}/">{escape(pep_name(x))}</a></td>'
+            f'<td data-l="Status"><span class="chip chip-{pep_status(x)["chip"]}">{pep_status(x)["label"]}</span></td>'
+            f'<td data-l="What that means">{pep_status(x)["sentence"]}</td><td class="num" data-l="Lowest price">{pep_low(x)}</td></tr>'
+            for x in slugs)
+        sections.append(f"""
+    <div class="sec-hd pep-group"><div><h2 id="g-{key}">{label}</h2><p>{plural(len(slugs), "substance")}. {line}</p></div></div>
+    <div class="tbl-wrap"><table class="tbl tbl-cards tbl-peptides" aria-labelledby="g-{key}">
+      <thead><tr><th scope="col">Substance</th><th scope="col">Status</th><th scope="col">What that means</th><th scope="col">Lowest price</th></tr></thead>
+      <tbody>{trs}</tbody>
+    </table></div>""")
+    checked = max(pep_checked(x) for x in PEPTIDE_SLUGS)
+    return f"""
+<section class="section letters-hd">
+  <div class="wrap">
+    <h1>Peptides and their FDA status</h1>
+    <p class="lede">Every peptide and approved alternative we track, {len(PEPTIDE_SLUGS)} in all, with its FDA status, its source and the lowest price we show. Each name opens its page; we do not link to shops or clinics.</p>
+    <p class="letters-stamp"><span class="stamp">Checked {nice_date(checked)}</span><span class="small">Lowest price: per mg at the shops we show, or per month at the online clinics for an approved medicine.</span></p>
+  </div>
+</section>
+<section class="band-2" id="peptides-list">
+  <div class="wrap">{"".join(sections)}
+  </div>
+</section>
+"""
+
+
+if PEPTIDE_SLUGS:
+    PAGES.append(("/peptides/", "peptides/index.html", "Peptides A to Z: FDA status and prices | Peptide Chooser",
+                  (f"Every peptide and approved alternative we track, {len(PEPTIDE_SLUGS)} in all, grouped FDA approved, not "
+                   "approved and cosmetic, with its source and the lowest price we show."),
+                  peptides_index(), item_list_schema("Peptides and their FDA status",
+                                                     [(pep_name(x), f"{SITE}/peptides/{x}/") for x in PEPTIDE_SLUGS]),
+                  [("/peptides/", "Peptides")]))
+    for _x in PEPTIDE_SLUGS:
+        PAGES.append((f"/peptides/{_x}/", f"peptides/{_x}/index.html", pep_title(_x), pep_description(_x), pep_page(_x), "",
+                      [("/peptides/", "Peptides"), (f"/peptides/{_x}/", pep_short(_x))]))
 
 
 def main():
