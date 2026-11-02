@@ -5,7 +5,8 @@ Reads the `site.*` views through the read-only role (peptide-data spec 0015) and
   - site.substance_status, site.approved_drugs -> "legal_db": status per substance with its source and date
   - site.plan_prices     -> "plans": telehealth plan prices per seller, with the date the page was last seen
   - site.products        -> "products": research-use listings for the substances the site shows (see keep_products)
-  - site.sellers         -> "sellers": the seller rows those listings point to, with their background check
+  - site.sellers         -> "sellers": the seller rows those listings point to, with their background check and their
+                            five-check score (score, score_* yes/no, score_checked_on)
   - site.fda_letters    -> "letters": the newest FDA warning letters to sellers in the database (see letters_rows)
   - site.fda_letters_all -> "letters_all": every peptide-related letter or letter to a seller we know, for /fda-warning-letters/
 
@@ -108,8 +109,9 @@ def main():
     used = {r["seller_slug"] for r in d["products"]}
     sellers = rows(
         "select seller_slug, seller_name, domain, seller_kind, legal_entity_name, registry_state, legal_entity_source_url, "
-        "fda_letter_count, last_fda_letter_date, coa_count, product_count, price_updated_at, first_seen, last_seen "
-        "from site.sellers order by seller_slug")
+        "fda_letter_count, last_fda_letter_date, coa_count, product_count, price_updated_at, first_seen, last_seen, "
+        "score, score_lab_testing, score_no_fda_letter, score_registered_company, score_legal_pages, score_fresh_prices, "
+        "score_checked_on from site.sellers order by seller_slug")
     d["sellers"] = [r for r in sellers if r["seller_slug"] in used]
     d["letters"] = letters_rows()
     # the line under the letters table: how many letters, since when (domain or address matches only)

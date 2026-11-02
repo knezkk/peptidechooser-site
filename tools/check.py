@@ -210,6 +210,9 @@ def check_parts(P):
                     errs.append(f"{name}: seller window links to a seller ({href})")
             if "btn-action" in m.group(1):
                 errs.append(f"{name}: Visit button inside the seller window")
+            # The seller score is facts, never a verdict (owner, 2 Nov 2026): no "safe", "trusted" or "best" in the window.
+            for w in re.findall(r"\b(safe|trusted|best)\b", re.sub(r"<[^>]+>", " ", m.group(1)), re.I):
+                errs.append(f"{name}: seller window says '{w}'")
     # The letters page (pages.md, Letters): every row has a date, a company, a subject and its fda.gov letter; the only
     # links leaving the site go to fda.gov, so no seller domain is linked anywhere on the page.
     if "fda-warning-letters/index.html" in P:
