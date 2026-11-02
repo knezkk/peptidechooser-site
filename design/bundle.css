@@ -150,6 +150,10 @@ body:has(.sellers-dlg[open]){overflow:hidden}
 .tbl-clinics td.act{text-align:left;margin-top:10px}
 .tbl-clinics .sub{display:inline;margin-left:6px}
 }
+/* On phones, with JavaScript, the first 10 plans show, then btn-line "Show all N" (owner answer Q2 a, 2 Nov 2026); from 641px every row shows and the button is not drawn. */
+@media (max-width:640px){.clip .tbl-clinics tr.more{display:none}}
+@media (min-width:641px){.clinics-more{display:none}}
+.clinics-more{margin:12px 0 0}
 
 /* Header menu (pages.md, Every page, Header, 31 Oct 2026): under 760px the nav opens from a plain "Menu" button
    (btn-line btn-sm, no icon); .nav-js is set by the head script, so with JavaScript off the links stay a wrapped row */

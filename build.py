@@ -370,6 +370,12 @@ def clinic_plans(g):
     return sorted(rows, key=lambda r: (float(r["price_monthly"]), r["seller_name"], r["plan_name"]))
 
 
+def other_use(g, r):
+    """A brand plan whose brand is approved for another use (`clinic_plans.other_use`, e.g. Ozempic: diabetes), or ""."""
+    return next((use for brand, use in (g.get("clinic_plans") or {}).get("other_use", {}).items()
+                 if r.get("product_kind") in BRANDED and r["plan_name"].split()[0] == brand), "")
+
+
 def row_plan(g, p):
     """The plan behind an option row's "Online clinics from" line on a goal with clinic plans: an FDA-approved row, the
     cheapest brand plan (branded or oral_branded) of its substance; the compounded row (`plan_kind`), the cheapest
@@ -379,7 +385,8 @@ def row_plan(g, p):
         subs = {x["substance"] for x in g["peptides"] if x.get("substance") and x["status"].startswith("FDA approved")}
         found = [r for r in rows if r.get("product_kind") == "compounded" and r["substance_slug"] in subs]
     elif p.get("substance") and p["status"].startswith("FDA approved"):
-        found = [r for r in rows if r["substance_slug"] == p["substance"] and r.get("product_kind") in BRANDED]
+        found = [r for r in rows if r["substance_slug"] == p["substance"] and r.get("product_kind") in BRANDED
+                 and not other_use(g, r)]
     else:
         return None
     return found[0] if found else None
@@ -1310,15 +1317,31 @@ def category_page(g):
 KIND_CHIP = {"brand": ("ok", "Brand"), "compounded": ("warn", "Compounded"), "program": ("neutral", "Program")}
 
 
+def plan_chip(g, r):
+    """What a plan is, as a chip: "Brand, diabetes" (chip-info) for a brand approved for another use (owner answer Q1 a,
+    2 Nov 2026: Ozempic is approved for diabetes, not weight loss), else the KIND_CHIP of its kind."""
+    use = other_use(g, r)
+    chip, label = ("info", f"Brand, {use}") if use else KIND_CHIP[plan_kind(r)]
+    return f'<span class="chip chip-{chip}">{label}</span>'
+
+
 def plan_kind(r):
     """"program" for a plan that names no medication, "brand" for branded or oral_branded, else "compounded"."""
     return "program" if not r["substance_slug"] else "brand" if r.get("product_kind") in BRANDED else "compounded"
 
 
 def care_note(r):
-    """"+ $99/mo care" when the plan adds a monthly membership, "all-in" when it adds none; "" when the fee is not known."""
+    """"+ $99/mo care" when the plan adds a monthly membership, "all-in" when it adds none, "care fee not known" when the
+    data has no fee (owner answer Q3 b, 2 Nov 2026)."""
     fee = r.get("membership_fee_monthly")
-    return "" if fee is None else "all-in" if float(fee) == 0 else f"+ {usd(fee)}/mo care"
+    return "care fee not known" if fee is None else "all-in" if float(fee) == 0 else f"+ {usd(fee)}/mo care"
+
+
+CLINICS_FIRST = 10
+# With JavaScript the clinic table is clipped on phones (CSS hides tr.more under .clip) and "Show all N" opens it; without
+# JavaScript every row shows and the button stays hidden.
+CLINICS_JS = """<script>(function(){var s=document.getElementById('clinics'),m=s&&s.querySelector('.clinics-more');if(!m)return;
+s.classList.add('clip');m.hidden=false;document.getElementById('clinics-all').addEventListener('click',function(){s.classList.remove('clip');m.hidden=true;});})();</script>"""
 
 
 def clinic_section(g, rows):
@@ -1329,14 +1352,15 @@ def clinic_section(g, rows):
         return ""
     newest = max(r["last_seen"] for r in rows)
     trs = []
-    for r in rows:
-        chip, label = KIND_CHIP[plan_kind(r)]
+    for i, r in enumerate(rows):
         care = care_note(r)
         n = r.get("fda_letter_count") or 0
         letter = (f'<a class="chip chip-warn chip-link" href="{LETTERS_URL}">FDA letter {nice_date(r["last_fda_letter_date"])}</a>'
                   if n and r.get("last_fda_letter_date") else '<span class="no-letter">none</span>')
-        trs.append(f'<tr><td><span class="name">{seller_base(r["seller_name"])}</span></td><td data-l="Plan">{r["plan_name"]}</td>'
-                   f'<td><span class="chip chip-{chip}">{label}</span></td>'
+        # on phones the first CLINICS_FIRST rows show until "Show all N" (owner answer Q2 a, 2 Nov 2026; bundle.css, Clinic table)
+        more = ' class="more"' if i >= CLINICS_FIRST else ""
+        trs.append(f'<tr{more}><td><span class="name">{seller_base(r["seller_name"])}</span></td><td data-l="Plan">{r["plan_name"]}</td>'
+                   f'<td>{plan_chip(g, r)}</td>'
                    f'<td data-l="Per month"><span class="num">{usd(r["price_monthly"])}</span>{f"<span class=sub>{care}</span>" if care else ""}</td>'
                    f'<td data-l="FDA letter">{letter}</td>'
                    f'<td class="act"><span class="pick-act"><span class="btn btn-action btn-sm" role="button" aria-disabled="true">Online clinic</span>'
@@ -1349,6 +1373,7 @@ def clinic_section(g, rows):
       <thead><tr><th scope="col">Clinic</th><th scope="col">Plan</th><th scope="col">What it is</th><th scope="col">Per month</th><th scope="col">FDA letter</th><th scope="col"><span class="vh">Online clinic</span></th></tr></thead>
       <tbody>{"".join(trs)}</tbody>
     </table></div>
+    {f'<p class="clinics-more" hidden><button type="button" class="btn btn-line" id="clinics-all">Show all {len(rows)}</button></p>{CLINICS_JS}' if len(rows) > CLINICS_FIRST else ""}
     <p class="small" style="margin-top:16px">Prices are the clinics' published monthly prices on {nice_date(newest)}; "from" prices are the lowest shown. A clinic with an FDA warning letter is still listed; the letter is public record.</p>
   </div>
 </section>"""

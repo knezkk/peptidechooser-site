@@ -239,7 +239,10 @@
           "liraglutide",
           "orforglipron"
         ],
-        "programs": true
+        "programs": true,
+        "other_use": {
+          "Ozempic": "diabetes"
+        }
       },
       "map": {
         "x": 50,
