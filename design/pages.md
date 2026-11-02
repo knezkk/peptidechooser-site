@@ -23,7 +23,7 @@ Everything else is a text link in `action` green. A partner without an affiliate
 3. **Breadcrumbs** (`small`) on every page except Home.
 4. Page content (below, by type).
 5. **Footer** (`ink`): logo on dark, links (About, How we rate, Contact, Affiliate and medical disclosure, Privacy), one-line disclaimer "Not medical advice. Talk to a doctor before starting any treatment.", "How we make money" link.
-6. **Cookie notice** (Google Analytics): bottom bar, "Accept" `btn-ink` and "Reject" `btn-line`, equal size.
+6. **Cookie notice** (Google Analytics): bottom bar, "We use Google Analytics to count visits and see which pages help. No ads, no selling of data." with the Privacy policy link, then "Accept" `btn-ink btn-sm` and "Reject" `btn-line btn-sm`, equal height (44px). **Under 640px** (owner, 1 Nov 2026): the sentence drops "and see which pages help" ("We use Google Analytics to count visits. No ads, no selling of data. Privacy policy"), in 13px at line height 1.35, and sits left of the two buttons, which stay side by side on the right (12px padding each, 6px apart, 14px text); 10px above and below. The bar is 74px tall at 390px (was 123px) and must stay under 110px. Consent logic unchanged.
 
 ## Home `/`
 

@@ -249,6 +249,14 @@ p { margin: 0 0 1em; }
 .cookie p a { color: var(--ink); }
 .cookie-btns { display: flex; gap: 8px; }
 .cookie-btns .btn { min-height: 44px; padding: 0 18px; font-size: 15px; width: auto; }
+/* Phones (owner, 1 Nov 2026): the short sentence beside the two buttons, so the bar stays under 110px at 390px */
+@media (max-width: 640px) {
+  .cookie .wrap { flex-wrap: nowrap; gap: 12px; padding-top: 10px; padding-bottom: 10px; }
+  .cookie p { flex: 1 1 auto; min-width: 0; font-size: 13px; line-height: 1.35; }
+  .cookie-long { display: none; }
+  .cookie-btns { flex: none; gap: 6px; }
+  .cookie-btns .btn { padding: 0 12px; font-size: 14px; }
+}
 
 @media (min-width: 760px) {
   .foot-grid { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: 48px; }
