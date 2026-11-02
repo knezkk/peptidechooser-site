@@ -124,6 +124,20 @@ def goal_href(g):
     return f'/{g["slug"]}/' if g.get("page") else f'/#goals-{g["slug"]}'
 
 
+def goals_strip(heading, skip=None):
+    """The goals strip (pages.md, Category and Letters; owner task 2 Nov 2026): a heading and one row of btn-line links to
+    the goal pages, each labelled with the goal's `label`; a goal page leaves itself out (`skip`)."""
+    links = "".join(f'<a class="btn btn-line btn-sm" href="/{g["slug"]}/">{g["label"]}</a>'
+                    for g in ALL_GOALS if g.get("page") and g["slug"] != skip)
+    return f"""
+<section class="section goals-strip" id="other-goals">
+  <div class="wrap">
+    <h2 class="h-sources">{heading}</h2>
+    <div class="btn-row">{links}</div>
+  </div>
+</section>""" if links else ""
+
+
 def nav_items(path):
     # Design book, Pages and buttons, Header (owner, 1 Nov 2026): "Peptides by goal" (a menu of the seven goals: a goal
     # with its own page links there, the others to Home with the goal chosen, /#goals-<slug>), then Legal status, FDA
@@ -302,7 +316,7 @@ def goal_rows():
         compare = f'<a class="btn btn-ink btn-sm" href="/{g["slug"]}/">Compare</a>' if g.get("page") else ""
         act = f'<span class="pick-act">{visit(g, small=True)}</span>' if pick else ""
         rows.append(f"""<tr>
-  <td><span class="name">{g["label"]}</span></td>
+  <td>{f'<a class="name" href="/{g["slug"]}/">{g["label"]}</a>' if g.get("page") else f'<span class="name">{g["label"]}</span>'}</td>
   <td>{option}</td>
   <td>{price}</td>
   <td>{chip}</td>
@@ -989,7 +1003,7 @@ LETTERS_PAGE = f"""
     {f'<p class="letters-more" hidden><button type="button" class="btn btn-line" id="letters-all">Show all {len(LETTERS_ALL)}</button></p>' if len(LETTERS_ALL) > LETTERS_FIRST else ""}
     <p class="small" style="margin-top:16px">Company names are as the FDA lists them. "In our database" names the seller we matched the letter to.</p>
   </div>
-</section>
+</section>{goals_strip("Compare peptides by goal")}
 {LETTERS_PAGE_JS}
 """ if LETTERS_ALL else ""
 FIGURE = figure_svg()
@@ -1461,7 +1475,7 @@ def category_body(g, table, table_lede):
       {table}
     </table></div>
   </div>
-</section>{legal_html}{clinic_section(g, plans)}
+</section>{legal_html}{clinic_section(g, plans)}{goals_strip("Compare other goals", g["slug"])}
 {sources_html}
 <div class="wrap sellers-all">{windows}</div>
 {SELLERS_JS}
