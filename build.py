@@ -1286,7 +1286,7 @@ def category_body(g, table, table_lede):
     return f"""
 <section class="hero hero-goal">
   <div class="wrap">
-    <div class="hero-grid">
+    <div class="hero-grid{"" if pad else " hero-solo"}">
       <div>
         <h1>{g["h1"]}</h1>
         <p class="small meta">{AUTHOR}. Last updated {CHECKED}. Every claim links to its source. Prices checked {STAMP_CHECKED}.</p>
