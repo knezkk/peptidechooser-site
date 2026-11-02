@@ -622,7 +622,7 @@ def g_best(b, f, N):
 <p>None of the vials sold for hair is FDA approved for any use, and we found no study in people that shows any of them grows hair. Our guide on <a href="/learn/injectable-peptides-for-hair-growth/">injectable peptides for hair growth</a> has the FDA status of each one.</p>
 
 <h2>Why do finasteride and minoxidil come first?</h2>
-<p>Because they were tested on hair in people, in large trials. In two one-year trials with 1,553 men, those who took finasteride 1 mg a day had 107 more hairs than the placebo group after one year, and 138 more after two years. The men on placebo kept losing hair.{N('pm-kaufman')}</p>
+<p>Because they were tested on hair in people, in large trials. In two one-year trials with 1,553 men, those who took finasteride had 107 more hairs than the placebo group after one year, and 138 more after two years. The men on placebo kept losing hair.{N('pm-kaufman')}</p>
 <p>Minoxidil, put on the scalp, helps hair grow and slows balding, most in people under 40 whose hair loss is recent.{N('medline-minoxidil')} Both work only while you use them.{N('hair-1')}{N('medline-minoxidil')}</p>
 
 <h2>What does "and thickness" mean in hair studies?</h2>

@@ -197,6 +197,10 @@ def check_schema(P):
     return errs
 
 
+DOSE = re.compile(r"\b\d+(?:\.\d+)?\s?(?:mg|mcg|µg|iu|units?|ml)\b\s*(?:per|a|an|/|every|each|once|twice)\s*"
+                  r"(?:day|daily|week|weekly|dose|kg|injection|night|morning)\b|\b(?:take|inject)\s+\d", re.I)
+
+
 def check_parts(P):
     errs = []
     css = (ROOT / "assets" / "site.css").read_text()
@@ -310,7 +314,18 @@ def check_parts(P):
                 errs.append(f"search-index.json: {e['name']} links off the site")
     if "search/index.html" in P and "noindex" not in P["search/index.html"].meta.get("robots", ""):
         errs.append("search/index.html: not noindex")
-    for name in ("search/index.html", "compare/index.html"):
+    # Peptide pages (pages.md, Peptide; owner task 2 Nov 2026): every page opens its short answer with the status and its
+    # source link, and no page on the site says a dose (an amount with how often or per what, or "take/inject N").
+    for name in P:
+        if name.startswith("peptides/") and name != "peptides/index.html":
+            html = (DIST / name).read_text(encoding="utf-8")
+            if not re.search(r'<p class="intro">[^<]+\. <a href="https?://[^"]+" rel="nofollow">(FDA source|Source)</a>', html):
+                errs.append(f"{name}: no status source link in the short answer")
+        text = " ".join(P[name].parts)
+        m = DOSE.search(text)
+        if m:
+            errs.append(f"{name}: says a dose ({m.group(0)})")
+    for name in ("search/index.html", "compare/index.html", *(n for n in P if n.startswith("peptides/"))):
         if name not in P:
             continue
         html = (DIST / name).read_text(encoding="utf-8")
