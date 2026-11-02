@@ -52,6 +52,8 @@ p { margin: 0 0 1em; }
 .hero { padding: 56px 0; }
 .hero-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 32px; }
 .hero h1 { max-width: 17ch; margin-bottom: 16px; }
+/* A goal page without the price pad: the short answer runs wider (pages.md, Category; owner answer Q3 b, 2 Nov 2026). */
+.hero-solo .intro { max-width: 62ch; }
 
 /* Home hero: intro line, then the evidence rail beside the body figure, then How we rate and the labels (pages.md, Home) */
 /* The first screen is white with no box around the flow; everything after it sits on the grey band (owner, 31 Oct 2026). */
@@ -284,6 +286,7 @@ p { margin: 0 0 1em; }
   .hero-pair { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0 48px; align-items: start; }
   .hero-pair .what-is { margin: 0; }
   .hero-grid { grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: 48px; align-items: start; }
+  .hero-grid.hero-solo { grid-template-columns: minmax(0, 1fr); }
   .flow { grid-template-columns: 170px 200px minmax(0, 1fr); grid-template-areas: "h1 h1 h2" "fig list cmp"; gap: 16px 24px; padding: 20px 24px 24px; }
   .fig { height: 372px; }
 }
