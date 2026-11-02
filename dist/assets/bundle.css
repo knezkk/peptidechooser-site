@@ -309,6 +309,23 @@ html:not(.nav-js) .head-search{order:0;flex:1 1 100%;max-width:420px;margin:0 0 
 .cmp .name{font-size:16px}
 }
 
+/* Guide and Learn (pages.md, Guide and Learn; owner task 2 Nov 2026). Short answer: a white card at the article's width,
+   1px line border, radius-panel, as the Get new letters card. Related guides, the Learn list and Home's guides card are
+   plain lists of text links between hairlines; no card holds a card. */
+.short-answer{margin:0 0 8px;padding:20px 24px;background:var(--white);border:1px solid var(--line);border-radius:var(--radius-panel)}
+.prose .short-answer h2,.learn-card h2{font-size:var(--display-4-size);line-height:var(--display-4-lh);margin:0 0 8px;padding:0;border:0}
+.prose .short-answer p{margin:0}
+.related ul,.guide-list,.learn-card ul{list-style:none;padding:0;margin:0}
+.related li,.learn-card li{margin:0;padding:10px 0;border-top:1px solid var(--line)}
+.guide-list li{margin:0;padding:20px 0;border-top:1px solid var(--line)}
+.guide-list li:last-child,.related li:last-child,.learn-card li:last-child{border-bottom:1px solid var(--line)}
+.prose .guide-list h2{font-size:var(--display-4-size);line-height:var(--display-4-lh);margin:0 0 6px;padding:0;border:0}
+.guide-list p{margin:0 0 4px}
+.guide-list .small{color:var(--ink-2)}
+.learn-card{padding:20px 24px;background:var(--white);border:1px solid var(--line);border-radius:var(--radius-panel)}
+.learn-card a{color:var(--clinic)}
+.learn-card>a{display:inline-block;margin-top:12px;font-weight:600}
+
 /* Inputs */
 .input{min-height:48px;padding:0 14px;border:1.5px solid var(--line-strong);border-radius:var(--radius-control);font:16px var(--font-text);color:var(--ink);background:var(--white);box-sizing:border-box}
 .input:focus-visible{outline:3px solid var(--clinic);outline-offset:1px}

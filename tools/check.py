@@ -172,8 +172,28 @@ def check_schema(P):
                         target = DIST / rel.strip("/")
                         if rel != "/" and not (target / "index.html").exists():
                             errs.append(f"{name}: breadcrumb to missing {rel}")
-                if t not in ("Organization", "WebSite", "BreadcrumbList", "Article"):
+                if t not in ("Organization", "WebSite", "BreadcrumbList", "Article", "ItemList"):
                     errs.append(f"{name}: schema type {t} not in the allowed list (6.3)")
+                if t == "Article" and not all(node.get(k) for k in ("headline", "datePublished", "author")):
+                    errs.append(f"{name}: Article without headline, datePublished or author")
+                if t == "ItemList" and not node.get("itemListElement"):
+                    errs.append(f"{name}: ItemList without items")
+        # The type each page needs (owner task 2 Nov 2026): Organization on Home, BreadcrumbList on every inner page,
+        # Article on every guide, ItemList on /sellers/ and the letters page.
+        found = set()
+        for block in p.jsonld:
+            try:
+                data = json.loads(block)
+            except json.JSONDecodeError:
+                continue
+            found |= {n.get("@type") for n in data.get("@graph", [data])}
+        need = {"Organization"} if name == "index.html" else set() if name == "404.html" else {"BreadcrumbList"}
+        if re.fullmatch(r"learn/[^/]+/index\.html", name):
+            need.add("Article")
+        if name in ("sellers/index.html", "fda-warning-letters/index.html"):
+            need.add("ItemList")
+        for t in sorted(need - found):
+            errs.append(f"{name}: no {t} JSON-LD")
     return errs
 
 

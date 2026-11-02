@@ -270,6 +270,15 @@ p { margin: 0 0 1em; }
 .prose li { margin-bottom: 8px; }
 .prose a:not(.btn) { color: var(--clinic); } /* a button keeps its own colours (Contact, 404) */
 .btn-row { display: flex; flex-wrap: wrap; gap: 10px; margin: 24px 0 32px; }
+/* Guide pages (pages.md, Guide): the related strip and the sources sit under "What to do next" at the sources heading's size. */
+.prose h2.h-sources { font: var(--display-4-weight) var(--display-4-size)/var(--display-4-lh) var(--font-display); margin: 48px 0 12px; padding: 0; border: 0; }
+.guide .btn-line { color: var(--ink); }
+.prose .short-answer h2:first-of-type { margin-top: 0; }
+.prose .related ul, .prose .guide-list { padding-left: 0; }
+.guide .btn-ink { color: var(--white); }
+/* Home's guides card sits in the grey band after "What the labels mean"; two columns of links from 760px. */
+.learn-card { margin-top: 48px; }
+@media (min-width: 760px) { .learn-card ul { columns: 2; column-gap: 32px; } .learn-card li { break-inside: avoid; } }
 
 /* Short pages (owner answer Q3 a, 2 Nov 2026): the footer sits at the bottom of the window; main takes the spare height.
    The breadcrumb is a body child with auto side margins, so it is told to stretch to the frame like any .wrap. */

@@ -10,6 +10,8 @@ Reads the `site.*` views through the read-only role (peptide-data spec 0015) and
                             five-check score (score, score_* yes/no, score_checked_on)
   - site.fda_letters    -> "letters": the newest FDA warning letters to sellers in the database (see letters_rows)
   - site.fda_letters_all -> "letters_all": every peptide-related letter or letter to a seller we know, for /fda-warning-letters/
+  - site.sellers, site.seller_profile, site.products -> "guide_stats": the counts the guides in guides.py quote (shops we
+                            check, those with a lab report in the last 12 months, shops that list BPC-157)
   - site.seller_profile, site.seller_substances, site.seller_letters -> "seller_profiles", "seller_substances" (top 12 per
     seller, see top_substances), "seller_letters": the seller pages /sellers/ and /sellers/<slug>/
 
@@ -100,6 +102,17 @@ def top_substances(all_rows, n=12):
     return out
 
 
+def guide_stats():
+    """The counts the guides quote (guides.py; owner task 2 Nov 2026), with the day they were counted. site.json keeps only
+    ten listings per substance, so these cannot be counted from its rows."""
+    r = rows(
+        "select (select count(*) from site.sellers) as sellers, "
+        "(select count(*) from site.seller_profile where newest_coa_date >= current_date - interval '12 months') as sellers_coa_12m, "
+        "(select count(distinct seller_slug) from site.products where substance_slug = 'bpc-157') as bpc_sellers")[0]
+    r["checked_on"] = date.today().isoformat()
+    return r
+
+
 def main():
     if not URL:
         print("pull_data: SITE_DATABASE_URL not set, site.json left as it is")
@@ -136,6 +149,7 @@ def main():
     # the count and the oldest date the letters page and Home's "See all N letters" show
     d["letters_all_total"] = len(d["letters_all"])
     d["letters_all_oldest"] = min((r["letter_date"] for r in d["letters_all"] if r["letter_date"]), default=None)
+    d["guide_stats"] = guide_stats()
     # The seller pages /sellers/ and /sellers/<slug>/ (pages.md, Seller): every seller's profile with its five checks,
     # its top 12 substances by listing count and its FDA warning letters.
     d["seller_profiles"] = rows(
