@@ -1170,7 +1170,7 @@ def g_skin(b, f, N):
     pep = [p for p in skin["peptides"] if p.get("substance")]
     short = (f"Skin peptides are sold as cosmetics: legal without FDA approval, and nobody has to show that they work.{N('legal-5')} "
              f"Matrixyl, a palmitoyl pentapeptide, has one 12-week, placebo-controlled study in 93 women that found fewer fine lines."
-             f"{N('pm-robinson')} Argireline, an acetylated hexapeptide, has a small study in women without a placebo group.{N('pm-blanes')} "
+             f"{N('pm-robinson')} Argireline, an acetylated hexapeptide, has a study in women without a placebo group.{N('pm-blanes')} "
              f"For copper peptides (GHK-Cu), a 2026 review called the studies in people small and few.{N('pm-najafi')}")
     opts = "".join(f"<li><strong>{p['name']}</strong>: {p['status']}. {p['does']}</li>" for p in pep)
     counts = " ".join(x for x in (shops_line(b, f, p["substance"], N) for p in pep) if x)
