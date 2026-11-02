@@ -2070,6 +2070,47 @@ def clinic_plans_section(r):
 </section>"""
 
 
+LEGIT_CLOSE = "These are the facts we hold; we do not call any seller legit or safe, and we never link to the shop."
+
+
+def legit_heading(r):
+    """The one place the site may write "legit" (owner decision 2 Nov 2026; pages.md, Rules that apply to every page):
+    this question, as the H2 of a seller page. tools/check.py allows the word nowhere else."""
+    return f"Is {seller_base(seller_name(r))} legit? What we can check"
+
+
+LEGIT_TAIL = " Is it legit? See the five checks."
+
+
+def legit_description(d):
+    """A seller page's description under 150 characters gets LEGIT_TAIL (owner task 2 Nov 2026), when it still fits
+    in the 160 characters tools/check.py allows."""
+    return d + LEGIT_TAIL if len(d) < 150 and len(d) + len(LEGIT_TAIL) <= 160 else d
+
+
+def legit_section(r):
+    """"Is <Name> legit? What we can check" (pages.md, Seller; owner task 2 Nov 2026): right after the short answer, the five
+    checks in the seller page's order, each "Met:" or "Not met:" with the check card's fact, then the closing sentence."""
+    lines = check_lines(r)
+    # a check that has not run yet says so, not "Not met" (owner answer Q3 b, 2 Nov 2026): today the legal pages, while
+    # terms, privacy and refund are all unknown
+    unrun = {"score_legal_pages": "Terms, privacy and refund pages."} if all(
+        r.get(f"{x}_seen") is None for x in ("terms", "privacy", "refund")) and not r.get("score_legal_pages") else {}
+    state = lambda k: "Not checked yet" if k in unrun else "Met" if r.get(k) else "Not met"
+    items = "".join(
+        f'<li><span class="chip chip-{"ok" if r.get(k) else "neutral"} mark-{"yes" if r.get(k) else "no"}">{t}</span>'
+        f'<span class="check-line">{state(k)}: {unrun.get(k, lines[k])}</span></li>'
+        for k, t in SCORE_CHECKS)
+    return f"""
+<section class="section legit" id="legit">
+  <div class="wrap">
+    <h2>{legit_heading(r)}</h2>
+    <ul class="check-list legit-list">{items}</ul>
+    <p class="small legit-close">{LEGIT_CLOSE}</p>
+  </div>
+</section>"""
+
+
 def seller_page(r):
     clinic = r["seller_slug"] in CLINIC_PROFILES
     answer = " ".join(clinic_answer(r) if clinic else short_answer(r))
@@ -2088,7 +2129,7 @@ def seller_page(r):
       </div>{check_card(r)}
     </div>
   </div>
-</section>{clinic_plans_section(r) if clinic else seller_subs_section(r)}{seller_letters_section(r)}{seller_company_section(r)}{similar_section(r)}
+</section>{legit_section(r)}{clinic_plans_section(r) if clinic else seller_subs_section(r)}{seller_letters_section(r)}{seller_company_section(r)}{similar_section(r)}
 """
 
 
@@ -2222,7 +2263,7 @@ if PROFILES:
                   [("/sellers/", "Sellers")]))
     for _r in sorted(PROFILES.values(), key=lambda x: x["seller_slug"]):
         PAGES.append((f"/sellers/{_r['seller_slug']}/", f"sellers/{_r['seller_slug']}/index.html", seller_title(_r),
-                      clinic_description(_r) if _r["seller_slug"] in CLINIC_PROFILES else seller_description(_r), seller_page(_r), "",
+                      legit_description(clinic_description(_r) if _r["seller_slug"] in CLINIC_PROFILES else seller_description(_r)), seller_page(_r), "",
                       [("/sellers/", "Sellers"), (f"/sellers/{_r['seller_slug']}/", seller_name(_r))]))
 
 
