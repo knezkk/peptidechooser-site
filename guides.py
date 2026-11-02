@@ -82,6 +82,31 @@ GUIDES = [
      "h1": "How we check peptide sellers: the five checks, with examples.",
      "desc": "The five checks behind every seller score, each with a real example from our database, what the score does not tell you and how often it refreshes.",
      "line": "The five seller checks, each with a real example, and what the score is not."},
+    # guides 17 to 22: the goals without a guide and the questions behind the site (owner task 2 Nov 2026, feat/learn-4)
+    {"slug": "peptides-for-recovery-and-joints", "title": "Peptides for recovery and joints: what the evidence shows",
+     "h1": "Peptides for recovery and joints: what the evidence in people shows.",
+     "desc": "BPC-157 and TB-500 are sold for injuries and joints. What the few studies in people found, their FDA status, the usual treatments and shop prices.",
+     "line": "BPC-157 and TB-500 for injuries: the studies in people and the usual treatments."},
+    {"slug": "peptides-for-libido-what-is-approved", "title": "Peptides for libido: Vyleesi, Melanotan II and the rest",
+     "h1": "Peptides for libido: what is approved, and what is not.",
+     "desc": "Vyleesi (bremelanotide) is FDA approved for low desire in premenopausal women. PT-141 from shops, Melanotan II, their FDA status and what shops charge.",
+     "line": "Vyleesi, PT-141 from shops and Melanotan II: status, trials and prices."},
+    {"slug": "longevity-peptides-epitalon-mots-c-nad", "title": "Longevity peptides: Epitalon, MOTS-c and NAD+ in 2026",
+     "h1": "Longevity peptides: Epitalon, MOTS-c and NAD+ in 2026.",
+     "desc": "Epitalon, MOTS-c and NAD+ are sold for aging. Their FDA status from our database, the studies in people by design, why NAD+ is not a peptide, and prices.",
+     "line": "Epitalon, MOTS-c and NAD+: status, the studies in people and prices."},
+    {"slug": "online-clinic-vs-research-shop", "title": "Online clinic vs research-use shop: what you are buying",
+     "h1": "Online clinic or research-use shop: what you are really buying.",
+     "desc": "An online clinic sells a prescription after a visit; a research-use shop sells vials not meant for people. What each may sell, our checks and FDA letters.",
+     "line": "The two kinds of seller we track, what each sells and what our checks mean."},
+    {"slug": "what-is-a-503a-pharmacy", "title": "What is a 503A pharmacy, and what may it compound?",
+     "h1": "What is a 503A pharmacy, and what may it make?",
+     "desc": "A 503A pharmacy makes medicines for one patient at a time. The FDA's three bulk substance categories, where our peptides sit, and the GLP-1 copy rules.",
+     "line": "Ordinary pharmacies, the FDA's three categories and where our peptides sit."},
+    {"slug": "how-to-check-a-peptide-seller", "title": "How to check a peptide seller yourself in ten minutes",
+     "h1": "How to check a peptide seller yourself, in ten minutes.",
+     "desc": "Five checks you can do alone before you buy: the lab report and its date, the FDA letter list, the state business registry, the legal pages and prices.",
+     "line": "Five checks you can do alone, with the public pages to use for each."},
 ]
 # Home's card shows the first six with "All guides" under them (owner task 2 Nov 2026: the first six when space is tight)
 HOME_CARD = 6
@@ -91,13 +116,16 @@ TOPIC = {"is-bpc-157-legal": "legal", "are-peptides-safe": "legal", "how-to-read
          "compounded-semaglutide-price": "glp1", "peptides-for-hair-loss-what-works": "hair",
          "best-peptides-for-hair-growth": "hair", "ghk-cu-for-hair": "hair", "injectable-peptides-for-hair-growth": "hair",
          "best-peptides-for-muscle-growth": "body", "bpc-157-vs-tb-500": "body", "peptides-for-skin-what-works": "body",
-         "are-peptides-legal-in-the-us": "legal", "how-we-check-sellers": "legal", "semaglutide-vs-tirzepatide-price": "glp1"}
+         "are-peptides-legal-in-the-us": "legal", "how-we-check-sellers": "legal", "semaglutide-vs-tirzepatide-price": "glp1",
+         "peptides-for-recovery-and-joints": "body", "peptides-for-libido-what-is-approved": "body",
+         "longevity-peptides-epitalon-mots-c-nad": "body", "online-clinic-vs-research-shop": "buying",
+         "what-is-a-503a-pharmacy": "buying", "how-to-check-a-peptide-seller": "buying"}
 RELATED_MAX = 5
 
 LEARN_TITLE = "Peptide guides in plain words | Peptide Chooser"
 LEARN_H1 = "Peptide guides in plain words"
-LEARN_DESC = ("Sixteen short guides on peptides in the US: what is legal, lab reports, seller checks, GLP-1 prices, and "
-              "peptides for hair, skin, muscle and recovery.")
+LEARN_DESC = ("Twenty-two short guides on peptides in the US: what is legal, how to check a seller, GLP-1 prices, and peptides "
+              "for hair, skin, muscle, libido and aging.")
 
 # Outside pages the guides cite (fda.gov and MedlinePlus only, plus the sources already on the site, which build.py
 # hands over). The date is the page's own "Content current as of" where it shows one.
@@ -151,6 +179,25 @@ SOURCES = {
                     "Int J Cosmet Sci 27(3), 2005, PubMed 18492182", "https://pubmed.ncbi.nlm.nih.gov/18492182/"),
     "pm-blanes": ("Blanes-Mira C et al., A synthetic hexapeptide (Argireline) with antiwrinkle activity, Int J Cosmet Sci 24(5), 2002, "
                   "PubMed 18498523", "https://pubmed.ncbi.nlm.nih.gov/18498523/"),
+    # guides 17 to 22
+    "label-vyleesi": ("FDA drug label for Vyleesi (bremelanotide), Indications and Usage, through openFDA, effective 13 Nov 2025",
+                      "https://api.fda.gov/drug/label.json?search=openfda.brand_name:%22VYLEESI%22"),
+    "pm-kingsberg": ("Kingsberg SA et al., Bremelanotide for the treatment of hypoactive sexual desire disorder: two randomized phase 3 "
+                     "trials, Obstet Gynecol 134(5), 2019, PubMed 31599840", "https://pubmed.ncbi.nlm.nih.gov/31599840/"),
+    "pm-diamond": ("Diamond LE et al., Bremelanotide (PT-141), a melanocortin receptor agonist, in premenopausal women, J Sex Med 3(4), "
+                   "2006, PubMed 16839319", "https://pubmed.ncbi.nlm.nih.gov/16839319/"),
+    "pm-korkushko": ("Korkushko OV et al., Normalizing effect of the pineal gland peptides on the daily melatonin rhythm in old monkeys "
+                     "and elderly people (in Russian), Adv Gerontol 20(1), 2007, PubMed 17969590", "https://pubmed.ncbi.nlm.nih.gov/17969590/"),
+    "pm-gallagher": ("Gallagher C, Emmanuel OO, NAD+ supplementation for anti-aging and wellness: a systematic review, Ageing Res Rev 116, "
+                     "2026, PubMed 41655607", "https://pubmed.ncbi.nlm.nih.gov/41655607/"),
+    "pm-covarrubias": ("Covarrubias AJ et al., NAD+ metabolism and its roles in cellular processes during ageing, Nat Rev Mol Cell Biol "
+                       "22(2), 2021, PubMed 33353981", "https://pubmed.ncbi.nlm.nih.gov/33353981/"),
+    "medline-tendinitis": ("MedlinePlus, Tendinitis", "https://medlineplus.gov/tendinitis.html"),
+    "medline-osteoarthritis": ("MedlinePlus, Osteoarthritis", "https://medlineplus.gov/osteoarthritis.html"),
+    "fda-wl-list": ("FDA, Warning Letters (the searchable list), current as of 27 Oct 2026",
+                    "https://www.fda.gov/inspections-compliance-enforcement-and-criminal-investigations/compliance-actions-and-activities/warning-letters"),
+    "fda-503a-list": ("FDA, 503A Categories Update for Interim Policy on Compounding Using Bulk Drug Substances (the category lists)",
+                      "https://www.fda.gov/media/94155/download"),
     "pm-kaufman": ("Kaufman KD et al., Finasteride in the treatment of men with androgenetic alopecia, J Am Acad Dermatol 39(4), 1998, PubMed 9777765",
                    "https://pubmed.ncbi.nlm.nih.gov/9777765/"),
     "pm-pyo": ("Pyo HK et al., The effect of tripeptide-copper complex on human hair growth in vitro, Arch Pharm Res 30(7), 2007, PubMed 17703734",
@@ -1289,13 +1336,372 @@ def g_checks(b, f, N):
     return short, body, nxt
 
 
+def g_joints(b, f, N):
+    short = (f"BPC-157 and TB-500, the peptides sold for injuries and joints, are not FDA approved for any use.{N('drugsfda-hair')} "
+             f"A 2026 review found three small studies of BPC-157 in people, 30 people in all, and rated the evidence very low in "
+             f"certainty.{N('pm-poolton')} For TB-500 the FDA found no data in people.{N('fda-bulk-risks')} The usual treatments for "
+             f"tendon and joint pain are not peptides: rest, ice, exercise, physical therapy, pain relievers and, if needed, injections."
+             f"{N('medline-tendinitis')}{N('medline-osteoarthritis')}")
+    rec = next(g for g in b.ALL_GOALS if g["slug"] == "recovery")
+    opts = "".join(f"<li><strong>{pep_link(b, p['substance'], p['name'])}</strong>: {p['status']}. {p['does']}</li>"
+                   for p in rec["peptides"] if p.get("substance"))
+    stat = "".join(f"<li><strong>{n}</strong>: {s}</li>" for n, s in
+                   (("BPC-157", status_words(b, "bpc-157", N, plain=True)), ("TB-500", status_words(b, "tb-500", N, plain=True))) if s)
+    prices = " ".join(x for x in (shops_line(b, f, s, N) for s in ("bpc-157", "tb-500")) if x)
+    body = f"""
+<h2>Which peptides are sold for recovery and joints?</h2>
+<p>Two, mostly, and our <a href="/recovery/">recovery page</a> lists both:</p>
+<ul>{opts}</ul>
+<p>Shops sell them as powder in a vial, often side by side. People buy them for torn tendons, sore knees and sports injuries.</p>
+
+<h2>Why do people try them?</h2>
+<p>Because injuries can take a long time to get better, and a vial promises a shortcut. The stories on shop pages and forums are not trial results: none of the three studies in people compared BPC-157 with a placebo or another treatment.{N('pm-poolton')}</p>
+
+<h2>What is their FDA status?</h2>
+<p>Neither is FDA approved for any use.{N('drugsfda-hair')} From our database:</p>
+{f"<ul>{stat}</ul>" if stat else ""}
+<p>In July 2026 the FDA's advisory committee on pharmacy compounding reviewed both, and the FDA proposed not to let pharmacies use them.{N('legal-6')}</p>
+
+<h2>What do the studies in people show?</h2>
+<p>For BPC-157, a 2026 review searched four databases for any study in people. It found three, with 30 people in all:{N('pm-poolton')}</p>
+<ul>
+<li>a look back at 16 patients given BPC-157 shots into the knee for pain;</li>
+<li>a look back at 12 patients treated for a bladder condition;</li>
+<li>a safety test in two people.</li>
+</ul>
+<p>None had a comparison group. Most people reported feeling better, but the reviewers rated the studies poor and the evidence very low in certainty, and said BPC-157 should be used in people only inside proper clinical trials.{N('pm-poolton')}</p>
+<p>For TB-500, the FDA says it found no data on its use in people.{N('fda-bulk-risks')} We found no trial in people either. Our guide <a href="/learn/bpc-157-vs-tb-500/">BPC-157 vs TB-500</a> puts the two side by side.</p>
+
+<h2>What does the FDA say about the risks?</h2>
+<p>The FDA lists both among substances that may be risky when pharmacies use them to make medicines. Both may set off an immune reaction when given some ways, and for both the FDA says it lacks the information to know whether they would cause harm.{N('fda-bulk-risks')}</p>
+
+<h2>What is used for tendon and joint pain instead?</h2>
+<p>None of these is a peptide.</p>
+<ul>
+<li><strong>Tendinitis</strong>: the aim is to reduce pain and swelling. Rest, wrapping or raising the area and medicines can help, ice for recent injuries, and then ultrasound, physical therapy, steroid shots or surgery.{N('medline-tendinitis')}</li>
+<li><strong>Osteoarthritis</strong>: treatment usually starts with exercises for strength and balance, weight loss if needed, and braces or shoe inserts. Pain relievers and creams can be bought without a prescription; a provider may add shots into the joint or prescription pain relievers, and surgery if nothing else helps.{N('medline-osteoarthritis')}</li>
+</ul>
+<p>A doctor or physical therapist can tell you which fits your injury.</p>
+
+<h2>What do the peptides cost?</h2>
+<p>{prices or "We show shop prices once the shops are in our database."}</p>
+<p>The windows on our recovery page list each shop with its five checks; we never link to the shops. A price per mg says nothing about what is in the vial, and a lab report covers one batch: see <a href="/learn/how-to-read-a-coa/">how to read a COA</a>.</p>
+<p>None of this is medical advice.</p>"""
+    nxt = (("/recovery/", "Compare recovery options"), ("/learn/bpc-157-vs-tb-500/", "BPC-157 vs TB-500 guide"))
+    return short, body, nxt
+
+
+def g_libido(b, f, N):
+    vy = brands(b, "bremelanotide")
+    short = (f"Bremelanotide ({vy or 'Vyleesi'}) is FDA approved for premenopausal women with low sexual desire that causes distress "
+             f"and has no other cause.{N('label-vyleesi')} PT-141 is the same molecule, bremelanotide, sold by research-use shops "
+             f"without a prescription; that is not the approved product.{N('pm-diamond')}{N('drugsfda-hair')} ")
+    mel = db_sentence(b, "melanotan-2", N)
+    short += (f"Melanotan II is not approved for any use, and {mel}" if mel else f"Melanotan II is not approved for any use.{N('drugsfda-hair')}")
+    lib = next(g for g in b.ALL_GOALS if g["slug"] == "libido")
+    opts = "".join(f"<li><strong>{p['name']}</strong>: {p['status']}. {p['does']}</li>" for p in lib["peptides"])
+    prices = " ".join(x for x in (shops_line(b, f, s, N) for s in ("bremelanotide", "melanotan-2")) if x)
+    plan = b.pep_low_plan("bremelanotide")
+    plan_s = (f" The lowest monthly Vyleesi plan at the online clinics we track is {b.usd(plan['price_monthly'])} "
+              f"({b.seller_base(plan['seller_name'])}).{N(pkey(plan))}") if plan and pkey(plan) in N.known else ""
+    body = f"""
+<h2>Which peptides are sold for libido?</h2>
+<p>Our <a href="/libido/">libido page</a> lists three:</p>
+<ul>{opts}</ul>
+
+<h2>What is Vyleesi approved for?</h2>
+<p>{pep_link(b, "bremelanotide", "Bremelanotide")}, sold as {vy or "Vyleesi"}, is approved for premenopausal women with acquired, generalized hypoactive sexual desire disorder: low sexual desire that causes marked distress or trouble in the relationship, and is not caused by another medical or mental health condition, problems in the relationship or a medicine.{N('label-vyleesi')}</p>
+<p>It is not approved for men, for women after menopause or to boost desire in people without that condition.{N('label-vyleesi')}</p>
+
+<h2>What did the trials find?</h2>
+<p>Two identical trials gave 1,267 premenopausal women bremelanotide or a placebo for 24 weeks, without them knowing which. Women on bremelanotide reported a small but clear rise in desire and less distress about low desire than women on the placebo.{N('pm-kingsberg')}</p>
+<p>More of them had nausea, flushing and headache: each came up in 10% or more of the women on bremelanotide in both trials.{N('pm-kingsberg')} The trials were paid for by the companies that make it.{N('pm-kingsberg')}</p>
+
+<h2>What does the Vyleesi label warn about?</h2>
+<ul>
+<li>Blood pressure rises for a short time and heart rate drops after each dose, usually for less than 12 hours. It is not for people with uncontrolled high blood pressure or known heart disease.{N('label-vyleesi')}</li>
+<li>Nausea is common: 40% of patients in the studies reported it.{N('label-vyleesi')}</li>
+<li>About 1% had dark patches on the skin, for example on the face or gums, and in some they did not go away.{N('label-vyleesi')}</li>
+</ul>
+<p>A prescriber checks these before and during treatment. A shop vial comes with none of that.</p>
+
+<h2>Is PT-141 the same as Vyleesi?</h2>
+<p>The molecule is the same: PT-141 was the research name of bremelanotide.{N('pm-diamond')} The product is not. A PT-141 vial from a research-use shop is not the approved medicine: nobody checked how it was made, how much is in it or whether it is clean, and it comes without a prescriber.{N('fda-approval')}</p>
+
+<h2>What about Melanotan II?</h2>
+<p>Melanotan II is a tanning peptide that is also sold for libido. It is not approved for any use.{N('drugsfda-hair')}{f" Our database records that {mel}" if mel else ""}</p>
+<p>The FDA says it may set off an immune reaction when given some ways, and that published case reports describe serious side effects, including melanoma, a brain swelling syndrome, an overdose-like reaction and painful erections that do not go away.{N('fda-bulk-risks')}</p>
+
+<h2>What do they cost?</h2>
+<p>{prices or "We show shop prices once the shops are in our database."}{plan_s} The shop listings are research-use vials, not Vyleesi.</p>
+<p>The windows on our libido page list each shop with its five checks; we never link to the shops. A price per mg says nothing about what is in the vial.</p>
+
+<h2>So which peptide works for libido?</h2>
+<p>Only one has trials in people and FDA approval: bremelanotide as Vyleesi, for one group of women with one condition.{N('label-vyleesi')} The same molecule from a shop is a different product, and Melanotan II has serious case reports behind it and no approval.</p>
+<p>If low desire troubles you, a doctor can first look for the causes the Vyleesi label rules out: another health problem, the relationship or a medicine you take.{N('label-vyleesi')}</p>
+<p>None of this is medical advice. A doctor can tell you what fits you.</p>"""
+    nxt = (("/libido/", "Compare libido options"), ("/learn/are-peptides-legal-in-the-us/", "Are peptides legal? guide"))
+    return short, body, nxt
+
+
+def g_longevity(b, f, N):
+    nad = b.db_status("nad-plus")
+    short = (f"Epitalon and MOTS-c are not FDA approved for any use.{N('drugsfda-hair')} In July 2026 the FDA proposed not to let "
+             f"pharmacies use either one.{N('legal-6')} The studies in people are thin: for Epitalon, small old studies on sleep "
+             f"hormone levels; for MOTS-c, the FDA found no human data.{N('pm-korkushko')}{N('fda-bulk-risks')} NAD+ is not a peptide but "
+             f"a coenzyme the body makes, and a 2026 review found no trial with health outcomes for NAD+ shots or drips.{N('pm-covarrubias')}{N('pm-gallagher')}")
+    ep, mo = db_sentence(b, "epitalon", N), db_sentence(b, "mots-c", N)
+    lon = next(g for g in b.ALL_GOALS if g["slug"] == "longevity")
+    opts = "".join(f"<li><strong>{pep_link(b, p['substance'], p['name']) if p.get('substance') else p['name']}</strong>: "
+                   f"{p['status']}. {p['does']}</li>" for p in lon["peptides"])
+    prices = " ".join(x for x in (shops_line(b, f, s, N) for s in ("epitalon", "mots-c", "nad-plus")) if x)
+    nad_plans = b.pep_plans("nad-plus")
+    nad_p = (f" The lowest NAD+ plan at the online clinics we track is {b.usd(nad_plans[0]['price_monthly'])} a month "
+             f"({b.seller_base(nad_plans[0]['seller_name'])}).{N(pkey(nad_plans[0]))}") if nad_plans and pkey(nad_plans[0]) in N.known else ""
+    nad_st = (f"<p>Our database records NAD+ as {nad['label'].lower()}: {nad['sentence']}.{N(next((k for k, (_, u) in SOURCES.items() if u == nad['url']), 'db-nad-plus'))} "
+              f"Category 1 is the FDA's interim group of ingredients pharmacies may use while it reviews them.{N('fda-503a')}</p>") if nad else ""
+    body = f"""
+<h2>Which longevity products do we track?</h2>
+<p>Our <a href="/longevity/">longevity page</a> lists three:</p>
+<ul>{opts}</ul>
+
+<h2>What is the FDA status of each?</h2>
+<ul>
+<li><strong>Epitalon</strong>: not approved for any use.{N('drugsfda-hair')}{f" Our database records that {ep}" if ep else ""}</li>
+<li><strong>MOTS-c</strong>: not approved for any use.{N('drugsfda-hair')}{f" Our database records that {mo}" if mo else ""}</li>
+</ul>
+<p>On 23 and 24 July 2026 the FDA's Pharmacy Compounding Advisory Committee reviewed both, with BPC-157 and TB-500, and the FDA proposed not to allow pharmacies to use them.{N('legal-6')}</p>
+{nad_st}
+
+<h2>What studies exist in people?</h2>
+<p><strong>Epitalon</strong> is a lab-made peptide of four amino acids. The human studies are small and old. One 2007 paper, in Russian, reported that Epitalon and a pineal gland extract raised night-time melatonin, the sleep hormone, in elderly people.{N('pm-korkushko')} That is a hormone level, not a longer or healthier life.</p>
+<p><strong>MOTS-c</strong> is sold as a "mitochondrial" peptide. The FDA says it found no data on MOTS-c given to people by any route.{N('fda-bulk-risks')} The research we found is in animals and cells, or measures the body's own MOTS-c in blood; we found no trial of MOTS-c as a treatment.</p>
+<p><strong>NAD+</strong>: a 2026 review found 33 studies in people of NAD+ boosters, mostly pills of its building blocks. They raised NAD-related levels in blood, but effects on health were mixed and often absent. It found no trial with health outcomes for NAD+ given into a vein or a muscle.{N('pm-gallagher')}</p>
+
+<h2>What does "NAD+ is not a peptide" mean?</h2>
+<p>A peptide is a short chain of amino acids. NAD+ is not: it is a coenzyme, a helper molecule the body uses to turn food into energy and to repair DNA. Its levels fall with age in animals and people, which is why it is sold for aging.{N('pm-covarrubias')}</p>
+<p>That is why our longevity page shows NAD+ with its own chip, "Not a peptide", next to the peptides. Clinics sell it as shots or drips, which a pharmacy makes; that is not an FDA-approved product.</p>
+
+<h2>What does the FDA say about the risks?</h2>
+<p>For Epitalon, the FDA says it may set off an immune reaction when given some ways and that it found no safety information for the proposed use.{N('fda-bulk-risks')} For MOTS-c, it lists a significant risk of an immune reaction and no human data.{N('fda-bulk-risks')} In both cases the FDA does not know whether the product would cause harm.</p>
+
+<h2>What do they cost?</h2>
+<p>{prices or "We show shop prices once the shops are in our database."}{nad_p}</p>
+<p>A low price per mg says nothing about what is in the vial. Our guide on <a href="/learn/how-to-check-a-peptide-seller/">how to check a seller yourself</a> shows what to look for before you buy.</p>
+<p>None of this is medical advice. A doctor can tell you what fits your health goals.</p>"""
+    nxt = (("/longevity/", "Compare longevity options"), ("/learn/are-peptides-safe/", "Are peptides safe? guide"))
+    return short, body, nxt
+
+
+def g_clinic_shop(b, f, N):
+    nc, ns = len(b.CLINIC_PROFILES), len(b.SHOPS)
+    short = ("An online clinic sells a prescription medicine after a visit with a prescriber; a research-use shop sells vials labeled "
+             f"for lab research, not for people.{N('fda-approval')}{N('fda-compounding')} They are not the same product, even when the "
+             "substance has the same name.")
+    if f["letters"]:
+        short += (f" Of the {f['letters']} FDA warning letters on our letters page, {f['tele_letters']} went to telehealth companies and "
+                  f"online clinics and {f['ruo_letters']} to research-use peptide shops.{N('db-letters')}")
+    counts = (f"<p>We track {nc} online clinics and {ns} research-use and cosmetic shops.{N('own-sellers')}</p>"
+              if nc and ns and "own-sellers" in N.known else "")
+    who = (f'Both. Of the {f["letters"]} letters on our <a href="{b.LETTERS_URL}">letters page</a>, {f["tele_letters"]} went to '
+           f'telehealth companies and online clinics, {f["ruo_letters"]} to research-use peptide shops and {f["compounders"]} to '
+           f'compounding pharmacies.{N("db-letters")}') if f["letters"] else "Both kinds can get one."
+    sc = f["sema_comp"][0] if f["sema_comp"] else None
+    sb = next((r for r in f["sema_brand"] if not b.other_use(next(g for g in b.ALL_GOALS if g["slug"] == "weight-loss"), r)), None)
+    shop = f["subs"].get("semaglutide")
+    compare = ""
+    if (sc or sb) and shop:
+        compare = (f"<p>Semaglutide shows the gap. At the online clinics we track, "
+                   + (f"a compounded semaglutide plan starts at {b.usd(sc['price_monthly'])} a month{N(pkey(sc))}" if sc else "")
+                   + (" and " if sc and sb else "")
+                   + (f"a Wegovy plan at {b.usd(sb['price_monthly'])} a month{N(pkey(sb))}" if sb else "")
+                   + f". {shop['shops']} research-use shops list semaglutide powder, with a middle price of {b.money(shop['ppm_median'])} per mg."
+                   f"{N('db-sellers')}</p>"
+                   "<p>These numbers cannot be compared. A clinic price is for a month of a medicine with a prescriber; a shop price is for "
+                   "powder in a vial that is not meant for people, with no prescriber and no pharmacy behind it.</p>")
+    body = f"""
+<h2>What are the two kinds of seller?</h2>
+<p><strong>Online clinics</strong> connect you with a prescriber online. If the prescriber agrees, a pharmacy sends you either a brand medicine, such as Wegovy, or a pharmacy-made (compounded) copy.{N('fda-compounding')}</p>
+<p><strong>Research-use shops</strong> sell peptides as powder in vials, labeled "for research only". There is no prescriber, no visit and no pharmacy; the label says the product is not meant for people.</p>
+{counts}
+
+<h2>What may each one sell?</h2>
+<p>A clinic's medicines come from a pharmacy on a prescription. A brand medicine is FDA approved: its maker sent trial data and the FDA checked it.{N('fda-approval')} A compounded copy is not FDA approved, and the FDA does not check its safety, effectiveness or quality before it is sold.{N('fda-compounding')}</p>
+<p>A research-use shop's vials are not approved for use in people. Many of the peptides they sell are on the FDA's list of substances that may be risky to compound, or were withdrawn from its review.{N('fda-bulk-risks')} Our guide <a href="/learn/are-peptides-legal-in-the-us/">Are peptides legal in the US?</a> explains the four kinds.</p>
+
+<h2>What do our five checks mean for each?</h2>
+<p>We check both kinds the same way: Lab reports, No FDA letter, Company found, Legal pages and Fresh prices.{N('own-how-we-rate')}</p>
+<ul>
+<li><strong>Lab reports</strong> are a shop check. In our data no online clinic has a lab report, so a clinic misses this check; that says nothing about the pharmacy behind it.</li>
+<li><strong>No FDA letter</strong>, <strong>Company found</strong> and <strong>Legal pages</strong> mean the same for both.{N('own-how-we-rate')}</li>
+<li><strong>Fresh prices</strong> means our own crawl saw a current price on the seller's site in the last 30 days.{N('own-how-we-rate')}</li>
+</ul>
+<p>Our guide on <a href="/learn/how-we-check-sellers/">how we check sellers</a> explains each check with an example.</p>
+
+<h2>Which kind gets FDA warning letters?</h2>
+<p>{who}</p>
+<p>A letter is the FDA's formal notice, not a court ruling; a seller with a letter is still listed, and its page links the letter.{N('fda-letters')}</p>
+
+<h2>How do the prices compare?</h2>
+{compare or "<p>We show both kinds of price once they are in our database.</p>"}
+
+<h2>What should you ask an online clinic?</h2>
+<ul>
+<li>Is the medicine the brand, or a copy made by a pharmacy? Only the brand is FDA approved.{N('fda-compounding')}</li>
+<li>Which pharmacy makes or sends it, and in which state is it licensed?</li>
+<li>Is the price all-in, or is there a monthly care fee on top?</li>
+<li>Has the clinic had an FDA warning letter? Our <a href="{b.LETTERS_URL}">letters page</a> lists them.</li>
+</ul>
+
+<h2>What if something goes wrong?</h2>
+<p>With a clinic, you have a prescriber to call and a pharmacy that filled the prescription. With a research-use vial, there is no prescriber and no pharmacy, and the label says the product was never meant for people.</p>
+<p>Either way, you or your doctor can report a side effect to the FDA through its MedWatch program.{N('fda-glp1-concerns')}</p>
+
+<h2>So which should you buy from?</h2>
+<p>That is a medical decision, not a shopping one. Only a clinic gives you a prescriber and a pharmacy; only a brand medicine has FDA approval. A research-use vial is not meant for people.</p>
+<p>Our <a href="/weight-loss/">weight loss page</a> lists the clinic plans, and each shop on our goal pages has its five checks. None of this is medical advice.</p>"""
+    nxt = (("/weight-loss/", "Compare clinic prices"), ("/learn/how-we-check-sellers/", "How we check sellers"))
+    return short, body, nxt
+
+
+# A substance whose FDA lists differ by route: the route each row covers, as the FDA names it (peptide-data confirmed both
+# GHK-Cu rows are current, owner answer Q1, 2 Nov 2026)
+ROUTE = {("ghk-cu", "fda_503a_category"): "except for injectable routes",
+         ("ghk-cu", "fda_nomination_withdrawn"): "for injectable routes"}
+
+
+def g_503a(b, f, N):
+    rows = b.LEGAL_DB or []
+
+    def names(regime, value):
+        out = sorted({r["substance_slug"] for r in rows if r["regime"] == regime and r["status_value"] == value})
+        return and_list([pep_link(b, s, b.pep_short(s)) + (f" ({ROUTE[(s, regime)]})" if (s, regime) in ROUTE else "") for s in out])
+    short = ("A 503A pharmacy is an ordinary state-licensed pharmacy that makes medicines for one patient at a time, on a "
+             f"prescription.{N('fda-503a')} It may use a raw ingredient only if the law allows it, for example from the FDA's 503A bulks "
+             f"list; while the FDA reviews nominated ingredients, it sorts them into three categories, and only category 1 may be used, "
+             f"under conditions.{N('fda-503a')} A compounded medicine is never FDA approved.{N('fda-compounding')}")
+    # the lists after the short answer, so its footnotes read in order; the 503A categories cite the FDA's list, the others its risk page
+    lists = [("Category 1", names("fda_503a_category", "category_1"), "fda-503a-list"),
+             ("Category 2", names("fda_503a_category", "category_2"), "fda-503a-list"),
+             ("Category 3", names("fda_503a_category", "category_3"), "fda-503a-list"),
+             ("On the FDA's list of substances that may be risky to compound", names("fda_cat2_safety", "category_2"), "fda-bulk-risks"),
+             ("Nomination withdrawn", names("fda_nomination_withdrawn", "withdrawn"), "fda-bulk-risks")]
+    where = "".join(f"<li><strong>{h}</strong>: {n}.{N(src)}</li>" for h, n, src in lists if n)
+    ghk = {r["regime"] for r in rows if r["substance_slug"] == "ghk-cu"}
+    routes = (f"<p>A substance can sit in two lists when the FDA treats its routes of use apart. GHK-Cu is the example: GHK-Cu "
+              f"\"except for injectable routes of administration\" is in category 1,{N('fda-503a-list')} and GHK-Cu \"for injectable "
+              f"routes of administration\" is among the substances whose nomination was withdrawn.{N('fda-bulk-risks')} So the category 1 "
+              "policy covers GHK-Cu that is not injected; for shots, the nomination was withdrawn and the policy does not apply.</p>"
+              ) if {"fda_503a_category", "fda_nomination_withdrawn"} <= ghk else ""
+    body = f"""
+<h2>What is a 503A pharmacy?</h2>
+<p>Section 503A of the federal drug law covers state-licensed pharmacies and doctors who compound: they mix a medicine for a patient who has a prescription.{N('fda-503a')} Outsourcing facilities work under a different section, 503B, with their own list.{N('fda-glp1-supply')}</p>
+<p>A compounded medicine is not FDA approved. The FDA does not check its safety, effectiveness or quality before it is sold.{N('fda-compounding')}</p>
+
+<h2>What may a 503A pharmacy compound?</h2>
+<p>It may make a medicine from a raw ingredient (a bulk drug substance) only if that ingredient meets one of the law's conditions, for example by being on the FDA's 503A bulks list.{N('fda-503a')}</p>
+<p>Many ingredients have been nominated for that list. While the FDA reviews them, it sorts them into three categories:{N('fda-503a')}</p>
+<ul>
+<li><strong>Category 1</strong>: nominated with enough information for the FDA to review it. The FDA does not intend to act against a pharmacy that uses it, if the conditions in its guidance are met.</li>
+<li><strong>Category 2</strong>: nominated with enough information, but the FDA found significant safety risks. The category 1 policy does not apply, and the FDA may act against pharmacies that use it.</li>
+<li><strong>Category 3</strong>: nominated without enough information to review it. It can be nominated again with more.</li>
+</ul>
+
+<h2>Where do the peptides we track sit?</h2>
+<p>From our database, which reads the FDA's lists:</p>
+<ul>{where}</ul>
+{routes}
+<p>Each peptide's page on our site shows the status that applies and the FDA page behind it.</p>
+
+<h2>What do "category 1" and "nomination withdrawn" mean for a buyer?</h2>
+<p><strong>Category 1</strong> means a pharmacy may make a medicine with the ingredient for a patient with a prescription, under the FDA's conditions, while the review goes on.{N('fda-503a')} It does not mean the FDA approved it or found that it works.{N('fda-compounding')}</p>
+<p><strong>Nomination withdrawn</strong> means the request to add the substance to the list was withdrawn, so it is not in any of the three categories on that request. The FDA's page on risky substances names several peptides in that group, such as BPC-157 and TB-500, with the safety concerns it found.{N('fda-bulk-risks')} A pharmacy cannot rely on the category 1 policy for them.</p>
+<p>Neither status says anything about research-use vials: those are not compounded medicines and are not approved for use in people.{N('drugsfda-hair')}</p>
+
+<h2>What are the rules for GLP-1 copies now?</h2>
+<p>While semaglutide and tirzepatide were in short supply, pharmacies could make copies of them. Both are now off the FDA's drug shortage list.{N('fda-glp1-supply')}</p>
+<p>For state-licensed 503A pharmacies, the time the FDA allowed for copies of semaglutide ended on 22 April 2025.{N('fda-glp1-supply')} The FDA has also warned that salt forms of semaglutide are a different ingredient from the one in the approved drugs.{N('fda-glp1-concerns')} Our guide on <a href="/learn/compounded-vs-brand-glp-1/">compounded vs brand GLP-1</a> has more.</p>
+
+<h2>How can you tell which kind of pharmacy made a medicine?</h2>
+<p>Ask the clinic which pharmacy fills the prescription, and whether it is a 503A pharmacy or a 503B outsourcing facility. A brand medicine comes from its maker; a compounded one comes from the pharmacy that made it. The label on a compounded medicine names the pharmacy, so you can look up its state license.</p>
+<p>None of this is legal or medical advice.</p>"""
+    nxt = (("/peptides/", "See every peptide's status"), ("/learn/are-peptides-legal-in-the-us/", "Are peptides legal? guide"))
+    return short, body, nxt
+
+
+DE_REGISTRY = "https://icis.corp.delaware.gov/ecorp/entitysearch/namesearch.aspx"
+FL_REGISTRY = "https://search.sunbiz.org/Inquiry/CorporationSearch/ByName"
+
+
+def g_self_check(b, f, N):
+    short = ("Five checks take about ten minutes: find the shop's newest lab report and its date, search the FDA's warning letter "
+             f"list for the shop's name and web address, look the company up in a state business registry, read its terms and refund "
+             f"pages, and see when its prices last changed.{N('own-how-we-rate')}{N('fda-wl-list')} None of them tells you that a "
+             f"product is safe; a research-use vial is not approved for use in people whatever the checks show.{N('drugsfda-hair')}")
+    sellers = ('Our <a href="/sellers/">seller pages</a> do these five checks for every shop we track and show the result with its date.'
+               if b.PROFILES else "Our seller pages will show these five checks for every shop we track.")
+    body = f"""
+<h2>Why check a seller yourself?</h2>
+<p>Research-use shops sell products that no regulator checks before they are sold.{N('fda-approval')} You cannot test what is in a vial at home, but you can check public facts about the shop. These are the same five facts we collect.{N('own-how-we-rate')}</p>
+
+<h2>Step 1: Is there a recent lab report?</h2>
+<p>Look for a certificate of analysis (COA) on the product page or a "lab results" page. Check three things:</p>
+<ul>
+<li>the date: we count a report only if it is from the last 12 months;{N('own-how-we-rate')}</li>
+<li>the lab's name, and whether it is a lab outside the shop;</li>
+<li>whether the batch number matches the product you would get.</li>
+</ul>
+<p>A report covers one batch, tested once. Our guide on <a href="/learn/how-to-read-a-coa/">how to read a COA</a> shows what each line means.</p>
+
+<h2>Step 2: Has the FDA sent it a warning letter?</h2>
+<p>The FDA publishes its warning letters in a searchable list on fda.gov.{N('fda-wl-list')} Search for the shop's name, then for its web address, because company names repeat and a letter may name the business behind the shop. Our <a href="{b.LETTERS_URL}">letters page</a> lists the letters to peptide sellers, compounders and online clinics.</p>
+<p>A letter is the FDA's formal notice, not a court ruling; read it, and note its date.{N('fda-letters')}</p>
+
+<h2>Step 3: Is there a real company behind it?</h2>
+<p>Look at the shop's terms page or footer for a company name and state. Then search that state's business registry, for example <a href="{FL_REGISTRY}" rel="nofollow">Florida's</a> or <a href="{DE_REGISTRY}" rel="nofollow">Delaware's</a>. A match tells you the company exists and whether it is active; it says nothing about the product.</p>
+<p>Not finding it does not prove the shop is fake: it may be registered in another state. We match only with high confidence and do not search every state yet.{N('own-how-we-rate')}</p>
+
+<h2>Step 4: Does it have terms and a refund page?</h2>
+<p>Look for a terms page and a privacy or refund page. Read the refund page: what happens if a package does not arrive or a vial is damaged? Having these pages says nothing about what they promise.{N('own-how-we-rate')}</p>
+
+<h2>Step 5: Are the prices current?</h2>
+<p>A shop whose prices have not changed in a long time may not be keeping its site up. We count prices as fresh when we saw one in the last 30 days.{N('own-how-we-rate')} Work out the price per mg yourself: the price divided by the amount in the vial.</p>
+
+<h2>Which warning signs should you look for?</h2>
+<ul>
+<li>A lab report with no date, no lab name or no batch number.</li>
+<li>The same lab report image on many different products.</li>
+<li>No company name or address anywhere on the site.</li>
+<li>A "research use only" label next to advice on how to use the product on yourself.</li>
+<li>A price far below what other shops charge: our goal pages show the middle price per mg for each peptide.</li>
+</ul>
+<p>One sign is not proof of anything, but several together are a reason to stop.</p>
+
+<h2>What the checks cannot tell you</h2>
+<ul>
+<li>Whether the product is safe or works. The checks are about the shop, not the vial.</li>
+<li>Whether the product is approved. A research-use vial is not approved for use in people, whatever the shop's checks show.{N('drugsfda-hair')}</li>
+<li>What the law means for you as a buyer. The FDA's letters go to sellers; a lawyer can answer for your state.</li>
+</ul>
+
+<h2>Can we do this for you?</h2>
+<p>{sellers} Our <a href="/how-we-rate/">How we rate</a> page has the rules, and our guide on <a href="/learn/how-we-check-sellers/">how we check sellers</a> gives an example of each check.</p>
+<p>None of this is medical or legal advice.</p>"""
+    nxt = ((("/sellers/", "See all sellers") if b.PROFILES else (b.LETTERS_URL, "See FDA warning letters")),
+           ("/learn/how-we-check-sellers/", "How we check sellers"))
+    return short, body, nxt
+
+
 TEXTS = {"is-bpc-157-legal": g_bpc, "are-peptides-safe": g_safe, "how-to-read-a-coa": g_coa,
          "compounded-vs-brand-glp-1": g_glp1, "what-an-fda-warning-letter-means": g_letter,
          "peptides-for-hair-loss-what-works": g_hair, "best-peptides-for-hair-growth": g_best,
          "ghk-cu-for-hair": g_ghk, "injectable-peptides-for-hair-growth": g_inject,
          "compounded-semaglutide-price": g_sema_price, "best-peptides-for-muscle-growth": g_muscle,
          "bpc-157-vs-tb-500": g_bpc_tb, "are-peptides-legal-in-the-us": g_legal, "semaglutide-vs-tirzepatide-price": g_sema_tirz,
-         "peptides-for-skin-what-works": g_skin, "how-we-check-sellers": g_checks}
+         "peptides-for-skin-what-works": g_skin, "how-we-check-sellers": g_checks,
+         "peptides-for-recovery-and-joints": g_joints, "peptides-for-libido-what-is-approved": g_libido,
+         "longevity-peptides-epitalon-mots-c-nad": g_longevity, "online-clinic-vs-research-shop": g_clinic_shop,
+         "what-is-a-503a-pharmacy": g_503a, "how-to-check-a-peptide-seller": g_self_check}
 
 
 def article_schema(b, g):
