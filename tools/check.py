@@ -320,12 +320,13 @@ def check_parts(P):
                 errs.append(f"{name}: links to a seller ({href})")
     if "compare/index.html" in P:
         html = (DIST / "compare/index.html").read_text(encoding="utf-8")
-        m = re.search(r'<script type="application/json" id="cmp-data">(.*?)</script>', html, re.S)
+        # the facts load from /compare/data.json after the page (design/site-polish, 2 Nov 2026)
+        src = DIST / "compare" / "data.json"
         try:
-            data = json.loads(m.group(1)) if m else {}
+            data = json.loads(src.read_text(encoding="utf-8")) if src.exists() else {}
         except ValueError:
             data = {}
-            errs.append("compare/index.html: comparison data does not parse")
+            errs.append("compare/data.json: comparison data does not parse")
         if not data:
             errs.append("compare/index.html: no plans or sellers to compare")
         for k, v in data.items():

@@ -3,6 +3,10 @@
 body{font-family:var(--font-text);color:var(--ink);background:var(--paper);font-size:var(--ui-size);line-height:var(--ui-lh);margin:0}
 a{color:var(--clinic);text-underline-offset:0.18em}
 a:hover{color:var(--clinic-hover)}
+/* Links on dark (footer, ink panels): white, and mark yellow on hover and focus; the light hover blue is 1.9:1 on ink. */
+.site-foot a:hover,.site-foot a:focus-visible,.panel-ink a:hover,.panel-ink a:focus-visible{color:var(--mark)}
+/* Footnote numbers: a 24px tap area around the small number without moving the line (WCAG 2.5.8). */
+sup a,a.ref{display:inline-block;min-width:24px;min-height:24px;padding:4px 4px;margin:-8px -8px;box-sizing:border-box;text-align:center;line-height:1}
 
 /* Buttons */
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:var(--touch);padding:0 20px;border-radius:var(--radius-control);font:700 15px var(--font-text);text-decoration:none;cursor:pointer;border:1.5px solid transparent;box-sizing:border-box;white-space:nowrap;transition:background-color var(--motion-quick),color var(--motion-quick),border-color var(--motion-quick)}
@@ -17,6 +21,10 @@ a:hover{color:var(--clinic-hover)}
 .btn-mark{background:var(--mark);color:var(--ink)}
 .btn-sm{min-height:var(--touch);padding:0 16px;font-size:14px}
 .btn:focus-visible{outline:3px solid var(--clinic);outline-offset:2px}
+/* A button keeps its own text colour whatever link rule surrounds it (prose, footer, tables; design/site-polish, 2 Nov 2026):
+   these repeat the colours at a weight no section's link rule reaches. */
+:is(a,span,button).btn.btn-ink,:is(a,span,button).btn.btn-ink:hover,:is(a,span,button).btn.btn-action,:is(a,span,button).btn.btn-action:hover{color:var(--white)}
+:is(a,span,button).btn.btn-line,:is(a,span,button).btn.btn-line:hover,:is(a,span,button).btn.btn-mark{color:var(--ink)}
 .paid{font:400 var(--fine-size) var(--font-text);color:var(--ink-2)}
 
 /* Chips */
