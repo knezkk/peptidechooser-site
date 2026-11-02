@@ -64,6 +64,11 @@ SOURCES = {
 }
 
 
+def checked(b):
+    """The "Checked" date of every guide: the data pull date, as on the goal pages, else the hand-checked date."""
+    return (b.DATA.get("pulled_at") or b.DATA["checked"])[:10]
+
+
 def nice(iso):
     d = date.fromisoformat(iso[:10])
     return f"{d.day} {d.strftime('%b %Y')}"
@@ -153,6 +158,9 @@ def known_sources(b, f):
     if f["sellers"]:
         k["db-sellers"] = (f"Peptide Chooser database: the research-use and cosmetic peptide shops we check, {nice(f['stats_on'])}. "
                            "Their prices and checks are in the seller windows on our goal pages", "/recovery/", "own")
+    st = b.db_status("bpc-157")
+    if st:
+        k["db-bpc"] = (f"FDA status of BPC-157 in the Peptide Chooser database, first seen {nice(st['seen'])}", st["url"], "link")
     if f["letters"]:
         k["db-letters"] = (f"Peptide Chooser, FDA warning letters to peptide sellers, compounders and online clinics, "
                            f"checked {nice(f['letters_on'])}", b.LETTERS_URL, "own")
@@ -172,8 +180,16 @@ def plan_words(b, r, n):
 # guide's Notes; f the facts. Sentences that need a number are joined in only when the number exists.
 
 def g_bpc(b, f, N):
-    short = (f"BPC-157 is not FDA approved for any use, and in July 2026 the FDA proposed keeping it off the list of "
-             f"substances pharmacies may use to make medicines.{N('legal-6')} "
+    # The status sentence a reader sees on /recovery/ and in "Is it legal today?" (owner task 2 Nov 2026): the database's
+    # status with its source, then the hand note on the July 2026 review; without the database, the hand row alone.
+    st, hand = b.db_status("bpc-157"), next(r for r in b.LEGAL["rows"] if r.get("substances") == ["bpc-157"])
+    review = f"{hand['note'][0].upper()}{hand['note'][1:]}.{N('legal-6')}"
+    if st:
+        src = next((k for k, (_, u) in SOURCES.items() if u == st["url"]), "db-bpc")
+        status = f"{st['label']}: {st['sentence']}.{N(src)} {review}"
+    else:
+        status = f"{hand['status']}: {hand['note']}.{N('legal-6')}"
+    short = (f"{status} "
              + (f"The FDA's warning letters we track went to the companies selling peptides, not to people who bought them for "
                 f"themselves.{N('db-letters')}" if f["letters"] else ""))
     research = (f" The FDA has sent warning letters to shops like these: {f['ruo_letters']} of the letters on our letters page went "
@@ -190,9 +206,9 @@ def g_bpc(b, f, N):
 
 <h2>Is BPC-157 FDA approved?</h2>
 <p>No. There is no FDA-approved medicine that contains BPC-157, for any use. An approved medicine is one whose maker sent the FDA its trial data and the FDA found that the benefits outweigh the known risks for the people it is meant for.{N('fda-approval')} Nobody has done that for BPC-157.</p>
-<p>The FDA's page on substances that may be risky in pharmacy-made medicines names BPC-157. It says BPC-157 made by a pharmacy may set off an immune reaction when given some ways, may be hard to make free of unwanted peptide fragments, and has little or no safety information behind it.{N('fda-bulk-risks')}</p>
+<p>The FDA's page on substances that may be risky in pharmacy-made medicines lists BPC-157 among those whose nomination for pharmacy compounding was withdrawn. It says BPC-157 made by a pharmacy may set off an immune reaction when given some ways, may be hard to make free of unwanted peptide fragments, and has little or no safety information behind it.{N('fda-bulk-risks')}</p>
 
-<h2>What did the FDA decide in July 2026?</h2>
+<h2>What did the FDA review in July 2026?</h2>
 <p>On 23 and 24 July 2026 the FDA's Pharmacy Compounding Advisory Committee, a panel of outside experts, reviewed BPC-157 together with TB-500, MOTS-c and epitalon. The question was whether pharmacies may use these substances to make medicines for patients on a prescription. The FDA proposed not to allow it.{N('legal-6')}</p>
 <p>A committee advises; the FDA decides. A proposal is a step, not the last word. We keep the status on our <a href="/#legal">Is it legal today?</a> table and change this page when the FDA publishes what it decided.</p>
 
@@ -317,7 +333,9 @@ def g_coa(b, f, N):
 <h2>What can a COA not tell you?</h2>
 <p>It cannot tell you that a peptide is safe or that it works in people. Only trials can show that, and for research-use peptides there are none that the FDA reviewed.{N('fda-approval')} It cannot tell you a dose, and we do not either.</p>
 <p>Signs that a report needs a closer look: no lab name, no batch number, the same purity to the decimal on every product, a date before the product existed, or a file that looks edited. When in doubt, the lab named on the report can usually confirm whether it issued it.</p>"""
-    nxt = (("/recovery/", "Compare recovery options"), (b.LETTERS_URL, "See FDA warning letters"))
+    # owner answer Q1 a (2 Nov 2026): the outline button goes to the seller list once it is built
+    nxt = (("/recovery/", "Compare recovery options"),
+           ("/sellers/", "See all sellers") if b.PROFILES else (b.LETTERS_URL, "See FDA warning letters"))
     return short, body, nxt
 
 
@@ -492,7 +510,7 @@ def guide_body(b, g):
     return f"""
 <article class="page guide"><div class="wrap prose">
 <h1>{g["h1"]}</h1>
-<p class="small meta"><a href="/about/">{b.AUTHOR}</a>. Checked {nice(BUILD_DATE)}.</p>
+<p class="small meta"><a href="/about/">{b.AUTHOR}</a>. Checked {nice(checked(b))}.</p>
 <section class="short-answer" aria-labelledby="short-h"><h2 id="short-h">Short answer</h2><p>{short}</p></section>
 {body}
 <h2>What to do next</h2>
@@ -504,9 +522,9 @@ def guide_body(b, g):
 """
 
 
-def learn_body():
+def learn_body(b):
     items = "".join(f'<li><h2><a href="/learn/{g["slug"]}/">{g["title"]}</a></h2><p>{g["line"]}</p>'
-                    f'<p class="small">Checked {nice(BUILD_DATE)}</p></li>' for g in GUIDES)
+                    f'<p class="small">Checked {nice(checked(b))}</p></li>' for g in GUIDES)
     return f"""
 <section class="page learn"><div class="wrap prose">
 <h1>{LEARN_H1}</h1>
@@ -519,7 +537,7 @@ def learn_body():
 
 def pages(b):
     """/learn/ and the six guides as build.py PAGES rows: (path, file, title, description, body, schema, crumb)."""
-    out = [("/learn/", "learn/index.html", LEARN_TITLE, LEARN_DESC, learn_body(), "", [("/learn/", "Learn")])]
+    out = [("/learn/", "learn/index.html", LEARN_TITLE, LEARN_DESC, learn_body(b), "", [("/learn/", "Learn")])]
     for g in GUIDES:
         path = f"/learn/{g['slug']}/"
         out.append((path, f"learn/{g['slug']}/index.html", g["title"], g["desc"], guide_body(b, g), article_schema(b, g),
