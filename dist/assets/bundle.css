@@ -171,6 +171,9 @@ body:has(.sellers-dlg[open]){overflow:hidden}
    open from a plain "Menu" button (btn-line btn-sm, no icon); .nav-js is set by the head script, so with JavaScript off
    the categories show open under the logo */
 .nav-toggle{display:none}
+/* Search beside Menu on phones (owner task 3 Nov 2026, the 390px walkthrough): opens the menu with the field focused */
+.search-toggle{display:none}
+@media (max-width:760px){.nav-js .search-toggle{display:inline-flex}}
 @media (max-width:1179px){
 .nav-js .nav-toggle{display:inline-flex}
 .nav-js .nav:not(.open){display:none}
@@ -465,6 +468,24 @@ a.legal-card:hover{border-color:var(--clinic)}
 @media (min-width:760px){.creator-cards{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media (min-width:1180px){.creator-cards{grid-template-columns:repeat(4,minmax(0,1fr))}}
 
+/* Phones (owner task 3 Nov 2026, the 390px walkthrough, finding 10): no text under 13px on a phone. Chips, the score
+   marks and the Checked stamp are 13px under 640px (12px and 11px from 641px, unchanged). */
+@media (max-width:640px){.chip,.stamp,:is(.sellers-dlg .score-marks,.check-list,.check-chips) .chip,.cmp .score-marks .chip{font-size:13px}}
+/* and every control 44px tall on a phone (finding 8): a section heading's link, the names heading a comparison table;
+   a chip link in a line of text keeps its line and reaches 24px (WCAG 2.5.8, layout.md, Touch) */
+@media (max-width:640px){.sec-hd>a{display:inline-flex;align-items:center;min-height:var(--touch)}
+.cmp th a.name,.cmp thead a.name{display:inline-flex;align-items:center;min-height:var(--touch)}
+.chip-link{padding-top:4px;padding-bottom:4px}
+.more-link,.letter-card a{display:inline-flex;align-items:center;min-height:var(--touch)}}
+/* Jump row (pages.md, Every page, Jump row; owner task 3 Nov 2026, the 390px walkthrough): under the H1 of a long page,
+   "Jump to" and one text link per section of the page, each 44px tall; phones only. */
+.jump{display:none}
+@media (max-width:640px){.jump{display:flex;flex-wrap:wrap;align-items:center;gap:0 16px;margin:8px 0 16px}
+.jump span{font-weight:600;font-size:var(--small-size);color:var(--ink-2)}.jump a{display:inline-flex;align-items:center;min-height:var(--touch)}}
+/* Filter fold (pages.md, Sellers; owner task 3 Nov 2026, the 390px walkthrough): under 640px a filter block folds
+   behind one btn-line "Filter" (aria-expanded), the count line stays under it; from 641px the button is not drawn. */
+.filter-toggle{display:none}
+@media (max-width:640px){.filter-toggle{display:inline-flex}.filter-body:not(.open){display:none}.filter-bar{margin:0 0 8px}}
 /* Goal page v2 (pages.md, Category; owner task 3 Nov 2026, UX audit 11.2 and 12). Decision cards: up to three panel-line
    cards in one row from 900px (stacked below): the card's question in small ink-2, the option's name, its chips, the price
    from data in bold with its source line, and one button at the foot. They replace the ℞ price pad. */

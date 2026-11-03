@@ -99,6 +99,55 @@ function pages(dir, base = '') {
     if (r.sw > r.iw) problems.push(`${w}px /sellers/#type=shops: page scrolls sideways (${r.sw} > ${r.iw})`);
     await page.close();
   }
+  // Phones (layout.md, Touch; owner task 3 Nov 2026, the 390px walkthrough): at 390 by 844 every control is at least 44px
+  // tall, except a link inside a line of text, a footnote number and a chip link in a line of text (both at least 24px,
+  // WCAG 2.5.8); no text under 13px except footnote numbers and visually hidden text; no two controls overlap.
+  {
+    const page = await browser.newPage({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
+    // a returning visitor: the cookie bar (fixed over the page) is already answered
+    await page.addInitScript(() => { try { localStorage.setItem('pc-consent', 'denied'); } catch (e) {} });
+    for (const p of list) {
+      await page.goto(`http://127.0.0.1:${port}${p}`, { waitUntil: 'load' });
+      const r = await page.evaluate(() => {
+        const seen = (e) => { const s = getComputedStyle(e), b = e.getBoundingClientRect();
+          return s.visibility !== 'hidden' && s.display !== 'none' && b.width > 0 && b.height > 0 && b.left >= 0
+            && !e.closest('[hidden], dialog:not([open]), details:not([open]) > :not(summary), .vh'); };
+        const name = (e) => `${e.tagName.toLowerCase()}${e.classList.length ? '.' + [...e.classList].slice(0, 2).join('.') : ''} "${(e.textContent || e.getAttribute('aria-label') || '').trim().replace(/\s+/g, ' ').slice(0, 30)}"`;
+        const inText = (e) => !!e.closest('p, li, td, dd, .small, .opt-plain, .sub, .listing, .src-take, .note');
+        const ctrls = [...document.querySelectorAll('a, button, input, select, summary')].filter(seen);
+        const small = [];
+        for (const e of ctrls) {
+          const b = e.getBoundingClientRect();
+          if (b.height >= 44) continue;
+          const foot = e.matches('a.ref, sup a'), chip = e.matches('a.chip-link'), inline = getComputedStyle(e).display === 'inline';
+          if ((inline && inText(e) && !e.classList.contains('btn')) || ((foot || (chip && inText(e))) && b.height >= 24)) continue;
+          small.push(`${name(e)} ${Math.round(b.width)}x${Math.round(b.height)}`);
+        }
+        const tiny = new Set();
+        for (const e of document.body.querySelectorAll('*')) {
+          if (!seen(e) || e.closest('sup, a.ref')) continue;
+          if (![...e.childNodes].some((c) => c.nodeType === 3 && c.textContent.trim())) continue;
+          const fs = parseFloat(getComputedStyle(e).fontSize);
+          if (fs < 13) tiny.add(`${name(e)} ${fs}px`);
+        }
+        // overlap: buttons, fields and block links (a link wrapping inside a sentence has a box that spans its lines)
+        const boxes = ctrls.filter((e) => !e.closest('sup') && !e.matches('a.ref') && getComputedStyle(e).display !== 'inline').map((e) => [e, e.getBoundingClientRect()]);
+        const over = [];
+        for (let i = 0; i < boxes.length && over.length < 3; i++) for (let j = i + 1; j < boxes.length; j++) {
+          const [a, A] = boxes[i], [c, C] = boxes[j];
+          if (a.contains(c) || c.contains(a)) continue;
+          const x = Math.min(A.right, C.right) - Math.max(A.left, C.left), y = Math.min(A.bottom, C.bottom) - Math.max(A.top, C.top);
+          if (x > 2 && y > 2) { over.push(`${name(a)} and ${name(c)}`); break; }
+        }
+        return { small: small.slice(0, 4), smallN: small.length, tiny: [...tiny].slice(0, 4), tinyN: tiny.size, over };
+      });
+      n++;
+      if (r.smallN) problems.push(`390px ${p}: ${r.smallN} control(s) under 44px: ${r.small.join('; ')}`);
+      if (r.tinyN) problems.push(`390px ${p}: text under 13px: ${r.tiny.join('; ')}`);
+      if (r.over.length) problems.push(`390px ${p}: controls overlap: ${r.over.join('; ')}`);
+    }
+    await page.close();
+  }
   await browser.close();
   server.close();
   console.log(`check-layout: ${problems.length ? problems.length + ' problem(s)' : 'ok'} (${n} checks)`);

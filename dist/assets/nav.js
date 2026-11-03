@@ -26,7 +26,7 @@ else if(e.key==='ArrowUp'){e.preventDefault();if(p===0)b.focus();else l[p-1].foc
 document.addEventListener('click',function(e){if(cur()>=0&&!e.target.closest('.nav-cat,.nav-toggle'))set(-1);});
 document.addEventListener('focusin',function(e){if(wide.matches&&cur()>=0&&!e.target.closest('.nav-cat'))set(-1);});
 // registered before the Menu's own Escape, so the first Escape closes only the open category
-document.addEventListener('keydown',function(e){var i=cur();if(e.key==='Escape'&&i>=0){e.stopImmediatePropagation();set(-1);btns[i].focus();}});
+document.addEventListener('keydown',function(e){var i=cur();if(e.key==='Escape'&&i>=0&&wide.matches){e.stopImmediatePropagation();set(-1);btns[i].focus();}});
 wide.addEventListener('change',function(){set(-1);});
 var tg=document.querySelector('.nav-toggle');if(tg)tg.addEventListener('click',function(){if(tg.getAttribute('aria-expanded')!=='true'&&cur()<0)set(0);});})();
 (function(){var b=document.querySelector('.nav-toggle'),n=document.getElementById('site-nav');if(!b||!n)return;
@@ -35,4 +35,9 @@ function set(o){n.classList.toggle('open',o);b.setAttribute('aria-expanded',o?'t
 // would skip them (design/site-polish, 2 Nov 2026)
 b.addEventListener('click',function(){var o=!n.classList.contains('open');set(o);if(o){var f=[].filter.call(n.querySelectorAll('a,button,input'),function(x){return x.offsetParent;})[0];if(f)f.focus();}});
 n.addEventListener('click',function(e){if(e.target.closest('a'))set(false);});
+// phones (owner task 3 Nov 2026, the 390px walkthrough): "Search" beside "Menu" opens the menu with the search field
+// focused, and a tap anywhere outside the open menu closes it
+var st=document.querySelector('.search-toggle'),q=document.getElementById('hs-q');
+if(st&&q)st.addEventListener('click',function(){if(!n.classList.contains('open'))b.click();q.focus();});
+document.addEventListener('click',function(e){if(n.classList.contains('open')&&!e.target.closest('#site-nav,.nav-toggle,.search-toggle,.head-search,.head-cta'))set(false);});
 document.addEventListener('keydown',function(e){if(e.key==='Escape'&&n.classList.contains('open')){set(false);b.focus();}});})();
