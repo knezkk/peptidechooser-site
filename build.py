@@ -3155,9 +3155,12 @@ def approved_evidence(slug, p):
     use = re.search(r"FDA approved for ([^.;]+)", p.get("status_plain", ""))
     if not use or pep_group(pep_status(slug)) != "approved":
         return None
-    day = min((a["approval_date"] for a in APPROVED_DB if a["substance_slug"] == slug and a.get("approval_date")), default=None)
-    day = day or pep_status(slug).get("seen")
-    return f'<span class="chip chip-ok">FDA approved</span> <span class="small">for {use.group(1)} (Drugs@FDA{", " + nice_date(day[:10]) if day else ""})</span>'
+    # the date only of the brand the option names ("Semaglutide (Wegovy)": Wegovy's approval, not Ozempic's 2017 one for
+    # diabetes); an option that names no brand in Drugs@FDA shows no date
+    named = {w.lower() for w in re.findall(r"[A-Za-z]+", p.get("name", ""))}
+    day = min((a["approval_date"] for a in APPROVED_DB if a["substance_slug"] == slug and a.get("approval_date")
+               and a.get("brand_name") and brand_base(a["brand_name"]).lower() in named), default=None)
+    return f'<span class="chip chip-ok">FDA approved</span> <span class="small">for {use.group(1)} (Drugs@FDA{", " + nice_date(str(day)[:10]) if day else ""})</span>'
 
 
 def pep_evidence(slug, src):
