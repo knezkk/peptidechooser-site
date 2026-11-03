@@ -935,8 +935,7 @@ def g_sema_price(b, f, N):
     wegovy = [r for r in brand if b.brand_base(r["plan_name"]) == "Wegovy"]
     frm = "from " if len(comp) > 1 else ""
     ozempic = [r for r in brand if b.other_use(wl, r)]
-    # the range alone: the first sentence (lead) already gives the lowest price and the clinic count (owner task w2, 3 Nov 2026)
-    short = ((f"Plans run {frm}{rng(comp)} a month ({len(comp)} plans){ref(comp[0])}"
+    short = ((f"At the online clinics we track, compounded semaglutide costs {frm}{rng(comp)} a month ({len(comp)} plans){ref(comp[0])}"
               + (f", against {rng(wegovy)} for Wegovy{ref(wegovy[0])}" if wegovy else "") + ". ") if comp else "") \
         + (f"Compounded semaglutide is a pharmacy-made copy, not FDA approved, and the FDA does not check its safety, "
            f"effectiveness or quality before it is sold.{N('fda-compounding')} The FDA has warned about dosing errors and "
@@ -1206,9 +1205,9 @@ def g_sema_tirz(b, f, N):
         return f"{name} from {b.usd(rows[0]['price_monthly'])}{ref(rows[0])}" if rows else ""
     weg = [r for r in sa if b.brand_base(r["plan_name"]) == "Wegovy"]
     zep = [r for r in ta if b.brand_base(r["plan_name"]) == "Zepbound"]
-    # the brands alone: the first sentence (lead) already gives each substance's lowest price (owner task w2, 3 Nov 2026)
-    parts = [x for x in (low(weg, "Wegovy"), low(zep, "Zepbound")) if x]
-    short = ((f"Brand plans start at {and_list(parts)}. " if parts else "")
+    parts = [x for x in (low(weg, "Wegovy"), low(zep, "Zepbound"), low(comp(sa), "compounded semaglutide"),
+                         low(comp(ta), "compounded tirzepatide")) if x]
+    short = ((f"At the online clinics we track, the monthly plans start at: {and_list(parts)}. " if parts else "")
              + f"Wegovy and Zepbound are FDA approved for weight management; Ozempic and Mounjaro are approved for type 2 diabetes."
              f"{N('label-wegovy')}{N('label-zepbound')}{N('label-ozempic')}{N('label-mounjaro')} Compounded copies are not FDA approved."
              f"{N('fda-compounding')}")
@@ -2159,9 +2158,8 @@ def related(slug):
 # practical sentence, from the guide's own data, then the detail. A guide whose data has no such sentence keeps its
 # short answer as it was. Legal guides open with the FDA status; no source on the site says buying a research-use
 # peptide for yourself is or is not a crime, so that half is never written.
-# how-we-check-sellers moved to /how-we-rate/ (owner answer 5 a, 3 Nov 2026); Sellers by the numbers already opens with
-# the count, so it gets no lead (owner task w2, 3 Nov 2026)
-SELLER_GUIDES = ("how-to-check-a-peptide-seller",)
+# how-we-check-sellers moved to /how-we-rate/ (owner answer 5 a, 3 Nov 2026)
+SELLER_GUIDES = ("how-to-check-a-peptide-seller", "peptide-seller-checks-by-the-numbers")
 
 
 def lead(b, f, N, slug):
