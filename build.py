@@ -370,7 +370,6 @@ def page(path, title, description, body, schema="", crumb=None):
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="fo-verify" content="41ddb585-e16e-4806-bd89-69e5c21f4752" />
 <title>{title}</title>
 <meta name="description" content="{description}">{'<meta name="robots" content="noindex">' if path in NOINDEX else ""}
 <link rel="canonical" href="{canonical}">{FEED_LINK if LETTERS_ALL and path in ("/", "/fda-warning-letters/") else ""}
