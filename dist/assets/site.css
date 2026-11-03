@@ -6,7 +6,10 @@ body { font-family: var(--font-text); color: var(--ink); background: var(--paper
 img, svg, video { display: block; max-width: 100%; height: auto; }
 h1, h2, h3, p, ul, ol { overflow-wrap: anywhere; }
 .tbl th, .tbl td, .chip { overflow-wrap: normal; }
-h1, h2, h3 { font-family: var(--font-display); margin: 0; color: var(--ink); text-wrap: balance; }
+h1, h2, h3 { font-family: var(--font-display); margin: 0; color: var(--ink); text-wrap: pretty; }
+/* No one-word last line (layout.md, Text; owner task w2, 3 Nov 2026): headings, ledes, paragraphs, list items and table
+   cells wrap with text-wrap: pretty where the browser has it (no script; older browsers wrap as before). */
+h4, p, li, td, .lede, .intro { text-wrap: pretty; }
 h1 { font-size: var(--display-1-size); line-height: var(--display-1-lh); font-weight: var(--display-1-weight); letter-spacing: var(--display-1-ls); }
 h2 { font-size: var(--display-3-size); line-height: var(--display-3-lh); font-weight: var(--display-3-weight); letter-spacing: var(--display-3-ls); }
 h3 { font-size: var(--display-4-size); line-height: var(--display-4-lh); font-weight: var(--display-4-weight); letter-spacing: var(--display-4-ls); }
@@ -55,7 +58,7 @@ p { margin: 0 0 1em; }
    after it 48px apart; the grey clinic band the same. */
 .hero.goal-first { padding: 24px 0 48px; }
 .goal-first h1 { max-width: 30ch; margin-bottom: 12px; }
-.goal-first .intro { max-width: 62ch; font-size: var(--ui-size); line-height: 1.55; margin: 12px 0 0; }
+.goal-first .intro { max-width: 58ch; font-size: var(--ui-size); line-height: 1.55; margin: 12px 0 0; }
 .goal-sec { padding: 48px 0 0; }
 .goal-opts { padding-top: 0; }
 .goal-opts .flow-solo { margin-top: 0; }
@@ -245,7 +248,7 @@ p { margin: 0 0 1em; }
 .pep-listing { margin: 8px 0 0; color: var(--ink-2); }
 .sub-filter .input { flex: 0 1 260px; }
 .legit-list { max-width: 760px; margin-top: 12px; } /* "Is <Name> legit?" on seller pages: the check card's list at reading width */
-.legit-close { max-width: 64ch; margin: 12px 0 0; color: var(--ink-2); }
+.legit-close { max-width: 58ch; margin: 12px 0 0; color: var(--ink-2); }
 .check-nolab { margin: 4px 0 0; font-size: var(--small-size); line-height: var(--small-lh); color: var(--ink-2); } /* a clinic: why the lab-report check is never met */
 /* Seller page (pages.md, Seller; owner task 3 Nov 2026): the top block (H1 at display-2 with the score and the page's
    action on its row from 900px), then 8 + 4 columns from 900px: the sections left, the card and "Similar sellers" right,
@@ -257,7 +260,7 @@ p { margin: 0 0 1em; }
 .seller-id .meta { margin: 0; }
 .seller-meta { margin: 2px 0 0; color: var(--ink-2); }
 .seller-score { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 24px; }
-.seller-answer { margin: 16px 0 0; max-width: 72ch; text-wrap: pretty; }
+.seller-answer { margin: 16px 0 0; max-width: 58ch; text-wrap: pretty; }
 .seller-body { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-6); margin-top: var(--space-6); }
 .seller-side { display: contents; }
 .seller-side .check-card { order: 1; }
@@ -267,7 +270,7 @@ p { margin: 0 0 1em; }
 .seller-sec:first-child { border-top: 0; padding-top: 0; }
 .seller-sec h2 { font-size: var(--display-3-size); line-height: var(--display-3-lh); margin: 0 0 4px; }
 .seller-lede { margin: 0 0 12px; color: var(--ink-2); }
-.seller-more, .seller-note { margin: 8px 0 0; max-width: 64ch; color: var(--ink-2); }
+.seller-more, .seller-note { margin: 8px 0 0; max-width: 58ch; color: var(--ink-2); }
 .check-nolab { text-wrap: pretty; }
 .legit .check-list li { grid-template-columns: 140px minmax(0, 1fr); }
 .legit .company-ledger { margin-top: 6px; }
@@ -323,7 +326,7 @@ p { margin: 0 0 1em; }
 .tbl .note { display: block; font-size: var(--small-size); color: var(--ink-2); }
 
 .h-sources { font-size: var(--display-4-size); line-height: var(--display-4-lh); margin-bottom: 12px; }
-.sources li { max-width: 60ch; margin-bottom: 4px; }
+.sources li { max-width: 58ch; margin-bottom: 4px; }
 
 /* Article / prose pages */
 .page { padding: 56px 0 96px; }
@@ -331,7 +334,9 @@ p { margin: 0 0 1em; }
 .prose > * { max-width: 768px; }
 .prose h1 { margin-bottom: 16px; }
 .prose .meta { margin: 0 0 32px; }
-.prose p, .prose li { font-size: var(--body-size); line-height: var(--body-lh); max-width: 64ch; }
+/* Body text at most 80 characters a line (layout.md, Text; owner task w2, 3 Nov 2026): 58ch, since Public Sans sets about
+   1.37 characters per ch; measured at 1440px. Not tables, cards or the header. */
+.prose p, .prose li { font-size: var(--body-size); line-height: var(--body-lh); max-width: 58ch; }
 .prose h2 { font: var(--display-3-weight) var(--display-3-size)/var(--display-3-lh) var(--font-display); letter-spacing: var(--display-3-ls); margin: 56px 0 16px; padding-top: 20px; border-top: 1px solid var(--line); }
 .prose h2:first-of-type { margin-top: 40px; }
 .prose ul, .prose ol { padding-left: 1.2em; }

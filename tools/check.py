@@ -4,6 +4,7 @@
 Exit code 1 on any failure. A failed check gets fixed; the rule is never lowered.
 """
 import json
+import os
 import re
 import sys
 from html.parser import HTMLParser
@@ -763,8 +764,31 @@ def check_data(P):
 
 CHECKS = {"words": check_words, "seo": check_seo, "schema": check_schema, "parts": check_parts, "data": check_data}
 
+# Plan names against their form (owner task w2, 3 Nov 2026): a clinic's own plan name can name another form than the
+# plan's `dosage_form` ("Ozempic Pill" for a pen). The site cannot change data, so this only warns, never fails, and the
+# data agent fixes the name at the source.
+FORM_WORDS = [(r"\b(pill|tablet|oral|capsule)s?\b", {"tablet", "capsule"}),
+              (r"\b(pen|kwikpen|injection|injectable|vial)s?\b", {"pen", "injection_vial"}),
+              (r"\b(spray|solution|topical|cream|foam)s?\b", {"topical"})]
+
+
+def plan_form_warnings():
+    src = Path(os.environ["SITE_JSON"]) if os.environ.get("SITE_JSON") else ROOT / "data" / "site.json"
+    out = []
+    for p in json.loads(src.read_text(encoding="utf-8")).get("plans") or []:
+        form, name = p.get("dosage_form"), p.get("plan_name") or ""
+        if not form:
+            continue
+        for rx, forms in FORM_WORDS:
+            if re.search(rx, name, re.I) and form not in forms:
+                out.append(f"{p.get('seller_name')}: plan {name!r} says {re.search(rx, name, re.I).group(0)!r} but its dosage_form is {form!r}")
+    return out
+
+
 if __name__ == "__main__":
     which = sys.argv[1:] or list(CHECKS)
+    for w in plan_form_warnings():
+        print("  warning (data):", w)
     P = pages()
     failed = 0
     for k in which:

@@ -23,7 +23,11 @@ Nothing on any page may leave its margins or push the page sideways, at any scre
 
 ## Touch
 
-Every control is at least 44px tall: nav items, the header button, in-table `btn-sm`, cookie buttons, goal rows. Body pins have a 48-unit hit circle; the goal list beside the figure is the full-size control for the same choice.
+Every control is at least 44px tall: nav items, the header button, in-table `btn-sm`, cookie buttons, goal rows. Body pins have a 48-unit hit circle; the goal list beside the figure is the full-size control for the same choice. **Exceptions** (owner task w2, 3 Nov 2026, phone finding 9): a footnote number (`sup a`) is at least 24px tall, the WCAG 2.5.8 minimum (it sits inside a line of text and a 44px target would push the lines apart); a link inside running text follows the text's line; a Chip is at least 24px tall (README, Chips). `tools/check_layout.js` has the 44px rule with these exceptions, run with `TAP=1` until every page passes, then on by default.
+
+## Text
+
+Body text runs at most 80 characters a line (owner task w2, 3 Nov 2026): `max-width: 58ch` on prose paragraphs and list items (guides, trust pages), the goal page intro, the seller page's short answer and notes, the legit closing line and the /sources/ entries; Public Sans sets about 1.37 characters per `ch`, so 58ch measures 73 to 77 characters at 1440px (72ch would measure about 98). Not tables, cards or the header. Headings, ledes, paragraphs, list items and table cells wrap with `text-wrap: pretty` where the browser has it, so a last line is never one word; no script.
 
 ## Vertical spacing
 

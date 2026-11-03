@@ -99,6 +99,23 @@ function pages(dir, base = '') {
     if (r.sw > r.iw) problems.push(`${w}px /sellers/#type=shops: page scrolls sideways (${r.sw} > ${r.iw})`);
     await page.close();
   }
+  // Tap size (layout.md, Touch; owner task w2, 3 Nov 2026): every control at least 44px tall, except a footnote number
+  // (`sup a`, 24px allowed) and a link inside running text. Off until w3 turns it on: TAP=1 node tools/check_layout.js.
+  if (process.env.TAP === '1') for (const w of [390, 1440]) {
+    const page = await browser.newPage({ viewport: { width: w, height: 900 } });
+    for (const p of list) {
+      await page.goto(`http://127.0.0.1:${port}${p}`, { waitUntil: 'load' });
+      const small = await page.evaluate(() => [...document.querySelectorAll('a[href], button, input, select, summary')].filter((e) => {
+        if (!e.offsetParent || e.closest('.vh')) return false;
+        if (e.closest('sup')) return e.getBoundingClientRect().height < 24;
+        if (e.tagName === 'A' && getComputedStyle(e).display === 'inline') return false; // a link inside running text
+        return e.getBoundingClientRect().height < 44;
+      }).map((e) => (e.textContent || e.name || e.tagName).trim().slice(0, 30)));
+      n++;
+      if (small.length) problems.push(`${w}px ${p}: ${small.length} control(s) under the tap size (${small.slice(0, 3).join(' | ')})`);
+    }
+    await page.close();
+  }
   await browser.close();
   server.close();
   console.log(`check-layout: ${problems.length ? problems.length + ' problem(s)' : 'ok'} (${n} checks)`);
