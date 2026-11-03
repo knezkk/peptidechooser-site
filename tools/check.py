@@ -655,6 +655,24 @@ def check_parts(P):
                     ids[target] = set(re.findall(r'\sid="([^"]+)"', (DIST / target).read_text(encoding="utf-8")))
                 if frag not in ids[target]:
                     errs.append(f"{name}: nav link {href}: no id {frag} on that page")
+    # Header cards (pages.md, Every page, Header; owner task 3 Nov 2026): every panel is a card, never a full-width
+    # strip (no container class, no width:100%); the count sentence under "Start here" matches the build.
+    sellers = len([d for d in (DIST / "sellers").iterdir() if (d / "index.html").exists()]) if (DIST / "sellers").exists() else 0
+    peps = len([d for d in (DIST / "peptides").iterdir() if (d / "index.html").exists()]) if (DIST / "peptides").exists() else 0
+    lp = DIST / "fda-warning-letters" / "index.html"
+    letters = len(re.findall(r"<tr[ >]", re.search(r'id="letters-table".*?<tbody>(.*?)</tbody>', lp.read_text(encoding="utf-8"), re.S).group(1))) if lp.exists() else 0
+    for name in P:
+        html = (DIST / name).read_text(encoding="utf-8")
+        for m in re.finditer(r'<div class="(nav-panel[^"]*)"[^>]*>(.*?)</div></li>', html, re.S):
+            if "nav-card" not in m.group(1).split():
+                errs.append(f"{name}: header panel without the card class")
+            if re.search(r'class="[^"]*\bwrap\b|width:\s*100%', m.group(0)):
+                errs.append(f"{name}: header panel is a full-width strip (container class or width:100%)")
+        for cnt in set(re.findall(r'<p class="nav-count">([^<]*)</p>', html)):
+            want = {"seller": sellers, "substance": peps, "FDA letter": letters}
+            for num, word in re.findall(r"(\d+) (seller|substance|FDA letter)s?\b", cnt):
+                if int(num) != want[word]:
+                    errs.append(f"{name}: header count '{num} {word}' but the build has {want[word]}")
     # /sources/ (pages.md, Sources): every group shown has at least one source
     src = DIST / "sources" / "index.html"
     if src.exists():
