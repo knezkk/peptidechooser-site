@@ -261,7 +261,7 @@ def check_parts(P):
         html = (DIST / name).read_text(encoding="utf-8")
         for m in re.finditer(r'class="([^"]*)"', html):
             cls = m.group(1).split()
-            if "btn" in cls and not any(c in cls for c in ("btn-ink", "btn-action", "btn-line", "btn-mark")):
+            if "btn" in cls and not any(c in cls for c in ("btn-ink", "btn-action", "btn-line", "btn-mark", "btn-wait")):
                 errs.append(f"{name}: button without a design-book kind ({cls})")
         # The paid button: a live one is an <a> to /out/ with rel=sponsored and "Paid link" right under it; a disabled one
         # (before the affiliate url exists) is a span with aria-disabled, no href or rel, and "No paid link yet" under it.
@@ -472,6 +472,26 @@ def check_parts(P):
             n = len(AUTHOR_LINE.findall((DIST / name).read_text(encoding="utf-8")))
             if n != 1:
                 errs.append(f"{name}: {n} author lines (want one: '<team>. Checked <date>.' in p.small.meta)")
+    # Home v2 (pages.md, Home; owner task 3 Nov 2026): each section under the hero ends with its one action (at most one
+    # btn-ink and one btn-line outside its tables: the letters section's pair is the most); the page stays under 60 KB
+    # (the price windows load on demand); "we do not link" is said once, in the label legend.
+    if "index.html" in P:
+        home = (DIST / "index.html").read_text(encoding="utf-8")
+        for m in re.finditer(r'<section class="[^"]*home-sec[^"]*" id="([^"]+)">(.*?)</section>', home, re.S):
+            body = re.sub(r"<table.*?</table>", "", m.group(2), flags=re.S)
+            for kind in ("btn-ink", "btn-line", "btn-wait", "btn-action"):
+                n = len(re.findall(rf'class="btn {kind}\b', body))
+                if n > (0 if kind in ("btn-wait", "btn-action") else 1):
+                    errs.append(f"index.html: section #{m.group(1)} has {n} {kind} buttons outside its tables")
+        size = len(home.encode("utf-8"))
+        if size > 60 * 1024:
+            errs.append(f"index.html: {size // 1024} KB, over the 60 KB limit")
+        text = re.sub(r"<dialog.*?</dialog>|<script.*?</script>|<[^>]+>", " ", home, flags=re.S)
+        said = re.findall(r"\b[Ww]e (?:do not|don't|never) link\b", text)
+        legend = re.search(r'<dl class="glossary-list">(.*?)</dl>', home, re.S)
+        in_legend = len(re.findall(r"\b[Ww]e (?:do not|don't|never) link\b", legend.group(1))) if legend else 0
+        if len(said) != 1 or in_legend != 1:
+            errs.append(f"index.html: 'we do not link' said {len(said)} times ({in_legend} in the label legend); want once, in the legend")
     # The letters feed (pages.md, Letters): it parses as XML and every item links to the letter on fda.gov.
     feed = DIST / "fda-warning-letters" / "feed.xml"
     if feed.exists():

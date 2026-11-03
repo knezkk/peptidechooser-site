@@ -13,6 +13,7 @@ import shutil
 from datetime import date
 
 import guides
+import home
 
 ROOT = Path(__file__).parent
 DIST = ROOT / "dist"
@@ -1256,10 +1257,17 @@ SELLERS_HOME = f"""
 </section>
 """ if SHOPS else ""
 
+# Home (pages.md, Home; the "Home v2" sketch, 3 Nov 2026): the hero with the chooser and the label legend, then the
+# sections home.py fills in at the markers once every helper exists.
+HOME_LEDE = ((HERO_COUNTS.strip() + " ") if HERO_COUNTS else "") + \
+    "FDA-approved options first, research-use peptides with their real status, every price dated."
+HOME_DESC = ("Find the right option for your goal and where to get it at the best price. FDA-approved options first, "
+             "research-use peptides with their real status.")
 HOME = f"""
 <section class="hero hero-clinic">
   <div class="wrap">
-    <h1 class="hero-h1">The best peptides for your goal, compared honestly.</h1>
+    <h1 class="hero-h1">Find the right option for your goal, and where to get it at the best price.</h1>
+    <p class="hero-lede">{HOME_LEDE}</p>
     <div class="chooser flow" id="goals">
       <div class="flow-hd fh-goal"><span class="step-n" aria-hidden="true">1</span><h2 id="step-goal">Choose a goal</h2></div>
       <div class="figure">{FIGURE}</div>
@@ -1271,74 +1279,23 @@ HOME = f"""
 </section>
 <section class="hero-more">
   <div class="wrap">
-    <div class="hero-pair">
     <p class="what-is"><strong>What is a peptide?</strong> A short chain of amino acids. Some are approved medicines (semaglutide, bremelanotide), some are cosmetics in creams, and many are sold online with no approval and no testing. This site tells you which is which, what it costs, and what the proven alternative is.</p>
-    <p class="lede hero-after">For each goal we put peptide products next to the FDA-approved alternatives and show what the evidence says, what it costs per month and how you would get it. We compare; we never sell.{HERO_COUNTS}</p>
-    </div>
     <section class="glossary" aria-labelledby="glossary-h">
       <h2 id="glossary-h">What the labels mean</h2>
       <dl class="glossary-list">{GLOSSARY}</dl>
     </section>
-    {guides.home_card()}
-    <section class="rate-strip" aria-labelledby="rate-h">
-      <div class="rate-hd"><h2 id="rate-h">How we rate</h2><p>Every seller gets the same five checks, in this order. They are facts we hold about the seller, not a safety grade.</p><a href="/how-we-rate/">Read the full method</a></div>
-      <ul class="criteria">
-        <li><h3>Lab reports</h3><p>A lab report dated in the last 12 months.</p></li>
-        <li><h3>No FDA letter</h3><p>No FDA warning letter matched to its web or street address.</p></li>
-        <li><h3>Company found</h3><p>The business behind the shop found in a state registry.</p></li>
-        <li><h3>Legal pages</h3><p>A terms page and a privacy or refund page, seen in the last 30 days.</p></li>
-        <li><h3>Fresh prices</h3><p>A price per milligram seen in the last 30 days.</p></li>
-      </ul>
-      <nav class="trust-links" aria-label="How we work"><a href="/disclosure/">How we make money</a><a href="/about/">Who checks our facts</a><a href="/corrections/">Mistakes we fixed</a><a href="#sources">Sources</a></nav>
-    </section>
   </div>
 </section>
-
-<section class="section" id="compare">
-  <div class="wrap">
-    <div class="sec-hd"><div><h2>Compare by goal</h2><p>One row per goal. The best proven option is the cheapest one the FDA has approved for that use.</p></div></div>
-    <div class="tbl-wrap"><table class="tbl">
-      <thead><tr><th scope="col">Goal</th><th scope="col">Best proven option</th><th scope="col">Price from</th><th scope="col">FDA status</th>{COMPARE_TH}</tr></thead>
-      <tbody>{goal_rows()}</tbody>
-    </table></div>
-    <p class="small" style="margin-top:16px">{STANDING_LINE}</p>
-  </div>
-</section>
-
-<section class="band-2" id="legal">
-  <div class="wrap">
-    <div class="sec-hd"><div><h2>Is it legal today?</h2><p>FDA status of the peptides people ask about most, each with its source. Checked {LEGAL_CHECKED}.</p></div>{ALL_SUBSTANCES}</div>
-    <div class="legal-filter" hidden><label for="legal-q">Filter by name</label><input class="input" id="legal-q" type="text" autocomplete="off"><button type="button" class="btn btn-line btn-sm" id="legal-clear">Clear</button></div>
-    <div class="tbl-wrap"><table class="tbl tbl-legal" id="legal-table">
-      <thead><tr><th scope="col">Peptide</th><th scope="col">Status</th><th scope="col">What that means</th></tr></thead>
-      <tbody>{LEGAL_ROWS}</tbody>
-    </table></div>
-    {f'<p class="legal-more" hidden><button type="button" class="btn btn-line btn-sm" id="legal-all">Show all {len(LEGAL_LIST)}</button></p>' if len(LEGAL_LIST) > 12 else ""}
-    <p class="small" style="margin-top:16px">{LEGAL_NOTE}</p>
-  </div>
-</section>
-
-{LETTERS_SECTION}
-{SELLERS_HOME}
-<section class="section" id="learn">
-  <div class="wrap">
-    <div class="sec-hd"><div><h2>Who to follow</h2><p>{CREATORS["note"]}</p></div></div>
-    <ul class="creators">{CREATOR_ROWS}</ul>
-    <p class="small" style="margin-top:16px">Reviewed {nice_date(CREATORS["checked"])}. Links open YouTube; we earn nothing from them.</p>
-  </div>
-</section>
+<!--home:where-->
+<!--home:compare-->
+<!--home:learn-->
+<!--home:legal-->
+<!--home:letters-->
+<!--home:creators-->
 
 <div class="wrap sellers-all">{SELLER_WINDOWS}</div>
-
-<section class="section" id="sources">
-  <div class="wrap">
-    <h2 class="h-sources">Sources</h2>
-    <ol class="small sources" style="padding-left:1.2em">{SOURCES_HOME}</ol>
-  </div>
-</section>
 {MAP_JS}
 {SELLERS_JS}
-{LEGAL_JS}
 """
 
 CORRECTIONS = f"""
@@ -2394,8 +2351,7 @@ NOT_FOUND = f"""
 
 PAGES = [
     ("/", "index.html", "Best peptides by goal, compared | Peptide Chooser",
-     "FDA status, real prices and evidence for each goal, checked and dated. Peptides next to the approved alternatives, from a site that never sells.",
-     HOME, ORG_SCHEMA, None),
+     HOME_DESC, HOME, ORG_SCHEMA, None),
     ("/about/", "about/index.html", "About Peptide Chooser",
      "Peptide Chooser is an independent site that compares peptide products and sellers for people in the United States.", ABOUT, "", [("/about/", "About")]),
     ("/how-we-rate/", "how-we-rate/index.html", "How we rate peptide products and sellers | Peptide Chooser",
@@ -3515,6 +3471,8 @@ def main():
     # the search index (pages.md, Every page, Header, Search): one entry per page, substance and seller
     if COMPARE_DATA:
         (DIST / "compare" / "data.json").write_text(COMPARE_DATA, encoding="utf-8")
+    if home.ROWS:
+        (DIST / home.WHERE_JSON).write_text(home.ROWS, encoding="utf-8")
     (DIST / "search-index.json").write_text(json.dumps(search_index(), ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
     # lastmod: the newest data date of this build, the database pull when connected, else the hand-checked date (owner, Q1 a, 2 Nov 2026)
     lastmod = max(DATA["checked"], (DATA.get("pulled_at") or "")[:10])
@@ -3531,6 +3489,8 @@ def main():
 
 # The Learn section (pages.md, Learn and Guide): /learn/ and the guides, from guides.py, which reads this module's helpers.
 PAGES += guides.pages(sys.modules[__name__])
+# Home's sections under the hero (pages.md, Home), from home.py, once every helper above exists.
+PAGES = [home.finish(sys.modules[__name__], p) if p[0] == "/" else p for p in PAGES]
 
 
 if __name__ == "__main__":

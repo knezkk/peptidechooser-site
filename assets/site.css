@@ -77,6 +77,15 @@ p { margin: 0 0 1em; }
 /* The first screen holds the H1 on one line and the whole flow card; the lede follows the card. */
 .hero-clinic .hero-h1 { max-width: none; margin: 0 0 16px; font-size: 34px; line-height: 1.15; }
 .hero-after { margin: 20px 0 0; max-width: 62ch; }
+/* Home v2 (owner's sketch, 3 Nov 2026): the H1 promises the option and where to get it; the counts lede sits under it. */
+.hero-lede { margin: 0 0 20px; max-width: 72ch; font-size: var(--ui-size); line-height: 1.5; color: var(--ink-2); }
+/* Two columns from 900px: Guides beside How we rate, the legal check beside "Most checked this month". */
+.home-two { display: grid; gap: 40px; }
+.home-two > * { min-width: 0; }
+.home-two .learn-card { margin-top: 0; }
+#legal .lede { margin: 0 0 20px; max-width: 52ch; }
+#legal h2 { margin: 0 0 8px; font: var(--display-2-weight) var(--display-2-size)/var(--display-2-lh) var(--font-display); letter-spacing: var(--display-2-ls); }
+@media (max-width: 640px) { #legal h2 { font-size: 26px; } }
 
 /* "What the labels mean": one card per label below the rail, inside the hero band, like the criteria cards */
 .glossary { margin-top: 48px; }
@@ -290,6 +299,7 @@ p { margin: 0 0 1em; }
 /* Home's guides card sits in the grey band after "What the labels mean"; two columns of links from 760px. */
 .learn-card { margin-top: 48px; }
 @media (min-width: 760px) { .learn-card ul { columns: 2; column-gap: 32px; } .learn-card li { break-inside: avoid; } }
+@media (min-width: 900px) { .home-two { grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 48px; align-items: start; } #legal .home-two { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
 
 /* Short pages (owner answer Q3 a, 2 Nov 2026): the footer sits at the bottom of the window; main takes the spare height.
    The breadcrumb is a body child with auto side margins, so it is told to stretch to the frame like any .wrap. */
@@ -462,7 +472,7 @@ body > .crumbs { width: -moz-available; width: -webkit-fill-available; width: st
   .wrap { max-width: var(--container-wide); padding: 0 32px; }
   body { font-size: 17px; }
   h1 { font-size: 50px; }
-  .sec-hd h2 { font-size: 36px; }
+  .sec-hd h2, #legal h2 { font-size: 36px; }
   .lede { font-size: 19px; }
   .hero-clinic { padding: 28px 0 72px; }
   .flow { grid-template-columns: 220px 260px minmax(0, 1fr); gap: 20px 36px; padding: 32px; }
@@ -479,7 +489,7 @@ body > .crumbs { width: -moz-available; width: -webkit-fill-available; width: st
   .wrap { max-width: var(--container-max); padding: 0 40px; }
   body { font-size: 18px; }
   h1 { font-size: 56px; }
-  .sec-hd h2 { font-size: 40px; }
+  .sec-hd h2, #legal h2 { font-size: 40px; }
   .lede { font-size: 21px; }
   .flow { grid-template-columns: 260px 300px minmax(0, 1fr); gap: 24px 44px; }
   .fig { height: 540px; }

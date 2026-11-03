@@ -19,12 +19,15 @@ sup a,a.ref{display:inline-block;min-width:24px;min-height:24px;padding:4px 4px;
 .btn-line{background:var(--white);color:var(--ink);border-color:var(--ink)}
 .btn-line:hover{background:var(--neutral-tint);color:var(--ink)}
 .btn-mark{background:var(--mark);color:var(--ink)}
+/* Waiting for a paid link (Home v2, 3 Nov 2026): our own page on a clinic until the clinic pays us; then btn-action takes its place. */
+.btn-wait{background:var(--white);color:var(--ink);border-color:var(--line-strong)}
+.btn-wait:hover{background:var(--neutral-tint);color:var(--ink)}
 .btn-sm{min-height:var(--touch);padding:0 16px;font-size:14px}
 .btn:focus-visible{outline:3px solid var(--clinic);outline-offset:2px}
 /* A button keeps its own text colour whatever link rule surrounds it (prose, footer, tables; design/site-polish, 2 Nov 2026):
    these repeat the colours at a weight no section's link rule reaches. */
 :is(a,span,button).btn.btn-ink,:is(a,span,button).btn.btn-ink:hover,:is(a,span,button).btn.btn-action,:is(a,span,button).btn.btn-action:hover{color:var(--white)}
-:is(a,span,button).btn.btn-line,:is(a,span,button).btn.btn-line:hover,:is(a,span,button).btn.btn-mark{color:var(--ink)}
+:is(a,span,button).btn.btn-line,:is(a,span,button).btn.btn-line:hover,:is(a,span,button).btn.btn-mark,:is(a,span,button).btn.btn-wait{color:var(--ink)}
 .paid{font:400 var(--fine-size) var(--font-text);color:var(--ink-2)}
 
 /* Chips */
@@ -349,6 +352,76 @@ html:not(.nav-js) .head-search{order:0;flex:1 1 100%;max-width:420px;margin:0 0 
 .pep-group:not(:first-child){margin-top:56px}
 .tbl-sold td.num,.tbl-peptides td.num{white-space:nowrap}
 .pep-foot .related{margin-bottom:40px}
+
+/* Home v2 (pages.md, Home; the owner's sketch of 3 Nov 2026). Every section ends with its action in .sec-act. */
+.sec-act{display:flex;flex-wrap:wrap;gap:12px;margin:24px 0 0}
+.more-link{display:inline-block;margin-top:14px;font-weight:600}
+/* Seller block ("Where to get it"): the filter row (two selects, the segmented type control, the name field) over the
+   Data table; a row: name over its small line, Type chip, Checks, From, FDA letters, one action with its small line under it.
+   On phones each row is a card (.tbl-cards). */
+.where-filter{display:flex;flex-wrap:wrap;align-items:flex-end;gap:12px 16px;margin:0 0 12px}
+.where-f{display:flex;flex-direction:column;gap:4px}
+.where-f label{font-weight:600;font-size:var(--small-size)}
+.where-q .input{width:200px;max-width:100%}
+.seg{display:inline-flex;border:1.5px solid var(--line-strong);border-radius:var(--radius-control);overflow:hidden;background:var(--white)}
+.seg-b{min-height:48px;padding:0 14px;border:0;border-left:1px solid var(--line);background:var(--white);font:600 14px var(--font-text);color:var(--ink);cursor:pointer}
+.seg-b:first-child{border-left:0}
+.seg-b[aria-pressed="true"]{background:var(--ink);color:var(--white)}
+.seg-b:focus-visible{outline:3px solid var(--clinic);outline-offset:-3px}
+.where-n{margin:0 0 10px;color:var(--ink-2)}
+.tbl-where .sub{display:block;font-size:var(--small-size);line-height:1.4;color:var(--ink-2)}
+.tbl-where .num{font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
+.tbl-where td.act{text-align:right;white-space:nowrap}
+.tbl-where td.act .paid{display:block;margin-top:4px}
+.where-note{margin:12px 0 0;color:var(--ink-2)}
+@media (max-width:640px){.tbl-where td.act{text-align:left;margin-top:10px}.tbl-where td.act .paid{display:inline;margin:0 0 0 10px}
+.tbl-where td[data-l]{display:inline-block;margin:6px 14px 0 0}.tbl-where td[data-l="Type"]{display:block}
+.seg{width:100%}.seg-b{flex:1;padding:0 8px}.where-f,.where-q .input{width:100%}.legal-row .btn{width:auto}}
+/* Goal cards ("Compare by goal"): seven white cards in one row (two columns on phones): the goal name, the option
+   count, the price from data in the number style and its one-word source. The whole card links the goal page. */
+.goal-cards{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.goal-card{display:flex;flex-direction:column;gap:2px;height:100%;box-sizing:border-box;padding:14px 16px;background:var(--white);border:1px solid var(--line);border-radius:var(--radius-panel);color:var(--ink);text-decoration:none}
+a.goal-card:hover{border-color:var(--clinic)}
+a.goal-card:focus-visible{outline:3px solid var(--clinic);outline-offset:2px}
+.goal-card .goal-name{font-weight:700;color:var(--clinic)}
+.goal-card .goal-price{margin-top:8px;font-weight:700;font-variant-numeric:tabular-nums}
+.goal-card .small{color:var(--ink-2)}
+@media (min-width:1024px){.goal-cards{grid-template-columns:repeat(7,minmax(0,1fr))}}
+@media (min-width:641px) and (max-width:1023px){.goal-cards{grid-template-columns:repeat(4,minmax(0,1fr))}}
+/* How we rate card (Home, beside the guides card): the five checks as a numbered list, each its name and one line. */
+.rate-card h2{font-size:var(--display-4-size);line-height:var(--display-4-lh);margin:0 0 8px}
+.rate-card>p{margin:0 0 8px;font-size:var(--small-size);line-height:var(--small-lh);color:var(--ink-2)}
+.rate-list{margin:0;padding:0 0 0 1.4em}
+.rate-list li{padding:8px 0;border-top:1px solid var(--line)}
+.rate-list li:last-child{border-bottom:1px solid var(--line)}
+/* Legal check field ("Is it legal today?"): a labelled input and btn-ink "Check" in one row; beside it "Most checked
+   this month", five white cards (name and status chips), then the A to Z link. */
+.legal-check label{display:block;font-weight:600;margin:0 0 6px}
+.legal-row{display:flex;gap:8px}
+.legal-row .input{flex:1 1 auto;min-width:0}
+.legal-most h3{font:700 var(--ui-size)/1.3 var(--font-text);margin:0 0 10px}
+.legal-cards{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.legal-card{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:6px 12px;padding:12px 14px;background:var(--white);border:1px solid var(--line);border-radius:var(--radius-panel);color:var(--ink);text-decoration:none}
+.legal-card .name{font-weight:700;color:var(--clinic)}
+.legal-card .chips{display:flex;flex-wrap:wrap;gap:6px}
+a.legal-card:hover{border-color:var(--clinic)}
+/* Letter cards ("Latest FDA warning letters"): three white cards: date and kind of seller, company, subject, the letter. */
+.letter-cards{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.letter-card{display:flex;flex-direction:column;gap:4px;padding:14px 16px;background:var(--white);border:1px solid var(--line);border-radius:var(--radius-panel)}
+.letter-card .name{font-weight:700}
+.letter-card .small{color:var(--ink-2)}
+@media (min-width:760px){.letter-cards{grid-template-columns:repeat(3,minmax(0,1fr))}}
+/* Creator card ("Who explains this well"): initials in a circle (ink, or clinic on every second card), no photos (rule
+   7); the name links the channel (rel nofollow), "Platform · N subscribers", one line of stance. */
+.creator-cards{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.creator-card{display:flex;gap:14px;padding:14px 16px;background:var(--white);border:1px solid var(--line);border-radius:var(--radius-panel)}
+.creator-card .initials{flex:none;display:flex;align-items:center;justify-content:center;width:44px;height:44px;border-radius:50%;background:var(--ink);color:var(--white);font-weight:700;font-size:15px}
+.creator-card .initials-clinic{background:var(--clinic)}
+.creator-card .name{font-weight:700}
+.creator-card .small{display:block;color:var(--ink-2)}
+.creator-card p{margin:6px 0 0;font-size:var(--small-size);line-height:var(--small-lh)}
+@media (min-width:760px){.creator-cards{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (min-width:1180px){.creator-cards{grid-template-columns:repeat(4,minmax(0,1fr))}}
 
 /* Inputs */
 .input{min-height:48px;padding:0 14px;border:1.5px solid var(--line-strong);border-radius:var(--radius-control);font:16px var(--font-text);color:var(--ink);background:var(--white);box-sizing:border-box}
