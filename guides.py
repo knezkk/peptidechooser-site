@@ -855,7 +855,7 @@ def plan_table(b, rows, N, kind):
     trs = []
     for r in rows:
         n = r.get("fda_letter_count") or 0
-        letter = (f'<a class="chip chip-warn chip-link" href="{b.LETTERS_URL}">FDA letter {nice(r["last_fda_letter_date"])}</a>'
+        letter = (f'<a class="chip chip-warn chip-link" href="{b.letter_href(r["seller_slug"])}">FDA letter {nice(r["last_fda_letter_date"])}</a>'
                   if n and r.get("last_fda_letter_date") else '<span class="no-letter">none</span>')
         what = plan_kind_words(r) if kind == "hair" else glp1_words(b, r) if kind == "glp1" else b.care_note(r)
         ref = N(f"plan-{r['seller_slug']}-{r['plan_slug']}")
