@@ -3,6 +3,7 @@
     python3 tools/check.py words    # one
 Exit code 1 on any failure. A failed check gets fixed; the rule is never lowered.
 """
+import collections
 import json
 import re
 import sys
@@ -637,6 +638,35 @@ def check_parts(P):
         in_legend = len(re.findall(r"\b[Ww]e (?:do not|don't|never) link\b", legend.group(1))) if legend else 0
         if len(said) != 1 or in_legend != 1:
             errs.append(f"index.html: 'we do not link' said {len(said)} times ({in_legend} in the label legend); want once, in the legend")
+    # "We do not link" once per page (owner decision C1, 3 Nov 2026; audit C12): the phrase family ("we do not link", "we
+    # never link", ...) only where the rules require it: Home's label legend, a seller page's closing sentence under "Is
+    # <Name> legit?", and /how-we-rate/ and /disclosure/, where the policy is explained. Text and meta tags of every page
+    # and price window count; the count per page is printed; any other occurrence fails.
+    nolink = re.compile(r"\b[Ww]e (?:do not|don't|never) link\b")
+    texts = [(n, (DIST / n).read_text(encoding="utf-8")) for n in P]
+    texts += [(f"windows/{f.name}", json.loads(f.read_text(encoding="utf-8")).get("html", ""))
+              for f in sorted((DIST / "windows").glob("*.json"))] if (DIST / "windows").exists() else []
+    counts = {}
+    for name, html in texts:
+        t = re.sub(r"<script.*?</script>", " ", html, flags=re.S)
+        said = len(nolink.findall(re.sub(r"<[^>]+>", " ", t))) + sum(len(nolink.findall(c)) for c in re.findall(r'<meta[^>]+content="([^"]*)"', t))
+        if not said:
+            continue
+        counts[name] = said
+        if name in ("how-we-rate/index.html", "disclosure/index.html"):
+            ok = said
+        elif name == "index.html":
+            legend = re.search(r'<dl class="glossary-list">(.*?)</dl>', t, re.S)
+            ok = min(1, len(nolink.findall(legend.group(1)))) if legend else 0
+        elif re.fullmatch(r"sellers/[^/]+/index\.html", name):
+            ok = sum(len(nolink.findall(x)) for x in re.findall(r'<p class="small legit-close">(.*?)</p>', t, re.S))
+        else:
+            ok = 0
+        if said > ok:
+            errs.append(f"{name}: 'we do not link' said {said} times, {said - ok} outside the allowed places")
+    shown = collections.Counter(re.sub(r"^sellers/[^/]+/", "sellers/*/", n) for n in counts)
+    print("  we-do-not-link per page: " + (", ".join(f"{n.replace('index.html', '') or '/'} {counts.get(n, '1 each on ' + str(c))}"
+                                              for n, c in sorted(shown.items())) or "none"))
     # A footnote right after "(<Seller>)" links that seller's own source: its line in Sources starts with the name (owner
     # UX audit, 3 Nov 2026: /hair/ looked as if Keeps and Strut were swapped), or our own database.
     sellers = seller_names()
