@@ -503,3 +503,10 @@ a.legal-card:hover{border-color:var(--clinic)}
 .check-chips{list-style:none;margin:14px 0 0;padding:0;display:flex;flex-direction:column;align-items:flex-start;gap:8px}
 .check-chips .chip{font-size:12px;padding:3px 8px}
 .check-how{margin:12px 0 0;font-size:var(--small-size)}
+/* Check bar (pages.md, Sellers; owner task w2, 3 Nov 2026): the Background check card's five chips in miniature, 10px
+   squares beside "4 of 5" in the sellers tables: met filled with chip-ok's text colour, not met chip-neutral with
+   the dashed ink-muted border; each spoken through its hidden label. */
+.check-bar{display:inline-flex;gap:3px;margin-left:8px;vertical-align:-1px}
+.check-bar .chip{width:10px;height:10px;padding:0;border-radius:2px;box-sizing:border-box}
+.check-bar .mark-yes{background:var(--action-text)}
+.check-bar .mark-no{border:1px dashed var(--ink-muted)}
