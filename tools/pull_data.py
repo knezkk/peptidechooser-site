@@ -61,17 +61,23 @@ def substances(d):
     return out | {s for r in d["legal"]["rows"] for s in r.get("substances", [])}
 
 
+# Cosmetic product forms (products.product_form): a cosmetic option's window lists only these (build.py COSMETIC_FORMS)
+COSMETIC_FORMS = {"cream", "serum", "lotion", "gel"}
+
+
 def keep_products(all_rows, subs, n=10):
     """site.json stays small: per substance, each seller's cheapest listing, then the n cheapest of those by price per mg
     (listings with a price per mg first, then blends and listings without one, by price), so the seller window
-    shows one row per seller (owner, 31 Oct 2026)."""
+    shows one row per seller (owner, 31 Oct 2026). Cosmetic forms and the rest are picked apart, n each, so a serum
+    is never pushed out by cheaper vials (owner UX audit, 3 Nov 2026)."""
     key = lambda r: (r["price_per_mg"] is None, r["price_per_mg"] or 0, r["price_usd"] is None, r["price_usd"] or 0, r["seller_slug"])
     out = []
     for slug in sorted(subs):
-        best = {}
-        for r in sorted((r for r in all_rows if r["substance_slug"] == slug), key=key):
-            best.setdefault(r["seller_slug"], r)
-        out += sorted(best.values(), key=key)[:n]
+        for cosmetic in (False, True):
+            best = {}
+            for r in sorted((r for r in all_rows if r["substance_slug"] == slug and (r.get("form") in COSMETIC_FORMS) == cosmetic), key=key):
+                best.setdefault(r["seller_slug"], r)
+            out += sorted(best.values(), key=key)[:n]
     return out
 
 
@@ -197,6 +203,13 @@ def main():
           f"{len(d['products'])} of {len(products)} listings, {len(d['sellers'])} of {len(sellers)} sellers, "
           f"{len(d['letters'])} of {d['letters_total']} letters, {d['letters_all_total']} on the letters page, "
           f"{len(d['seller_profiles'])} seller pages")
+    # cosmetic listings per substance the site shows (owner UX audit, 3 Nov 2026), for the report
+    cos = {}
+    for r in products:
+        if r.get("form") in COSMETIC_FORMS and r["substance_slug"] in substances(d):
+            cos[r["substance_slug"]] = cos.get(r["substance_slug"], 0) + 1
+    print("pull_data: cosmetic listings (cream, serum, lotion, gel): "
+          + (", ".join(f"{k} {v}" for k, v in sorted(cos.items())) or "none"))
     return 0
 
 
