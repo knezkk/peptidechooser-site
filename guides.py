@@ -2173,15 +2173,22 @@ def guide_body(b, g):
 """
 
 
+# /learn/ by topic (pages.md, Learn; owner task 3 Nov 2026): one h2 per topic, its id the target of the header's Learn links
+LEARN_GROUPS = [("hair", "Hair"), ("glp1", "GLP-1"), ("legal", "Legal"), ("buying", "Buying"), ("data", "Data"), ("body", "Body")]
+
+
 def learn_body(b):
-    items = "".join(f'<li><h2><a href="/learn/{g["slug"]}/">{g["title"]}</a></h2><p>{g["line"]}</p>'
-                    f'<p class="small">Checked {nice(checked(b))}</p></li>' for g in GUIDES)
+    def row(g):
+        return (f'<li><h3><a href="/learn/{g["slug"]}/">{g["title"]}</a></h3><p>{g["line"]}</p>'
+                f'<p class="small">Checked {nice(checked(b))}</p></li>')
+    items = "".join(f'<h2 class="learn-topic" id="{t}">{label}</h2><ul class="guide-list">{"".join(row(g) for g in GUIDES if TOPIC.get(g["slug"]) == t)}</ul>'
+                    for t, label in LEARN_GROUPS if any(TOPIC.get(g["slug"]) == t for g in GUIDES))
     return f"""
 <section class="page learn"><div class="wrap prose">
 <h1>{LEARN_H1}</h1>
 <p class="lede">Short answers to the questions people ask about peptides in the US, each with its sources. No doses, no sales.</p>
 <p class="small meta"><a href="/about/">Peptide Chooser editorial team</a>. Every claim links to its source.</p>
-<ul class="guide-list">{items}</ul>
+{items}
 </div></section>
 """
 

@@ -487,6 +487,34 @@ def check_parts(P):
             link, guid = it.findtext("link") or "", it.findtext("guid") or ""
             if not link.startswith("https://www.fda.gov/") or guid != link or not it.findtext("title") or not it.findtext("pubDate"):
                 errs.append(f"feed.xml: item without its fda.gov link, title or date ({link})")
+    # Header categories (pages.md, Every page, Header; owner task 3 Nov 2026): a nav link never points at a section of
+    # Home or of the page itself, and every one opens a built page (with its #id there, for a link into a page).
+    ids = {}
+    for name in P:
+        html = (DIST / name).read_text(encoding="utf-8")
+        m = re.search(r'<nav class="nav" id="site-nav"[^>]*>(.*?)</nav>', html, re.S)
+        if not m:
+            errs.append(f"{name}: no header nav")
+            continue
+        for href in re.findall(r'href="([^"]*)"', m.group(1)):
+            path, _, frag = href.partition("#")
+            if href.startswith(("#", "/#")) or not path.startswith("/"):
+                errs.append(f"{name}: nav link {href} is an anchor, not a page")
+                continue
+            target = path.strip("/") + "/index.html" if path != "/" else "index.html"
+            if not (DIST / target).exists():
+                errs.append(f"{name}: nav link {href} opens no built page")
+            elif frag:
+                if target not in ids:
+                    ids[target] = set(re.findall(r'\sid="([^"]+)"', (DIST / target).read_text(encoding="utf-8")))
+                if frag not in ids[target]:
+                    errs.append(f"{name}: nav link {href}: no id {frag} on that page")
+    # /sources/ (pages.md, Sources): every group shown has at least one source
+    src = DIST / "sources" / "index.html"
+    if src.exists():
+        for sec in re.findall(r'<section class="src-group"[^>]*>(.*?)</section>', src.read_text(encoding="utf-8"), re.S):
+            if "<li>" not in sec:
+                errs.append("sources/index.html: a group with no source")
     return errs
 
 
