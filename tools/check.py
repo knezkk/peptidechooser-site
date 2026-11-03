@@ -77,6 +77,17 @@ class Text(HTMLParser):
             self.parts.append(d)
 
 
+# The six things a peptide page can carry beyond its status (pages.md, Peptide, Thin pages), as the page shows them.
+PEP_SIGNALS = {"goal page": r'id="evidence"', "shop table": r'class="tbl tbl-cards tbl-sold">.*?<tbody><tr>',
+               "clinic plan": r'class="tbl tbl-cards tbl-clinics">.*?<tbody><tr', "FDA letter": r'tbl-pep-letters">.*?<tbody><tr>',
+               "guide": r'id="guides-h"', "approved brand": r"<li><span>Approved brands</span>"}
+AUTHOR_LINE = re.compile(r'<p class="small meta"><a href="/about/">Peptide Chooser editorial team</a>\. Checked \d{1,2} [A-Z][a-z]{2,8} \d{4}\.</p>')
+
+
+def page_path(name):
+    return "/" if name == "index.html" else "/404" if name == "404.html" else "/" + name.replace("index.html", "")
+
+
 def pages():
     out = {}
     for f in sorted(DIST.rglob("*.html")):
@@ -400,6 +411,40 @@ def check_parts(P):
         for k, v in data.items():
             if v.get("k") == "seller" and f'href="/sellers/{k[2:]}/"' not in v.get("h", ""):
                 errs.append(f"compare/index.html: seller {k} does not link to its page")
+    # Thin pages (pages.md, Peptide; owner task 2 Nov 2026): a /peptides/<slug>/ page is indexed only when it shows at
+    # least three of the six, each read off the page as built; otherwise it is noindex (and so out of the sitemap).
+    for name in P:
+        if name.startswith("peptides/") and name != "peptides/index.html":
+            html = (DIST / name).read_text(encoding="utf-8")
+            has = [k for k, pat in PEP_SIGNALS.items() if re.search(pat, html, re.S)]
+            noindex = "noindex" in P[name].meta.get("robots", "")
+            if len(has) >= 3 and noindex:
+                errs.append(f"{name}: noindex but shows {len(has)} of the six ({', '.join(has)})")
+            if len(has) < 3 and not noindex:
+                errs.append(f"{name}: thin ({', '.join(has) or 'status only'}) but indexed")
+    # Orphans (pages.md, Rules that apply to every page): every page in the sitemap is linked from another page of the
+    # build (not the sitemap or llms.txt, which are not pages).
+    sm = (DIST / "sitemap.xml").read_text(encoding="utf-8") if (DIST / "sitemap.xml").exists() else ""
+    linked = set()
+    for name, p in P.items():
+        own = page_path(name)
+        for a in p.links:
+            h = re.sub(r"[?#].*", "", a.get("href", "").replace(SITE, ""))
+            if h.startswith("/") and h != own:
+                linked.add(h)
+    for loc in re.findall(rf"<loc>{re.escape(SITE)}([^<]*)</loc>", sm):
+        if loc != "/" and loc not in linked:
+            errs.append(f"sitemap.xml: {loc} is linked from no other page")
+    # The author line (pages.md, Rules that apply to every page): every goal, seller, peptide, compare, guide and letters
+    # page carries the one line "<team>. Checked <date>." with the same class, exactly once.
+    goals = {f'{g["slug"]}/index.html' for g in json.loads((ROOT / "data" / "site.json").read_text(encoding="utf-8"))["goals"] if g.get("page")}
+    for name in P:
+        inner = (name in goals or name == "fda-warning-letters/index.html"
+                 or re.match(r"(sellers|peptides|compare|learn)/[^/]+/index\.html$", name))
+        if inner:
+            n = len(AUTHOR_LINE.findall((DIST / name).read_text(encoding="utf-8")))
+            if n != 1:
+                errs.append(f"{name}: {n} author lines (want one: '<team>. Checked <date>.' in p.small.meta)")
     # The letters feed (pages.md, Letters): it parses as XML and every item links to the letter on fda.gov.
     feed = DIST / "fda-warning-letters" / "feed.xml"
     if feed.exists():
