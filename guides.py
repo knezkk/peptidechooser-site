@@ -439,7 +439,7 @@ def g_bpc(b, f, N):
 
 <h2>What does "research use only" mean?</h2>
 <p>"Research use only" and "not for human use" are words the shop puts on its own label. They do not mean that anyone approved the product, and they tell you nothing about what is in the vial or how clean it is.{research}</p>
-<p>The label also means there is no dose on the box and no instructions from a doctor or pharmacist. We do not give doses either, and we never link to these shops.</p>
+<p>The label also means there is no dose on the box and no instructions from a doctor or pharmacist. We do not give doses either.</p>
 
 <h2>What are research-use shops doing?</h2>
 <p>They keep selling it, in vials of different sizes and in blends with other peptides.</p>
@@ -813,7 +813,7 @@ def g_ghk(b, f, N):
              f"{c['amount_mg']:,g} mg at {b.usd(c['price_usd'])}.{N('db-sellers')}" if c and c.get("amount_mg") else "")
     if line:
         price += (f"<p>{line}{cheap} Those are research-use vials and powders, not serums. Our <a href=\"/hair/\">hair page</a> "
-                  "lists them with each shop's five checks; we never link to the shops.</p>")
+                  "lists them with each shop's five checks, and each name opens our page on that shop.</p>")
     body = f"""
 <h2>What is GHK-Cu?</h2>
 <p>GHK is a peptide of three amino acids (glycine, histidine and lysine). GHK-Cu is the same peptide carrying copper. The body makes it, and lab studies link it to skin repair and collagen.{N('pm-pickart')}</p>
@@ -1126,7 +1126,7 @@ def g_bpc_tb(b, f, N):
 
 <h2>What do they cost?</h2>
 {f"<ul>{prices}</ul>" if prices else "<p>We show shop prices once the shops are in our database.</p>"}
-<p>The window on our recovery page lists each shop with its five checks; we never link to the shops.{f' You can also put two shops side by side on <a href="{cmp_url}">Compare</a>.' if cmp_url else ''}</p>
+<p>The window on our recovery page lists each shop with its five checks, and each name opens our page on that shop.{f' You can also put two shops side by side on <a href="{cmp_url}">Compare</a>.' if cmp_url else ''}</p>
 
 <h2>What has the FDA said to the shops?</h2>
 {letters}
@@ -1421,7 +1421,7 @@ def g_joints(b, f, N):
 
 <h2>What do the peptides cost?</h2>
 <p>{prices or "We show shop prices once the shops are in our database."}</p>
-<p>The windows on our recovery page list each shop with its five checks; we never link to the shops. A price per mg says nothing about what is in the vial, and a lab report covers one batch: see <a href="/learn/how-to-read-a-coa/">how to read a COA</a>.</p>
+<p>The windows on our recovery page list each shop with its five checks, and each name opens our page on that shop. A price per mg says nothing about what is in the vial, and a lab report covers one batch: see <a href="/learn/how-to-read-a-coa/">how to read a COA</a>.</p>
 <p>None of this is medical advice.</p>"""
     nxt = (("/recovery/", "Compare recovery options"), ("/learn/bpc-157-vs-tb-500/", "BPC-157 vs TB-500 guide"))
     return short, body, nxt
@@ -1470,7 +1470,7 @@ def g_libido(b, f, N):
 
 <h2>What do they cost?</h2>
 <p>{prices or "We show shop prices once the shops are in our database."}{plan_s} The shop listings are research-use vials, not Vyleesi.</p>
-<p>The windows on our libido page list each shop with its five checks; we never link to the shops. A price per mg says nothing about what is in the vial.</p>
+<p>The windows on our libido page list each shop with its five checks, and each name opens our page on that shop. A price per mg says nothing about what is in the vial.</p>
 
 <h2>So which peptide works for libido?</h2>
 <p>Only one has trials in people and FDA approval: bremelanotide as Vyleesi, for one group of women with one condition.{N('label-vyleesi')} The same molecule from a shop is a different product, and Melanotan II has serious case reports behind it and no approval.</p>
@@ -1856,7 +1856,7 @@ def g_bpc_price(b, f, N):
     body = f"""
 <h2>What do shops charge per mg?</h2>
 <p>{rng or "We show the price per mg once our price crawl has BPC-157 listings."} The middle price is the one in the middle when all listings are put in order, so a few very cheap or very dear vials do not pull it.</p>
-<p>We crawl the shops' own pages for the price and the amount on the label. We never link to a research-use shop, and we do not sell anything.</p>
+<p>We crawl the shops' own pages for the price and the amount on the label. We do not sell anything.</p>
 
 <h2>How do we work out the price per mg?</h2>
 <p>We take the listed price and divide it by the amount of BPC-157 the label gives. A pack of ten 10 mg vials counts as 100 mg. Blends, listings with no amount and prices outside $0.01 to $100 per mg, which are almost always a typing error on the shop's page, are left out of the range.</p>
@@ -1928,7 +1928,7 @@ def g_oz_weg(b, f, N):
 <h2>What do online clinics charge?</h2>
 <p>Every brand semaglutide plan at the online clinics we track, cheapest first{f", checked {nice(newest)}" if newest else ""}. Under each price is the care fee:</p>
 {table}
-<p>A clinic with an FDA warning letter is still listed; the chip opens our <a href="{b.LETTERS_URL}">letters page</a>. Each clinic's name opens our page on it. We do not link to clinic sites from this guide.</p>
+<p>A clinic with an FDA warning letter is still listed; the chip opens our <a href="{b.LETTERS_URL}">letters page</a>. Each clinic's name opens our page on it.</p>
 
 <h2>What does the care fee add?</h2>
 <p>"All-in" means the price covers the prescriber and the check-ins. A monthly amount means a fee on top of the medicine. "Care fee not known" means the clinic's page did not say.{f" {len(fees)} of the {len(plans)} plans above add a fee on top." if fees else ""} Add the fee before you compare two plans.</p>
@@ -2043,7 +2043,7 @@ def g_ruo(b, f, N):
 <p>For most peptides sold this way, such as BPC-157 and TB-500, there is no approved version at all. Each one's page under <a href="/peptides/">Peptides A to Z</a> shows its FDA status, and our <a href="/recovery/">recovery page</a> puts them next to the usual treatments.</p>
 
 <h2>How do we show research-use shops?</h2>
-<p>We list them so you can see the facts, never to sell. We do not link to any research-use shop, we take no money from them and they get no Paid link. Each one has a page with its five checks, and the seller windows on our goal pages show its prices next to the others.{N('own-how-we-rate')}</p>
+<p>We list them so you can see the facts, never to sell. We take no money from research-use shops and they get no Paid link. Each one has a page with its five checks, and the seller windows on our goal pages show its prices next to the others.{N('own-how-we-rate')}</p>
 
 <h2>Is it legal to buy?</h2>
 <p>The FDA's letters go to sellers, not to people who buy for themselves. What the law means for you as a buyer is a legal question, and a lawyer can answer for your state. Our guide <a href="/learn/are-peptides-legal-in-the-us/">Are peptides legal in the US?</a> explains the four kinds of peptide.</p>
