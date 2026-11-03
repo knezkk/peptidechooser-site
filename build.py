@@ -3037,18 +3037,51 @@ def compare_items():
 
 
 COMPARE_JS = """<script>
+// Compare any two (pages.md, Compare any two; owner task w2, 3 Nov 2026): each select becomes a text field with a
+// grouped list under it (the header search's list part; arrows, Enter, Escape); two substances with a pair page open
+// that page; otherwise the two columns are drawn from /compare/data.json. Without JavaScript the selects submit.
 (function(){var D={},f=document.getElementById('cmp-form'),a=f.elements.a,b=f.elements.b,
 out=document.getElementById('cmp-out'),p=new URLSearchParams(location.search);
-function draw(){var x=D[a.value],y=D[b.value];if(!x||!y){out.innerHTML='<p class="cmp-note">Choose two to see them side by side.</p>';return;}
-if(x.k!==y.k){out.innerHTML='<p class="cmp-note">Choose two clinic plans or two sellers: a plan and a seller do not share the same facts.</p>';return;}
-var h='<table class="cmp"><caption class="vh">'+a.options[a.selectedIndex].text+' and '+b.options[b.selectedIndex].text+'</caption><thead><tr><td></td><th scope="col">'+x.h+'</th><th scope="col">'+y.h+'</th></tr></thead><tbody>';
+function label(s){return s.selectedIndex>0?s.options[s.selectedIndex].text:'';}
+function pick(sel){var w=sel.parentNode,inp=document.createElement('input'),ul=document.createElement('ul'),act=-1,res=[],id=sel.id+'-list';
+inp.className='input';inp.type='text';inp.id=sel.id+'-q';inp.autocomplete='off';inp.placeholder='Type a plan, shop or substance';
+inp.setAttribute('role','combobox');inp.setAttribute('aria-expanded','false');inp.setAttribute('aria-controls',id);inp.setAttribute('aria-autocomplete','list');
+ul.className='search-list cmp-list';ul.id=id;ul.setAttribute('role','listbox');ul.hidden=true;
+w.querySelector('label').setAttribute('for',inp.id);sel.hidden=true;sel.tabIndex=-1;w.appendChild(inp);w.appendChild(ul);
+var items=[].slice.call(sel.querySelectorAll('option')).filter(function(o){return o.value;}).map(function(o){return{v:o.value,t:o.text,g:o.parentNode.label||''};});
+function close(){ul.hidden=true;inp.setAttribute('aria-expanded','false');inp.removeAttribute('aria-activedescendant');act=-1;}
+function choose(x){sel.value=x.v;inp.value=x.t;close();}
+// names that start with what was typed come first, then the others, each in group order
+function draw(){var q=inp.value.trim().toLowerCase(),st=function(x){return q&&x.t.toLowerCase().indexOf(q)===0?0:1;};
+res=items.filter(function(x){return!q||x.t.toLowerCase().indexOf(q)>=0;}).map(function(x,i){return[st(x),i,x];})
+.sort(function(m,n){return m[0]-n[0]||m[1]-n[1];}).map(function(m){return m[2];}).slice(0,60);
+ul.textContent='';act=-1;var g=null;res.forEach(function(x,i){if(x.g!==g){g=x.g;var h=document.createElement('li');h.className='cmp-group';h.setAttribute('role','presentation');h.textContent=g;ul.appendChild(h);}
+var li=document.createElement('li');li.id=id+'-'+i;li.setAttribute('role','option');li.setAttribute('aria-selected','false');li.textContent=x.t;
+li.addEventListener('mousedown',function(e){e.preventDefault();choose(x);});ul.appendChild(li);});
+if(!res.length){var n=document.createElement('li');n.className='search-none';n.textContent='No match.';ul.appendChild(n);}
+ul.hidden=false;inp.setAttribute('aria-expanded','true');}
+function mark(i){var o=ul.querySelectorAll('[role=option]');if(!o.length)return;act=(i+o.length)%o.length;
+for(var j=0;j<o.length;j++)o[j].setAttribute('aria-selected',j===act?'true':'false');inp.setAttribute('aria-activedescendant',o[act].id);o[act].scrollIntoView({block:'nearest'});}
+inp.addEventListener('input',function(){sel.value='';draw();});inp.addEventListener('focus',draw);
+inp.addEventListener('keydown',function(e){if(e.key==='ArrowDown'){e.preventDefault();if(ul.hidden)draw();else mark(act+1);}
+else if(e.key==='ArrowUp'){e.preventDefault();mark(act-1);}
+else if(e.key==='Enter'&&!ul.hidden&&act>=0){e.preventDefault();choose(res[act]);}
+else if(e.key==='Escape'&&!ul.hidden){e.preventDefault();close();}});
+inp.addEventListener('blur',function(){setTimeout(close,100);});
+return function(){inp.value=label(sel);};}
+var sa=pick(a),sb=pick(b);
+function pair(){var P=D._pairs||{};return P[a.value+'|'+b.value]||P[b.value+'|'+a.value];}
+function show(){var x=D[a.value],y=D[b.value];if(!x||!y){out.innerHTML='<p class="cmp-note">Choose two to see them side by side.</p>';return;}
+if(x.k!==y.k){out.innerHTML='<p class="cmp-note">Choose two of the same kind: two clinic plans, two shops or two substances.</p>';return;}
+var h='<table class="cmp"><caption class="vh">'+label(a)+' and '+label(b)+'</caption><thead><tr><td></td><th scope="col">'+x.h+'</th><th scope="col">'+y.h+'</th></tr></thead><tbody>';
 x.c.forEach(function(c,i){h+='<tr><th scope="row">'+c[0]+'</th><td>'+c[1]+'</td><td>'+y.c[i][1]+'</td></tr>';});
 out.innerHTML=h+'</tbody></table>';}
-f.addEventListener('submit',function(e){e.preventDefault();history.replaceState(null,'','/compare/?a='+encodeURIComponent(a.value)+'&b='+encodeURIComponent(b.value));draw();});
-out.hidden=false;out.innerHTML='<p class="cmp-note">Loading the plans and sellers.</p>';
-// the facts load once, after the page (/compare/data.json, about 90 KB), so the page itself stays small (design/site-polish)
+f.addEventListener('submit',function(e){e.preventDefault();var to=pair();if(to){location.href=to;return;}
+history.replaceState(null,'','/compare/?a='+encodeURIComponent(a.value)+'&b='+encodeURIComponent(b.value));show();});
+out.hidden=false;out.innerHTML='<p class="cmp-note">Loading the plans, shops and substances.</p>';
+// the facts load once, after the page (/compare/data.json), so the page itself stays small (design/site-polish)
 fetch('/compare/data.json').then(function(r){return r.json();}).then(function(d){D=d;
-if(D[p.get('a')])a.value=p.get('a');if(D[p.get('b')])b.value=p.get('b');draw();})
+if(D[p.get('a')])a.value=p.get('a');if(D[p.get('b')])b.value=p.get('b');sa();sb();show();})
 .catch(function(){out.innerHTML='<p class="cmp-note">The comparison could not load. Open each seller from <a href="/sellers/">the sellers we track</a>.</p>';});})();
 </script>"""
 
@@ -3060,10 +3093,11 @@ def compare_page():
     plans, sellers = compare_items()
     data = {k: v for k, _, v in plans + sellers}
     opts = lambda items: "".join(f'<option value="{k}">{escape(label)}</option>' for k, label, _ in items)
-    groups = ((f'<optgroup label="Clinic plans">{opts(plans)}</optgroup>' if plans else "")
-              + (f'<optgroup label="Sellers">{opts(sellers)}</optgroup>' if sellers else ""))
+    # three groups (owner task w2, 3 Nov 2026): the substances join after the pair pages are built (cmp_links_in)
+    groups = ((f'<optgroup label="Online clinic plans">{opts(plans)}</optgroup>' if plans else "")
+              + (f'<optgroup label="Research-use shops">{opts(sellers)}</optgroup>' if sellers else "") + "<!--cmp-subs-->")
     select = lambda name, label: (f'<div class="cmp-field"><label for="cmp-{name}">{label}</label><select class="input" id="cmp-{name}" name="{name}">'
-                                  f'<option value="">Choose a plan or seller</option>{groups}</select></div>')
+                                  f'<option value="">Choose a plan, shop or substance</option>{groups}</select></div>')
     checked = max([r["last_seen"] for r in PLANS if r.get("last_seen")] + [r["score_checked_on"] for r in PROFILES.values() if r.get("score_checked_on")], default="")
     global COMPARE_DATA
     COMPARE_DATA = json.dumps(data, ensure_ascii=False, separators=(",", ":"))
@@ -3071,7 +3105,7 @@ def compare_page():
 <section class="section letters-hd">
   <div class="wrap">
     <h1>Compare any two plans or sellers</h1>
-    <p class="lede">Pick two online clinic plans or two peptide sellers and see them side by side: price and care fee for a plan; the five checks, products, price per mg and FDA letters for a seller. Seller names open our page on the seller.</p>
+    <p class="lede">Pick two online clinic plans, two peptide shops or two substances and see them side by side: price and care fee for a plan; the five checks, products, price per mg and FDA letters for a shop; FDA status, prices and letters for a substance. Seller names open our page on the seller.</p>
     <p class="letters-stamp">{f'<span class="stamp">Checked {nice_date(checked)}</span>' if checked else ""}<span class="small">{plural(len(plans), "clinic plan")} and {plural(len(sellers), "seller")}.</span></p>
   </div>
 </section>
@@ -3928,8 +3962,15 @@ def cmp_sub_answer(a, b):
         lo, hi = sorted(((na, la), (nb, lb)), key=lambda x: x[1]["price_per_mg"])
         out.append(f"At the shops we show, {lo[0]} is cheaper per mg: {per_mg(lo[1]['price_per_mg'])}/mg against {per_mg(hi[1]['price_per_mg'])}/mg.")
     elif pa and pb:
-        lo, hi = sorted(((na, pa), (nb, pb)), key=lambda x: float(x[1]["price_monthly"]))
-        out.append(f"At the online clinics we track, {lo[0]} plans start lower: {usd(lo[1]['price_monthly'])} a month against {usd(hi[1]['price_monthly'])}.")
+        # like with like (owner task w2, 3 Nov 2026): the brand plans of a form both sell, never a pill against a pen
+        fa, fb = sub_form_lows(a), sub_form_lows(b)
+        common = sorted((k for k in fa if k in fb and k[0] == "brand"), key=lambda k: float(fa[k]["price_monthly"]) + float(fb[k]["price_monthly"]))
+        if common:
+            k = common[0]
+            lo, hi = sorted(((na, fa[k]), (nb, fb[k])), key=lambda x: float(x[1]["price_monthly"]))
+            if float(lo[1]["price_monthly"]) != float(hi[1]["price_monthly"]):
+                out.append(f"At the online clinics we track, brand {FORM_PLURAL[k[1]]} of {lo[0]} start lower: "
+                           f"{usd(lo[1]['price_monthly'])} a month against {usd(hi[1]['price_monthly'])}.")
     else:
         for n, l, p in ((na, la, pa), (nb, lb, pb)):
             if l:
@@ -3955,23 +3996,123 @@ def cmp_fit(parts):
     return out
 
 
+# Verdict on the pair pages (pages.md, Compare pairs; owner task w2, UX audit 7.4, B17, B18, 3 Nov 2026): from data only,
+# each fact favours one side: the cheaper plan of a form and kind both sell (pen with pen, the #65 rule), the lower
+# price per mg at the shops, more clinics or shops selling it, fewer FDA letters naming a research-use substance, a
+# different FDA status. "Pick A if ... Pick B if ..." when each side has a fact; one side with two facts names both;
+# one fact alone reads "Same FDA status; the difference is ..."; no fact, no block. No effect or side-effect claim.
+FORM_PLURAL = {"Pen": "pens", "Pill": "pills", "Injection": "injections", "Topical": "topicals"}
+
+
+def sub_form_lows(slug):
+    """{(kind, form): the substance's cheapest plan of that kind (brand or compounded) and form}."""
+    out = {}
+    for r in pep_plans(slug):
+        kind = "compounded" if plan_kind(r) == "compounded" else "brand" if plan_kind(r) in ("brand", "generic") else None
+        if kind and plan_form_word(r) in FORM_PLURAL:
+            out.setdefault((kind, plan_form_word(r)), r)
+    return out
+
+
+def cmp_sub_facts(a, b):
+    """([(pick, diff)] for a, [(pick, diff)] for b): the facts that favour each side, strongest first."""
+    na, nb = pep_short(a), pep_short(b)
+    fa, fb = [], []
+    side = lambda first: fa if first else fb
+    ga, gb = pep_group(pep_status(a)), pep_group(pep_status(b))
+    if ga != gb and "approved" in (ga, gb):
+        w, o = (a, b) if ga == "approved" else (b, a)
+        side(w == a).append(("you want an FDA-approved medicine", f"{pep_short(w)} is FDA approved and {pep_short(o)} is {cmp_status_words(o)}"))
+    approved = ga == gb == "approved"
+    if approved:
+        la, lb = sub_form_lows(a), sub_form_lows(b)
+        common = sorted((k for k in la if k in lb), key=lambda k: float(la[k]["price_monthly"]) + float(lb[k]["price_monthly"]))
+        if common:
+            k = common[0]
+            x, y = float(la[k]["price_monthly"]), float(lb[k]["price_monthly"])
+            if x != y:
+                what = f"{k[0]} {FORM_PLURAL[k[1]]}"
+                lo = (na, x, y) if x < y else (nb, y, x)
+                side(x < y).append((f"price matters most: {what} from {usd(lo[1])}/mo against {usd(lo[2])}",
+                                    f"price: {what} of {lo[0]} start at {usd(lo[1])} a month, against {usd(lo[2])}"))
+        ca, cb = (len({r["seller_slug"] for r in pep_plans(x)}) for x in (a, b))
+        where = "clinic"
+    else:
+        sa, sb = pep_low_shop(a), pep_low_shop(b)
+        if sa and sb and sa["price_per_mg"] != sb["price_per_mg"]:
+            x, y = sa["price_per_mg"], sb["price_per_mg"]
+            lo = (na, x, y) if x < y else (nb, y, x)
+            side(x < y).append((f"price per mg matters most: from {per_mg(lo[1])}/mg against {per_mg(lo[2])}/mg",
+                                f"price: {lo[0]} starts at {per_mg(lo[1])}/mg at the shops we show, against {per_mg(lo[2])}/mg"))
+        ca, cb = (len({r["seller_slug"] for r in pep_shops(x)}) for x in (a, b))
+        where = "shop"
+    if ca != cb and min(ca, cb) > 0:
+        more = ca > cb
+        side(more).append((f"you want more {where}s to choose from: {max(ca, cb)} against {min(ca, cb)}",
+                           f"{plural(max(ca, cb), where)} sell {na if more else nb}, against {min(ca, cb)} for {nb if more else na}"))
+    if not approved and LETTER_SUBS_ON:
+        la_, lb_ = len(LETTER_SUBS.get(a, [])), len(LETTER_SUBS.get(b, []))
+        if la_ != lb_:
+            side(la_ < lb_).append((f"you want fewer FDA letters naming it: {min(la_, lb_)} against {max(la_, lb_)}",
+                                    f"FDA letters: {plural(min(la_, lb_), 'letter')} {'names' if min(la_, lb_) == 1 else 'name'} {na if la_ < lb_ else nb}, against {max(la_, lb_)}"))
+    return fa, fb
+
+
+def cmp_verdict(na, nb, fa, fb, same="Same FDA status; the difference is"):
+    """The verdict block and how many facts it states (2, or 0 when it is left out; never 1). `same` opens the one-fact
+    sentence: the substances share their FDA status (pairs are built only from the same kind of status)."""
+    if fa and fb:
+        text, n = f"Pick {na} if {fa[0][0]}. Pick {nb} if {fb[0][0]}.", 2
+    elif len(fa) >= 2 or len(fb) >= 2:
+        name, f = (na, fa) if len(fa) >= 2 else (nb, fb)
+        text, n = f"Pick {name} if {f[0][0]}, or if {f[1][0]}.", 2
+    elif fa or fb:
+        f = fa or fb
+        text, n = f"{same} {f[0][1]}.", 2
+    else:
+        return "", 0
+    return (f'<section class="cmp-verdict" aria-labelledby="verdict-h" data-facts="{n}"><h2 id="verdict-h" class="h-sources">Which to pick</h2>'
+            f"<p>{text}</p></section>"), n
+
+
+def cmp_next(links):
+    """"What to do next" on a pair page: the pages the pair has in this build, as a plain link list."""
+    items = "".join(f'<li><a href="{h}">{escape(t)}</a></li>' for h, t in links)
+    return (f'<section class="cmp-next" aria-labelledby="next-h"><h2 id="next-h" class="h-sources">What to do next</h2>'
+            f'<ul class="next-links">{items}</ul></section>') if items else ""
+
+
 def cmp_sub_page(a, b, goals):
     na, nb = pep_short(a), pep_short(b)
     checked = max(pep_checked(a), pep_checked(b))
     heads = [f'<a class="name" href="/peptides/{x}/">{escape(pep_short(x))}</a><span class="cmp-sub">{pep_status(x)["label"]}</span>' for x in (a, b)]
     ca, cb = cmp_sub_cell(a, goals), cmp_sub_cell(b, goals)
-    table = cmp_table(f"{na} and {nb}", heads, list(zip(CMP_SUB_ROWS, ca, cb)))
+    both_ok = pep_group(pep_status(a)) == pep_group(pep_status(b)) == "approved"
+    # an approved medicine has no shop price row; the letters are one line under the table (owner task w2, 3 Nov 2026)
+    rows = [r for r in zip(CMP_SUB_ROWS, ca, cb) if r[0] != "FDA letters" and not (both_ok and r[0] == "Lowest price at shops")]
+    table = cmp_table(f"{na} and {nb}", heads, rows)
+    if LETTERS_ALL and LETTER_SUBS_ON:
+        cnt = lambda x: (f'<a href="/fda-warning-letters/?sub={x}">{plural(len(LETTER_SUBS.get(x, [])), "letter")}</a> '
+                         f'{"names" if len(LETTER_SUBS.get(x, [])) == 1 else "name"} {escape(pep_short(x))}')
+        table += (f'<p class="small cmp-letters">FDA warning letters we track: {cnt(a)}, {cnt(b)}. '
+                  "These letters are about sellers and advertising, not about the medicine's approval.</p>")
+    verdict, _ = cmp_verdict(na, nb, *cmp_sub_facts(a, b))
+    sold = {x for r in PROFILES.values() for x in (clinic_subs(r) if r["seller_slug"] in CLINIC_PROFILES else shop_subs(r))}
+    nxt = cmp_next([(f"/peptides/{x}/", f"{pep_short(x)}: FDA status and prices") for x in (a, b)]
+                   + [(f'/{g["slug"]}/', f'{g["label"]}: every option compared') for g in goals[:1]]
+                   + ([(f"/sellers/#substance={a}", f"Sellers of {na} we track")] if a in sold and PROFILES else []))
     plans = [pep_low_plan(x) if pep_group(pep_status(x)) == "approved" else None for x in (a, b)]
     pre = f'?a=p.{plans[0]["seller_slug"]}.{plans[0]["plan_slug"]}&amp;b=p.{plans[1]["seller_slug"]}.{plans[1]["plan_slug"]}' if all(plans) else ""
     body = cmp_body(f"{na} vs {nb}", checked, cmp_sub_answer(a, b), table,
                     [(f"/peptides/{a}/", na), (f"/peptides/{b}/", nb)], pre,
-                    "Statuses come from the FDA lists; prices are the lowest we show, per mg at the shops or per month at the online clinics.")
+                    "Statuses come from the FDA lists; prices are the lowest we show, per mg at the shops or per month at the online clinics.",
+                    verdict, nxt)
     desc = cmp_fit([f"{na} vs {nb}: {cmp_sub_answer(a, b)[0][:-1]}.", *cmp_sub_answer(a, b)[1:2],
                     f'Both on our {goals[0]["name"].lower()} page.', f"Checked {nice_date(checked)}.", "We compare and never sell."])
     return cmp_title(f"{na} vs {nb}", "FDA status and prices"), desc, body
 
 
-def cmp_body(h1, checked, answer, table, links, pre, note):
+def cmp_body(h1, checked, answer, table, links, pre, note, verdict="", nxt=""):
     more = " and ".join(f'<a href="{u}">{escape(t)}</a>' for u, t in links)
     return f"""
 <section class="section letters-hd">
@@ -3979,6 +4120,7 @@ def cmp_body(h1, checked, answer, table, links, pre, note):
     <h1>{escape(h1)}</h1>
     <p class="lede">{" ".join(answer)}</p>
     {author_line(checked)}
+    {verdict}
     <p class="small">{note}</p>
   </div>
 </section>
@@ -3987,6 +4129,7 @@ def cmp_body(h1, checked, answer, table, links, pre, note):
     {table}
     <p class="small" style="margin-top:16px">Our pages on each: {more}.</p>
     {f'<p class="cmp-link"><a class="btn btn-line" href="/compare/{pre}">Compare any two</a></p>' if pre else ""}
+    {nxt}
   </div>
 </section>
 """
@@ -3996,7 +4139,9 @@ def cmp_body(h1, checked, answer, table, links, pre, note):
 # dosage_form, and per clinic the cheapest compounded plan of each form.
 PLAN_FORM_WORD = {"injection_vial": "Injection", "pen": "Pen", "tablet": "Pill", "capsule": "Pill", "topical": "Topical",
                   "solution": "Topical"}
-plan_form = lambda r: PLAN_FORM_WORD.get(r.get("dosage_form") or "", "Form not stated")
+# its own name (owner, 3 Nov 2026): plan_form above is the goal page filter's "pill"/"shot"; the same name made the later
+# definition replace the earlier one
+plan_form_word = lambda r: PLAN_FORM_WORD.get(r.get("dosage_form") or "", "Form not stated")
 
 
 def clinic_forms(c, sub):
@@ -4004,7 +4149,7 @@ def clinic_forms(c, sub):
     out = {}
     for r in sorted((r for r in PLANS if r["seller_slug"] == c and r["substance_slug"] == sub and r.get("product_kind") == "compounded"
                      and r.get("price_monthly") is not None), key=lambda r: (float(r["price_monthly"]), r["plan_name"])):
-        out.setdefault(plan_form(r), r)
+        out.setdefault(plan_form_word(r), r)
     return out
 
 
@@ -4077,6 +4222,33 @@ def cmp_clinic_answer(a, b, subs):
     return out[:3]
 
 
+def cmp_clinic_facts(a, b, subs):
+    """The clinic pair's facts (as cmp_sub_facts): the cheaper plan of a form both sell, no FDA letter, more checks met."""
+    na, nb = cmp_clinic_name(a), cmp_clinic_name(b)
+    fa, fb = [], []
+    side = lambda first: fa if first else fb
+    for sub in subs[:1]:
+        xa, xb = clinic_forms(a, sub), clinic_forms(b, sub)
+        common = sorted((f for f in xa if f in xb and f in FORM_PLURAL), key=lambda f: float(xa[f]["price_monthly"]) + float(xb[f]["price_monthly"]))
+        if common:
+            f = common[0]
+            x, y = float(xa[f]["price_monthly"]), float(xb[f]["price_monthly"])
+            if x != y:
+                lo = (na, x, y) if x < y else (nb, y, x)
+                what = f"compounded {sub} {FORM_PLURAL[f]}"
+                side(x < y).append((f"price matters most: {what} from {usd(lo[1])}/mo against {usd(lo[2])}",
+                                    f"price: {what} at {lo[0]} start at {usd(lo[1])} a month, against {usd(lo[2])}"))
+    la, lb = (PROFILES[x].get("fda_letter_count") or 0 for x in (a, b))
+    if bool(la) != bool(lb):
+        side(not la).append(("you want a clinic with no FDA warning letter",
+                             f"{na if lb else nb} has an FDA warning letter and {nb if lb else na} has none"))
+    sa, sb = (PROFILES[x].get("score") or 0 for x in (a, b))
+    if sa != sb:
+        side(sa > sb).append((f"you want more of our five checks met: {max(sa, sb)} against {min(sa, sb)}",
+                              f"{na if sa > sb else nb} meets {max(sa, sb)} of our five checks, against {min(sa, sb)}"))
+    return fa, fb
+
+
 def cmp_clinic_page(a, b, subs):
     na, nb = cmp_clinic_name(a), cmp_clinic_name(b)
     plans = [cmp_clinic_plan(x, subs[0]) for x in (a, b)]
@@ -4086,8 +4258,13 @@ def cmp_clinic_page(a, b, subs):
     table = cmp_table(f"{na} and {nb}", heads, list(zip(rows, cmp_clinic_cells(a, subs, b), cmp_clinic_cells(b, subs, a))))
     pre = f'?a=p.{plans[0]["seller_slug"]}.{plans[0]["plan_slug"]}&amp;b=p.{plans[1]["seller_slug"]}.{plans[1]["plan_slug"]}'
     answer = cmp_clinic_answer(a, b, subs)
+    verdict, _ = cmp_verdict(na, nb, *cmp_clinic_facts(a, b, subs), same="The one difference we hold is")
+    nxt = cmp_next([(f"/sellers/{x}/", f"{cmp_clinic_name(x)}: plans, prices and checks") for x in (a, b)]
+                   + [(f"/peptides/{x}/", f"{pep_short(x)}: FDA status and prices") for x in subs if x in PEPTIDE_SLUGS]
+                   + ([("/weight-loss/", "Weight loss: every option compared")] if any(p[0] == "/weight-loss/" for p in PAGES) else []))
     body = cmp_body(f"{na} vs {nb}", checked, answer, table, [(f"/sellers/{a}/", na), (f"/sellers/{b}/", nb)], pre,
-                    "Prices are the clinics' published monthly prices. Checks are facts we hold about the clinic, not a safety or quality grade.")
+                    "Prices are the clinics' published monthly prices. Checks are facts we hold about the clinic, not a safety or quality grade.",
+                    verdict, nxt)
     what = " and ".join(f"compounded {s}" for s in subs)
     desc = cmp_fit([f"{na} vs {nb} for {what}: monthly price, care fee, FDA warning letters and five background checks.",
                     answer[-1], f"Checked {nice_date(checked)}."])
@@ -4121,15 +4298,50 @@ def cmp_compared_with(key):
     return f'<p class="compared"><strong>Compared with:</strong> {", ".join(links)}</p>' if links else ""
 
 
+def compare_sub(slug):
+    """One substance's column in the tool (owner task w2, 3 Nov 2026): status, clinic price per form, lowest per mg, letters,
+    goal pages."""
+    s = pep_status(slug)
+    forms = {}
+    for r in pep_plans(slug):
+        forms.setdefault(plan_form_word(r), r)
+    low, n = pep_low_shop(slug), len({r["seller_slug"] for r in pep_shops(slug)})
+    nl = len(LETTER_SUBS.get(slug, []))
+    return {"k": "sub", "h": f'<a class="name" href="/peptides/{slug}/">{escape(pep_short(slug))}</a><span class="cmp-sub">{s["label"]}</span>', "c": [
+        ("FDA status", f'<span class="chip chip-{s["chip"]}">{s["label"]}</span><span class="cmp-sub">{s["sentence"]}.</span>'),
+        ("Clinic plans from", "".join(f'<span class="cmp-form">{f} from <span class="num">{usd(r["price_monthly"])}/mo</span></span>'
+                                      for f, r in forms.items()) or "No plan we track"),
+        ("Lowest per mg", f'<span class="num">{per_mg(low["price_per_mg"])}/mg</span><span class="cmp-sub">lowest of {plural(n, "shop")}</span>' if low else "None shown"),
+        ("FDA letters", (f'{plural(nl, "letter")} {"names" if nl == 1 else "name"} it' if nl else "None we track names it") if LETTER_SUBS_ON else "Not listed by substance"),
+        ("Goal pages", ", ".join(f'<a href="/{g["slug"]}/">{g["name"]}</a>' for g in ALL_GOALS if g.get("page") and any(slug in subs_of(p) for p in g["peptides"])) or "None")]}
+
+
+def cmp_tool_subs():
+    """Adds the substances to /compare/: their options (the third group) and data, with the pair pages the tool opens."""
+    global COMPARE_DATA
+    if not COMPARE_DATA:
+        return ""
+    data = json.loads(COMPARE_DATA)
+    subs = sorted(PEPTIDE_SLUGS, key=lambda x: pep_short(x).lower())
+    data.update({f"u.{x}": compare_sub(x) for x in subs})
+    data["_pairs"] = {f"u.{a}|u.{b}": p for p, _, kind, _, a, b in CMP_PAGES if kind == "sub"}
+    COMPARE_DATA = json.dumps(data, ensure_ascii=False, separators=(",", ":"))
+    return ('<optgroup label="Substances">' + "".join(f'<option value="u.{x}">{escape(pep_short(x))}</option>' for x in subs) + "</optgroup>") if subs else ""
+
+
 def cmp_links_in():
-    """Popular comparisons on /compare/ (the pairs with the most shops or plans) and the "Compared with" lines."""
-    top = sorted(CMP_PAGES, key=lambda x: (-x[3], x[1].lower()))[:CMP_POPULAR]
+    """Popular comparisons on /compare/ (the substance pairs the tool can make, the most shops or plans first), the
+    substances in the tool and the "Compared with" lines."""
+    sub_opts = cmp_tool_subs()
+    top = sorted((x for x in CMP_PAGES if x[2] == "sub"), key=lambda x: (-x[3], x[1].lower()))[:CMP_POPULAR]
     popular = (f'<section class="section" id="popular"><div class="wrap"><section class="related" aria-labelledby="popular-h">'
                f'<h2 id="popular-h" class="h-sources">Popular comparisons</h2><ul>'
                + "".join(f'<li><a href="{p}">{escape(t)}</a></li>' for p, t, *_ in top) + "</ul></section></div></section>\n") if top else ""
     for i, (path, out, title, desc, body, schema, crumb) in enumerate(PAGES):
-        if path == "/compare/" and popular:
-            body = body.replace(COMPARE_JS, popular + COMPARE_JS, 1)
+        if path == "/compare/":
+            body = body.replace("<!--cmp-subs-->", sub_opts)
+            if popular:
+                body = body.replace(COMPARE_JS, popular + COMPARE_JS, 1)
         elif path.startswith("/peptides/") and path.count("/") == 3:
             slug = path.split("/")[2]
             pairs = [c for c in CMP_PAGES if slug in (c[4], c[5])]

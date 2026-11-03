@@ -786,6 +786,24 @@ def check_parts(P):
             m = re.search(r'url=(/[^"]*)"', html)
             if 'content="noindex"' not in html or 'rel="canonical"' not in html or not m or not (DIST / m.group(1).strip("/") / "index.html").exists():
                 errs.append(f"{f.relative_to(DIST)}: redirect page without noindex, canonical or a built target")
+    # Compare (pages.md, Compare any two, Compare pairs; owner task w2, 3 Nov 2026): a pair page's verdict states two
+    # facts or is left out, never one; no "Not shown" row; the tool's pickers offer both sides of every built pair.
+    tool = (DIST / "compare" / "index.html").read_text(encoding="utf-8") if (DIST / "compare" / "index.html").exists() else ""
+    offered = set(re.findall(r'<option value="([^"]+)"', tool.split('id="cmp-b"')[0])) if tool else set()
+    for name in (n for n in P if re.fullmatch(r"compare/[^/]+-vs-[^/]+/index\.html", n)):
+        html = (DIST / name).read_text(encoding="utf-8")
+        for m in re.finditer(r'class="cmp-verdict"[^>]*data-facts="(\d+)"', html):
+            if int(m.group(1)) < 2:
+                errs.append(f"{name}: a verdict with {m.group(1)} fact (two or none)")
+        if "cmp-verdict" in html and not re.search(r'class="cmp-verdict"[^>]*data-facts="\d+"', html):
+            errs.append(f"{name}: a verdict without its fact count")
+        if re.search(r"<td>Not shown\b", html):
+            errs.append(f"{name}: a 'Not shown' row")
+        head = re.search(r"<thead>(.*?)</thead>", html, re.S)
+        for kind, slug in re.findall(r'href="/(peptides|sellers)/([^/"]+)/"', head.group(1) if head else ""):
+            ok = f"u.{slug}" in offered if kind == "peptides" else any(v.startswith(f"p.{slug}.") for v in offered)
+            if tool and not ok:
+                errs.append(f"{name}: the tool's pickers do not offer {slug}")
     # /sources/ (pages.md, Sources): every group shown has at least one source
     src = DIST / "sources" / "index.html"
     if src.exists():
