@@ -18,7 +18,7 @@
 
 - [Peptides A to Z: FDA status and prices | Peptide Chooser](https://peptidechooser.com/peptides/): Every peptide and approved alternative we track, 12 in all, grouped FDA approved, not approved and cosmetic, with its source and the lowest price we show.
 
-## Guides (29 pages)
+## Guides (27 pages)
 
 - [Peptide guides in plain words | Peptide Chooser](https://peptidechooser.com/learn/): Twenty-eight short guides on peptides in the US: what is legal, how to check a seller, GLP-1 prices, and peptides for hair, skin, muscle, libido and aging.
 - [Is BPC-157 legal in the US? What the FDA decided](https://peptidechooser.com/learn/is-bpc-157-legal/): BPC-157 is not FDA approved. What the July 2026 FDA review proposed, what research-use labels mean and how we check the shops that sell it.
@@ -27,7 +27,6 @@
 - [Compounded vs brand semaglutide and tirzepatide](https://peptidechooser.com/learn/compounded-vs-brand-glp-1/): Compounded semaglutide and tirzepatide next to Wegovy and Zepbound: when pharmacies may copy them, what online clinics charge and the FDA letters to clinics.
 - [What an FDA warning letter means for a seller](https://peptidechooser.com/learn/what-an-fda-warning-letter-means/): An FDA warning letter is a formal notice, not a court ruling. What the letters to peptide sellers say, what happens after one and how we show them.
 - [Peptides for hair loss: what works and what is marketing](https://peptidechooser.com/learn/peptides-for-hair-loss-what-works/): Finasteride and minoxidil are the FDA-approved hair loss options. What copper peptide serums and injectable peptides have behind them, and what clinics charge.
-- [Best peptides for hair growth: what the evidence shows](https://peptidechooser.com/learn/best-peptides-for-hair-growth/): GHK-Cu, PTD-DBM, biotin and injectable peptides sold for hair, next to finasteride and minoxidil: what each has been tested on, and what thicker means.
 - [GHK-Cu for hair: what it is, the studies and how it is sold](https://peptidechooser.com/learn/ghk-cu-for-hair/): GHK-Cu is a copper peptide sold in scalp serums and in research-use vials. Its FDA status, the hair studies, what a serum label tells you and what it costs.
 - [Injectable peptides for hair growth: legal status, evidence](https://peptidechooser.com/learn/injectable-peptides-for-hair-growth/): BPC-157, TB-500 and GHK-Cu vials are sold for hair. Their FDA status from our database, the evidence in people, and what approved options cost.
 - [Compounded semaglutide price: what clinics charge in 2026](https://peptidechooser.com/learn/compounded-semaglutide-price/): Every compounded semaglutide plan at the online clinics we track, cheapest first, with its care fee and FDA letter, next to Wegovy and Ozempic plans.
@@ -36,7 +35,6 @@
 - [Are peptides legal in the US? Status by kind in 2026](https://peptidechooser.com/learn/are-peptides-legal-in-the-us/): Approved, pharmacy-made, cosmetic and research-use peptides: what each kind means in law, the FDA's 503A lists and how to read our status chip.
 - [Semaglutide vs tirzepatide: price at online clinics](https://peptidechooser.com/learn/semaglutide-vs-tirzepatide-price/): Every semaglutide and tirzepatide plan at the online clinics we track, brand and compounded, cheapest first, with care fees and what each is approved for.
 - [Peptides for skin: what works and what is marketing](https://peptidechooser.com/learn/peptides-for-skin-what-works/): GHK-Cu, Matrixyl and Argireline: what each skin peptide was tested on, in people or in a dish, their cosmetic status and how to read an ingredient list.
-- [How we check peptide sellers: the five checks explained](https://peptidechooser.com/learn/how-we-check-sellers/): The five checks behind every seller score, each with a real example from our database, what the score does not tell you and how often it refreshes.
 - [Peptides for recovery and joints: what the evidence shows](https://peptidechooser.com/learn/peptides-for-recovery-and-joints/): BPC-157 and TB-500 are sold for injuries and joints. What the few studies in people found, their FDA status, the usual treatments and shop prices.
 - [Peptides for libido: Vyleesi, Melanotan II and the rest](https://peptidechooser.com/learn/peptides-for-libido-what-is-approved/): Vyleesi (bremelanotide) is FDA approved for low desire in premenopausal women. PT-141 from shops, Melanotan II, their FDA status and what shops charge.
 - [Longevity peptides: Epitalon, MOTS-c and NAD+ in 2026](https://peptidechooser.com/learn/longevity-peptides-epitalon-mots-c-nad/): Epitalon, MOTS-c and NAD+ are sold for aging. Their FDA status from our database, the studies in people by design, why NAD+ is not a peptide, and prices.

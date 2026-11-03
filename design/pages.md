@@ -116,7 +116,7 @@ One guide in plain words (owner task 2 Nov 2026; replaces the earlier `/hair/<to
 - **Schema**: Article JSON-LD (headline, description, datePublished and dateModified = build date, author and publisher the Organization, image the og image) plus BreadcrumbList; `tools/check.py` requires both.
 - In the sitemap, llms.txt and `tools/og.py` like every page.
 - **Checks** (`tools/check.py`): the short answer's first sentence under 160 characters; "What to do next" links at least one built page; no /learn/ group empty; no guide title twice.
-- **Redirects** (owner task w2, 3 Nov 2026): `data/redirects.json` maps an old path to a new one (empty: a URL changes only with ODOBRENO PRAVILA, rule 8). GitHub Pages has no server redirects, so the build writes each old path as a page with a meta refresh, the new page's canonical and noindex; `tools/check.py` fails one without a built target.
+- **Redirects** (owner task w2, 3 Nov 2026; first two by owner answers 1 a and 5 a, ODOBRENO PRAVILA - Karlo - 3. 11. 2026: /learn/best-peptides-for-hair-growth/ to /learn/peptides-for-hair-loss-what-works/, /learn/how-we-check-sellers/ to /how-we-rate/; the old guide is not built and every link points at the new page): `data/redirects.json` maps an old path to a new one (empty: a URL changes only with ODOBRENO PRAVILA, rule 8). GitHub Pages has no server redirects, so the build writes each old path as a page with a meta refresh, the new page's canonical and noindex; `tools/check.py` fails one without a built target.
 
 ## Sellers `/sellers/`
 
