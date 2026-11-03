@@ -1781,12 +1781,8 @@ CLINICS_JS = """<script>(function(){var s=document.getElementById('clinics'),m=s
 s.classList.add('clip');m.hidden=false;document.getElementById('clinics-all').addEventListener('click',function(){s.classList.remove('clip');m.hidden=true;});})();</script>"""
 
 
-DISABLED_ACT = ('<span class="pick-act"><span class="btn btn-action btn-sm" role="button" aria-disabled="true">Online clinic</span>'
-                '<span class="paid">No paid link yet</span></span>')
-
-
 def clinic_row_act(r):
-    """A compounded plan's button (owner decision C8, 3 Nov 2026: compounded GLP-1 is linked only through clinics without an
+    """A clinic plan's button, every kind (owner answer Q1 a, 3 Nov 2026; for compounded plans owner decision C8, 3 Nov 2026: compounded GLP-1 is linked only through clinics without an
     FDA letter, labelled compounded): btn-action "Visit <Name>" with "Paid link" only when the data carries the clinic's paid
     link and the clinic has no FDA letter; otherwise btn-wait "See plans" to our clinic page."""
     name, paid = seller_base(r["seller_name"]), r.get("paid_url")
@@ -1801,29 +1797,28 @@ def clinic_row_act(r):
 
 def clinic_section(g, rows):
     """"Online clinic prices" (pages.md, Category, weight loss; owner task 2 Nov 2026): one row per plan, cheapest first;
-    the clinic in plain text (no link to any clinic site), its FDA letter linking to our letters page, and the disabled
-    "Online clinic" button until a paid link exists per seller. Stacked cards on phones (bundle.css, Clinic table)."""
+    the clinic in plain text (no link to any clinic site), its FDA letter chip beside the price, and btn-wait "See plans"
+    to our clinic page until a paid link exists per seller (clinic_row_act). Stacked cards on phones (bundle.css, Clinic table)."""
     if not rows:
         return ""
     newest = max(r["last_seen"] for r in rows)
     trs = []
     for i, r in enumerate(rows):
         care = care_note(r)
-        letter = plan_letter(r).strip() or '<span class="no-letter">none</span>'
-        comp = plan_kind(r) == "compounded"
         # on phones the first CLINICS_FIRST rows show until "Show all N" (owner answer Q2 a, 2 Nov 2026; bundle.css, Clinic table)
         more = ' class="more"' if i >= CLINICS_FIRST else ""
         trs.append(f'<tr{more}><td>{clinic_link(r["seller_slug"], seller_base(r["seller_name"]))}</td><td data-l="Plan">{r["plan_name"]}</td>'
                    f'<td>{plan_chip(g, r)}</td>'
-                   f'<td data-l="Per month"><span class="num">{usd(r["price_monthly"])}</span>{plan_letter(r) if comp else ""}{f"<span class=sub>{care}</span>" if care else ""}</td>'
-                   f'<td data-l="FDA letter">{letter}</td>'
-                   f'<td class="act">{clinic_row_act(r) if comp else DISABLED_ACT}</td></tr>')
+                   f'<td data-l="Per month"><span class="num">{usd(r["price_monthly"])}</span>{plan_letter(r)}{f"<span class=sub>{care}</span>" if care else ""}</td>'
+                   # every row: the letter chip by the price, no FDA letter column, "See plans" to our clinic page (owner answers
+                   # Q1 a and Q2 b, 3 Nov 2026)
+                   f'<td class="act">{clinic_row_act(r)}</td></tr>')
     return f"""
 <section class="band-2" id="clinics">
   <div class="wrap">
     <div class="sec-hd"><div><h2>Online clinic prices</h2><p>{len(rows)} plans at the online clinics we track, cheapest first.</p></div></div>
     <div class="tbl-wrap"><table class="tbl tbl-cards tbl-clinics">
-      <thead><tr><th scope="col">Clinic</th><th scope="col">Plan</th><th scope="col">What it is</th><th scope="col">Per month</th><th scope="col">FDA letter</th><th scope="col"><span class="vh">Online clinic</span></th></tr></thead>
+      <thead><tr><th scope="col">Clinic</th><th scope="col">Plan</th><th scope="col">What it is</th><th scope="col">Per month</th><th scope="col"><span class="vh">Our clinic page</span></th></tr></thead>
       <tbody>{"".join(trs)}</tbody>
     </table></div>
     {f'<p class="clinics-more" hidden><button type="button" class="btn btn-line" id="clinics-all">Show all {len(rows)}</button></p>{CLINICS_JS}' if len(rows) > CLINICS_FIRST else ""}
