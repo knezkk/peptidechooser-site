@@ -519,3 +519,5 @@ body > .crumbs { width: -moz-available; width: -webkit-fill-available; width: st
 @media (prefers-reduced-motion: reduce) {
   * { scroll-behavior: auto !important; transition: none !important; animation: none !important; }
 }
+.az-jump, .pep-filter { margin-bottom: 16px; } /* /peptides/: letters, then the status filter, then the table */
+.pep-filter #pep-n { margin: 0 0 0 8px; }

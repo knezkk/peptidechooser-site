@@ -244,6 +244,8 @@ html:not(.nav-js) .nav-panel .nav-panel-in{display:block;padding:0}
 .year-chip[aria-pressed="true"]{background:var(--clinic-tint);border-color:var(--clinic);color:var(--clinic-text)}
 .year-chip[aria-pressed="true"] span{color:var(--clinic-text)}
 .year-chip:focus-visible{outline:3px solid var(--clinic);outline-offset:2px}
+/* Letter jump (/peptides/, owner UX audit B16, 3 Nov 2026): the year chip as a link to the first row of each letter */
+a.year-chip{display:inline-flex;align-items:center;text-decoration:none;min-width:var(--touch);justify-content:center}
 #letters-n{margin:12px 0 0}
 #letters-n:empty{display:none}
 .letters-more,.letters-all{margin:16px 0 0}
