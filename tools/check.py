@@ -429,9 +429,28 @@ def check_parts(P):
             trs = re.findall(r"<tr( [^>]*)?><td><a class=\"name\" href=\"/sellers/([^\"/]+)/\"", html)
             if {s for _, s in trs} != built:
                 errs.append(f"{name}: the tables do not list every seller page in the build")
+            # two tabs, clinics first (owner task w2, 3 Nov 2026): each seller in exactly one table, the clinics table
+            # first in the HTML, the lede's counts and the tab labels equal to the rows, no old jargon chip label
+            def tbl_rows(tid):
+                m = re.search(rf'<table[^>]*id="{tid}".*?<tbody>(.*?)</tbody>', html, re.S)
+                return re.findall(r'<tr[^>]*><td><a class="name" href="/sellers/([^"/]+)/"', m.group(1)) if m else []
+            cl, sh = tbl_rows("clinics-table"), tbl_rows("sellers-table")
+            if len(cl + sh) != len(set(cl + sh)):
+                errs.append(f"{name}: a seller has a row in both tables or twice in one")
+            if cl and sh and html.index('id="clinics-table"') > html.index('id="sellers-table"'):
+                errs.append(f"{name}: the clinics table does not come first")
+            lede = re.search(r'<p class="lede">([^<]*)</p>', html)
+            want = ([f"{len(cl)} online clinic"] if cl else []) + [f"{len(sh)} research-use shop"]
+            if not lede or not all(w in lede.group(1) for w in want):
+                errs.append(f"{name}: the lede's counts are not the rows ({len(cl)} clinics, {len(sh)} shops)")
+            if cl and sh and (f"Online clinics ({len(cl)})" not in html or f"Research-use shops ({len(sh)})" not in html):
+                errs.append(f"{name}: a tab label's count is not its rows")
+            for old in ("Lab report in 12 months", "Fresh prices<", "Legal pages <"):
+                if old in re.sub(r"<script.*?</script>", "", html, flags=re.S).split('class="year-chips"', 1)[-1].split("</div>", 1)[0]:
+                    errs.append(f"{name}: an old jargon chip label ({old.strip('<').strip()})")
             if any(re.search(r"\bhidden\b", a or "") for a, _ in trs):
                 errs.append(f"{name}: a seller row is hidden without JavaScript")
-            for cls in ("sellers-filter", "clinics-filter"):
+            for cls in ("sellers-filter", "sellers-tabs"):
                 m = re.search(rf'<div class="[^"]*\b{cls}\b[^"]*"([^>]*)>', html)
                 if m and "hidden" not in m.group(1):
                     errs.append(f"{name}: the {cls} block shows without JavaScript")

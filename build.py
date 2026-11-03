@@ -2635,9 +2635,10 @@ def sellers_order(x):
 # applies (a clinic has no lab-report check); the clinics keep their own sort. The state lives in the URL hash
 # (#substance=bpc-157&min=3), so a link carries a filter; the page stays one URL. The script reads only the rows' data-
 # attributes, so it names no seller. Without JavaScript the controls stay hidden and every shop and clinic shows.
-SELLER_CHECKS = [("lab", "score_lab_testing", "Lab report in 12 months"), ("letter", "score_no_fda_letter", "No FDA letter"),
-                 ("company", "score_registered_company", "Company found"), ("legal", "score_legal_pages", "Legal pages"),
-                 ("fresh", "score_fresh_prices", "Fresh prices")]
+# chip labels in plain words (owner task w2, UX audit B7, 3 Nov 2026)
+SELLER_CHECKS = [("lab", "score_lab_testing", "Lab report this year"), ("letter", "score_no_fda_letter", "No FDA letter"),
+                 ("company", "score_registered_company", "Company found"), ("legal", "score_legal_pages", "Legal pages found"),
+                 ("fresh", "score_fresh_prices", "Prices this month")]
 SELLER_SORTS = [("checks", "Most checks"), ("products", "Most products"), ("price", "Lowest price per mg"), ("name", "Name"),
                 ("since", "Tracked since, oldest first")]
 
@@ -2674,26 +2675,32 @@ def sellers_filter(shops, clinics):
     mins = "".join(f'<option value="{i}">{"Any" if i == 0 else f"{i} of {len(SCORE_CHECKS)}" if i == len(SCORE_CHECKS) else f"{i} or more"}</option>'
                    for i in range(len(SCORE_CHECKS) + 1))
     sorts = "".join(f'<option value="{k}">{t}</option>' for k, t in SELLER_SORTS)
+    # each chip carries its count of clinics and of shops; the script shows the open tab's (owner task w2, 3 Nov 2026)
     chips = "".join(
-        f'<button type="button" class="year-chip" data-check="{k}" aria-pressed="false">{t} <span>{sum(bool(r.get(f)) for r in shops)}<span class="vh"> shops</span></span></button>'
+        f'<button type="button" class="year-chip" data-check="{k}" data-nc="{sum(bool(r.get(f)) for r in clinics)}" data-ns="{sum(bool(r.get(f)) for r in shops)}" aria-pressed="false">'
+        f'{t} <span class="chip-n">{sum(bool(r.get(f)) for r in shops)}</span></button>'
         for k, f, t in SELLER_CHECKS)
     return f"""<div class="letters-filter sellers-filter" hidden>
       <div class="legal-filter"><label for="sellers-q">Filter by name</label><input class="input" id="sellers-q" type="text" autocomplete="off"><button type="button" class="btn btn-line btn-sm" id="sellers-clear">Clear</button></div>
       <div class="legal-filter sub-filter"><label for="sellers-sub">Substance</label><select class="input" id="sellers-sub"><option value="">Any substance</option>{opts}</select>
       <label for="sellers-min">Minimum checks</label><select class="input" id="sellers-min">{mins}</select>
-      <label for="sellers-sort">Sort</label><select class="input" id="sellers-sort">{sorts}</select></div>
+      <label for="sellers-sort" class="sort-shops">Sort</label><select class="input sort-shops" id="sellers-sort">{sorts}</select>
+      <label for="clinics-sort" class="sort-clinics">Sort</label><select class="input sort-clinics" id="clinics-sort"><option value="checks">Most checks</option><option value="low">Lowest monthly price</option></select></div>
       <div class="year-chips" role="group" aria-labelledby="sellers-checks"><span id="sellers-checks">Checks met</span>{chips}</div>
       <p class="small" id="sellers-n" aria-live="polite"></p>
     </div>"""
 
 
 SELLERS_INDEX_JS = """<script>
-(function(){var tb=document.getElementById('sellers-table');if(!tb)return;var f=document.querySelector('.sellers-filter'),q=document.getElementById('sellers-q'),
-c=document.getElementById('sellers-clear'),m=document.querySelector('.sellers-more'),all=document.getElementById('sellers-all'),n=document.getElementById('sellers-n'),
-sb=document.getElementById('sellers-sub'),mn=document.getElementById('sellers-min'),so=document.getElementById('sellers-sort'),
-chips=[].slice.call(f.querySelectorAll('.year-chip')),rows=[].slice.call(tb.tBodies[0].rows),open=false,FIRST=FIRST_N,
-ct=document.getElementById('clinics-table'),cf=document.querySelector('.clinics-filter'),cs=document.getElementById('clinics-sort'),cn=document.getElementById('clinics-n'),
-crows=ct?[].slice.call(ct.tBodies[0].rows):[];
+// The sellers index (pages.md, Sellers; owner task w2, 3 Nov 2026): two tabs, clinics first, one filter block for both; the
+// state in the hash (type, q, substance, min, check, sort, csort). Reads only the rows' data- attributes.
+(function(){var tb=document.getElementById('sellers-table'),ct=document.getElementById('clinics-table'),f=document.querySelector('.sellers-filter');if(!f||(!tb&&!ct))return;
+var tabs=document.querySelector('.sellers-tabs'),segs=tabs?[].slice.call(tabs.querySelectorAll('.seg-b')):[],
+q=document.getElementById('sellers-q'),c=document.getElementById('sellers-clear'),m=document.querySelector('.sellers-more'),all=document.getElementById('sellers-all'),
+n=document.getElementById('sellers-n'),sb=document.getElementById('sellers-sub'),mn=document.getElementById('sellers-min'),so=document.getElementById('sellers-sort'),
+cs=document.getElementById('clinics-sort'),chips=[].slice.call(f.querySelectorAll('.year-chip')),
+rows=tb?[].slice.call(tb.tBodies[0].rows):[],crows=ct?[].slice.call(ct.tBodies[0].rows):[],secS=document.getElementById('shops'),secC=document.getElementById('clinics'),
+open=false,FIRST=FIRST_N,type=ct?'clinics':'shops';
 rows.concat(crows).forEach(function(r,i){r._i=i;});
 function num(r,k){var v=r.getAttribute('data-'+k);return v===''||v===null?null:parseFloat(v);}
 function has(r,k,v){return(' '+r.getAttribute('data-'+k)+' ').indexOf(' '+v+' ')>=0;}
@@ -2702,98 +2709,140 @@ price:function(a,b){var x=num(a,'m'),y=num(b,'m');return x===null?(y===null?a._i
 name:function(a,b){return a.getAttribute('data-n').localeCompare(b.getAttribute('data-n'));},
 since:function(a,b){return a.getAttribute('data-t').localeCompare(b.getAttribute('data-t'))||a._i-b._i;},
 low:function(a,b){var x=num(a,'low'),y=num(b,'low');return x===null?(y===null?a._i-b._i:1):y===null?-1:x-y||a._i-b._i;}};
-function opt(el,v){return!!el.querySelector('option[value="'+v+'"]');}
-function on(){return chips.filter(function(x){return x.getAttribute('aria-pressed')==='true';}).map(function(x){return x.getAttribute('data-check');});}
-function hit(r,s,u,k,cks,clinic){return(!s||r.cells[0].textContent.toLowerCase().indexOf(s)>=0)&&(!u||has(r,'subs',u))&&num(r,'s')>=k
-&&cks.every(function(x){return(clinic&&x==='lab')||has(r,'c',x);});}
-function save(){var h=[],cks=on();if(q.value.trim())h.push('q='+encodeURIComponent(q.value.trim()));if(sb.value)h.push('substance='+sb.value);
-if(mn.value!=='0')h.push('min='+mn.value);if(cks.length)h.push('check='+cks.join(','));if(so.value!=='checks')h.push('sort='+so.value);
+function opt(el,v){return!!el&&!!el.querySelector('option[value="'+v+'"]');}
+function on(){return chips.filter(function(x){return x.getAttribute('aria-pressed')==='true'&&!x.hidden;}).map(function(x){return x.getAttribute('data-check');});}
+function hit(r,s,u,k,cks){return(!s||r.cells[0].textContent.toLowerCase().indexOf(s)>=0)&&(!u||has(r,'subs',u))&&num(r,'s')>=k
+&&cks.every(function(x){return has(r,'c',x);});}
+function save(){var h=[],cks=on();if(type==='shops'&&ct)h.push('type=shops');if(q.value.trim())h.push('q='+encodeURIComponent(q.value.trim()));if(sb.value)h.push('substance='+sb.value);
+if(mn.value!=='0')h.push('min='+mn.value);if(cks.length)h.push('check='+cks.join(','));if(so&&so.value!=='checks')h.push('sort='+so.value);
 if(cs&&cs.value!=='checks')h.push('csort='+cs.value);var u=location.pathname+location.search+(h.length?'#'+h.join('&'):'');
 if(u!==location.pathname+location.search+location.hash)history.replaceState(null,'',u);}
-function load(){if(location.hash.indexOf('=')<0)return;var P=new URLSearchParams(location.hash.slice(1)),cks=(P.get('check')||'').split(',');
+function load(){var hs=location.hash.slice(1);
+if(hs.indexOf('=')<0){if(hs==='shops'&&tb)type='shops';else if(hs==='clinics'&&ct)type='clinics';return;}
+var P=new URLSearchParams(hs),cks=(P.get('check')||'').split(','),t=P.get('type');
 q.value=P.get('q')||'';sb.value=opt(sb,P.get('substance'))?P.get('substance'):'';mn.value=opt(mn,P.get('min'))?P.get('min'):'0';
-so.value=opt(so,P.get('sort'))?P.get('sort'):'checks';if(cs)cs.value=opt(cs,P.get('csort'))?P.get('csort'):'checks';
-chips.forEach(function(x){x.setAttribute('aria-pressed',cks.indexOf(x.getAttribute('data-check'))>=0?'true':'false');});}
-function draw(){var s=q.value.trim().toLowerCase(),u=sb.value,k=parseInt(mn.value,10),cks=on(),any=!!(s||u||k||cks.length),j=0;
-rows.sort(SORT[so.value]).forEach(function(r){tb.tBodies[0].appendChild(r);var ok=hit(r,s,u,k,cks,false);r.hidden=!ok||(!open&&!any&&j>=FIRST);if(ok)j++;});
-if(m)m.hidden=open||any||rows.length<=FIRST;n.textContent=any?j+' of '+rows.length+' shops match.':'';
-if(ct){var i=0;crows.sort(SORT[cs.value]).forEach(function(r){ct.tBodies[0].appendChild(r);r.hidden=!hit(r,s,u,k,cks,true);if(!r.hidden){i++;if(any||cs.value!=='checks')r.style.opacity=1;}});
-cn.textContent=any?i+' of '+crows.length+' clinics match the filters above the shops.':'';}}
+if(so)so.value=opt(so,P.get('sort'))?P.get('sort'):'checks';if(cs)cs.value=opt(cs,P.get('csort'))?P.get('csort'):'checks';
+chips.forEach(function(x){x.setAttribute('aria-pressed',cks.indexOf(x.getAttribute('data-check'))>=0?'true':'false');});
+// Home's "See all" sends type=clinic or type=shop; a substance link without a type opens the tab that carries it
+type=(t==='shops'||t==='shop')&&tb?'shops':(t==='clinics'||t==='clinic')&&ct?'clinics':ct?'clinics':'shops';
+if(!t&&sb.value&&ct&&tb&&!crows.some(function(r){return has(r,'subs',sb.value);}))type='shops';}
+function draw(){var s=q.value.trim().toLowerCase(),u=sb.value,k=parseInt(mn.value,10),cl=type==='clinics',
+any=false,j=0,R=cl?crows:rows,T=cl?ct:tb;
+segs.forEach(function(b){b.setAttribute('aria-pressed',b.getAttribute('data-type')===type?'true':'false');});
+if(secC)secC.hidden=!cl;if(secS)secS.hidden=cl;
+[].forEach.call(f.querySelectorAll('.sort-shops'),function(x){x.hidden=cl;});[].forEach.call(f.querySelectorAll('.sort-clinics'),function(x){x.hidden=!cl;});
+chips.forEach(function(x){x.hidden=cl&&x.getAttribute('data-check')==='lab';x.querySelector('.chip-n').textContent=x.getAttribute(cl?'data-nc':'data-ns');});
+var cks=on();any=!!(s||u||k||cks.length);
+R.sort(SORT[cl?cs.value:so.value]).forEach(function(r){T.tBodies[0].appendChild(r);var ok=hit(r,s,u,k,cks);
+r.hidden=!ok||(!cl&&!open&&!any&&j>=FIRST);if(ok)j++;r.style.opacity=1;});
+if(m)m.hidden=cl||open||any||rows.length<=FIRST;n.textContent=any?j+' of '+R.length+(cl?' clinics':' shops')+' match.':'';}
 function ch(){draw();save();}
-f.hidden=false;if(cf)cf.hidden=false;load();
+f.hidden=false;if(tabs)tabs.hidden=false;load();
 q.addEventListener('input',ch);[sb,mn,so,cs].forEach(function(x){if(x)x.addEventListener('change',ch);});
 chips.forEach(function(x){x.addEventListener('click',function(){x.setAttribute('aria-pressed',x.getAttribute('aria-pressed')==='true'?'false':'true');ch();});});
+segs.forEach(function(b){b.addEventListener('click',function(){type=b.getAttribute('data-type');ch();});});
 c.addEventListener('click',function(){q.value='';sb.value='';mn.value='0';chips.forEach(function(x){x.setAttribute('aria-pressed','false');});ch();q.focus();});
 window.addEventListener('hashchange',function(){load();draw();});
 if(all)all.addEventListener('click',function(){open=true;draw();});draw();})();
 </script>""".replace("FIRST_N", str(SELLERS_FIRST))
 
 
+def subs_words(names, total=None, n=3):
+    """"BPC-157, TB-500, GHK-Cu and 35 more": the first names, then how many more of `total` (default: the names)."""
+    short = [re.sub(r" *\(.*\)$", "", sub_label(x)) for x in names]
+    rest = max(total or 0, len(short)) - min(n, len(short))
+    return ", ".join(short[:n]) + (f" and {rest} more" if rest > 0 else "") if short else "Not named"
+
+
+def check_bar(r):
+    """"4 of 5" and the five checks as a bar of miniature marks (the Background check card's chips at 10px; pages.md,
+    Sellers), each spoken."""
+    marks = "".join(f'<span class="chip chip-{"ok" if r.get(k) else "neutral"} mark-{"yes" if r.get(k) else "no"}">'
+                    f'<span class="vh">{t}: {"yes" if r.get(k) else "no"}</span></span>' for k, t in SCORE_CHECKS)
+    return f'<span class="num">{r["score"]} of {len(SCORE_CHECKS)}</span><span class="check-bar">{marks}</span>'
+
+
+ACT_TH = '<th scope="col"><span class="vh">Our page</span></th>'
+
+
 def sellers_index():
-    rows, more_cls = sorted(SHOPS.values(), key=sellers_order), ' class="more"'
-    trs = "".join(
+    """/sellers/ (pages.md, Sellers; owner task w2, 3 Nov 2026): two tabs, the online clinics first, then the shops."""
+    shops = sorted(SHOPS.values(), key=sellers_order)
+    clinics = sorted(CLINIC_PROFILES.values(), key=lambda r: (-(r.get("score") or 0), seller_name(r).lower()))
+    me = sys.modules[__name__]
+    more_cls = ' class="more"'
+    strs = "".join(
         f'<tr{more_cls if i >= SELLERS_FIRST else ""} data-c="{met_checks(r)}" data-s="{r["score"]}" data-subs="{" ".join(shop_subs(r))}"'
         f' data-p="{r.get("product_count") or 0}" data-m="{compare_ppm(r)[0] if compare_ppm(r)[0] is not None else ""}"'
         f' data-n="{escape(seller_name(r).lower())}" data-t="{r.get("first_seen") or ""}">'
         f'<td><a class="name" href="/sellers/{r["seller_slug"]}/">{seller_name(r)}</a></td>'
-        f'<td data-l="Kind">{kind_words(r)[1]}</td><td class="num" data-l="Checks">{r["score"]} of {len(SCORE_CHECKS)}</td>'
-        f'<td class="num" data-l="Products">{r.get("product_count") or 0}</td><td class="num" data-l="Substances">{r.get("substance_count") or 0}</td>'
-        f'<td class="num" data-l="From /mg">{per_mg(compare_ppm(r)[0]) if compare_ppm(r)[0] is not None else "unknown"}</td>'
-        f'<td class="num" data-l="FDA letters">{r.get("fda_letter_count") or 0}</td></tr>'
-        for i, r in enumerate(rows))
+        f'<td data-l="Sells">{escape(subs_words([x["substance_slug"] for x in SELLER_SUBS.get(r["seller_slug"], [])], r.get("substance_count")))}</td>'
+        f'<td class="num" data-l="From">{per_mg(compare_ppm(r)[0]) + "/mg" if compare_ppm(r)[0] is not None else "unknown"}</td>'
+        f'<td data-l="Checks">{check_bar(r)}</td><td data-l="FDA letters">{home.where_letters(me, r)}</td>'
+        f'<td class="act"><a class="btn btn-line btn-sm" href="/sellers/{r["seller_slug"]}/">Our review</a></td></tr>'
+        for i, r in enumerate(shops))
     checked = max((r["score_checked_on"] for r in PROFILES.values() if r.get("score_checked_on")), default="")
-    clinics = sorted(CLINIC_PROFILES.values(), key=lambda r: (-(r.get("score") or 0), seller_name(r).lower()))
-    counts = f"{plural(len(rows), 'shop')}{' and ' + plural(len(clinics), 'online clinic') if clinics else ''}"
-    more = (f'<p class="legal-more sellers-more" hidden><button type="button" class="btn btn-line" id="sellers-all">Show all {len(rows)}</button></p>'
-            if len(rows) > SELLERS_FIRST else "")
+    more = (f'<p class="legal-more sellers-more" hidden><button type="button" class="btn btn-line" id="sellers-all">Show all {len(shops)}</button></p>'
+            if len(shops) > SELLERS_FIRST else "")
+    lede = (f"{plural(len(clinics), 'online clinic')} that prescribe and ship, then {plural(len(shops), 'research-use shop')}. " if clinics else
+            f"{plural(len(shops), 'research-use shop')}. ") + "Every name opens our page on that seller; checks are facts we hold, not a grade."
+    tabs = ("<div class=\"seg sellers-tabs\" role=\"group\" aria-label=\"Show\" hidden>"
+            f'<button type="button" class="seg-b" data-type="clinics" aria-pressed="true">Online clinics ({len(clinics)})</button>'
+            f'<button type="button" class="seg-b" data-type="shops" aria-pressed="false">Research-use shops ({len(shops)})</button></div>') if clinics and shops else ""
+    shops_sec = f"""
+    <section class="sellers-sec" id="shops" aria-labelledby="shops-h">
+      <h2 id="shops-h" class="h-sources">Research-use shops</h2>
+      <div class="tbl-wrap"><table class="tbl tbl-cards tbl-sellers tbl-where" id="sellers-table"><caption class="vh">Research-use shops, most checks first</caption>
+        <thead><tr><th scope="col">Shop</th><th scope="col">Sells</th><th scope="col">From</th><th scope="col">Checks</th><th scope="col">FDA letters</th>{ACT_TH}</tr></thead>
+        <tbody>{strs}</tbody>
+      </table></div>
+      {more}
+    </section>""" if shops else ""
     return f"""
 <section class="section letters-hd">
   <div class="wrap">
     <h1>Peptide sellers we track</h1>
-    <p class="lede">{counts}: every shop in our database that sells peptides online, with its five checks, how many products and substances it lists, and its FDA warning letters{", then the online clinics with their plans" if clinics else ""}. Each name opens our page on the seller; we do not link to the shops or the clinics.</p>
-    <p class="letters-stamp">{f'<span class="stamp">Checked {nice_date(checked)}</span>' if checked else ""}<span class="small">Shops: most checks first, then most products.</span></p>
+    <p class="lede">{lede}</p>
+    <p class="letters-stamp">{f'<span class="stamp">Checked {nice_date(checked)}</span>' if checked else ""}</p>
   </div>
 </section>
 <section class="band-2" id="sellers-list">
   <div class="wrap">
-    {sellers_filter(rows, clinics)}
-    <div class="tbl-wrap"><table class="tbl tbl-cards tbl-sellers" id="sellers-table"><caption class="vh">Sellers, most checks first</caption>
-      <thead><tr><th scope="col">Seller</th><th scope="col">Kind</th><th scope="col">Checks</th><th scope="col">Products</th><th scope="col">Substances</th><th scope="col">From /mg</th><th scope="col">FDA letters</th></tr></thead>
-      <tbody>{trs}</tbody>
-    </table></div>
-    {more}
+    {tabs}
+    {sellers_filter(shops, clinics)}
+    {clinics_directory(clinics)}{shops_sec}
     {COMPARE_LINK}
     <p class="small" style="margin-top:16px">Checks are facts we hold about the seller, not a safety or quality grade. <a href="/how-we-rate/">How we rate</a></p>
   </div>
-</section>{clinics_directory(clinics)}
+</section>
 {SELLERS_INDEX_JS}
 """
 
 
 def clinics_directory(clinics):
-    """"Online clinics" on /sellers/ (pages.md, Sellers; owner task 2 Nov 2026): one row per clinic page, under the shops."""
+    """The online clinics table on /sellers/ (pages.md, Sellers): the first tab, first in the HTML."""
     if not clinics:
         return ""
+    me = sys.modules[__name__]
     trs = []
     for r in clinics:
         plans = clinic_plan_rows(r)
         low = min((float(p["price_monthly"]) for p in plans), default=None)
         trs.append(f'<tr data-c="{met_checks(r)}" data-s="{r["score"]}" data-subs="{" ".join(clinic_subs(r))}" data-low="{low if low is not None else ""}">'
                    f'<td><a class="name" href="/sellers/{r["seller_slug"]}/">{seller_name(r)}</a></td>'
-                   f'<td class="num" data-l="Plans">{len(plans)}</td><td class="num" data-l="From">{usd(low) + "/mo" if low is not None else "unknown"}</td>'
-                   f'<td class="num" data-l="Checks">{r["score"]} of {len(SCORE_CHECKS)}</td><td class="num" data-l="FDA letters">{r.get("fda_letter_count") or 0}</td>'
-                   f'<td class="num" data-l="Checked">{nice_date(r["score_checked_on"]) if r.get("score_checked_on") else "unknown"}</td></tr>')
+                   f'<td data-l="What it prescribes">{escape(subs_words(sorted(clinic_subs(r), key=lambda x: sub_label(x).lower())))}</td>'
+                   f'<td class="num" data-l="From">{usd(low) + "/mo" if low is not None else "unknown"}</td>'
+                   f'<td data-l="Checks">{check_bar(r)}</td><td data-l="FDA letters">{home.where_letters(me, r)}</td>'
+                   f'<td class="act">{clinic_button(r["seller_slug"], "See plans")}</td></tr>')
     return f"""
-<section class="section" id="clinics">
-  <div class="wrap">
-    <div class="sec-hd"><div><h2>Online clinics</h2><p>{plural(len(clinics), 'online clinic')} with plan prices, most checks first. Clinics prescribe and publish no lab reports, so a clinic meets at most 4 of the 5 checks.</p></div></div>
-    <div class="legal-filter clinics-filter" hidden><label for="clinics-sort">Sort clinics</label><select class="input" id="clinics-sort"><option value="checks">Most checks</option><option value="low">Lowest monthly price</option></select><p class="small" id="clinics-n" aria-live="polite"></p></div>
-    <div class="tbl-wrap"><table class="tbl tbl-cards tbl-sellers" id="clinics-table"><caption class="vh">Online clinics, most checks first</caption>
-      <thead><tr><th scope="col">Clinic</th><th scope="col">Plans</th><th scope="col">From</th><th scope="col">Checks</th><th scope="col">FDA letters</th><th scope="col">Checked</th></tr></thead>
-      <tbody>{"".join(trs)}</tbody>
-    </table></div>
-  </div>
-</section>"""
+    <section class="sellers-sec" id="clinics" aria-labelledby="clinics-h">
+      <h2 id="clinics-h" class="h-sources">Online clinics</h2>
+      <div class="tbl-wrap"><table class="tbl tbl-cards tbl-sellers tbl-where" id="clinics-table"><caption class="vh">Online clinics, most checks first</caption>
+        <thead><tr><th scope="col">Clinic</th><th scope="col">What it prescribes</th><th scope="col">From</th><th scope="col">Checks</th><th scope="col">FDA letters</th>{ACT_TH}</tr></thead>
+        <tbody>{"".join(trs)}</tbody>
+      </table></div>
+      <p class="small sellers-note">Clinics prescribe and publish no lab reports, so a clinic meets at most 4 of the 5 checks.</p>
+    </section>"""
 
 
 # 404 (pages.md, 404; owner task 2 Nov 2026): the goal pages, then the sections that exist, and the search line.

@@ -287,7 +287,14 @@ p { margin: 0 0 1em; }
 .company-ledger .ledger > span:first-child { color: var(--ink-2); flex: none; }
 .company-ledger .ledger > span:last-child { text-align: right; overflow-wrap: anywhere; }
 .tbl-sellers td:nth-child(n+3), .tbl-sellers th:nth-child(n+3), .tbl-sells td:nth-child(2), .tbl-sells th:nth-child(2) { white-space: nowrap; }
-.clinics-filter .small { flex-basis: 100%; margin: 0; }
+/* /sellers/ tabs (pages.md, Sellers; owner task w2, 3 Nov 2026): the segmented control over the filter block, one table
+   at a time; a hidden tab, select or chip never shows */
+.sellers-tabs { margin: 0 0 16px; }
+.sellers-tabs[hidden], .sellers-sec[hidden], .sellers-filter [hidden] { display: none; }
+.sellers-sec + .sellers-sec { margin-top: var(--space-7); }
+.sellers-sec h2 { margin: 0 0 12px; }
+.sellers-note { margin: 10px 0 0; color: var(--ink-2); }
+.tbl-sellers td[data-l="Checks"] { white-space: nowrap; }
 .sellers-filter .sub-filter .input, .clinics-filter .input { flex: 0 1 auto; min-width: 0; max-width: 100%; } /* the selects size to their options (pages.md, Sellers) */
 .tbl-cards tr[hidden] { display: none; } /* a filtered or not yet shown row stays hidden as a card on phones */
 

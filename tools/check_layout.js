@@ -87,6 +87,18 @@ function pages(dir, base = '') {
     await page.close();
   }
   for (const [i, s] of Object.entries(cardW)) if (s.size > 1) problems.push(`header card ${+i + 1}: width changes from 1440px up (${[...s].join(', ')})`);
+  // /sellers/ shops tab (pages.md, Sellers; owner task w2, 3 Nov 2026): the clinics tab is the default the loop above
+  // measured; the shops tab opens from the hash
+  if (list.includes('/sellers/')) for (const w of WIDTHS) {
+    const page = await browser.newPage({ viewport: { width: w, height: 900 } });
+    await page.goto(`http://127.0.0.1:${port}/sellers/#type=shops`, { waitUntil: 'load' });
+    const r = await page.evaluate(() => ({ sw: document.documentElement.scrollWidth, iw: window.innerWidth,
+      shown: !document.getElementById('shops') || !document.getElementById('shops').hidden }));
+    n++;
+    if (!r.shown) problems.push(`${w}px /sellers/#type=shops: the shops tab does not open`);
+    if (r.sw > r.iw) problems.push(`${w}px /sellers/#type=shops: page scrolls sideways (${r.sw} > ${r.iw})`);
+    await page.close();
+  }
   await browser.close();
   server.close();
   console.log(`check-layout: ${problems.length ? problems.length + ' problem(s)' : 'ok'} (${n} checks)`);
