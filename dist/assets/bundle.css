@@ -564,3 +564,20 @@ a.legal-card:hover{border-color:var(--clinic)}
 .check-bar .chip{width:10px;height:10px;padding:0;border-radius:2px;box-sizing:border-box}
 .check-bar .mark-yes{background:var(--action-text)}
 .check-bar .mark-no{border:1px dashed var(--ink-muted)}
+/* Compare pairs and tool, decide (pages.md, Compare; owner task w2, 3 Nov 2026): the verdict under the author line, a
+   white card with the h-sources heading "Which to pick" and one or two sentences; one small line of FDA letters under
+   the table; "What to do next" as the guides' link list; the tool's pickers use the header search's list part, with
+   a small ink-2 label over each group. */
+.cmp-verdict{max-width:760px;margin:16px 0 12px;padding:16px 20px;background:var(--white);border:1px solid var(--line);border-radius:var(--radius-panel)}
+.cmp-verdict h2{margin:0 0 6px}
+.cmp-verdict p{margin:0;font-weight:600}
+.cmp-letters{margin:12px 0 0;max-width:58ch;color:var(--ink-2)}
+.cmp-next{margin:32px 0 0;max-width:760px}
+.cmp-next .next-links,.next-links{list-style:none;margin:8px 0 0;padding:0}
+.next-links li{margin:0;padding:8px 0;border-top:1px solid var(--line)}
+.next-links li:last-child{border-bottom:1px solid var(--line)}
+.cmp-field{position:relative}
+.cmp-list{left:0;right:auto;max-height:320px;overflow-y:auto}
+.cmp-list [role="option"]{padding:10px 12px;border-radius:var(--radius-control);cursor:pointer;font-size:var(--ui-size)}
+.cmp-list [role="option"]:hover,.cmp-list [aria-selected="true"]{background:var(--neutral-tint)}
+.cmp-group{padding:10px 12px 4px;font-size:12px;font-weight:600;color:var(--ink-2)}
