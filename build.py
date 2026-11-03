@@ -234,7 +234,8 @@ def goals_strip(heading, skip=None):
 # when it has a link. By goal groups the goal pages as below, each with its option count and the cheapest price the data has.
 NAV_GOAL_GROUPS = [("Hair and skin", ("hair", "skin")), ("Weight", ("weight-loss",)), ("Body", ("muscle", "recovery")),
                    ("Drive and aging", ("libido", "longevity"))]
-LEARN_TOPICS = [("hair", "Hair"), ("glp1", "GLP-1"), ("legal", "Legal"), ("buying", "Buying"), ("data", "Data")]
+# "Body" added (owner answer 2 a to w2, 3 Nov 2026): /learn/ has a sixth topic for the muscle, skin, recovery, libido and aging guides
+LEARN_TOPICS = [("hair", "Hair"), ("glp1", "GLP-1"), ("legal", "Legal"), ("buying", "Buying"), ("data", "Data"), ("body", "Body")]
 
 
 def goal_from(g):
