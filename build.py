@@ -4126,6 +4126,8 @@ def llms_sections():
     return "".join(f"\n## {name} ({plural(len(rows), 'page')})\n\n" + "".join(rows) for name, rows in groups.items() if rows)
 
 
+
+
 def main():
     if DIST.exists():
         shutil.rmtree(DIST)
@@ -4148,6 +4150,17 @@ def main():
         target.write_text(page(path, title, desc, body, schema, crumb), encoding="utf-8")
     (DIST / "404.html").write_text(page("/404", "Page not found | Peptide Chooser",
                                         "This page does not exist on Peptide Chooser. Go to the home page or compare peptide options by goal; the link may be old or mistyped.", NOT_FOUND), encoding="utf-8")
+    # Redirects (owner task w2, 3 Nov 2026; empty until the owner approves a URL change, rule 8): data/redirects.json maps
+    # an old path to its new one; GitHub Pages has no server redirects, so each old path gets a page with a meta refresh,
+    # the canonical of the new page and noindex. Never a path the build already has.
+    for old_path, new_path in REDIRECTS.items():
+        assert not built(old_path), f"redirect from {old_path}, which is still a page"
+        target = DIST / old_path.strip("/") / "index.html"
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(f'<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Moved</title>'
+                          f'<meta name="robots" content="noindex"><link rel="canonical" href="{SITE}{new_path}">'
+                          f'<meta http-equiv="refresh" content="0; url={new_path}"></head>'
+                          f'<body><p>This page moved: <a href="{new_path}">{SITE}{new_path}</a></p></body></html>\n', encoding="utf-8")
     if LETTERS_ALL:
         (DIST / "fda-warning-letters" / "feed.xml").write_text(letters_feed(), encoding="utf-8")
     # Web app manifest (design book, README, Logo): the name and the icons drawn from the mark by tools/og.py.
@@ -4198,6 +4211,10 @@ def main():
 
 
 # The Learn section (pages.md, Learn and Guide): /learn/ and the guides, from guides.py, which reads this module's helpers.
+# A guide whose path is in data/redirects.json is not built; its path becomes a redirect page in main() (owner answers
+# 1 a and 5 a, ODOBRENO PRAVILA - Karlo - 3. 11. 2026)
+REDIRECTS = json.loads((ROOT / "data" / "redirects.json").read_text()) if (ROOT / "data" / "redirects.json").exists() else {}
+guides.GUIDES[:] = [g for g in guides.GUIDES if f"/learn/{g['slug']}/" not in REDIRECTS]
 PAGES += guides.pages(sys.modules[__name__])
 # Home's sections under the hero (pages.md, Home), from home.py, once every helper above exists.
 PAGES = [home.finish(sys.modules[__name__], p) if p[0] == "/" else p for p in PAGES]
