@@ -852,14 +852,14 @@ def g_ghk(b, f, N):
 def plan_table(b, rows, N, kind):
     """A table of clinic plans (the site's tbl part): clinic as text or our page, plan, what it is or the care fee, per
     month, the FDA letter chip to our letters page and the day the price was checked. No link to any clinic site."""
-    trs = []
+    trs, named = [], set()
     for r in rows:
         n = r.get("fda_letter_count") or 0
         letter = (f'<a class="chip chip-warn chip-link" href="{b.letter_href(r["seller_slug"])}">FDA letter {nice(r["last_fda_letter_date"])}</a>'
                   if n and r.get("last_fda_letter_date") else '<span class="no-letter">none</span>')
         what = plan_kind_words(r) if kind == "hair" else glp1_words(b, r) if kind == "glp1" else b.care_note(r)
         ref = N(f"plan-{r['seller_slug']}-{r['plan_slug']}")
-        trs.append(f'<tr><td>{b.clinic_link(r["seller_slug"], b.seller_base(r["seller_name"]))}</td><td data-l="Plan">{r["plan_name"]}</td>'
+        trs.append(f'<tr><td>{b.clinic_link(r["seller_slug"], b.seller_base(r["seller_name"]))}</td><td data-l="Plan">{b.explain_brand(r["plan_name"], named)}</td>'
                    f'<td data-l="{"Care fee" if kind == "price" else "What it is"}">{what}</td>'
                    f'<td data-l="Per month"><span class="num">{b.usd(r["price_monthly"])}</span>{ref}'
                    + (f'<span class="sub">{b.care_note(r)}</span>' if kind == "glp1" else "") + '</td>'

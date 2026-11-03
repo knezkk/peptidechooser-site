@@ -1216,6 +1216,15 @@ def office_cell(t):
     return f'<td class="office" title="{escape(full)}">{escape(m.group(1))}</td>' if m else f'<td class="office">{escape(full)}</td>'
 
 
+# "Maker of an approved drug" (owner UX audit B21, 3 Nov 2026): a letter's company that is the applicant (sponsor) of an
+# approved drug in our data, matched on the name's words without "Inc", "LLC", "and Company" and the like.
+CO_STOP = {"inc", "llc", "co", "company", "and", "corp", "corporation", "ltd", "limited", "plc", "the", "usa", "us", "a", "s", "as"}
+co_words = lambda n: tuple(w for w in re.findall(r"[a-z0-9]+", (n or "").lower()) if w not in CO_STOP)
+MAKERS = {co_words(a["sponsor"]) for a in APPROVED_DB if a.get("sponsor")} - {()}
+is_maker = lambda company: any(co_words(company)[:len(m)] == m for m in MAKERS)
+MAKER_CHIP = ' <span class="chip chip-neutral">Maker of an approved drug</span>'
+
+
 def letters_all_rows():
     out, more = [], ' class="more"'
     for i, r in enumerate(LETTERS_ALL):
@@ -1225,7 +1234,7 @@ def letters_all_rows():
             f'<tr{more if i >= LETTERS_FIRST else ""} data-year="{r["letter_date"][:4]}" data-subs="{" ".join(SUBS_OF_LETTER.get(r["letter_url"], []))}"><td class="num">{nice_date(r["letter_date"])}</td>'
             # the subject once, in its own column (owner UX audit A27, 3 Nov 2026: it was repeated in the company cell for
             # phones, and the Office column, always CDER, went); phones stack the row as a card
-            f'<td data-l="Company"><span class="name">{escape(clean(r["company_name"]))}</span>{seller}</td>'
+            f'<td data-l="Company"><span class="name">{escape(clean(r["company_name"]))}</span>{MAKER_CHIP if is_maker(r["company_name"]) else ""}{seller}</td>'
             f'<td class="subj" data-l="Subject">{subj.replace("/", "/<wbr>")}</td>'
             f'<td><a href="{escape(r["letter_url"])}" rel="nofollow">FDA letter</a></td></tr>')
     return "".join(out)
@@ -1245,17 +1254,17 @@ YEAR_CHIPS = "".join(
 LETTERS_PAGE_JS = """<script>
 (function(){var tb=document.getElementById('letters-table');if(!tb)return;var f=document.querySelector('.letters-filter'),q=document.getElementById('letters-q'),
 c=document.getElementById('letters-clear'),m=document.querySelector('.letters-more'),all=document.getElementById('letters-all'),n=document.getElementById('letters-n'),
-chips=[].slice.call(document.querySelectorAll('.year-chip')),rows=[].slice.call(tb.tBodies[0].rows),open=false,sb=document.getElementById('letters-sub');
+chips=[].slice.call(document.querySelectorAll('.year-chip')),rows=[].slice.call(tb.tBodies[0].rows),lim=25,sb=document.getElementById('letters-sub');
 var P=new URLSearchParams(location.search);if(sb&&P.get('sub')&&sb.querySelector('option[value="'+P.get('sub')+'"]'))sb.value=P.get('sub');if(P.get('q'))q.value=P.get('q');
 function draw(){var s=q.value.trim().toLowerCase(),u=sb?sb.value:'',ys=chips.filter(function(x){return x.getAttribute('aria-pressed')==='true';}).map(function(x){return x.getAttribute('data-year');}),k=0;
-rows.forEach(function(r){var hit=(!s||r.cells[1].textContent.toLowerCase().indexOf(s)>=0)&&(!ys.length||ys.indexOf(r.getAttribute('data-year'))>=0)
+rows.forEach(function(r,i){var hit=(!s||r.cells[1].textContent.toLowerCase().indexOf(s)>=0)&&(!ys.length||ys.indexOf(r.getAttribute('data-year'))>=0)
 &&(!u||(' '+r.getAttribute('data-subs')+' ').indexOf(' '+u+' ')>=0);
-r.hidden=!hit||(!open&&!s&&!u&&!ys.length&&r.classList.contains('more'));if(hit)k++;});
-if(m)m.hidden=open||!!s||!!u||ys.length>0;n.textContent=(s||u||ys.length)?k+' of '+rows.length+' letters match.':'';}
+r.hidden=!hit||(!s&&!u&&!ys.length&&i>=lim);if(hit)k++;});
+if(m)m.hidden=lim>=rows.length||!!s||!!u||ys.length>0;n.textContent=(s||u||ys.length)?k+' of '+rows.length+' letters match.':'';}
 f.hidden=false;if(m)m.hidden=false;q.addEventListener('input',draw);if(sb)sb.addEventListener('change',draw);
 chips.forEach(function(x){x.addEventListener('click',function(){x.setAttribute('aria-pressed',x.getAttribute('aria-pressed')==='true'?'false':'true');draw();});});
 c.addEventListener('click',function(){q.value='';if(sb)sb.value='';chips.forEach(function(x){x.setAttribute('aria-pressed','false');});draw();q.focus();});
-if(all)all.addEventListener('click',function(){open=true;draw();});draw();})();
+if(all)all.addEventListener('click',function(){lim+=25;draw();});draw();})();
 </script>"""
 # Get new letters (pages.md, Letters, owner 2 Nov 2026): one white card under the explanation line with the RSS feed and a
 # plain form that posts to Buttondown (double opt-in, set in the Buttondown account). Not drawn while
@@ -1303,6 +1312,7 @@ LETTERS_PAGE = f"""
 <section class="section letters-hd">
   <div class="wrap">
     <h1>FDA warning letters to peptide sellers and online clinics</h1>
+    <p class="letters-what">A warning letter is about how a company sold or advertised a product. It does not withdraw any approval and is not a safety finding about an approved medicine.</p>
     <p class="lede">A warning letter is the FDA's formal notice that it found what it believes are significant violations of the law; the company is asked to reply within 15 business days. It is public record. <a href="{FDA_ABOUT_LETTERS}" rel="nofollow">What the FDA says about warning letters</a></p>
     {author_line(DATA["pulled_at"][:10]) if DATA.get("pulled_at") else ""}
     <p class="letters-stamp"><span class="small">{len(LETTERS_ALL)} letters since {nice_date(DATA["letters_all_oldest"]) if DATA.get("letters_all_oldest") else ""}, newest first. Each links to the letter on fda.gov.</span></p>
@@ -1321,7 +1331,7 @@ LETTERS_PAGE = f"""
       <thead><tr><th scope="col">Date</th><th scope="col">Company</th><th scope="col" class="subj">Subject</th><th scope="col">Source</th></tr></thead>
       <tbody>{letters_all_rows()}</tbody>
     </table></div>
-    {f'<p class="letters-more" hidden><button type="button" class="btn btn-line" id="letters-all">Show all {len(LETTERS_ALL)}</button></p>' if len(LETTERS_ALL) > LETTERS_FIRST else ""}
+    {f'<p class="letters-more" hidden><button type="button" class="btn btn-line" id="letters-all">Show 25 more</button></p>' if len(LETTERS_ALL) > LETTERS_FIRST else ""}
     <p class="small" style="margin-top:16px">Company names are as the FDA lists them. "In our database" names the seller we matched the letter to.</p>
   </div>
 </section>{goals_strip("Compare peptides by goal")}
@@ -1781,6 +1791,26 @@ CLINICS_JS = """<script>(function(){var s=document.getElementById('clinics'),m=s
 s.classList.add('clip');m.hidden=false;document.getElementById('clinics-all').addEventListener('click',function(){s.classList.remove('clip');m.hidden=true;});})();</script>"""
 
 
+# Brand names explained once (owner UX audit B23, 3 Nov 2026): a brand our data maps to a substance (approved_drugs:
+# brand and substance) gets the substance in brackets at its first mention in a plan table, "Foundayo (orforglipron)".
+BRAND_SUB = {}
+for _a in APPROVED_DB:
+    if _a.get("brand_name") and _a["substance_slug"]:
+        BRAND_SUB.setdefault(brand_base(_a["brand_name"]).lower(), _a["substance_slug"])
+
+
+def explain_brand(plan_name, seen):
+    """The plan name with "(substance)" after its brand the first time the brand appears (seen: brands already named)."""
+    first = plan_name.split()[0] if plan_name else ""
+    slug = BRAND_SUB.get(first.lower())
+    if not slug or first.lower() in seen or slug.replace("-", " ") in plan_name.lower():
+        return plan_name
+    seen.add(first.lower())
+    name = next((r["canonical_name"] for r in LEGAL_DB or [] if r["substance_slug"] == slug and r.get("canonical_name")), slug.replace("-", " "))
+    name = escape(re.sub(r"\s*\(.*\)", "", name).lower())
+    return f"{first} ({name}){plan_name[len(first):]}"
+
+
 def clinic_row_act(r):
     """A clinic plan's button, every kind (owner answer Q1 a, 3 Nov 2026; for compounded plans owner decision C8, 3 Nov 2026: compounded GLP-1 is linked only through clinics without an
     FDA letter, labelled compounded): btn-action "Visit <Name>" with "Paid link" only when the data carries the clinic's paid
@@ -1802,12 +1832,12 @@ def clinic_section(g, rows):
     if not rows:
         return ""
     newest = max(r["last_seen"] for r in rows)
-    trs = []
+    trs, named = [], set()
     for i, r in enumerate(rows):
         care = care_note(r)
         # on phones the first CLINICS_FIRST rows show until "Show all N" (owner answer Q2 a, 2 Nov 2026; bundle.css, Clinic table)
         more = ' class="more"' if i >= CLINICS_FIRST else ""
-        trs.append(f'<tr{more}><td>{clinic_link(r["seller_slug"], seller_base(r["seller_name"]))}</td><td data-l="Plan">{r["plan_name"]}</td>'
+        trs.append(f'<tr{more}><td>{clinic_link(r["seller_slug"], seller_base(r["seller_name"]))}</td><td data-l="Plan">{explain_brand(r["plan_name"], named)}</td>'
                    f'<td>{plan_chip(g, r)}</td>'
                    f'<td data-l="Per month"><span class="num">{usd(r["price_monthly"])}</span>{plan_letter(r)}{f"<span class=sub>{care}</span>" if care else ""}</td>'
                    # every row: the letter chip by the price, no FDA letter column, "See plans" to our clinic page (owner answers
@@ -2999,7 +3029,9 @@ def pep_answer(slug):
         out.append(f'The lowest price at the {plural(n, "shop")} shown below is {per_mg(low["price_per_mg"])}/mg '
                    f'({clinic_link(low["seller_slug"], clean(SELLERS.get(low["seller_slug"], {}).get("seller_name") or low["seller_name"]), True)})'
                    f'{", checked " + nice_date(seen) if seen else ""}.')
-    n = len(LETTER_SUBS.get(slug, []))
+    n = len(LETTER_SUBS.get(slug, [])) if pep_group(s) != "approved" else 0
+    # an approved medicine's letters are about sellers, not its approval: the count stays in the letters section (owner
+    # UX audit B15, 3 Nov 2026)
     if n:  # the count of letters that name it (owner task 2 Nov 2026), linking the section below
         out.append(f'<a href="#letters">{plural(n, "FDA warning letter")}</a> name{"s" if n == 1 else ""} it.')
     p = pep_low_plan(slug) if pep_group(s) == "approved" else None
@@ -3157,6 +3189,22 @@ class PepSources:
                        for i, (t, u) in enumerate(self.items, start=1))
 
 
+# Above an approved medicine's letters (owner UX audit B15, 3 Nov 2026)
+APPROVED_LETTERS_LINE = "<p>These letters are about sellers and advertising, not about the medicine's approval.</p>"
+
+
+def approved_evidence(slug, p):
+    """An approved medicine's evidence cell instead of "Not rated" (owner UX audit B15): "FDA approved for <use>
+    (Drugs@FDA, <date>)", the use from the goal page's own checked line, the date the first approval in Drugs@FDA, else
+    the day the status was seen. None when the goal's line names no use."""
+    use = re.search(r"FDA approved for ([^.;]+)", p.get("status_plain", ""))
+    if not use or pep_group(pep_status(slug)) != "approved":
+        return None
+    day = min((a["approval_date"] for a in APPROVED_DB if a["substance_slug"] == slug and a.get("approval_date")), default=None)
+    day = day or pep_status(slug).get("seen")
+    return f'<span class="chip chip-ok">FDA approved</span> <span class="small">for {use.group(1)} (Drugs@FDA{", " + nice_date(day[:10]) if day else ""})</span>'
+
+
 def pep_evidence(slug, src):
     """One row per goal page option that carries the substance: the goal, the option, its evidence chip (from the goal's
     checked options table when it has one) and the line that page shows for it, with that page's sources."""
@@ -3164,7 +3212,8 @@ def pep_evidence(slug, src):
     for g, p in pep_goals(slug):
         o = next((o for o in g.get("options") or [] if o["name"] == p["name"] or o.get("substance") == slug and subs_of(p) == [slug]
                   or subs_of(p) == [slug] and sub_label(slug).lower().split()[0] in o["name"].lower()), None)
-        chip = f'<span class="chip chip-{o["evidence_chip"]}">{o["evidence"]}</span>' if o else '<span class="small">Not rated</span>'
+        chip = (f'<span class="chip chip-{o["evidence_chip"]}">{o["evidence"]}</span>' if o else
+                approved_evidence(slug, p) or '<span class="small">Not rated</span>')
         refs_ = [(x["text"], x["url"]) for x in g.get("sources", []) if o and x["n"] in o["sources"]]
         refs_ += [(x["text"], x["url"]) for x in LEGAL["sources"] if x["n"] in (p.get("src") or [])]
         sup = "".join(src.ref(t, u) for t, u in refs_)
@@ -3262,7 +3311,7 @@ def pep_letters_section(slug):
     return f"""
 <section class="section" id="letters">
   <div class="wrap">
-    <div class="sec-hd"><div><h2>FDA warning letters</h2><p>{plural(len(rows), "FDA warning letter")} name{"s" if len(rows) == 1 else ""} {escape(name)}.{shown} Each quote is where the letter first names it.</p></div></div>
+    <div class="sec-hd"><div><h2>FDA warning letters</h2>{APPROVED_LETTERS_LINE if pep_group(pep_status(slug)) == "approved" else ""}<p>{plural(len(rows), "FDA warning letter")} name{"s" if len(rows) == 1 else ""} {escape(name)}.{shown} Each quote is where the letter first names it.</p></div></div>
     <div class="tbl-wrap"><table class="tbl tbl-letters tbl-pep-letters">
       <thead><tr><th scope="col">Date</th><th scope="col">Company</th><th scope="col">Source</th></tr></thead>
       <tbody>{trs}</tbody>
@@ -3358,28 +3407,50 @@ PEP_COSMETIC_TOO = {x: r for r in LEGAL["rows"] if r.get("status") == "Cosmetic"
 PEP_ROUTE = {x: f' ({"injection" if "inject" in (pep_status(x).get("listing") or "").lower() else "as a drug"})' for x in PEP_COSMETIC_TOO}
 
 
+def pep_means(slug):
+    """"What it means" in plain words (owner UX audit B16): the sentence of the status row the legal tables show (the
+    lowest rank, as db_status picks it), from list_words; a hand-written status keeps its own sentence."""
+    rows = sorted(pep_status_rows(slug), key=lambda r: DB_STATUS[(r["regime"], r["status_value"])][0])
+    if rows:
+        return list_words(rows[0])[1]
+    t = pep_status(slug)["sentence"]
+    return t[0].upper() + t[1:] + ("" if t.endswith(".") else ".")
+
+
+PEP_FILTERS = [("approved", "Approved"), ("cosmetic", "Cosmetic"), ("not", "Not approved")]
+PEPTIDES_JS = """<script>
+(function(){var t=document.getElementById('pep-table'),f=document.querySelector('.pep-filter');if(!t||!f)return;f.hidden=false;
+var n=document.getElementById('pep-n'),rows=[].slice.call(t.querySelectorAll('tbody tr'));
+function draw(){var on={},c=0;f.querySelectorAll('.year-chip').forEach(function(b){on[b.getAttribute('data-group')]=b.getAttribute('aria-pressed')==='true';});
+rows.forEach(function(r){var s=on[r.getAttribute('data-group')];r.hidden=!s;if(s)c++;});n.textContent=c+' of '+rows.length+' shown.';}
+f.addEventListener('click',function(e){var b=e.target.closest('.year-chip');if(!b)return;b.setAttribute('aria-pressed',b.getAttribute('aria-pressed')==='true'?'false':'true');draw();});
+draw();})();
+</script>"""
+
+
 def peptides_index():
-    sections = []
-    for key, label, line in PEP_GROUPS:
-        rows = [(pep_name(x) + PEP_ROUTE.get(x, ""), x, pep_status(x)["chip"], pep_status(x)["label"], pep_status(x)["sentence"], pep_low(x))
-                for x in PEPTIDE_SLUGS if pep_group(pep_status(x)) == key]
-        if key == "cosmetic":
-            rows += [(f"{pep_name(x)} (cream or serum)", x, r["chip"], r["status"], r["note"], "none shown") for x, r in PEP_COSMETIC_TOO.items()]
-        rows.sort(key=lambda t: t[0].lower())
-        slugs = rows
-        if not slugs:
-            continue
-        trs = "".join(
-            f'<tr><td><a class="name" href="/peptides/{x}/">{escape(name)}</a></td>'
-            f'<td data-l="Status"><span class="chip chip-{chip}">{label}</span></td>'
-            f'<td data-l="What that means">{sentence}</td><td class="num" data-l="Lowest price">{low}</td></tr>'
-            for name, x, chip, label, sentence, low in rows)
-        sections.append(f"""
-    <div class="sec-hd pep-group"><div><h2 id="g-{key}">{label}</h2><p>{plural(len(slugs), "substance")}. {line}</p></div></div>
-    <div class="tbl-wrap"><table class="tbl tbl-cards tbl-peptides" aria-labelledby="g-{key}">
-      <thead><tr><th scope="col">Substance</th><th scope="col">Status</th><th scope="col">What that means</th><th scope="col">Lowest price</th></tr></thead>
-      <tbody>{trs}</tbody>
-    </table></div>""")
+    """/peptides/ (owner UX audit B16, 3 Nov 2026): one table in A to Z order with a Status column, a row of letters to jump
+    to, and the three statuses as filter chips (all on; shown with JavaScript only). Title and H1 unchanged (rule 8)."""
+    rows = [(pep_name(x) + PEP_ROUTE.get(x, ""), x, pep_group(pep_status(x)), pep_status(x)["chip"], pep_status(x)["label"],
+             pep_means(x), pep_low(x)) for x in PEPTIDE_SLUGS]
+    rows += [(f"{pep_name(x)} (cream or serum)", x, "cosmetic", r["chip"], r["status"], r["note"][0].upper() + r["note"][1:] + ".",
+              "none shown") for x, r in PEP_COSMETIC_TOO.items()]
+    rows.sort(key=lambda t: t[0].lower())
+    letter = lambda name: name[0].upper() if name[0].isalpha() else "#"
+    firsts = {}
+    for t in rows:
+        firsts.setdefault(letter(t[0]), t)
+    anchor = lambda t: f' id="az-{letter(t[0]).lower()}"' if firsts[letter(t[0])] is t else ""
+    trs = "".join(
+        f'<tr data-group="{grp}"{anchor(t)}>'
+        f'<td><a class="name" href="/peptides/{x}/">{escape(name)}</a></td>'
+        f'<td data-l="Status"><span class="chip chip-{chip}">{label}</span></td>'
+        f'<td data-l="What it means">{sentence}</td><td class="num" data-l="Lowest price">{low}</td></tr>'
+        for t in rows for name, x, grp, chip, label, sentence, low in [t])
+    jump = "".join(f'<a class="year-chip" href="#az-{k.lower()}">{k}</a>' for k in firsts)
+    counts = {k: sum(t[2] == k for t in rows) for k, _ in PEP_FILTERS}
+    chips = "".join(f'<button type="button" class="year-chip" data-group="{k}" aria-pressed="true">{w} <span>{counts[k]}</span></button>'
+                    for k, w in PEP_FILTERS if counts[k])
     checked = max(pep_checked(x) for x in PEPTIDE_SLUGS)
     return f"""
 <section class="section letters-hd">
@@ -3390,9 +3461,16 @@ def peptides_index():
   </div>
 </section>
 <section class="band-2" id="peptides-list">
-  <div class="wrap">{"".join(sections)}
+  <div class="wrap">
+    <nav class="year-chips az-jump" aria-label="Jump to a letter">{jump}</nav>
+    <div class="year-chips pep-filter" role="group" aria-labelledby="pep-show" hidden><span id="pep-show">Show</span>{chips}<p class="small" id="pep-n" aria-live="polite"></p></div>
+    <div class="tbl-wrap"><table class="tbl tbl-cards tbl-peptides" id="pep-table"><caption class="vh">Peptides A to Z with their FDA status</caption>
+      <thead><tr><th scope="col">Substance</th><th scope="col">Status</th><th scope="col">What it means</th><th scope="col">Lowest price</th></tr></thead>
+      <tbody>{trs}</tbody>
+    </table></div>
   </div>
 </section>
+{PEPTIDES_JS}
 """
 
 
