@@ -811,8 +811,9 @@ def substance_name(slug):
 
 
 # Cosmetic product forms (peptide-data products.product_form): a cosmetic option's window lists only these, a research-use
-# option's window never does (owner UX audit, 3 Nov 2026: the GHK-Cu serum row opened injectable vials).
-COSMETIC_FORMS = {"cream", "serum", "lotion", "gel"}
+# option's window never does (owner UX audit, 3 Nov 2026: the GHK-Cu serum row opened injectable vials). "topical" counts
+# too (owner answer, 3 Nov 2026); tools/pull_data.py keeps the same list.
+COSMETIC_FORMS = ("cream", "serum", "lotion", "gel", "topical")
 is_cosmetic = lambda p: p["status"].startswith("Cosmetic")
 
 
@@ -889,13 +890,15 @@ def seller_table(slug, kind=None):
         if variant and variant.lower() not in name.lower():
             name += f", {variant}"
         size = f'{r["amount_mg"]:g} mg' if r.get("amount_mg") else "size unknown"
+        if kind == "cosmetic" and r.get("form"):  # the form word per row in a cosmetic window ("Serum", "Cream", "Topical")
+            size = f'{r["form"].capitalize()} · {size}'
         price = money(r["price_usd"]) if r.get("price_usd") is not None else "unknown"
         ppm = (f'{money(r["price_per_mg"])}/mg' if r.get("price_per_mg") is not None else "blend" if r.get("is_blend") else "unknown")
         seller = clean(SELLERS.get(r["seller_slug"], {}).get("seller_name") or r["seller_name"])
         # the name opens our page on the seller when it has one (owner task 2 Nov 2026); never the seller's own site
         name_html = (f'<a class="name" href="/sellers/{r["seller_slug"]}/">{seller}</a>' if r["seller_slug"] in PROFILES
                      else f'<span class="name">{seller}</span>')
-        trs.append(f'<tr data-seller="{r["seller_slug"]}"><td>{name_html}</td><td data-l="Product">{name}<span class="sub">{size}</span></td>'
+        trs.append(f'<tr data-seller="{r["seller_slug"]}" data-form="{escape(r.get("form") or "")}"><td>{name_html}</td><td data-l="Product">{name}<span class="sub">{size}</span></td>'
                    f'<td data-l="Price"><span class="num">{price}</span></td>'
                    + ("" if kind == "cosmetic" else f'<td data-l="Per mg"><span class="num">{ppm}</span></td>') +
                    f'<td class="checks">{score_line(r)}{check_chips(r)}</td></tr>')
