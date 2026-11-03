@@ -88,8 +88,7 @@ setTimeout(function(){if(!window.pcMotion)d.classList.remove('motion');},3000);}
 # Design book, Every page, Header: up to 900px the nav sits behind "Menu". The head script marks the page before it
 # paints, so the closed menu never flashes; with JavaScript off the mark is missing and the links show as a wrapped row.
 NAV_HEAD = "<script>document.documentElement.classList.add('nav-js');</script>"
-NAV_JS = """<script>
-// Header categories (pages.md, Every page, Header; owner task 3 Nov 2026): one open at a time. From 1180px a mouse opens
+NAV_SCRIPT = """// Header categories (pages.md, Every page, Header; owner task 3 Nov 2026): one open at a time. From 1180px a mouse opens
 // a category on hover and closes it 250ms after leaving; a click, Enter or Space opens it too (a mouse click never closes
 // one the hover opened). Arrow keys: left and right between the categories, down into the panel, up and down inside it.
 // Escape, a click outside or focus leaving closes it. Under 1180px the same buttons open the accordion inside the Menu.
@@ -127,7 +126,9 @@ function set(o){n.classList.toggle('open',o);b.setAttribute('aria-expanded',o?'t
 b.addEventListener('click',function(){var o=!n.classList.contains('open');set(o);if(o){var f=[].filter.call(n.querySelectorAll('a,button,input'),function(x){return x.offsetParent;})[0];if(f)f.focus();}});
 n.addEventListener('click',function(e){if(e.target.closest('a'))set(false);});
 document.addEventListener('keydown',function(e){if(e.key==='Escape'&&n.classList.contains('open')){set(false);b.focus();}});})();
-</script>"""
+"""
+# one cached file for every page instead of 4 KB inline on each (Home stays under its 60 KB check with the card menu)
+NAV_JS = '<script src="/assets/nav.js" defer></script>'
 # Design book, Every page, Header, Search (owner task 2 Nov 2026): a plain field right of the links on wide screens, the first
 # item inside the phone Menu. Typing filters /search-index.json in the page (no library): at most 8 results under the field,
 # arrow keys move, Enter opens the chosen one (none chosen: the form goes to /search/), Escape closes. With JavaScript off
@@ -3952,6 +3953,7 @@ def main():
     (DIST / "windows").mkdir(exist_ok=True)
     for k, html in GOAL_PANELS.items():
         (DIST / "windows" / f"goal-{k}.json").write_text(json.dumps({"html": html}), encoding="utf-8")
+    (DIST / "assets" / "nav.js").write_text(NAV_SCRIPT, encoding="utf-8")
     if home.JS:
         (DIST / "assets" / "home.js").write_text(home.JS, encoding="utf-8")
     if home.ROWS:
