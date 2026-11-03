@@ -65,6 +65,16 @@ b.hidden=true;});})();
 </script>""" if GA4_ID else ""
 STANDING_LINE = f"Every claim links to its source. Prices checked {CHECKED}."
 
+
+def author_line(iso):
+    """The one author line of every inner page (goal, seller, peptide, compare, guide, letters; pages.md, Rules that apply
+    to every page): the team linked to /about/ and the newest data date the page shows."""
+    return f'<p class="small meta"><a href="/about/">{AUTHOR}</a>. Checked {nice_date(iso)}.</p>'
+
+
+# its own line under the author line on the goal and peptide pages (owner answer Q2 b, 3 Nov 2026)
+SOURCE_LINE = '\n        <p class="small meta">Every claim links to its source.</p>'
+
 # Design book, Motion. The head script marks the page for motion only when the visitor allows it; CSS then
 # pre-hides what will be revealed. If GSAP has not started within 3 s, the mark is removed and everything shows.
 # With JavaScript off or reduced motion on, nothing is ever hidden.
@@ -519,6 +529,7 @@ APPROVED_DB = DATA.get("approved_db") or []
 _plan_seen = max((r["last_seen"] for r in GOAL_PLANS.values()), default="")
 _prices_on = DB.get("prices_checked_on", "") if DB else ""
 STAMP_CHECKED = nice_date(max(_prices_on, _plan_seen)) if (_prices_on or _plan_seen) else CHECKED
+GOAL_CHECKED = max(DATA["checked"], _prices_on, _plan_seen)  # the goal pages' data date: hand check, prices, plans
 # The one lookup from a database status to what the page shows: (regime, status_value) -> (rank, chip, label, sentence).
 # Lower rank wins when a substance has several open statuses. Statuses not listed here (shortage, not_listed) are
 # not legal statuses and are skipped.
@@ -1128,7 +1139,8 @@ LETTERS_PAGE = f"""
   <div class="wrap">
     <h1>FDA warning letters to peptide sellers and online clinics</h1>
     <p class="lede">A warning letter is the FDA's formal notice that it found what it believes are significant violations of the law; the company is asked to reply within 15 business days. It is public record. <a href="{FDA_ABOUT_LETTERS}" rel="nofollow">What the FDA says about warning letters</a></p>
-    <p class="letters-stamp"><span class="stamp">Checked {nice_date(DATA["pulled_at"][:10]) if DATA.get("pulled_at") else ""}</span><span class="small">{len(LETTERS_ALL)} letters since {nice_date(DATA["letters_all_oldest"]) if DATA.get("letters_all_oldest") else ""}, newest first. Each links to the letter on fda.gov.</span></p>
+    {author_line(DATA["pulled_at"][:10]) if DATA.get("pulled_at") else ""}
+    <p class="letters-stamp"><span class="small">{len(LETTERS_ALL)} letters since {nice_date(DATA["letters_all_oldest"]) if DATA.get("letters_all_oldest") else ""}, newest first. Each links to the letter on fda.gov.</span></p>
     {SUBSCRIBE_BOX}
   </div>
 </section>
@@ -1674,7 +1686,7 @@ def category_body(g, table, table_lede):
     <div class="hero-grid{"" if pad else " hero-solo"}">
       <div>
         <h1>{g["h1"]}</h1>
-        <p class="small meta">{AUTHOR}. Last updated {CHECKED}. Every claim links to its source. Prices checked {STAMP_CHECKED}.</p>
+        {author_line(GOAL_CHECKED)}{SOURCE_LINE}
         <p class="intro">{g["short_answer"]}</p>
       </div>{pad}
     </div>
@@ -1911,6 +1923,8 @@ def check_card(r):
         f'<li><span class="chip chip-{"ok" if r.get(k) else "neutral"} mark-{"yes" if r.get(k) else "no"}">{t}'
         f'<span class="vh">: {"yes" if r.get(k) else "no"}</span></span><span class="check-line">{lines[k]}</span></li>'
         for k, t in SCORE_CHECKS)
+    if r.get("first_seen"):  # not a check: when we started tracking the seller (owner answer Q1 b, 3 Nov 2026)
+        rows += f'<li><span class="check-key">Tracked since</span><span class="check-line">{nice_date(r["first_seen"][:10])}.</span></li>'
     if is_clinic(r):
         foot = '<p class="check-act"><span class="btn btn-action" role="button" aria-disabled="true">Online clinic</span><span class="paid">No paid link yet</span></p>'
     else:
@@ -2166,9 +2180,7 @@ def legit_section(r):
 def seller_page(r):
     clinic = r["seller_slug"] in CLINIC_PROFILES
     answer = " ".join(clinic_answer(r) if clinic else short_answer(r))
-    seen = r.get("price_updated_at")
-    meta = (f'{AUTHOR}. Tracked since {nice_date(r["first_seen"])}.' if r.get("first_seen") else f"{AUTHOR}.") + \
-           (f" Prices checked {nice_date(seen[:10])}." if seen else "")
+    checked = max((r.get("price_updated_at") or "")[:10], (r.get("score_checked_on") or "")[:10], (r.get("first_seen") or "")[:10])
     return f"""
 <section class="hero hero-goal seller-pg">
   <div class="wrap">
@@ -2176,7 +2188,7 @@ def seller_page(r):
       <div>
         <h1>{seller_name(r)}: prices, checks and what we found.</h1>
         <p class="seller-kind"><span class="chip chip-neutral">{kind_words(r)[1]}</span></p>
-        <p class="small meta">{meta}</p>
+        {author_line(checked) if checked else ""}
         <p class="intro">{answer}</p>
       </div>{check_card(r)}
     </div>
@@ -2631,6 +2643,9 @@ def pep_answer(slug):
     s = pep_status(slug)
     host = "FDA source" if "fda.gov" in s["url"] else "Source"
     out = [f'{s["label"]}: {s["sentence"]}. <a href="{escape(s["url"])}" rel="nofollow">{host}</a>, {nice_date(s["seen"])}.']
+    n = len(pep_status_rows(slug))
+    if n > 1:  # several current rows, each a line in the facts card (owner task 2 Nov 2026)
+        out.append(f'The FDA lists it in {n} places; <a href="#facts-h">see the facts</a>.')
     goals = list(dict.fromkeys(g["slug"] for g, _ in pep_goals(slug)))
     if goals:
         gs = [next(g for g in ALL_GOALS if g["slug"] == x) for x in goals]
@@ -2703,19 +2718,42 @@ def pep_chips(slug, s):
             f'<span class="stamp">Checked {nice_date(pep_checked(slug))}</span></p>')
 
 
+def pep_status_rows(slug):
+    """The substance's current status rows (a status the legal tables know), newest first."""
+    rows = [r for r in pep_db_rows(slug) if (r["regime"], r["status_value"]) in DB_STATUS]
+    return sorted(rows, key=lambda r: (r.get("valid_from") or r.get("first_seen_by_us") or "", r["regime"]), reverse=True)
+
+
+def fact_words(r):
+    """A list entry in the database's words: "category 1 (scope), since 1 Jan 2024"."""
+    v = VALUE_WORDS.get(r["status_value"], r["status_value"].replace("_", " "))
+    scope = f' ({r["scope"]})' if r.get("scope") and r["regime"] != "fda_approval" else ""
+    since = f', since {nice_date(r["valid_from"])}' if r.get("valid_from") else ""
+    return f"{v}{scope}{since}"
+
+
+def pep_brands(slug):
+    return sorted({brand_base(a["brand_name"]) for a in APPROVED_DB if a["substance_slug"] == slug and a.get("brand_name")}
+                  - {pep_short(slug).split()[0].title()})
+
+
 def pep_facts(slug, s):
     """The facts ledger in the Background check card's frame: FDA status and every open list entry in the database's
     words, the approved brands, forms, prescription needed, first seen by us."""
     rows = [("FDA status", f'<span class="chip chip-{s["chip"]}">{s["label"]}</span>')]
+    # every current status row on its own line, newest first: its chip, the FDA's wording and its source (owner task
+    # 2 Nov 2026; GHK-Cu is on the 503A list and has a withdrawn nomination, each with its own wording)
+    for r in pep_status_rows(slug):
+        chip, label = DB_STATUS[(r["regime"], r["status_value"])][1:3]
+        listing = f'<span class="listing">FDA listing: "{escape(r["fda_listing"])}"</span>' if r.get("fda_listing") else ""
+        host = "FDA source" if "fda.gov" in r["source_url"] else "Source"
+        rows.append((REGIME_WORDS.get(r["regime"], "FDA list"), f'<span class="chip chip-{chip}">{label}</span> {fact_words(r)}{listing}'
+                     f' <a href="{escape(r["source_url"])}" rel="nofollow">{host}</a>'))
     for r in sorted(pep_db_rows(slug), key=lambda r: r["regime"]):
-        if r["regime"] not in REGIME_WORDS:
+        if r["regime"] not in REGIME_WORDS or (r["regime"], r["status_value"]) in DB_STATUS:
             continue
-        v = VALUE_WORDS.get(r["status_value"], r["status_value"].replace("_", " "))
-        scope = f' ({r["scope"]})' if r.get("scope") and r["regime"] != "fda_approval" else ""
-        since = f', since {nice_date(r["valid_from"])}' if r.get("valid_from") else ""
-        rows.append((REGIME_WORDS[r["regime"]], f'{v}{scope}{since}'))
-    brands = sorted({brand_base(a["brand_name"]) for a in APPROVED_DB if a["substance_slug"] == slug and a.get("brand_name")}
-                    - {pep_short(slug).split()[0].title()})
+        rows.append((REGIME_WORDS[r["regime"]], fact_words(r)))
+    brands = pep_brands(slug)
     if brands and pep_group(s) == "approved":
         rows.append(("Approved brands", ", ".join(brands)))
     forms = pep_forms(slug)
@@ -2891,8 +2929,8 @@ def pep_page(slug):
       <div>
         <h1>{escape(pep_name(slug))}</h1>
         {pep_chips(slug, s)}
-        <p class="small meta"><a href="/about/">{AUTHOR}</a>. {STANDING_LINE.replace(CHECKED, nice_date(pep_checked(slug)))}</p>
-        <p class="intro">{" ".join(pep_answer(slug))}</p>{f'<p class="small pep-listing">FDA listing: "{escape(s["listing"])}"</p>' if s.get("listing") else ""}
+        {author_line(pep_checked(slug))}{SOURCE_LINE}
+        <p class="intro">{" ".join(pep_answer(slug))}</p>{f'<p class="small pep-listing">FDA listing: "{escape(s["listing"])}"</p>' if s.get("listing") and len(pep_status_rows(slug)) < 2 else ""}
       </div>{pep_facts(slug, s)}
     </div>
   </div>
@@ -2954,6 +2992,20 @@ def peptides_index():
 """
 
 
+def pep_signals(slug):
+    """What a peptide page carries beyond its status, each as the page shows it (pages.md, Peptide, Thin pages)."""
+    s = pep_status(slug)
+    approved = pep_group(s) == "approved"
+    return {"goal page": bool(pep_goals(slug)), "shop table": bool(pep_shops(slug)),
+            "clinic plan": approved and bool(pep_plans(slug)), "FDA letter": bool(LETTER_SUBS_ON and LETTER_SUBS.get(slug)),
+            "guide": bool(pep_guides(slug)), "approved brand": approved and bool(pep_brands(slug))}
+
+
+# Thin pages (pages.md, Peptide; owner task 2 Nov 2026): a page with fewer than three of the six is still built and
+# linked, but carries noindex and leaves the sitemap and llms.txt, as /search/ does.
+PEP_MIN_SIGNALS = 3
+PEP_THIN = [x for x in PEPTIDE_SLUGS if sum(pep_signals(x).values()) < PEP_MIN_SIGNALS]
+
 if PEPTIDE_SLUGS:
     PAGES.append(("/peptides/", "peptides/index.html", "Peptides A to Z: FDA status and prices | Peptide Chooser",
                   (f"Every peptide and approved alternative we track, {len(PEPTIDE_SLUGS)} in all, grouped FDA approved, not "
@@ -2961,6 +3013,8 @@ if PEPTIDE_SLUGS:
                   peptides_index(), item_list_schema("Peptides and their FDA status",
                                                      [(pep_name(x), f"{SITE}/peptides/{x}/") for x in PEPTIDE_SLUGS]),
                   [("/peptides/", "Peptides")]))
+    for _x in PEP_THIN:
+        NOINDEX.add(f"/peptides/{_x}/")
     for _x in PEPTIDE_SLUGS:
         PAGES.append((f"/peptides/{_x}/", f"peptides/{_x}/index.html", pep_title(_x), pep_description(_x), pep_page(_x), "",
                       [("/peptides/", "Peptides"), (f"/peptides/{_x}/", pep_short(_x))]))
@@ -3135,7 +3189,8 @@ def cmp_body(h1, checked, answer, table, links, pre, note):
   <div class="wrap">
     <h1>{escape(h1)}</h1>
     <p class="lede">{" ".join(answer)}</p>
-    <p class="letters-stamp"><span class="stamp">Checked {nice_date(checked)}</span><span class="small"><a href="/about/">{AUTHOR}</a>. {note}</span></p>
+    {author_line(checked)}
+    <p class="small">{note}</p>
   </div>
 </section>
 <section class="band-2" id="compare-two">
@@ -3358,6 +3413,10 @@ def main():
         f'<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">{urls}</urlset>\n')
     (DIST / "pages.json").write_text(json.dumps([{"path": p[0], "title": p[2]} for p in PAGES] + [{"path": "/404", "title": "Page not found | Peptide Chooser"}]))
     print("built", len(PAGES) + 1, "pages")
+    if PEPTIDE_SLUGS:
+        print(f"peptide pages: {len(PEPTIDE_SLUGS) - len(PEP_THIN)} indexed, {len(PEP_THIN)} noindex (fewer than {PEP_MIN_SIGNALS} of the six)")
+        for x in PEP_THIN:
+            print(f"  noindex /peptides/{x}/: has {', '.join(k for k, v in pep_signals(x).items() if v) or 'only its status'}")
 
 
 # The Learn section (pages.md, Learn and Guide): /learn/ and the guides, from guides.py, which reads this module's helpers.
