@@ -2018,11 +2018,12 @@ CLINIC_LAB_LINE = '<p class="check-nolab">Online clinics prescribe; they do not 
 
 def card_chip(k, t, r):
     """One check's chip in the Background check card and the "Is <Name> legit?" list: its name, with the state spoken.
-    The letter check says what it found instead of "No FDA letter: no" (owner UX audit, 3 Nov 2026): "FDA warning
-    letter: none" when met, "FDA warning letter: yes (N)" when not."""
+    The letter check says what it found instead of "No FDA letter: no" (owner UX audit, 3 Nov 2026): "FDA letter: none"
+    when met, "FDA letter: yes (N)" when not ("FDA warning letter: ..." does not fit the card's 124px chip column on
+    phones; the line beside the chip says "FDA warning letter")."""
     on = bool(r.get(k))
     if k == "score_no_fda_letter":
-        t, state = ("FDA warning letter: none" if on else f'FDA warning letter: yes ({r.get("fda_letter_count") or 1})'), ""
+        t, state = ("FDA letter: none" if on else f'FDA letter: yes ({r.get("fda_letter_count") or 1})'), ""
     else:
         state = f'<span class="vh">: {"yes" if on else "no"}</span>'
     return f'<span class="chip chip-{"ok" if on else "neutral"} mark-{"yes" if on else "no"}">{t}{state}</span>'
