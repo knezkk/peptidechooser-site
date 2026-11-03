@@ -2185,6 +2185,19 @@ def seller_page(r):
 """
 
 
+PPM_LOW, PPM_HIGH = 0.01, 100
+
+
+def compare_ppm(r):
+    """The seller's price per mg range from listings between $0.01 and $100/mg: its own lowest and highest, and those of
+    its top substances; a value outside the band is a misread unit until the database fixes it (owner, 2 Nov 2026, the
+    seller pages' Q6 a rule widened to the top). (None, None) when nothing is left."""
+    vals = [r.get("price_per_mg_min"), r.get("price_per_mg_max")]
+    vals += [x.get(k) for x in SELLER_SUBS.get(r["seller_slug"], []) for k in ("price_per_mg_min", "price_per_mg_max")]
+    vals = [v for v in vals if v is not None and PPM_LOW <= v <= PPM_HIGH]
+    return (min(vals), max(vals)) if vals else (None, None)
+
+
 def sellers_order(x):
     return (-(x.get("score") if x.get("score") is not None else -1), -(x.get("product_count") or 0), seller_name(x).lower())
 
@@ -2227,7 +2240,9 @@ def sellers_filter(shops, clinics):
     def count(s):
         parts = [plural(n_shop[s], "shop")] if n_shop.get(s) else []
         return ", ".join(parts + ([plural(n_clinic[s], "clinic")] if n_clinic.get(s) else []))
-    opts = "".join(f'<option value="{s}">{escape(sub_label(s))} ({count(s)})</option>' for s in subs)
+    def short(s):  # the name without its bracket, as in the peptide page titles (owner answer Q3 a, 3 Nov 2026)
+        return re.sub(r" *\(.*\)$", "", sub_label(s))
+    opts = "".join(f'<option value="{s}">{escape(short(s))} ({count(s)})</option>' for s in subs)
     mins = "".join(f'<option value="{i}">{"Any" if i == 0 else f"{i} of {len(SCORE_CHECKS)}" if i == len(SCORE_CHECKS) else f"{i} or more"}</option>'
                    for i in range(len(SCORE_CHECKS) + 1))
     sorts = "".join(f'<option value="{k}">{t}</option>' for k, t in SELLER_SORTS)
@@ -2290,11 +2305,12 @@ def sellers_index():
     rows, more_cls = sorted(SHOPS.values(), key=sellers_order), ' class="more"'
     trs = "".join(
         f'<tr{more_cls if i >= SELLERS_FIRST else ""} data-c="{met_checks(r)}" data-s="{r["score"]}" data-subs="{" ".join(shop_subs(r))}"'
-        f' data-p="{r.get("product_count") or 0}" data-m="{r["price_per_mg_min"] if r.get("price_per_mg_min") is not None else ""}"'
+        f' data-p="{r.get("product_count") or 0}" data-m="{compare_ppm(r)[0] if compare_ppm(r)[0] is not None else ""}"'
         f' data-n="{escape(seller_name(r).lower())}" data-t="{r.get("first_seen") or ""}">'
         f'<td><a class="name" href="/sellers/{r["seller_slug"]}/">{seller_name(r)}</a></td>'
         f'<td data-l="Kind">{kind_words(r)[1]}</td><td class="num" data-l="Checks">{r["score"]} of {len(SCORE_CHECKS)}</td>'
         f'<td class="num" data-l="Products">{r.get("product_count") or 0}</td><td class="num" data-l="Substances">{r.get("substance_count") or 0}</td>'
+        f'<td class="num" data-l="From /mg">{per_mg(compare_ppm(r)[0]) if compare_ppm(r)[0] is not None else "unknown"}</td>'
         f'<td class="num" data-l="FDA letters">{r.get("fda_letter_count") or 0}</td></tr>'
         for i, r in enumerate(rows))
     checked = max((r["score_checked_on"] for r in PROFILES.values() if r.get("score_checked_on")), default="")
@@ -2314,7 +2330,7 @@ def sellers_index():
   <div class="wrap">
     {sellers_filter(rows, clinics)}
     <div class="tbl-wrap"><table class="tbl tbl-cards tbl-sellers" id="sellers-table"><caption class="vh">Sellers, most checks first</caption>
-      <thead><tr><th scope="col">Seller</th><th scope="col">Kind</th><th scope="col">Checks</th><th scope="col">Products</th><th scope="col">Substances</th><th scope="col">FDA letters</th></tr></thead>
+      <thead><tr><th scope="col">Seller</th><th scope="col">Kind</th><th scope="col">Checks</th><th scope="col">Products</th><th scope="col">Substances</th><th scope="col">From /mg</th><th scope="col">FDA letters</th></tr></thead>
       <tbody>{trs}</tbody>
     </table></div>
     {more}
@@ -2505,19 +2521,6 @@ def compare_plan(r):
         ("Substance", escape(sub_label(r["substance_slug"])) if r.get("substance_slug") else "Names no medication"),
         ("FDA letter", letter),
         ("Prices checked", nice_date(r["last_seen"]))]}
-
-
-PPM_LOW, PPM_HIGH = 0.01, 100
-
-
-def compare_ppm(r):
-    """The seller's price per mg range from listings between $0.01 and $100/mg: its own lowest and highest, and those of
-    its top substances; a value outside the band is a misread unit until the database fixes it (owner, 2 Nov 2026, the
-    seller pages' Q6 a rule widened to the top). (None, None) when nothing is left."""
-    vals = [r.get("price_per_mg_min"), r.get("price_per_mg_max")]
-    vals += [x.get(k) for x in SELLER_SUBS.get(r["seller_slug"], []) for k in ("price_per_mg_min", "price_per_mg_max")]
-    vals = [v for v in vals if v is not None and PPM_LOW <= v <= PPM_HIGH]
-    return (min(vals), max(vals)) if vals else (None, None)
 
 
 def compare_seller(r):
