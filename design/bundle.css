@@ -177,15 +177,19 @@ body:has(.sellers-dlg[open]){overflow:hidden}
 .nav-js .nav.open{flex-direction:column;align-items:stretch;border-top:1px solid var(--line);padding-top:2px}
 }
 
-/* Header categories (pages.md, Every page, Header; owner task 3 Nov 2026, the "Home v2" sketch): five plain text buttons
-   (600, 15px, 44px tall, aria-expanded, no icon), neutral-tint on hover, the open one clinic-text. From 1180px the open
-   one has a 2px clinic line under it and its panel is a full-width white strip under the header (line hairlines,
-   shadow-card) with the links in the container on four columns: a group label (700, small) over links (600) with one
-   small ink-2 line each. Under 1180px the categories are an accordion inside the Menu (48px rows, 700, hairlines between),
-   the open one listing its links two to a row, without labels or lines. JavaScript off: every category shows open, as
-   columns under the logo. */
+/* Header categories (pages.md, Every page, Header; owner tasks 3 Nov 2026, the "Home v2" sketch and "Navigacija v2:
+   lebdeća kartica"): five plain text buttons (600, 15px, 44px tall, aria-expanded, no icon), neutral-tint on hover. From
+   1180px the open one is paper-2 with clinic-text and a 3px mark bar on the header's hairline, and its panel is a
+   floating card under it, never a strip: white, 1px line border, radius-panel, shadow-card; positioned by the script
+   (left edge on the item's, ending at least 24px inside the container), 8px under the hairline. Its width is its
+   columns: link columns 270px, the paper-2 "Start here" column 300px, hairlines between, each 22px 24px 24px inside.
+   Rows: the name (600, 15px) over one 13px ink-2 line, 9px 10px padding, 8px corners; hover and focus paper-2 with a
+   3px mark underline 3px under the name. Group labels 12px 600 ink-2, 14px above a group that follows another. Under
+   1180px the categories are an accordion inside the Menu (48px rows, 700, hairlines between), the open one listing its
+   links two to a row, without labels, lines or "Start here". JavaScript off: every category shows open, as columns
+   under the logo. */
 .nav-cats{display:flex;align-items:center;gap:2px;list-style:none;margin:0;padding:0}
-.nav-cat-btn{display:inline-flex;align-items:center;min-height:var(--touch);padding:0 12px;border:0;border-radius:var(--radius-control);background:none;font:600 15px var(--font-text);color:var(--ink);cursor:pointer;white-space:nowrap}
+.nav-cat-btn{position:relative;display:inline-flex;align-items:center;min-height:var(--touch);padding:0 12px;border:0;border-radius:var(--radius-control);background:none;font:600 15px var(--font-text);color:var(--ink);cursor:pointer;white-space:nowrap}
 .nav-cat-btn:hover{background:var(--neutral-tint)}
 .nav-cat.open .nav-cat-btn{color:var(--clinic-text)}
 .nav-cat-btn:focus-visible{outline:3px solid var(--clinic);outline-offset:2px}
@@ -197,11 +201,25 @@ body:has(.sellers-dlg[open]){overflow:hidden}
 .nav-panel a:focus-visible{outline:3px solid var(--clinic);outline-offset:2px;border-radius:var(--radius-control)}
 .nav-sub{font:400 var(--small-size)/1.4 var(--font-text);color:var(--ink-2)}
 .nav-panel .nav-panel-in{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px 28px;padding-top:20px;padding-bottom:22px}
-.nav-flat{display:contents}
 @media (min-width:1180px){
-.nav-js .nav-panel{display:none;position:absolute;left:0;right:0;top:100%;z-index:30;background:var(--white);border-top:1px solid var(--line);border-bottom:1px solid var(--line);box-shadow:var(--shadow-card)}
+.nav-js .nav-cat.open .nav-cat-btn{background:var(--paper-2)}
+.nav-js .nav-cat.open .nav-cat-btn::after{content:"";position:absolute;left:12px;right:12px;bottom:-13px;height:3px;background:var(--mark)}
+.nav-js .nav-panel{display:none;position:absolute;left:0;top:calc(100% + 8px);z-index:30;max-width:calc(100% - 48px);background:var(--white);border:1px solid var(--line);border-radius:var(--radius-panel);box-shadow:var(--shadow-card);overflow:hidden}
 .nav-js .nav-cat.open .nav-panel{display:block}
-.nav-js .nav-cat.open .nav-cat-btn{box-shadow:inset 0 -2px 0 var(--clinic)}
+.nav-js .nav-panel .nav-panel-in{display:flex;gap:0;padding:0}
+.nav-js .nav-col,.nav-js .nav-side{flex:none;box-sizing:border-box;padding:22px 24px 24px}
+.nav-js .nav-col{width:270px;border-right:1px solid var(--line)}
+.nav-js .nav-side{width:300px;background:var(--paper-2)}
+.nav-js .nav-panel .nav-h{margin:0 0 6px;font:600 12px/1.4 var(--font-text);color:var(--ink-2)}
+.nav-js .nav-col .nav-h:not(:first-child){margin-top:14px}
+.nav-js .nav-col a{display:block;min-height:0;margin:0 -10px;padding:9px 10px;border-radius:8px;color:var(--ink)}
+.nav-js .nav-col a:hover,.nav-js .nav-col a:focus-visible{background:var(--paper-2);color:var(--ink)}
+.nav-js .nav-col a:hover .nav-l,.nav-js .nav-col a:focus-visible .nav-l,.nav-js .nav-col a[aria-current="page"] .nav-l,.nav-js .nav-side a:hover,.nav-js .nav-side a:focus-visible{text-decoration:underline;text-decoration-color:var(--mark);text-decoration-thickness:3px;text-underline-offset:3px}
+.nav-js .nav-col .nav-l{display:block;white-space:nowrap}
+.nav-js .nav-col .nav-sub{display:block;margin-top:1px;font-size:13px;line-height:1.35}
+.nav-js .nav-side a{display:block;min-height:0;padding:7px 0;color:var(--ink)}
+.nav-js .nav-side a::after{content:"\00a0\2192" / "";color:var(--clinic)}
+.nav-count{margin:14px 0 0;padding-top:14px;border-top:1px solid var(--line);font-size:13px;line-height:1.4;color:var(--ink-2)}
 }
 @media (max-width:1179px){
 .nav-cats{flex-direction:column;align-items:stretch;gap:0}
@@ -211,7 +229,7 @@ body:has(.sellers-dlg[open]){overflow:hidden}
 .nav-js .nav-cat.open .nav-panel{display:block}
 .nav-panel .nav-panel-in{grid-template-columns:repeat(2,minmax(0,1fr));gap:0 16px;max-width:none;padding:0 4px 10px}
 .nav-col,.nav-col ul{display:contents}
-.nav-h,.nav-sub{display:none}
+.nav-h,.nav-sub,.nav-side{display:none}
 }
 html:not(.nav-js) .site-head>.wrap{flex-wrap:wrap;padding-top:10px;padding-bottom:10px}
 html:not(.nav-js) .site-head .brand{order:1}
@@ -222,6 +240,7 @@ html:not(.nav-js) .nav-cats{width:100%;display:grid;grid-template-columns:repeat
 html:not(.nav-js) .nav-cat{border:0}
 html:not(.nav-js) .nav-cat-btn{pointer-events:none;padding:0}
 html:not(.nav-js) .nav-panel .nav-panel-in{display:block;padding:0}
+html:not(.nav-js) .nav-side{display:none}
 /* Legal filter (pages.md, Home, "Is it legal today?", 1 Nov 2026): a labelled plain input and btn-line "Clear" above
    the table; "Show all N" (btn-line) under it. Shown only with JavaScript. */
 .legal-filter{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin-bottom:16px}

@@ -88,15 +88,19 @@ setTimeout(function(){if(!window.pcMotion)d.classList.remove('motion');},3000);}
 # Design book, Every page, Header: up to 900px the nav sits behind "Menu". The head script marks the page before it
 # paints, so the closed menu never flashes; with JavaScript off the mark is missing and the links show as a wrapped row.
 NAV_HEAD = "<script>document.documentElement.classList.add('nav-js');</script>"
-NAV_JS = """<script>
-// Header categories (pages.md, Every page, Header; owner task 3 Nov 2026): one open at a time. From 1180px a mouse opens
+NAV_SCRIPT = """// Header categories (pages.md, Every page, Header; owner task 3 Nov 2026): one open at a time. From 1180px a mouse opens
 // a category on hover and closes it 250ms after leaving; a click, Enter or Space opens it too (a mouse click never closes
 // one the hover opened). Arrow keys: left and right between the categories, down into the panel, up and down inside it.
 // Escape, a click outside or focus leaving closes it. Under 1180px the same buttons open the accordion inside the Menu.
 (function(){var cats=[].slice.call(document.querySelectorAll('.nav-cat'));if(!cats.length)return;
 var btns=cats.map(function(c){return c.querySelector('.nav-cat-btn');}),wide=matchMedia('(min-width: 1180px)'),t=null,ptr='';
 function cur(){for(var j=0;j<cats.length;j++)if(cats[j].classList.contains('open'))return j;return -1;}
-function set(i){clearTimeout(t);cats.forEach(function(c,j){c.classList.toggle('open',j===i);btns[j].setAttribute('aria-expanded',j===i?'true':'false');});}
+function set(i){clearTimeout(t);cats.forEach(function(c,j){c.classList.toggle('open',j===i);btns[j].setAttribute('aria-expanded',j===i?'true':'false');});if(i>=0)place(i);}
+// the card under its item (owner task 3 Nov 2026): left edge on the item's, moved left so it ends 24px inside the container
+function place(i){var pn=cats[i].querySelector('.nav-panel'),h=document.querySelector('.site-head'),w=h&&h.querySelector('.wrap');if(!w)return;
+if(!wide.matches){pn.style.left='';return;}var r=w.getBoundingClientRect(),cs=getComputedStyle(w),L=r.left+parseFloat(cs.paddingLeft),R=r.right-parseFloat(cs.paddingRight);
+var x=Math.max(L,Math.min(btns[i].getBoundingClientRect().left,R-24-pn.offsetWidth));pn.style.left=Math.round(x-h.getBoundingClientRect().left)+'px';}
+window.addEventListener('resize',function(){var i=cur();if(i>=0)place(i);});
 function links(i){return [].slice.call(cats[i].querySelectorAll('.nav-panel a'));}
 cats.forEach(function(c,i){var b=btns[i];
 b.addEventListener('pointerdown',function(e){ptr=e.pointerType;});
@@ -122,7 +126,9 @@ function set(o){n.classList.toggle('open',o);b.setAttribute('aria-expanded',o?'t
 b.addEventListener('click',function(){var o=!n.classList.contains('open');set(o);if(o){var f=[].filter.call(n.querySelectorAll('a,button,input'),function(x){return x.offsetParent;})[0];if(f)f.focus();}});
 n.addEventListener('click',function(e){if(e.target.closest('a'))set(false);});
 document.addEventListener('keydown',function(e){if(e.key==='Escape'&&n.classList.contains('open')){set(false);b.focus();}});})();
-</script>"""
+"""
+# one cached file for every page instead of 4 KB inline on each (Home stays under its 60 KB check with the card menu)
+NAV_JS = '<script src="/assets/nav.js" defer></script>'
 # Design book, Every page, Header, Search (owner task 2 Nov 2026): a plain field right of the links on wide screens, the first
 # item inside the phone Menu. Typing filters /search-index.json in the page (no library): at most 8 results under the field,
 # arrow keys move, Enter opens the chosen one (none chosen: the form goes to /search/), Escape closes. With JavaScript off
@@ -259,32 +265,79 @@ def nav_link(path, href, label, sub=""):
     return f'<li><a href="{href}"{cur}><span class="nav-l">{label}</span>{sub}</a></li>'
 
 
+def nav_counts():
+    """The count sentence under "Start here" (pages.md, Every page, Header; owner task 3 Nov 2026), from this build."""
+    parts = [plural(len(PROFILES), "seller") if PROFILES else "", plural(len(PEPTIDE_SLUGS), "substance") if PEPTIDE_SLUGS else "",
+             plural(len(LETTERS_ALL), "FDA letter") if LETTERS_ALL else ""]
+    parts = [x for x in parts if x]
+    return (", ".join(parts) + ". " if parts else "") + f"Checked {nice_date(DATA_CHECKED)}."
+
+
+def top_substances(n=2):
+    """The substances the most sellers list (shops' substances and clinics' plan medicines), with a page in this build."""
+    count = {}
+    for r in PROFILES.values():
+        for x in (clinic_subs(r) if r["seller_slug"] in CLINIC_PROFILES else shop_subs(r)):
+            count[x] = count.get(x, 0) + 1
+    return [x for x in sorted(count, key=lambda x: (-count[x], x)) if x in PEPTIDE_SLUGS][:n]
+
+
 def nav_cats(path):
     goals = {g["slug"]: g for g in ALL_GOALS if g.get("page") and built(f'/{g["slug"]}/')}
-    cols = []
-    for head, slugs in NAV_GOAL_GROUPS:
-        items = "".join(nav_link(path, f"/{s}/", goals[s]["label"],
-                                 plural(len(goals[s]["peptides"]), "option") + (f", from {goal_from(goals[s])}" if goal_from(goals[s]) else ""))
-                        for s in slugs if s in goals)
-        if items:
-            cols.append(f'<div class="nav-col"><p class="nav-h">{head}</p><ul>{items}</ul></div>')
+
+    def goal_link(sl):
+        g = goals[sl]
+        return nav_link(path, f"/{sl}/", g["label"], plural(len(g["peptides"]), "option") + (f", from {goal_from(g)}" if goal_from(g) else ""))
+
+    def col(groups):
+        out = "".join(f'<p class="nav-h">{head}</p><ul>{"".join(goal_link(x) for x in slugs if x in goals)}</ul>'
+                      for head, slugs in groups if any(x in goals for x in slugs))
+        return f'<div class="nav-col">{out}</div>' if out else ""
+
+    # By goal in two columns, as in the sketch: Hair and skin with Weight, then Body with Drive and aging
+    goal_cols = [col(NAV_GOAL_GROUPS[:2]), col(NAV_GOAL_GROUPS[2:])]
+    letters_on = max((r["letter_date"] for r in LETTERS_ALL if r.get("letter_date")), default="")
+    plans, sellers = compare_items() if (PLANS or PROFILES) else ([], [])
+    legal = next((g["line"] for g in guides.GUIDES if g["slug"] == "are-peptides-legal-in-the-us"), "")
+    topics = {t: sum(1 for g in guides.GUIDES if guides.TOPIC.get(g["slug"]) == t) for t, _ in LEARN_TOPICS}
     flat = {
-        "sellers": ("Sellers", [("/sellers/#clinics", "Online clinics", CLINIC_PROFILES), ("/sellers/", "Research-use shops", SHOPS),
-                                ("/compare/", "Compare any two", True)]),
-        "peptides": ("Peptides", [("/peptides/", "A to Z", True), ("/learn/are-peptides-legal-in-the-us/", "Legal status", True),
-                                  ("/fda-warning-letters/", "FDA warning letters", True)]),
-        "learn": ("Learn", [(f"/learn/#{t}", label, True) for t, label in LEARN_TOPICS] + [("/learn/", "All guides", True)]),
-        "about": ("About", [("/how-we-rate/", "How we rate", True), ("/about/", "About", True), ("/contact/", "Contact", True),
-                            ("/disclosure/", "How we make money", True)]),
+        "sellers": ("Sellers", [("/sellers/#clinics", "Online clinics", plural(len(CLINIC_PROFILES), "clinic") if CLINIC_PROFILES else ""),
+                                ("/sellers/", "Research-use shops", plural(len(SHOPS), "shop") if SHOPS else ""),
+                                ("/compare/", "Compare any two", " and ".join(x for x in (plural(len(plans), "plan") if plans else "",
+                                                                                          plural(len(sellers), "seller") if sellers else "") if x))]),
+        "peptides": ("Peptides", [("/peptides/", "A to Z", plural(len(PEPTIDE_SLUGS), "substance") if PEPTIDE_SLUGS else ""),
+                                  ("/learn/are-peptides-legal-in-the-us/", "Legal status", legal),
+                                  ("/fda-warning-letters/", "FDA warning letters",
+                                   f'{plural(len(LETTERS_ALL), "letter")}, the newest {nice_date(letters_on)}' if letters_on else "")]),
+        "learn": ("Learn", [(f"/learn/#{t}", label, plural(topics[t], "guide")) for t, label in LEARN_TOPICS if topics[t]]
+                  + [("/learn/", "All guides", plural(len(guides.GUIDES), "guide"))]),
+        "about": ("About", [("/how-we-rate/", "How we rate", ""), ("/about/", "About", ""), ("/contact/", "Contact", ""),
+                            ("/disclosure/", "How we make money", "")]),
     }
-    panels = [("goal", "By goal", "".join(cols))]
+    # "Start here", the card's right column: three links per category to pages in this build
+    start = {
+        "goal": [("/", "Cheapest approved option per goal"), ("/learn/are-peptides-legal-in-the-us/", "Is it legal today?"),
+                 ("/how-we-rate/", "How we rate sellers")],
+        "sellers": [("/sellers/#clinics", "Online clinics first"), ("/compare/", "Compare any two"), ("/how-we-rate/", "How we rate")],
+        "peptides": [(f"/peptides/{x}/", re.sub(r" *\(.*\)$", "", sub_label(x))) for x in top_substances()]
+                    + [("/fda-warning-letters/", "FDA warning letters")],
+        "learn": [(f'/learn/{g["slug"]}/', g["title"]) for g in guides.GUIDES[-3:]],  # the guides added last
+        "about": [("/disclosure/", "How we make money"), ("/contact/", "Contact"), ("/corrections/", "Corrections")],
+    }
+    panels = [("goal", "By goal", "".join(goal_cols))]
     for key, (label, items) in flat.items():
-        links = "".join(nav_link(path, h, t) for h, t, has in items if has and built(h.split("#")[0]))
+        links = "".join(nav_link(path, h, t, sub) for h, t, sub in items if built(h.split("#")[0])
+                        and (t != "Online clinics" or CLINIC_PROFILES) and (t != "Research-use shops" or SHOPS))
         if links:
-            panels.append((key, label, f'<ul class="nav-flat">{links}</ul>'))
+            panels.append((key, label, f'<div class="nav-col"><ul>{links}</ul></div>'))
+
+    def side(key):
+        links = "".join(f'<li><a href="{h}">{escape(t)}</a></li>' for h, t in start[key] if built(h.split("#")[0]))
+        return (f'<div class="nav-side"><p class="nav-h">Start here</p><ul>{links}</ul><p class="nav-count">{nav_counts()}</p></div>'
+                if links else "")
     return '<ul class="nav-cats">' + "".join(
         f'<li class="nav-cat"><button type="button" class="nav-cat-btn" aria-expanded="false" aria-controls="nav-p-{key}">{label}</button>'
-        f'<div class="nav-panel" id="nav-p-{key}"><div class="wrap nav-panel-in">{inner}</div></div></li>'
+        f'<div class="nav-panel nav-card" id="nav-p-{key}"><div class="nav-panel-in">{inner}{side(key)}</div></div></li>'
         for key, label, inner in panels if inner) + "</ul>"
 
 
@@ -4034,6 +4087,7 @@ def main():
     (DIST / "windows").mkdir(exist_ok=True)
     for k, html in GOAL_PANELS.items():
         (DIST / "windows" / f"goal-{k}.json").write_text(json.dumps({"html": html}), encoding="utf-8")
+    (DIST / "assets" / "nav.js").write_text(NAV_SCRIPT, encoding="utf-8")
     if home.JS:
         (DIST / "assets" / "home.js").write_text(home.JS, encoding="utf-8")
     if home.ROWS:

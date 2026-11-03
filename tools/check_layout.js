@@ -60,6 +60,33 @@ function pages(dir, base = '') {
     }
     await page.close();
   }
+  // Header cards (pages.md, Every page, Header; owner task 3 Nov 2026): each category open at 1180, 1440, 1920 and 2560px
+  // leaves no sideways scroll, stays inside the container (24px clear of its right edge) and keeps one pixel width
+  // from 1440px up.
+  const cardW = {};
+  for (const w of [1180, 1440, 1920, 2560]) {
+    const page = await browser.newPage({ viewport: { width: w, height: 900 } });
+    await page.goto(`http://127.0.0.1:${port}/`, { waitUntil: 'load' });
+    const count = await page.evaluate(() => document.querySelectorAll('.nav-cat').length);
+    for (let i = 0; i < count; i++) {
+      await page.click(`.nav-cat:nth-child(${i + 1}) .nav-cat-btn`);
+      const r = await page.evaluate((i) => {
+        const c = document.querySelectorAll('.nav-cat')[i], pn = c.querySelector('.nav-panel'), w = document.querySelector('.site-head .wrap');
+        const b = pn.getBoundingClientRect(), wb = w.getBoundingClientRect(), cs = getComputedStyle(w);
+        return { open: c.classList.contains('open'), sw: document.documentElement.scrollWidth, iw: window.innerWidth, left: b.left, right: b.right, width: Math.round(b.width),
+                 L: wb.left + parseFloat(cs.paddingLeft), R: wb.right - parseFloat(cs.paddingRight) };
+      }, i);
+      n++;
+      const tag = `${w}px header card ${i + 1}`;
+      if (!r.open) problems.push(`${tag}: does not open`);
+      if (r.sw > r.iw) problems.push(`${tag}: page scrolls sideways`);
+      if (r.left < r.L - 1 || r.right > r.R - 24 + 1) problems.push(`${tag}: outside the container (${Math.round(r.left)} to ${Math.round(r.right)})`);
+      if (w >= 1440) { (cardW[i] = cardW[i] || new Set()).add(r.width); }
+      await page.keyboard.press('Escape');
+    }
+    await page.close();
+  }
+  for (const [i, s] of Object.entries(cardW)) if (s.size > 1) problems.push(`header card ${+i + 1}: width changes from 1440px up (${[...s].join(', ')})`);
   await browser.close();
   server.close();
   console.log(`check-layout: ${problems.length ? problems.length + ' problem(s)' : 'ok'} (${n} checks)`);
