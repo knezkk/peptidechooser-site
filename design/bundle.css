@@ -111,8 +111,8 @@ body:has(.sellers-dlg[open]){overflow:hidden}
 .sellers-dlg .score{display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px;margin-bottom:8px}
 .sellers-dlg .score-n{font-size:var(--small-size);font-weight:600;color:var(--ink);white-space:nowrap}
 .sellers-dlg .score-marks{display:flex;flex-wrap:wrap;gap:4px}
-:is(.sellers-dlg .score-marks,.check-list) .chip{font-weight:600;font-size:11px;padding:1px 5px;border:1px solid transparent;white-space:nowrap}
-:is(.sellers-dlg .score-marks,.check-list) .mark-no{border:1px dashed var(--ink-muted)}
+:is(.sellers-dlg .score-marks,.check-list,.check-chips) .chip{font-weight:600;font-size:11px;padding:1px 5px;border:1px solid transparent;white-space:nowrap}
+:is(.sellers-dlg .score-marks,.check-list,.check-chips) .mark-no{border:1px dashed var(--ink-muted)}
 @media (min-width:641px){.sellers-dlg .score-marks{flex-wrap:nowrap}.sellers-dlg .tbl th:nth-child(2){width:20%}}
 .dlg-foot+.dlg-score{margin-top:4px}
 @media (max-width:640px){
@@ -393,3 +393,16 @@ html:not(.nav-js) .nav-panel .nav-panel-in{display:block;padding:0}
 /* Learn topics (pages.md, Learn): an h2 per topic over its guides */
 .prose .learn-topic{margin:48px 0 0}
 .learn-topic+.guide-list{margin-top:8px}
+/* Compact table (tbl-compact; pages.md, Seller; owner task 3 Nov 2026): the DataTable at 40px rows with 13px cells and
+   tighter padding, for the tables in the seller page's 8-column body; inside .tbl-wrap like every table, never wider
+   than its column (the frame scrolls). Under 640px a tbl-cards table still turns into cards. */
+@media (min-width:641px){
+.tbl-compact th{padding:8px 12px}
+.tbl-compact td{height:40px;padding:4px 12px;font-size:13px;line-height:1.35}
+.tbl-compact :is(.name,.sub,.num,a){font-size:13px}
+}
+/* Background check card, summary (pages.md, Seller; owner task 3 Nov 2026): one chip per check, the name only, then the
+   stamp and note, then "How we rate". The facts and dates are in the legit section. */
+.check-chips{list-style:none;margin:14px 0 0;padding:0;display:flex;flex-direction:column;align-items:flex-start;gap:8px}
+.check-chips .chip{font-size:12px;padding:3px 8px}
+.check-how{margin:12px 0 0;font-size:var(--small-size)}

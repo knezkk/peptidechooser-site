@@ -368,9 +368,25 @@ def check_parts(P):
         for w in re.findall(r"\b(safe|trusted|best|legit)\b", text, re.I):
             errs.append(f"{name}: seller page says '{w}'")
         if name != "sellers/index.html":
-            card = re.search(r'<div class="board check-card".*?<ul class="check-list">(.*?)</ul>', html, re.S)
+            # the seller page in one screen (owner task 3 Nov 2026): the five marks once, in the card, with no date in
+            # its rows; the five facts once, in the legit list; H1 "<Name> review" opening the unchanged title; the
+            # letters section at #fda-letters
+            card = re.search(r'<div class="board check-card".*?<ul class="check-chips">(.*?)</ul>', html, re.S)
             if not card or len(re.findall(r'class="chip chip-(?:ok|neutral) mark-(?:yes|no)"', card.group(1))) != 5:
                 errs.append(f"{name}: Background check card without its five marks")
+            elif re.search(r"\d{1,2} [A-Z][a-z]{2} \d{4}", re.sub(r"<[^>]+>", " ", card.group(1))):
+                errs.append(f"{name}: a date in the Background check card's check rows")
+            if len(re.findall(r'class="chip chip-(?:ok|neutral) mark-(?:yes|no)"', main.group(1) if main else "")) != 5:
+                errs.append(f"{name}: the check marks appear outside the card")
+            legit = re.search(r'<ul class="check-list legit-list">(.*?)</ul>', html, re.S)
+            if not legit or len(re.findall(r'<span class="check-key">', legit.group(1))) != 5 \
+                    or len(re.findall(r'class="check-line"', html)) != 5:
+                errs.append(f"{name}: the five facts not once, in the legit list")
+            h1 = [t.strip() for tag, t in P[name].h if tag == "h1"]
+            if not h1 or not h1[0].endswith(" review") or not P[name].title.strip().startswith(h1[0][:-7]):
+                errs.append(f"{name}: H1 not '<Name> review' or the title does not start with the name ({h1})")
+            if 'href="https://www.fda.gov/' in html and "FDA letter</a>" in html and 'id="fda-letters"' not in html:
+                errs.append(f"{name}: FDA letters without id=\"fda-letters\"")
             if "Checks are facts we hold about the seller, not a safety or quality grade." not in html:
                 errs.append(f"{name}: no note that the checks are facts, not a grade")
         else:
