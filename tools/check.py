@@ -78,8 +78,8 @@ class Text(HTMLParser):
 
 
 # The six things a peptide page can carry beyond its status (pages.md, Peptide, Thin pages), as the page shows them.
-PEP_SIGNALS = {"goal page": r'id="evidence"', "shop table": r'class="tbl tbl-cards tbl-sold">.*?<tbody><tr>',
-               "clinic plan": r'class="tbl tbl-cards tbl-clinics">.*?<tbody><tr', "FDA letter": r'tbl-pep-letters">.*?<tbody><tr>',
+PEP_SIGNALS = {"goal page": r'id="evidence"', "shop table": r'class="tbl (?:tbl-compact )?tbl-cards tbl-sold">.*?<tbody><tr>',
+               "clinic plan": r'class="tbl (?:tbl-compact )?tbl-cards tbl-clinics">.*?<tbody><tr', "FDA letter": r'tbl-pep-letters">.*?<tbody><tr>',
                "guide": r'id="guides-h"', "approved brand": r"<li><span>Approved brands</span>"}
 AUTHOR_LINE = re.compile(r'<p class="small meta"><a href="/about/">Peptide Chooser editorial team</a>\. Checked \d{1,2} [A-Z][a-z]{2,8} \d{4}\.</p>')
 
@@ -352,6 +352,23 @@ def check_parts(P):
         for w, n in about.items():
             if w in home and home[w] != n:
                 errs.append(f"about/index.html: {n} {w}, Home says {home[w]} (a count must come from the same data)")
+    # Substance pages (pages.md, Peptide; owner task 3 Nov 2026): the status line and "Where to get it" (or the cosmetic
+    # line) on every one; the first seller shown has the most checks among the page's shops.
+    for name in P:
+        if not re.match(r"peptides/[^/]+/index\.html$", name):
+            continue
+        html = (DIST / name).read_text(encoding="utf-8")
+        if 'class="pep-status"' not in html:
+            errs.append(f"{name}: no status line")
+        if "Where to get it" not in html:
+            errs.append(f"{name}: no Where to get it block")
+        where = re.search(r'<ul class="where-list">(.*?)</ul>', html, re.S)
+        table = re.search(r'<table class="tbl[^"]*tbl-sold".*?</table>', html, re.S)
+        if where and table:
+            first = re.search(r"(\d) of 5 checks", where.group(1))
+            best = max((int(n) for n in re.findall(r'<span class="num">(\d)</span> of 5 checks', table.group(0))), default=None)
+            if first and best is not None and int(first.group(1)) < best:
+                errs.append(f"{name}: the first shop shown has {first.group(1)} of 5 checks, the table's best has {best}")
     # Home's windows load on demand from dist/windows/<key>.json (owner UX audit, 3 Nov 2026): the same rules apply.
     for f in sorted((DIST / "windows").glob("*.json")) if (DIST / "windows").exists() else []:
         errs += window_errs(f"windows/{f.name}", json.loads(f.read_text(encoding="utf-8"))["html"])
@@ -495,12 +512,12 @@ def check_parts(P):
                 errs.append(f"search-index.json: {e['name']} links off the site")
     if "search/index.html" in P and "noindex" not in P["search/index.html"].meta.get("robots", ""):
         errs.append("search/index.html: not noindex")
-    # Peptide pages (pages.md, Peptide; owner task 2 Nov 2026): every page opens its short answer with the status and its
-    # source link, and no page on the site says a dose (an amount with how often or per what, or "take/inject N").
+    # Peptide pages (pages.md, Peptide; owner task 2 Nov 2026): every page opens with the status and its source link (the
+    # status line since the substance page v2, 3 Nov 2026), and no page on the site says a dose (an amount with how often or per what, or "take/inject N").
     for name in P:
         if name.startswith("peptides/") and name != "peptides/index.html":
             html = (DIST / name).read_text(encoding="utf-8")
-            if not re.search(r'<p class="intro">[^<]+\. <a href="https?://[^"]+" rel="nofollow">(FDA source|Source)</a>', html):
+            if not re.search(r'<p class="pep-status">.*?<a href="https?://[^"]+" rel="nofollow">(FDA source|Source)</a></p>', html):
                 errs.append(f"{name}: no status source link in the short answer")
         text = " ".join(P[name].parts)
         m = DOSE.search(text)

@@ -165,6 +165,9 @@ body:has(.sellers-dlg[open]){overflow:hidden}
 /* On phones, with JavaScript, the first 10 plans show, then btn-line "Show all N" (owner answer Q2 a, 2 Nov 2026); from 641px every row shows and the button is not drawn. */
 @media (max-width:640px){.clip .tbl-clinics tr.more{display:none}}
 @media (min-width:641px){.clinics-more{display:none}}
+/* On the substance page the first 10 plans show at every width, then "Show all N" (owner task 3 Nov 2026: one screen) */
+.pep-sold.clip .tbl-clinics tr.more{display:none}
+@media (min-width:641px){.pep-sold .clinics-more{display:block}}
 .clinics-more{margin:12px 0 0}
 
 /* Header menu (pages.md, Every page, Header, 31 Oct 2026; up to 1179px since 2 Nov 2026): below 1180px the categories
@@ -500,8 +503,9 @@ a.legal-card:hover{border-color:var(--clinic)}
 .tbl-legal a.ref:not(:has(sup)){display:inline;min-width:0;min-height:0;padding:0;margin:0}
 /* The goal page's clinic table (tbl-compact): from 641px each row is one line, the button's small line beside it and the
    care fee after the price, so a row is the 44px button plus 8px (owner task 3 Nov 2026). */
-@media (min-width:641px){.goal-sec .tbl-clinics .pick-act{flex-direction:row;align-items:center;gap:8px;padding:0;white-space:nowrap}
-.goal-sec .tbl-clinics td .sub{display:inline;margin-left:6px}.goal-sec .tbl-clinics td{height:auto;padding:4px 12px}}
+/* The substance page's clinic table (pep-sold) uses the same one-line rows (owner task 3 Nov 2026). */
+@media (min-width:641px){:is(.goal-sec,.pep-sold) .tbl-clinics .pick-act{flex-direction:row;align-items:center;gap:8px;padding:0;white-space:nowrap}
+:is(.goal-sec,.pep-sold) .tbl-clinics td .sub{display:inline;margin-left:6px}:is(.goal-sec,.pep-sold) .tbl-clinics td{height:auto;padding:4px 12px}}
 /* What to do next: three text links between hairlines, no card. */
 .next-list{list-style:none;margin:0;padding:0}
 .next-list li{padding:10px 0;border-top:1px solid var(--line)}
@@ -564,6 +568,22 @@ a.legal-card:hover{border-color:var(--clinic)}
 .check-bar .chip{width:10px;height:10px;padding:0;border-radius:2px;box-sizing:border-box}
 .check-bar .mark-yes{background:var(--action-text)}
 .check-bar .mark-no{border:1px dashed var(--ink-muted)}
+/* Where to get it (pages.md, Peptide; owner task 3 Nov 2026): the substance page's first block, a panel-line with three
+   lines: who (name, then the plan or the checks in small), the price, the one button. Phones: the button under the line. */
+.where-list{list-style:none;margin:12px 0 0;padding:0}
+.where-list li{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:12px;align-items:center;padding:8px 0;border-top:1px solid var(--line)}
+.where-who .sub{display:block;font-size:var(--small-size);line-height:1.4;color:var(--ink-2)}
+.where-who .sub .chip{margin-left:6px}
+.where-price{text-align:right}
+.where-price .num{font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
+.where-price .chip{margin-left:6px}
+.where-foot{margin:12px 0 0}
+@media (max-width:640px){.where-list li{grid-template-columns:minmax(0,1fr) auto}.where-list li>:last-child:not(.where-price){grid-column:1/-1}}
+/* A section placed in a panel on the substance page (pep-block, pages.md, Peptide): its heading at display-4, its lede in
+   small, no rule under it, so the panel reads as one block. */
+.pep-block .sec-hd,.pep-sold .sec-hd,.pep-where h2{margin:0 0 12px;padding:0;border:0}
+.pep-block .sec-hd h2,.pep-sold .sec-hd h2,.pep-where h2{font-size:var(--display-4-size);line-height:var(--display-4-lh);margin:0 0 4px}
+.pep-block .sec-hd p,.pep-sold .sec-hd p{font-size:var(--small-size);line-height:var(--small-lh);color:var(--ink-2);margin:0}
 /* Compare pairs and tool, decide (pages.md, Compare; owner task w2, 3 Nov 2026): the verdict under the author line, a
    white card with the h-sources heading "Which to pick" and one or two sentences; one small line of FDA letters under
    the table; "What to do next" as the guides' link list; the tool's pickers use the header search's list part, with
