@@ -23,30 +23,19 @@ p { margin: 0 0 1em; }
 
 /* Notice bar */
 .notice { background: var(--paper-2); font-size: var(--small-size); color: var(--ink-2); border-bottom: 1px solid var(--line); }
-.notice .wrap { min-height: 36px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; padding-top: 6px; padding-bottom: 6px; } /* text never touches the bar's edges */
-.notice .more { white-space: nowrap; }
+.notice .wrap { min-height: 36px; display: flex; align-items: center; padding-top: 6px; padding-bottom: 6px; } /* text never touches the bar's edges */
+.notice p { margin: 0; }
 
-/* Header */
-.site-head { border-bottom: 1px solid var(--line); background: var(--white); }
-.site-head .wrap { display: flex; align-items: center; gap: 24px; min-height: 72px; }
+/* Header (pages.md, Every page, Header; owner task 3 Nov 2026): from 1180px one row, logo, the five categories, the
+   search field and "Find a seller"; the open category's panel is a strip under the whole header */
+.site-head { position: relative; border-bottom: 1px solid var(--line); background: var(--white); }
+.site-head > .wrap { display: flex; align-items: center; gap: 24px; min-height: 72px; }
 .brand { display: inline-flex; align-items: center; gap: 10px; font: 800 20px var(--font-brand); letter-spacing: -0.015em; color: var(--ink); text-decoration: none; white-space: nowrap; }
 .brand img { width: auto; height: 20px; } /* the mark 20px tall, 10px (half its height) from the name */
-.nav { display: flex; gap: 2px; margin-left: auto; overflow-x: auto; scrollbar-width: none; }
-.nav::-webkit-scrollbar { display: none; }
-.nav a { flex: none; display: inline-flex; align-items: center; min-height: 44px; font: 600 15px var(--font-text); color: var(--ink); text-decoration: none; padding: 0 12px; border-radius: var(--radius-control); white-space: nowrap; }
-.nav a:hover { background: var(--neutral-tint); color: var(--ink); }
-.nav a[aria-current="page"] { color: var(--clinic-text); }
+.site-head .brand { flex: none; }
+.nav { display: flex; margin-left: auto; }
 .head-cta { flex: none; }
-/* 1180 to 1599px: the six header items and the search field keep one row beside the logo and the button (owner task 2 Nov 2026;
-   901 to 1100px before the field) */
-@media (min-width: 1180px) and (max-width: 1599px) {
-  .site-head .wrap { gap: 12px; }
-  .nav > a, .nav-goals-btn { padding: 0 5px; }
-  .head-search { margin-left: 4px; }
-  .head-search .input { font-size: 14px; padding: 0 8px; }
-}
-.site-head .brand, .nav-goals { flex: none; }
-@media (min-width: 1180px) { .nav { flex: 1 1 auto; justify-content: flex-end; } }
+@media (min-width: 1180px) and (max-width: 1599px) { .site-head > .wrap { gap: 16px; } }
 /* text for screen readers only (table headers of button columns) */
 .vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 .tbl th:has(.vh) { position: relative; } /* keeps the hidden text inside the scrolling table frame */
@@ -313,7 +302,10 @@ body > .crumbs { width: -moz-available; width: -webkit-fill-available; width: st
 .home-pairs { margin: 0; }
 /* 404: the goal pages, then the sections, as two lines of links (pages.md, 404) */
 .prose ul.nf-links { list-style: none; padding: 0; display: flex; flex-wrap: wrap; gap: 4px 20px; }
-.site-foot .trust { border-top: 1px solid var(--line-dark); margin-top: 24px; padding-top: 16px; display: flex; flex-wrap: wrap; gap: 8px 24px; }
+.site-foot .trust { max-width: none; border-top: 1px solid var(--line-dark); margin: 24px 0 0; padding-top: 16px; color: var(--ink-on-dark); }
+/* Footer columns (pages.md, Every page; owner task 3 Nov 2026): Browse, Trust and Data, one link per line */
+.foot-col .foot-links { flex-direction: column; flex-wrap: nowrap; gap: 6px; }
+.foot-col .foot-links a { display: inline-flex; align-items: center; min-height: 32px; }
 
 /* Creators, trust row */
 .sr { position: absolute; left: -999px; width: 1px; height: 1px; overflow: hidden; }
@@ -342,7 +334,7 @@ body > .crumbs { width: -moz-available; width: -webkit-fill-available; width: st
 
 @media (min-width: 760px) {
   .seller-cards { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .foot-grid { grid-template-columns: minmax(0, 5fr) minmax(0, 3fr) minmax(0, 3fr); gap: 48px; }
+  .foot-grid { grid-template-columns: minmax(0, 4fr) repeat(3, minmax(0, 2fr)); gap: 32px; }
   .home-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
   .criteria { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .glossary-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -419,16 +411,23 @@ body > .crumbs { width: -moz-available; width: -webkit-fill-available; width: st
   .tbl-letters .sub-phone { display: block; margin-top: 2px; font-size: var(--small-size); line-height: 1.4; color: var(--ink-2); font-weight: 400; }
 }
 @media (max-width: 1179px) {
-  /* Header up to 1179px (900px before the search field, 760px before Sellers; owner tasks 2 Nov 2026): logo and "Compare by goal" on the first row, "Menu" under them; the open menu (or, with
-     JavaScript off, the wrapped links) takes the full width below (pages.md, Every page, Header) */
-  .site-head .wrap { flex-wrap: wrap; gap: 6px 16px; padding-top: 10px; padding-bottom: 10px; min-height: 0; }
+  /* Header up to 1179px (owner task 3 Nov 2026): logo, the search field and "Menu" on the first row; the open Menu takes
+     the full width below with the five categories as an accordion and "Find a seller" as its last row. JavaScript off:
+     the categories show open under the logo, then the button (pages.md, Every page, Header) */
+  .site-head > .wrap { flex-wrap: wrap; gap: 6px 12px; padding-top: 10px; padding-bottom: 10px; min-height: 0; }
   .site-head .brand { order: 1; }
-  .head-cta { order: 2; margin-left: auto; }
-  .head-cta .btn { width: auto; min-height: 44px; padding: 0 14px; font-size: 14px; }
+  .head-search { order: 2; margin-left: auto; }
   .nav-toggle { order: 3; }
-  .nav { order: 4; width: 100%; margin-left: 0; flex-wrap: wrap; overflow: visible; }
-  .nav-js .nav.open { padding-bottom: 6px; }
-  .nav-js .nav.open a { width: 100%; }
+  .nav { order: 5; width: 100%; margin-left: 0; }
+  .head-cta { order: 6; width: 100%; padding-bottom: 10px; }
+  .head-cta .btn { width: 100%; }
+  .nav-js .nav:not(.open) ~ .head-cta { display: none; }
+}
+/* phones (760px): only the logo and "Menu" on the first row; the search field is the first row of the open Menu */
+@media (max-width: 760px) {
+  .nav-toggle { margin-left: auto; }
+  .head-search { order: 4; flex: 1 1 100%; max-width: none; margin: 6px 0 4px; }
+  .nav-js .nav:not(.open) ~ .head-search { display: none; }
 }
 @media (max-width: 640px) {
   .wrap { padding: 0 16px; }
@@ -451,7 +450,6 @@ body > .crumbs { width: -moz-available; width: -webkit-fill-available; width: st
   .band-2 { padding: 48px 0; margin-top: 48px; }
   .site-head .brand { font-size: 17px; gap: 8px; }
   .site-head .brand img { width: auto; height: 18px; }
-  .notice .more { display: none; }
   .prose h2 { font-size: 22px; margin-top: 40px; }
   .prose p, .prose li { font-size: 17px; }
   .board.rx { padding: 18px; }
