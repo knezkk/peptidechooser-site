@@ -4093,7 +4093,6 @@ def llms_sections():
     return "".join(f"\n## {name} ({plural(len(rows), 'page')})\n\n" + "".join(rows) for name, rows in groups.items() if rows)
 
 
-REDIRECTS = json.loads((ROOT / "data" / "redirects.json").read_text()) if (ROOT / "data" / "redirects.json").exists() else {}
 
 
 def main():
@@ -4179,6 +4178,10 @@ def main():
 
 
 # The Learn section (pages.md, Learn and Guide): /learn/ and the guides, from guides.py, which reads this module's helpers.
+# A guide whose path is in data/redirects.json is not built; its path becomes a redirect page in main() (owner answers
+# 1 a and 5 a, ODOBRENO PRAVILA - Karlo - 3. 11. 2026)
+REDIRECTS = json.loads((ROOT / "data" / "redirects.json").read_text()) if (ROOT / "data" / "redirects.json").exists() else {}
+guides.GUIDES[:] = [g for g in guides.GUIDES if f"/learn/{g['slug']}/" not in REDIRECTS]
 PAGES += guides.pages(sys.modules[__name__])
 # Home's sections under the hero (pages.md, Home), from home.py, once every helper above exists.
 PAGES = [home.finish(sys.modules[__name__], p) if p[0] == "/" else p for p in PAGES]

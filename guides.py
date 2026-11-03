@@ -911,7 +911,7 @@ def g_inject(b, f, N):
 <h2>Is there any evidence they grow hair?</h2>
 <p>Not in people, as far as we could find. The hair study quoted for copper peptides was done on follicles in a dish, with AHK-Cu, a close relative of GHK-Cu.{N('pm-pyo')} The studies on BPC-157 are in animals and cells.{N('fda-bulk-risks')}</p>
 <p>A study in a dish or in mice tells you what a substance does to cells. It does not tell you what an injection does to your hair, or what it does to the rest of you.</p>
-<p>A price per mg does not tell you either. It says nothing about what is in the vial: a lab report covers one batch, tested once, and only if a lab outside the shop did the test. Our guide on <a href="/learn/how-to-read-a-coa/">how to read a COA</a> shows what to look for. Our <a href="/learn/best-peptides-for-hair-growth/">best peptides for hair growth</a> guide puts these vials next to serums, biotin and the approved options.</p>
+<p>A price per mg does not tell you either. It says nothing about what is in the vial: a lab report covers one batch, tested once, and only if a lab outside the shop did the test. Our guide on <a href="/learn/how-to-read-a-coa/">how to read a COA</a> shows what to look for. Our <a href="/learn/peptides-for-hair-loss-what-works/">peptides for hair loss</a> guide puts these vials next to serums, biotin and the approved options.</p>
 
 <h2>What has the FDA said to the shops?</h2>
 {letters}
@@ -1069,7 +1069,7 @@ def g_muscle(b, f, N):
 
 <h2>What do they cost?</h2>
 <p>{counts or "We show shop prices once the shops are in our database."}{f" {tes_shops} shops also list tesamorelin as a research-use vial; that is not the approved medicine.{N('db-sellers')}" if tes_shops else ""}</p>
-<p>A price per mg says nothing about what is in a vial. Our guide on <a href="/learn/how-to-read-a-coa/">how to read a COA</a> shows what a lab report can tell you, and <a href="/learn/how-we-check-sellers/">how we check sellers</a> explains the five checks next to each shop.</p>
+<p>A price per mg says nothing about what is in a vial. Our guide on <a href="/learn/how-to-read-a-coa/">how to read a COA</a> shows what a lab report can tell you, and <a href="/how-we-rate/">How we rate</a> explains the five checks next to each shop.</p>
 
 <h2>So what are the best peptides for muscle?</h2>
 <p>On the evidence in people, none. The peptides sold for muscle raise hormone levels in short trials or were tested for other problems, and the FDA lists safety concerns for two of them. The approved growth hormone medicines are for medical conditions.</p>
@@ -1572,7 +1572,7 @@ def g_clinic_shop(b, f, N):
 <li><strong>No FDA letter</strong>, <strong>Company found</strong> and <strong>Legal pages</strong> mean the same for both.{N('own-how-we-rate')}</li>
 <li><strong>Fresh prices</strong> means our own crawl saw a current price on the seller's site in the last 30 days.{N('own-how-we-rate')}</li>
 </ul>
-<p>Our guide on <a href="/learn/how-we-check-sellers/">how we check sellers</a> explains each check with an example.</p>
+<p>Our <a href="/how-we-rate/">How we rate</a> page explains each check with an example.</p>
 
 <h2>Which kind gets FDA warning letters?</h2>
 <p>{who}</p>
@@ -1596,7 +1596,7 @@ def g_clinic_shop(b, f, N):
 <h2>So which should you buy from?</h2>
 <p>That is a medical decision, not a shopping one. Only a clinic gives you a prescriber and a pharmacy; only a brand medicine has FDA approval. A research-use vial is not meant for people.</p>
 <p>Our <a href="/weight-loss/">weight loss page</a> lists the clinic plans, and each shop on our goal pages has its five checks. None of this is medical advice.</p>"""
-    nxt = (("/weight-loss/", "Compare clinic prices"), ("/learn/how-we-check-sellers/", "How we check sellers"))
+    nxt = (("/weight-loss/", "Compare clinic prices"), ("/how-we-rate/", "How we rate"))
     return short, body, nxt
 
 
@@ -1721,10 +1721,10 @@ def g_self_check(b, f, N):
 </ul>
 
 <h2>Can we do this for you?</h2>
-<p>{sellers} Our <a href="/how-we-rate/">How we rate</a> page has the rules, and our guide on <a href="/learn/how-we-check-sellers/">how we check sellers</a> gives an example of each check.</p>
+<p>{sellers} Our <a href="/how-we-rate/">How we rate</a> page has the rules and an example of each check.</p>
 <p>None of this is medical or legal advice.</p>"""
     nxt = ((("/sellers/", "See all sellers") if b.PROFILES else (b.LETTERS_URL, "See FDA warning letters")),
-           ("/learn/how-we-check-sellers/", "How we check sellers"))
+           ("/how-we-rate/", "How we rate"))
     return short, body, nxt
 
 # Guides 23 to 28 (owner task 2 Nov 2026, feat/learn-5): pages built on our own numbers. Every count is worked out from
@@ -2063,7 +2063,7 @@ def g_by_numbers(b, f, N):
     if not total:
         short = "We show these numbers once our seller checks are in our database."
         return short, "<h2>Where are the numbers?</h2><p>This page fills in from our database.</p>", \
-            (("/how-we-rate/", "How we rate"), ("/learn/how-we-check-sellers/", "How we check sellers"))
+            (("/how-we-rate/", "How we rate"), ("/learn/how-to-check-a-peptide-seller/", "Check a seller yourself"))
     met = [(t, sum(bool(r.get(k)) for r in scored)) for k, t in b.SCORE_CHECKS]
     spread = Counter(r["score"] for r in scored)
     mid = sorted(r["score"] for r in scored)[total // 2]
@@ -2083,7 +2083,7 @@ def g_by_numbers(b, f, N):
     body = f"""
 <h2>What are these numbers?</h2>
 <p>Every peptide shop we track gets the same five yes or no checks: Lab reports, No FDA letter, Company found, Legal pages and Fresh prices. The score is how many it meets.{N('own-how-we-rate')} This page counts them again each time we pull our data; these numbers are as of {nice(on)}.</p>
-<p>Our guide <a href="/learn/how-we-check-sellers/">How we check sellers</a> explains each check with an example.</p>
+<p>Our <a href="/how-we-rate/">How we rate</a> page explains each check with an example.</p>
 
 <h2>Which kinds of shop are they?</h2>
 <p>{kinds_words}</p>
@@ -2117,7 +2117,7 @@ def g_by_numbers(b, f, N):
 <h2>Where can you see each seller?</h2>
 <p>Our <a href="/sellers/">sellers list</a> shows every shop and clinic with its score, and each seller's page shows its five checks with their dates. The seller windows on our goal pages, such as the <a href="/recovery/">recovery page</a>, show the shops for one peptide, and every substance has its own page under <a href="/peptides/">Peptides A to Z</a>.</p>
 <p>Paid links do not change a check, and nobody can buy a higher score.{N('own-how-we-rate')}</p>"""
-    nxt = (("/sellers/", "See all sellers"), ("/learn/how-we-check-sellers/", "How we check sellers"))
+    nxt = (("/sellers/", "See all sellers"), ("/how-we-rate/", "How we rate"))
     return short, body, nxt
 
 
@@ -2158,7 +2158,7 @@ def related(slug):
 # practical sentence, from the guide's own data, then the detail. A guide whose data has no such sentence keeps its
 # short answer as it was. Legal guides open with the FDA status; no source on the site says buying a research-use
 # peptide for yourself is or is not a crime, so that half is never written.
-SELLER_GUIDES = ("how-to-check-a-peptide-seller", "how-we-check-sellers", "peptide-seller-checks-by-the-numbers")
+SELLER_GUIDES = ("how-to-check-a-peptide-seller", "peptide-seller-checks-by-the-numbers")  # how-we-check-sellers moved to /how-we-rate/ (owner answer 5 a, 3 Nov 2026)
 
 
 def lead(b, f, N, slug):
