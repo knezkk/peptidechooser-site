@@ -564,9 +564,9 @@ def g_glp1(b, f, N):
     cs, bs, ct, bt = f["comp_sema"], f["brand_sema"], f["comp_tirz"], f["brand_tirz"]
     price = (f" At the online clinics we track, compounded semaglutide starts at {b.usd(cs['price_monthly'])}/mo and brand "
              f"semaglutide at {b.usd(bs['price_monthly'])}/mo.{N('plan-comp_sema')}{N('plan-brand_sema')}" if cs and bs else "")
-    short = (f"Brand semaglutide (Wegovy) and tirzepatide (Zepbound) are FDA approved for weight management; compounded "
-             f"copies are not, and the FDA does not check them before they are sold.{N('legal-1')}{N('legal-2')}"
-             f"{N('fda-compounding')}{price}")
+    # two sentences, so the first stays under 160 characters (owner task w2, 3 Nov 2026; the words unchanged)
+    short = (f"Brand semaglutide (Wegovy) and tirzepatide (Zepbound) are FDA approved for weight management.{N('legal-1')}{N('legal-2')} "
+             f"Compounded copies are not, and the FDA does not check them before they are sold.{N('fda-compounding')}{price}")
     rows = []
     for label, r, key in (("Compounded semaglutide", cs, "comp_sema"), ("Brand semaglutide (Wegovy)", bs, "brand_sema"),
                           ("Compounded tirzepatide", ct, "comp_tirz"), ("Brand tirzepatide (Zepbound)", bt, "brand_tirz")):
@@ -608,8 +608,8 @@ def g_glp1(b, f, N):
 
 def g_letter(b, f, N):
     top = f["subjects"]
-    short = ("A warning letter is the FDA's formal notice that it found what it believes are significant violations of the law; "
-             f"the company is asked to reply within 15 business days.{N('fda-letters')} It is public record, but it is not a "
+    short = ("A warning letter is the FDA's formal notice that it found what it believes are significant violations of the law. "
+             f"The company is asked to reply within 15 business days.{N('fda-letters')} It is public record, but it is not a "
              "court ruling and not a fine."
              + (f" Of the {f['letters']} letters on our letters page, the most common subject is \"{escape(top[0][0])}\" "
                 f"({top[0][1]} letters).{N('db-letters')}" if top else ""))
@@ -911,7 +911,7 @@ def g_inject(b, f, N):
 <h2>Is there any evidence they grow hair?</h2>
 <p>Not in people, as far as we could find. The hair study quoted for copper peptides was done on follicles in a dish, with AHK-Cu, a close relative of GHK-Cu.{N('pm-pyo')} The studies on BPC-157 are in animals and cells.{N('fda-bulk-risks')}</p>
 <p>A study in a dish or in mice tells you what a substance does to cells. It does not tell you what an injection does to your hair, or what it does to the rest of you.</p>
-<p>A price per mg does not tell you either. It says nothing about what is in the vial: a lab report covers one batch, tested once, and only if a lab outside the shop did the test. Our guide on <a href="/learn/how-to-read-a-coa/">how to read a COA</a> shows what to look for. Our <a href="/learn/best-peptides-for-hair-growth/">best peptides for hair growth</a> guide puts these vials next to serums, biotin and the approved options.</p>
+<p>A price per mg does not tell you either. It says nothing about what is in the vial: a lab report covers one batch, tested once, and only if a lab outside the shop did the test. Our guide on <a href="/learn/how-to-read-a-coa/">how to read a COA</a> shows what to look for. Our <a href="/learn/peptides-for-hair-loss-what-works/">peptides for hair loss</a> guide puts these vials next to serums, biotin and the approved options.</p>
 
 <h2>What has the FDA said to the shops?</h2>
 {letters}
@@ -1069,7 +1069,7 @@ def g_muscle(b, f, N):
 
 <h2>What do they cost?</h2>
 <p>{counts or "We show shop prices once the shops are in our database."}{f" {tes_shops} shops also list tesamorelin as a research-use vial; that is not the approved medicine.{N('db-sellers')}" if tes_shops else ""}</p>
-<p>A price per mg says nothing about what is in a vial. Our guide on <a href="/learn/how-to-read-a-coa/">how to read a COA</a> shows what a lab report can tell you, and <a href="/learn/how-we-check-sellers/">how we check sellers</a> explains the five checks next to each shop.</p>
+<p>A price per mg says nothing about what is in a vial. Our guide on <a href="/learn/how-to-read-a-coa/">how to read a COA</a> shows what a lab report can tell you, and <a href="/how-we-rate/">How we rate</a> explains the five checks next to each shop.</p>
 
 <h2>So what are the best peptides for muscle?</h2>
 <p>On the evidence in people, none. The peptides sold for muscle raise hormone levels in short trials or were tested for other problems, and the FDA lists safety concerns for two of them. The approved growth hormone medicines are for medical conditions.</p>
@@ -1572,7 +1572,7 @@ def g_clinic_shop(b, f, N):
 <li><strong>No FDA letter</strong>, <strong>Company found</strong> and <strong>Legal pages</strong> mean the same for both.{N('own-how-we-rate')}</li>
 <li><strong>Fresh prices</strong> means our own crawl saw a current price on the seller's site in the last 30 days.{N('own-how-we-rate')}</li>
 </ul>
-<p>Our guide on <a href="/learn/how-we-check-sellers/">how we check sellers</a> explains each check with an example.</p>
+<p>Our <a href="/how-we-rate/">How we rate</a> page explains each check with an example.</p>
 
 <h2>Which kind gets FDA warning letters?</h2>
 <p>{who}</p>
@@ -1596,7 +1596,7 @@ def g_clinic_shop(b, f, N):
 <h2>So which should you buy from?</h2>
 <p>That is a medical decision, not a shopping one. Only a clinic gives you a prescriber and a pharmacy; only a brand medicine has FDA approval. A research-use vial is not meant for people.</p>
 <p>Our <a href="/weight-loss/">weight loss page</a> lists the clinic plans, and each shop on our goal pages has its five checks. None of this is medical advice.</p>"""
-    nxt = (("/weight-loss/", "Compare clinic prices"), ("/learn/how-we-check-sellers/", "How we check sellers"))
+    nxt = (("/weight-loss/", "Compare clinic prices"), ("/how-we-rate/", "How we rate"))
     return short, body, nxt
 
 
@@ -1670,7 +1670,7 @@ FL_REGISTRY = "https://search.sunbiz.org/Inquiry/CorporationSearch/ByName"
 
 
 def g_self_check(b, f, N):
-    short = ("Five checks take about ten minutes: find the shop's newest lab report and its date, search the FDA's warning letter "
+    short = ("Five checks take about ten minutes. Find the shop's newest lab report and its date, search the FDA's warning letter "
              f"list for the shop's name and web address, look the company up in a state business registry, read its terms and refund "
              f"pages, and see when its prices last changed.{N('own-how-we-rate')}{N('fda-wl-list')} None of them tells you that a "
              f"product is safe; a research-use vial is not approved for use in people whatever the checks show.{N('drugsfda-hair')}")
@@ -1721,10 +1721,10 @@ def g_self_check(b, f, N):
 </ul>
 
 <h2>Can we do this for you?</h2>
-<p>{sellers} Our <a href="/how-we-rate/">How we rate</a> page has the rules, and our guide on <a href="/learn/how-we-check-sellers/">how we check sellers</a> gives an example of each check.</p>
+<p>{sellers} Our <a href="/how-we-rate/">How we rate</a> page has the rules and an example of each check.</p>
 <p>None of this is medical or legal advice.</p>"""
     nxt = ((("/sellers/", "See all sellers") if b.PROFILES else (b.LETTERS_URL, "See FDA warning letters")),
-           ("/learn/how-we-check-sellers/", "How we check sellers"))
+           ("/how-we-rate/", "How we rate"))
     return short, body, nxt
 
 # Guides 23 to 28 (owner task 2 Nov 2026, feat/learn-5): pages built on our own numbers. Every count is worked out from
@@ -2063,7 +2063,7 @@ def g_by_numbers(b, f, N):
     if not total:
         short = "We show these numbers once our seller checks are in our database."
         return short, "<h2>Where are the numbers?</h2><p>This page fills in from our database.</p>", \
-            (("/how-we-rate/", "How we rate"), ("/learn/how-we-check-sellers/", "How we check sellers"))
+            (("/how-we-rate/", "How we rate"), ("/learn/how-to-check-a-peptide-seller/", "Check a seller yourself"))
     met = [(t, sum(bool(r.get(k)) for r in scored)) for k, t in b.SCORE_CHECKS]
     spread = Counter(r["score"] for r in scored)
     mid = sorted(r["score"] for r in scored)[total // 2]
@@ -2083,7 +2083,7 @@ def g_by_numbers(b, f, N):
     body = f"""
 <h2>What are these numbers?</h2>
 <p>Every peptide shop we track gets the same five yes or no checks: Lab reports, No FDA letter, Company found, Legal pages and Fresh prices. The score is how many it meets.{N('own-how-we-rate')} This page counts them again each time we pull our data; these numbers are as of {nice(on)}.</p>
-<p>Our guide <a href="/learn/how-we-check-sellers/">How we check sellers</a> explains each check with an example.</p>
+<p>Our <a href="/how-we-rate/">How we rate</a> page explains each check with an example.</p>
 
 <h2>Which kinds of shop are they?</h2>
 <p>{kinds_words}</p>
@@ -2117,7 +2117,7 @@ def g_by_numbers(b, f, N):
 <h2>Where can you see each seller?</h2>
 <p>Our <a href="/sellers/">sellers list</a> shows every shop and clinic with its score, and each seller's page shows its five checks with their dates. The seller windows on our goal pages, such as the <a href="/recovery/">recovery page</a>, show the shops for one peptide, and every substance has its own page under <a href="/peptides/">Peptides A to Z</a>.</p>
 <p>Paid links do not change a check, and nobody can buy a higher score.{N('own-how-we-rate')}</p>"""
-    nxt = (("/sellers/", "See all sellers"), ("/learn/how-we-check-sellers/", "How we check sellers"))
+    nxt = (("/sellers/", "See all sellers"), ("/how-we-rate/", "How we rate"))
     return short, body, nxt
 
 
@@ -2154,18 +2154,108 @@ def related(slug):
             f'<ul>{items}</ul></section>')
 
 
+# The answer first (pages.md, Guide; owner task w2, UX audit B20, 3 Nov 2026): the short answer opens with the one
+# practical sentence, from the guide's own data, then the detail. A guide whose data has no such sentence keeps its
+# short answer as it was. Legal guides open with the FDA status; no source on the site says buying a research-use
+# peptide for yourself is or is not a crime, so that half is never written.
+# how-we-check-sellers moved to /how-we-rate/ (owner answer 5 a, 3 Nov 2026)
+SELLER_GUIDES = ("how-to-check-a-peptide-seller", "peptide-seller-checks-by-the-numbers")
+
+
+def lead(b, f, N, slug):
+    """The guide's first sentence from data, with its footnote, or ""."""
+    note = lambda k: N(k) if k in N.known else ""
+
+    def low(rows):
+        rows = [r for r in rows if r.get("price_monthly") is not None]
+        if not rows:
+            return None
+        r = min(rows, key=lambda r: (float(r["price_monthly"]), r["seller_name"]))
+        return (f"from {b.usd(r['price_monthly'])}/mo at {b.plural(len({x['seller_slug'] for x in rows}), 'clinic')}",
+                note(f"plan-{r['seller_slug']}-{r['plan_slug']}"), max(x.get("last_seen") or "" for x in rows))
+
+    def two(a, x, c, y):
+        if not (x and y):
+            return ""
+        return f"{a} {x[0]}{x[1]} and {c} {y[0]}{y[1]}, checked {nice(max(x[2], y[2]))}."
+    if slug == "compounded-semaglutide-price":
+        x = low(f["sema_comp"])
+        return f"Compounded semaglutide {x[0]}{x[1]}, checked {nice(x[2])}." if x else ""
+    if slug == "compounded-vs-brand-glp-1":
+        return two("Compounded semaglutide", low(f["sema_comp"]), "brand", low(f["sema_brand"]))
+    if slug == "semaglutide-vs-tirzepatide-price":
+        return two("Semaglutide", low(f["sema_all"]), "tirzepatide", low(f["tirz_all"]))
+    if slug == "ozempic-vs-wegovy-price":
+        by = lambda w: [r for r in b.PLANS if w in (r.get("plan_name") or "")]
+        return two("Ozempic", low(by("Ozempic")), "Wegovy", low(by("Wegovy")))
+    if slug == "cheapest-bpc-157-per-mg":  # the guide's own numbers (guide_stats), the same as its body
+        x = f["subs"].get("bpc-157") or {}
+        return (f"BPC-157 from {b.per_mg(x['ppm_min'])}/mg at {b.plural(x['shops'], 'shop')}, checked {nice(f['stats_on'])}.{note('db-sellers')}"
+                if x.get("ppm_min") is not None and x.get("shops") and f["stats_on"] else "")
+    if slug in SELLER_GUIDES and f["sellers"] and f["coa_12m"] is not None:
+        return f"{b.plural(f['sellers'], 'shop')} checked; {f['coa_12m']} have a lab report this year.{note('db-sellers')}"
+    if slug == "what-an-fda-warning-letter-means" and f["letters"] and f["letters_on"]:
+        return (f"We track {f['letters']} FDA warning letters to peptide sellers, compounders and online clinics, "
+                f"checked {nice(f['letters_on'])}.{note('db-letters')}")
+    if TOPIC.get(slug) == "hair":
+        g = next(x for x in b.ALL_GOALS if x["slug"] == "hair")
+        # the option the goal's checked price belongs to (its `price` names the goal)
+        pick = next((p for p in g["peptides"] if p.get("price") == g["slug"]), None)
+        src = next((f"hair-{x['n']}" for x in g.get("sources", []) if x["url"] == g.get("price_source")), "")
+        if pick and g["slug"] in b.PRICE_REF:
+            return f"FDA approved for hair loss: {pick['name']}, from ${g['price_from_usd']}/mo {g['price_note']}.{note(src)}"
+    return ""
+
+
+# "What to do next" (pages.md, Guide; owner task w2, 3 Nov 2026): under the two buttons, the pages the guide's subject
+# has in this build: its goal page, the compare page of the two substances it names, each substance's page and the
+# sellers that list it. Substances are the database substances named in the guide's title.
+GOAL_OF = {"hair": "hair", "glp1": "weight-loss"}
+GOAL_WORDS = (("muscle", "muscle"), ("recovery", "recovery"), ("bpc-157-vs-tb-500", "recovery"), ("skin", "skin"),
+              ("libido", "libido"), ("longevity", "longevity"))
+
+
+def guide_subs(b, g):
+    names = {x: re.sub(r" *\(.*\)$", "", b.sub_label(x)) for x in b.PEPTIDE_SLUGS}
+    found = [(m.start(), x) for x, n in names.items() for m in [re.search(rf"(?<![\w-]){re.escape(n)}(?![\w-])", g["title"], re.I)] if m]
+    return [x for _, x in sorted(found)], names
+
+
+def next_links(b, g, skip):
+    subs, names = guide_subs(b, g)
+    goal = GOAL_OF.get(TOPIC.get(g["slug"])) or next((v for k, v in GOAL_WORDS if k in g["slug"]), None)
+    out = []
+    if goal and b.built(f"/{goal}/"):
+        label = next(x["label"] for x in b.ALL_GOALS if x["slug"] == goal)
+        out.append((f"/{goal}/", f"{label}: every option compared"))
+    if len(subs) >= 2 and b.built(b.cmp_path(subs[0], subs[1])):
+        out.append((b.cmp_path(subs[0], subs[1]), f"{names[subs[0]]} vs {names[subs[1]]}, side by side"))
+    sold = {x for r in b.PROFILES.values() for x in (b.clinic_subs(r) if r["seller_slug"] in b.CLINIC_PROFILES else b.shop_subs(r))}
+    for x in subs:
+        if b.built(f"/peptides/{x}/"):
+            out.append((f"/peptides/{x}/", f"{names[x]}: FDA status and prices"))
+        if x in sold and b.built("/sellers/"):
+            out.append((f"/sellers/#substance={x}", f"Sellers of {names[x]} we track"))
+    seen = set(skip)
+    out = [(h, t) for h, t in out if not (h in seen or seen.add(h))]
+    lis = "".join(f'<li><a href="{h}">{escape(t)}</a></li>' for h, t in out)
+    return f'<ul class="next-links">{lis}</ul>' if out else ""
+
+
 def guide_body(b, g):
     f = facts(b)
     N = Notes(known_sources(b, f))
+    first = lead(b, f, N, g["slug"])  # cited first, so its footnote is number 1
     short, body, (ink, line) = TEXTS[g["slug"]](b, f, N)
     return f"""
 <article class="page guide"><div class="wrap prose">
 <h1>{g["h1"]}</h1>
 <p class="small meta"><a href="/about/">{b.AUTHOR}</a>. Checked {nice(checked(b))}.</p>
-<section class="short-answer" aria-labelledby="short-h"><h2 id="short-h">Short answer</h2><p>{short}</p></section>
+<section class="short-answer" aria-labelledby="short-h"><h2 id="short-h">Short answer</h2><p>{(first + " ") if first else ""}{short}</p></section>
 {body}
 <h2>What to do next</h2>
 <div class="btn-row"><a class="btn btn-ink" href="{ink[0]}">{ink[1]}</a><a class="btn btn-line" href="{line[0]}">{line[1]}</a></div>
+{next_links(b, g, (ink[0], line[0]))}
 {related(g["slug"])}
 <section class="guide-sources" aria-labelledby="sources-h"><h2 id="sources-h" class="h-sources">Sources</h2>
 <ol class="small sources">{N.html()}</ol></section>
@@ -2173,31 +2263,56 @@ def guide_body(b, g):
 """
 
 
-# /learn/ by topic (pages.md, Learn; owner task 3 Nov 2026): one h2 per topic, its id the target of the header's Learn links
-LEARN_GROUPS = [("hair", "Hair"), ("glp1", "GLP-1"), ("legal", "Legal"), ("buying", "Buying"), ("data", "Data"), ("body", "Body")]
+# /learn/ by topic (pages.md, Learn; owner task 3 Nov 2026): one h2 per topic, its id the target of the header's Learn
+# links, with one line on what the topic answers (owner task w2, 3 Nov 2026)
+LEARN_GROUPS = [("hair", "Hair", "What works for hair loss, what is marketing, and what it costs."),
+                ("glp1", "GLP-1", "Semaglutide and tirzepatide: brand, compounded and what clinics charge."),
+                ("legal", "Legal", "What the FDA allows, and what a label or a warning letter means."),
+                ("buying", "Buying", "Clinics, pharmacies and shops: what each sells and how to check one."),
+                ("data", "Data", "Our own numbers: prices per mg, seller checks and FDA letters."),
+                ("body", "Body", "Muscle, healing, skin, sex drive and aging: the evidence and the FDA status.")]
+WPM = 200  # reading speed for "N min read"
+START_HERE = 3
 
 
-def learn_body(b):
+def read_min(body):
+    words = len(re.sub(r"<[^>]+>", " ", re.sub(r'<section class="(?:related|guide-sources)".*?</section>', "", body, flags=re.S)).split())
+    return max(1, round(words / WPM))
+
+
+def learn_body(b, mins, start):
     def row(g):
         return (f'<li><h3><a href="/learn/{g["slug"]}/">{g["title"]}</a></h3><p>{g["line"]}</p>'
-                f'<p class="small">Checked {nice(checked(b))}</p></li>')
-    items = "".join(f'<h2 class="learn-topic" id="{t}">{label}</h2><ul class="guide-list">{"".join(row(g) for g in GUIDES if TOPIC.get(g["slug"]) == t)}</ul>'
-                    for t, label in LEARN_GROUPS if any(TOPIC.get(g["slug"]) == t for g in GUIDES))
+                f'<p class="small">{mins[g["slug"]]} min read · Checked {nice(checked(b))}</p></li>')
+    items = "".join(f'<h2 class="learn-topic" id="{t}">{label}</h2><p class="learn-line">{line}</p>'
+                    f'<ul class="guide-list">{"".join(row(g) for g in GUIDES if TOPIC.get(g["slug"]) == t)}</ul>'
+                    for t, label, line in LEARN_GROUPS if any(TOPIC.get(g["slug"]) == t for g in GUIDES))
+    firsts = "".join(f'<li><a href="/learn/{g["slug"]}/">{g["title"]}</a></li>' for g in start)
+    start_html = (f'<section class="learn-start" aria-labelledby="start-h"><h2 id="start-h" class="h-sources">Start here</h2>'
+                  f'<ul>{firsts}</ul></section>') if start else ""
     return f"""
 <section class="page learn"><div class="wrap prose">
 <h1>{LEARN_H1}</h1>
 <p class="lede">Short answers to the questions people ask about peptides in the US, each with its sources. No doses, no sales.</p>
 <p class="small meta"><a href="/about/">Peptide Chooser editorial team</a>. Every claim links to its source.</p>
+{start_html}
 {items}
 </div></section>
 """
 
 
 def pages(b):
-    """/learn/ and the guides as build.py PAGES rows: (path, file, title, description, body, schema, crumb)."""
-    out = [("/learn/", "learn/index.html", LEARN_TITLE, LEARN_DESC, learn_body(b), "", [("/learn/", "Learn")])]
+    """/learn/ and the guides as build.py PAGES rows: (path, file, title, description, body, schema, crumb). The guides
+    are built first: /learn/ needs their read times and "Start here", the three guides the most other pages link to
+    (pages already built and the guides themselves, a page counted once per guide)."""
+    out = []
     for g in GUIDES:
         path = f"/learn/{g['slug']}/"
         out.append((path, f"learn/{g['slug']}/index.html", g["title"], g["desc"], guide_body(b, g), article_schema(b, g),
                     [("/learn/", "Learn"), (path, g["title"])]))
-    return out
+    mins = {g["slug"]: read_min(row[4]) for g, row in zip(GUIDES, out)}
+    bodies = [(p[0], p[4]) for p in b.PAGES] + [(p[0], p[4]) for p in out]
+    inbound = {g["slug"]: sum(1 for path, body in bodies if path != f"/learn/{g['slug']}/" and f'href="/learn/{g["slug"]}/"' in body)
+               for g in GUIDES}
+    start = sorted(GUIDES, key=lambda g: (-inbound[g["slug"]], GUIDES.index(g)))[:START_HERE]
+    return [("/learn/", "learn/index.html", LEARN_TITLE, LEARN_DESC, learn_body(b, mins, start), "", [("/learn/", "Learn")])] + out
