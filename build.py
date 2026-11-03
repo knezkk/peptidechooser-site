@@ -1989,6 +1989,28 @@ def seller_description(r):
     return out
 
 
+def legal_state(r):
+    """The Legal pages check in one of five states (owner task 3 Nov 2026; pages.md, Seller), from the newest legal-pages
+    crawl (site.seller_profile legal_check_outcome and legal_checked_on): (state, sentence). A blocked or failed attempt
+    is not met; the score does not change. Data from before the two columns falls back to the seen pages alone."""
+    pages = (("terms", "Terms"), ("privacy", "Privacy"), ("refund", "Refund"))
+    seen = [r.get(f"{k}_seen") for k, _ in pages]
+    out, on = r.get("legal_check_outcome"), r.get("legal_checked_on")
+    date = f" ({nice_date(on)})" if on else ""
+    if r.get("score_legal_pages"):
+        return "Met", "Terms, privacy and refund pages found."
+    if out == "blocked":
+        return "Could not check", f"the site blocks our crawler{date}."
+    if out == "failed":
+        return "Could not check", f"the site did not answer{date}."
+    if out is None and all(x is None for x in seen):
+        return "Not checked yet", "Terms, privacy and refund pages."
+    return "Not met", "Missing: " + ", ".join(t.lower() for (k, t), x in zip(pages, seen) if not x) + " page."
+
+
+LEGAL_STATES = ("Met", "Not met", "Could not check", "Not checked yet")
+
+
 def check_lines(r):
     """One plain line per check for the Background check card, each with its date."""
     lab = "None found." if r["seller_slug"] in CLINIC_PROFILES else (f"{plural(r['coa_count'], 'lab report')}, the newest dated {nice_date(r['newest_coa_date'])}."
@@ -2002,11 +2024,9 @@ def check_lines(r):
                f"{r['registry_status']} in the state registry on {nice_date(r['registry_checked_on'])}."
                if r.get("score_registered_company") and r.get("entity_name") and r.get("registry_status") and r.get("registry_checked_on")
                else "Not found in a state registry.")
-    pages = [(k, t) for k, t in (("terms", "Terms"), ("privacy", "Privacy"), ("refund", "Refund"))]
-    seen = [r.get(f"{k}_seen") for k, _ in pages]
-    legal = ("Terms, privacy and refund pages found." if r.get("score_legal_pages") else
-             "Terms, privacy and refund pages: not checked yet." if all(s is None for s in seen) else
-             "Missing: " + ", ".join(t.lower() for (k, t), s in zip(pages, seen) if not s) + " page.")
+    state, said = legal_state(r)
+    legal = ({"Not checked yet": "Terms, privacy and refund pages: not checked yet.",
+              "Could not check": f"Could not check: {said}"}.get(state, said))
     seen_on = r.get("price_updated_at")
     fresh = (f"Prices checked {nice_date(seen_on)}." if r.get("score_fresh_prices") and seen_on else
              f"No recent price; the newest is from {nice_date(seen_on)}." if seen_on else "No price seen.")
@@ -2272,13 +2292,12 @@ def legit_section(r):
     """"Is <Name> legit? What we can check" (pages.md, Seller; owner task 2 Nov 2026): right after the short answer, the five
     checks in the seller page's order, each "Met:" or "Not met:" with the check card's fact, then the closing sentence."""
     lines = check_lines(r)
-    # a check that has not run yet says so, not "Not met" (owner answer Q3 b, 2 Nov 2026): today the legal pages, while
-    # terms, privacy and refund are all unknown
-    unrun = {"score_legal_pages": "Terms, privacy and refund pages."} if all(
-        r.get(f"{x}_seen") is None for x in ("terms", "privacy", "refund")) and not r.get("score_legal_pages") else {}
-    state = lambda k: "Not checked yet" if k in unrun else "Met" if r.get(k) else "Not met"
+    # the legal pages check has five states (legal_state; owner task 3 Nov 2026): a check that has not run says so, a
+    # crawl the site blocked or that got no answer says it could not check, with the date of the attempt
+    legal = legal_state(r)
+    line = lambda k: f"{legal[0]}: {legal[1]}" if k == "score_legal_pages" else f'{"Met" if r.get(k) else "Not met"}: {lines[k]}'
     items = "".join(
-        f'<li>{card_chip(k, t, r)}<span class="check-line">{state(k)}: {unrun.get(k, lines[k])}</span></li>'
+        f'<li>{card_chip(k, t, r)}<span class="check-line">{line(k)}</span></li>'
         for k, t in SCORE_CHECKS)
     return f"""
 <section class="section legit" id="legit">
@@ -3647,6 +3666,13 @@ def main():
         print(f"peptide pages: {len(PEPTIDE_SLUGS) - len(PEP_THIN)} indexed, {len(PEP_THIN)} noindex (fewer than {PEP_MIN_SIGNALS} of the six)")
         for x in PEP_THIN:
             print(f"  noindex /peptides/{x}/: has {', '.join(k for k, v in pep_signals(x).items() if v) or 'only its status'}")
+    if PROFILES:  # the Legal pages check per state on the seller pages (owner task 3 Nov 2026), for the report
+        n = {k: 0 for k in LEGAL_STATES}
+        for r in PROFILES.values():
+            n[legal_state(r)[0]] += 1
+        out = [r.get("legal_check_outcome") for r in PROFILES.values() if legal_state(r)[0] == "Could not check"]
+        print("legal pages: " + ", ".join(f"{k} {v}" for k, v in n.items())
+              + (f" (blocked {out.count('blocked')}, failed {out.count('failed')})" if out else ""))
 
 
 # The Learn section (pages.md, Learn and Guide): /learn/ and the guides, from guides.py, which reads this module's helpers.

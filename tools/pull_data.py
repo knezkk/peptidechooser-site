@@ -185,7 +185,9 @@ def main():
         "price_per_mg_max, coa_count, newest_coa_date, fda_letter_count, last_fda_letter_date, entity_name, entity_state, "
         "entity_evidence, entity_source_url, registry_status, registry_checked_on, terms_seen, terms_checked_on, privacy_seen, "
         "privacy_checked_on, refund_seen, refund_checked_on, first_seen, price_updated_at, score, score_lab_testing, "
-        "score_no_fda_letter, score_registered_company, score_legal_pages, score_fresh_prices, score_checked_on "
+        "score_no_fda_letter, score_registered_company, score_legal_pages, score_fresh_prices, score_checked_on, "
+        # the newest legal-pages crawl (peptide-data spec 0015 decision 28): found, absent, blocked, failed or null
+        "legal_checked_on, legal_check_outcome "
         "from site.seller_profile order by seller_slug")
     d["seller_substances"] = top_substances(rows(
         "select seller_slug, substance_slug, listing_count, price_per_mg_min, price_per_mg_max, has_coa, "

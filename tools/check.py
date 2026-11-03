@@ -307,6 +307,20 @@ def check_parts(P):
         f = DIST / "sellers" / slug / "index.html"
         if f.exists() and "we never link to the shop" in f.read_text(encoding="utf-8"):
             errs.append(f"sellers/{slug}/index.html: clinic page says 'we never link to the shop'")
+    # The Legal pages line on a seller page (owner task 3 Nov 2026; pages.md, Seller): only the five states' wordings, in
+    # the Background check card (the fact alone) and in the legit list ("<state>: <fact>").
+    date = r"(?: \(\d{1,2} [A-Z][a-z]{2} \d{4}\))?"
+    could = rf"Could not check: the site (?:blocks our crawler|did not answer){date}\."
+    missing = r"Missing: [a-z, ]+ page\."
+    legal_ok = re.compile(rf"(?:Met: )?Terms, privacy and refund pages found\.|(?:Not met: )?{missing}|{could}"
+                          r"|Terms, privacy and refund pages: not checked yet\.|Not checked yet: Terms, privacy and refund pages\.")
+    for name in P:
+        if not re.match(r"sellers/[^/]+/index\.html$", name):
+            continue
+        html = (DIST / name).read_text(encoding="utf-8")
+        for m in re.finditer(r'>Legal pages(?:<span class="vh">[^<]*</span>)?</span><span class="check-line">([^<]*)</span>', html):
+            if not legal_ok.fullmatch(m.group(1)):
+                errs.append(f"{name}: Legal pages line not one of the five states: {m.group(1)!r}")
     # Home's windows load on demand from dist/windows/<key>.json (owner UX audit, 3 Nov 2026): the same rules apply.
     for f in sorted((DIST / "windows").glob("*.json")) if (DIST / "windows").exists() else []:
         errs += window_errs(f"windows/{f.name}", json.loads(f.read_text(encoding="utf-8"))["html"])
