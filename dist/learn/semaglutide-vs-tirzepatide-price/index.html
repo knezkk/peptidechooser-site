@@ -144,7 +144,7 @@ document.addEventListener('click',function(e){if(w.classList.contains('open')&&!
 document.addEventListener('keydown',function(e){if(e.key==='Escape'&&w.classList.contains('open')){set(false);b.focus();}});})();
 </script>
 <script>
-(function(){var idx=null,wait=[],ORDER={Goal:0,Peptide:1,Seller:2,Page:3};
+(function(){var idx=null,wait=[],ORDER={Goal:0,Peptide:1,Seller:2,Clinic:3,Comparison:4,Guide:5,Page:6};
 function load(cb){if(idx)return cb(idx);wait.push(cb);if(wait.length>1)return;
 fetch('/search-index.json').then(function(r){return r.json();}).then(function(d){idx=d;var w=wait;wait=[];w.forEach(function(f){f(d);});}).catch(function(){wait=[];});}
 function c(s){return String(s||'').toLowerCase().replace(/[^a-z0-9]+/g,'');}
