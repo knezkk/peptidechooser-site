@@ -14,6 +14,7 @@ import shutil
 from datetime import date
 
 import guides
+import home
 
 ROOT = Path(__file__).parent
 DIST = ROOT / "dist"
@@ -66,7 +67,6 @@ try{localStorage.setItem('pc-consent',v);}catch(e){}
 if(v==='yes'&&window.pcLoadGA){pcLoadGA();}
 b.hidden=true;});})();
 </script>""" if GA4_ID else ""
-STANDING_LINE = f"Every claim links to its source. Prices checked {CHECKED}."
 
 
 def author_line(iso):
@@ -403,79 +403,6 @@ def item_list_schema(name, items):
                           "numberOfItems": len(els), "itemListElement": els}) + "</script>")
 
 
-def visit(g, small=False, p=None):
-    """The paid Visit button for a goal: a sponsored /out/ link with "Paid link" under it once data/site.json has the
-    goal's affiliate url, until then a disabled span (no link, no rel) with "No paid link yet" under it. On an option row
-    whose medicine needs no prescription (minoxidil) it reads "Pharmacy" (owner UX audit, 3 Nov 2026; "Pharmacy, no prescription"
-    does not fit the 160px button, and the row's how line already says "No prescription")."""
-    size = " btn-sm" if small else ""
-    label = "Pharmacy" if p is not None and needs_rx(p) is False else "Online clinic"
-    a = g.get("affiliate") or {}
-    if a.get("url") and a.get("name"):
-        return (f'<a class="btn btn-action{size}" href="/out/{a["name"]}/" rel="sponsored">{label}</a>'
-                f'<span class="paid">Paid link</span>')
-    return f'<span class="btn btn-action{size}" role="button" aria-disabled="true">{label}</span><span class="paid">No paid link yet</span>'
-
-
-def top_pick(g):
-    """The goal's best proven option: the first FDA-approved one in its options (or its chooser options when it has
-    no comparison page), else the one marked best. Returns (name, status chip html, option) or None."""
-    if g.get("options"):
-        items = [(o, o["name"], o["fda"], status_chip(o, "fda_chip", "fda")) for o in g["options"]]
-    else:
-        items = [(p, p["name"].replace(" (proven alternative)", ""), p["status"], status_chip(p)) for p in g["peptides"]]
-    # top_pick: false keeps an option out (e.g. tesamorelin: approved, but not for the goal's use)
-    rows = [(name, status, item.get("best"), chip, item) for item, name, status, chip in items if item.get("top_pick", True)]
-    pick = next((r for r in rows if r[1].startswith("FDA approved")), None) or next((r for r in rows if r[2]), None)
-    return (pick[0], pick[3], pick[4]) if pick else None
-
-
-def sold_peptide(g):
-    """For a goal with no top pick: its most asked-about peptide, the first not-approved option (database chip when
-    there is one) that research-use shops sell, since the card says so. Returns (name, status chip html) or None."""
-    for item in g.get("options") or g["peptides"]:
-        s = db_status(item["substance"]) if item.get("substance") else None
-        chip = s["chip"] if s else item.get("chip", item.get("fda_chip"))
-        if chip == "neutral" and "research-use" in (item.get("does", "") + " " + item.get("how", "")).lower():
-            return item["name"], status_chip(item) if "chip" in item else status_chip(item, "fda_chip", "fda")
-    return None
-
-
-def goal_rows():
-    """"Compare by goal" (owner, 1 Nov 2026: one table for all seven goals, replacing "Top pick per goal"): the goal,
-    its best proven option (the top-pick rule), the price where a priced option or plan exists, the FDA status chip,
-    "Compare" for a goal with its own page, and Visit for a goal with an approved option."""
-    rows = []
-    for g in ALL_GOALS:
-        pick = top_pick(g)
-        if pick:
-            option, chip = f'<span class="name">{pick[0]}</span>', pick[1]
-        else:
-            sold = sold_peptide(g)
-            option = '<span class="note">No FDA-approved option</span>' + (f'<span class="name">{sold[0]}</span><span class="note">Sold by research-use shops; we do not link to them.</span>' if sold else "")
-            chip = sold[1] if sold else ""
-        price = ""
-        if g["slug"] in PRICE_REF:
-            n = PRICE_REF[g["slug"]]
-            price = (f'<span class="num-l">${g["price_from_usd"]}<span class="num-unit">/mo</span></span>'
-                     f'<sup><a class="ref" href="#src-price-{g["slug"]}" aria-label="Source {n}">{n}</a></sup><span class="note">{g["price_note"]}</span>')
-        elif pick and opt_price(pick[2], g["slug"]):
-            price = opt_price(pick[2], g["slug"])
-        price += plan_line(g, "note")
-        compare = f'<a class="btn btn-ink btn-sm" href="/{g["slug"]}/">Compare</a>' if g.get("page") else ""
-        act = f'<span class="pick-act">{visit(g, small=True)}</span>' if pick else ""
-        rows.append(f"""<tr>
-  <td>{f'<a class="name" href="/{g["slug"]}/">{g["label"]}</a>' if g.get("page") else f'<span class="name">{g["label"]}</span>'}</td>
-  <td>{option}</td>
-  <td>{price}</td>
-  <td>{chip}</td>
-  <td class="act">{compare}</td>
-  <td class="act">{act}</td>
-</tr>""")
-    return "\n".join(rows)
-
-
-COMPARE_TH = '<th scope="col"><span class="vh">Compare</span></th><th scope="col"><span class="vh">Online clinic</span></th>'
 ALL_GOALS = DATA["goals"]
 LEGAL = DATA["legal"]
 CREATORS = DATA["creators"]
@@ -519,6 +446,19 @@ def usd(v):
     return f"${v:,.0f}" if v == int(v) else f"${v:,.2f}"
 
 
+# The price per mg band (owner, 2 Nov 2026): a value outside $0.01 to $100/mg is a misread unit until the database fixes it.
+PPM_LOW, PPM_HIGH = 0.01, 100
+
+
+def per_mg(v):
+    """A price per mg as people read it: cents from $0.10 up, else two significant figures ($0.019)."""
+    return f"${v:,.2f}" if v >= 0.1 else f"${v:.2g}"
+
+
+def plural(n, word):
+    return f"{n} {word}{'' if n == 1 else 's'}"
+
+
 # A goal's clinic plans (pages.md, Category, weight loss; owner task 2 Nov 2026): the rows of site.plan_prices whose
 # substance is one of the goal's `clinic_plans.substances`, and, with `programs`, the plans that name no medication.
 BRANDED = ("branded", "oral_branded")
@@ -542,7 +482,17 @@ def other_use(g, r):
 def row_plan(g, p):
     """The plan behind an option row's "Online clinics from" line on a goal with clinic plans: an FDA-approved row, the
     cheapest brand plan (branded or oral_branded) of its substance; the compounded row (`plan_kind`), the cheapest
-    compounded plan of the goal's approved substances. None for other rows."""
+    compounded plan of the goal's approved substances. On a goal without clinic plans, an FDA-approved row with a
+    substance gets its substance's cheapest plan that is not compounded (Home v2, 3 Nov 2026: minoxidil at Keeps).
+    None for other rows."""
+    if not g.get("clinic_plans"):
+        if not (p.get("substance") and p["status"].startswith("FDA approved")):
+            return None
+        found = [r for r in PLANS if r["substance_slug"] == p["substance"] and r.get("price_monthly") is not None
+                 and r.get("product_kind") != "compounded"]
+        best = min(found, key=lambda r: (float(r["price_monthly"]), r["seller_name"])) if found else None
+        plan = GOAL_PLANS.get(g["slug"])
+        return plan if best and plan and best["seller_slug"] == plan["seller_slug"] and best["plan_slug"] == plan["plan_slug"] else best
     rows = clinic_plans(g)
     if p.get("plan_kind") == "compounded":
         subs = {x["substance"] for x in g["peptides"] if x.get("substance") and x["status"].startswith("FDA approved")}
@@ -739,6 +689,23 @@ PROFILES = {r["seller_slug"]: r for r in DATA.get("seller_profiles") or []}
 # (product_count > 0), a clinic only plans (product_count 0). Every list of shops takes SHOPS; a clinic is never in one.
 SHOPS = {k: r for k, r in PROFILES.items() if (r.get("product_count") or 0) > 0}
 CLINIC_PROFILES = {k: r for k, r in PROFILES.items() if k not in SHOPS}
+
+
+def clinic_button(seller_slug, label, small="Our clinic page", plan=None):
+    """A clinic's one action (Home v2, 3 Nov 2026), on clinic_row_act's rule (owner answer Q1 a and decision C8, 3 Nov
+    2026): btn-action "Visit <Name> ..." through /out/<seller>/ with "Paid link" under it only when the data carries the
+    clinic's paid link (`paid_url` on the plan row, else on its profile; none yet) and the clinic has no FDA letter; else
+    btn-wait `label` to our page on the clinic with `small` under it; "" when we have no page on the clinic."""
+    r = PROFILES.get(seller_slug)
+    if not r:
+        return ""
+    paid = (plan or {}).get("paid_url") or r.get("paid_url")
+    if paid and not (r.get("fda_letter_count") or (plan or {}).get("fda_letter_count") or 0):
+        tail = label.split(" · ", 1)[1] if " · " in label else ""
+        return (f'<span class="pick-act"><a class="btn btn-action btn-sm" href="/out/{seller_slug}/" rel="sponsored">'
+                f'Visit {seller_base(r["seller_name"])}{" · " + tail if tail else ""}</a><span class="paid">Paid link</span></span>')
+    return (f'<span class="pick-act"><a class="btn btn-wait btn-sm" href="/sellers/{seller_slug}/">{label}</a>'
+            f'<span class="paid">{small}</span></span>')
 
 
 def clinic_link(seller_slug, name, inline=False):
@@ -939,7 +906,7 @@ COSMETIC_LATER = "Sold as a cosmetic; prices come later."
 SELLER_WINDOWS = {window_key(p): seller_window(p) for g in ALL_GOALS for p in g["peptides"] if has_window(p)}
 
 
-def sellers_button(p, lazy=False):
+def sellers_button(p, lazy=False, label=None, kind="btn-line"):
     """"Prices at N shops" on a research-use option row with listings, N the distinct sellers across its substances;
     a link to the window without JS. FDA-approved rows never get it. lazy (Home): the window is not in the page; the
     script loads it from /windows/<key>.json on the first click, and without JS the button opens the substance page's
@@ -948,12 +915,12 @@ def sellers_button(p, lazy=False):
         return ""
     n = len({r["seller_slug"] for s in subs_of(p) for r in seller_rows(s, window_kind(p))})
     key = window_key(p)
-    label = f'Prices at {n} shop{"s" if n != 1 else ""}'
+    label = label or f'Prices at {n} shop{"s" if n != 1 else ""}'
     if lazy:
         first = next(s for s in subs_of(p) if seller_rows(s, window_kind(p)))
         href = f"/peptides/{first}/#sold" if first in PEPTIDE_SLUGS else "/sellers/"
-        return f'<a class="btn btn-line btn-sm sellers-open" href="{href}" data-dlg="{key}" data-src="/windows/{key}.json">{label}</a>'
-    return f'<a class="btn btn-line btn-sm sellers-open" href="#{key}" data-dlg="{key}">{label}</a>'
+        return f'<a class="btn {kind} btn-sm sellers-open" href="{href}" data-dlg="{key}" data-src="/windows/{key}.json">{label}</a>'
+    return f'<a class="btn {kind} btn-sm sellers-open" href="#{key}" data-dlg="{key}">{label}</a>'
 
 
 def opt_price(p, slug):
@@ -1003,36 +970,113 @@ def alt_chip(p):
     return '<span class="chip chip-neutral">Not a peptide</span>' if p.get("not_peptide") else ""
 
 
+def window_low(p):
+    """(lowest price, shops) in an option's window: the lowest price per mg inside the /compare/ band for research-use
+    listings, the lowest price for cosmetic ones; (None, n) without a price."""
+    kind = window_kind(p)
+    rows = [r for s in subs_of(p) for r in seller_rows(s, kind)]
+    n = len({r["seller_slug"] for r in rows})
+    if kind == "cosmetic":
+        vals = [r["price_usd"] for r in rows if r.get("price_usd") is not None]
+    else:
+        vals = [r["price_per_mg"] for r in rows if r.get("price_per_mg") is not None and PPM_LOW <= r["price_per_mg"] <= PPM_HIGH]
+    return (min(vals) if vals else None), n
+
+
+def plan_clinics(g, p, rp):
+    """How many clinics have a plan like the row's: the same substances, compounded or not as the row's plan."""
+    comp = rp.get("product_kind") == "compounded"
+    subs = ({x["substance"] for x in g["peptides"] if x.get("substance") and x["status"].startswith("FDA approved")}
+            if p.get("plan_kind") == "compounded" else {rp["substance_slug"]})
+    return len({r["seller_slug"] for r in PLANS if r["substance_slug"] in subs and r.get("price_monthly") is not None
+                and (r.get("product_kind") == "compounded") == comp})
+
+
+def opt_line(g, p, rp, pad):
+    """The collapsed row's line (Home v2, 3 Nov 2026): the option's `plain` sentence, then its price from data in bold:
+    "From $25/mo at online clinics · 3 clinics" with the plan's footnote and the clinic's FDA letter chip; "From $0.65/mg
+    at 76 shops" from its window; "From $48 at 4 shops" for cosmetics; else the hand price with its footnote."""
+    price = ""
+    if rp:
+        sid, n = plan_ref(g, rp)
+        price = (f'<strong>From {usd(rp["price_monthly"])}/mo at online clinics</strong> · {plural(plan_clinics(g, p, rp), "clinic")}'
+                 f'<sup><a class="ref" href="#{sid}" aria-label="Source {n}">{n}</a></sup>{plan_letter(rp)}')
+    elif has_window(p):
+        low, n = window_low(p)
+        if low is not None:
+            unit = money(low) if window_kind(p) == "cosmetic" else f"{per_mg(low)}/mg"
+            price = f'<strong>From {unit} at {plural(n, "shop")}</strong>'
+    elif pad:
+        price = "<strong>" + re.sub(r"<sup>.*", "", pad).replace('<span class="price-pad">from', "From").replace("</span>", "") + "</strong>" + re.search(r"<sup>.*</sup>", pad).group(0)
+    text = p.get("plain", "")
+    return f'<span class="opt-plain">{text}{" " if text and price else ""}{price}</span>' if (text or price) else ""
+
+
+def opt_action(g, p, rp, lazy):
+    """The row's one button (Home v2, 3 Nov 2026): a row with a clinic plan, "See plans at <clinic> · $X/mo" to our clinic
+    page ("Opens our clinic page"; "Pharmacy, no prescription" for a medicine that needs none), or Visit through /out/ once
+    the clinic pays us; a research-use row, "Prices at N shops" ("Our checks, no shop links"); a cosmetic row, "Compare N
+    serums" (its window), or "Sold as a cosmetic; prices come later." without listings."""
+    if rp:
+        name = seller_base(rp["seller_name"])
+        small = "Pharmacy, no prescription" if needs_rx(p) is False else "Opens our clinic page"
+        btn = clinic_button(rp["seller_slug"], f'See plans at {name} · {usd(rp["price_monthly"])}/mo', small, rp)
+        if btn:
+            return btn
+    if has_window(p) and window_kind(p) == "cosmetic":
+        n = window_low(p)[1]
+        what = "serums" if "serum" in (p["name"] + p.get("does", "")).lower() else "products"
+        return f'<span class="pick-act">{sellers_button(p, lazy, f"Compare {plural(n, what[:-1])}", "btn-wait")}</span>'
+    if has_window(p):
+        return f'<span class="pick-act">{sellers_button(p, lazy)}<span class="paid">Our checks, no shop links</span></span>'
+    if is_cosmetic(p):
+        return f'<span class="pick-act"><span class="paid no-link">{COSMETIC_LATER}</span></span>'
+    if p.get("no_link") and not NO_LINK_SAID.search(p["no_link"]):
+        return f'<span class="pick-act"><span class="paid no-link">{p["no_link"]}</span></span>'
+    return ""
+
+
+# "We do not link to them" and its variants (pages.md, Home): said once on Home, in the label legend.
+NO_LINK_SAID = re.compile(r"\s*[Ww]e (?:do not|don't|never) link(?: to (?:them|shops|these shops|it))?\.?")
+
+
+def unsaid(t):
+    """A line with its "we do not link" sentence taken out ("Research-use shops; we do not link to them." ->
+    "Research-use shops."); a line that said nothing else reads "Research-use shops."."""
+    out = NO_LINK_SAID.sub("", t).strip().rstrip(";,") 
+    return (out + ("" if out.endswith(".") else ".")) if out else "Research-use shops."
+
+
 def option_rows(g, lazy=False):
-    """One goal's step 2 option rows (pages.md, Home, step 2; also /hair/): name and chips; opened, the does, status
-    and how lines, the price and plan line ending the how line; "Prices at N shops" for research-use rows, "Online clinic" on
-    every FDA-approved row."""
+    """One goal's step 2 option rows (pages.md, Home, Option rows; also the goal pages): collapsed, the name and chips,
+    the `plain` sentence and the price in bold, and one button (opt_action); opened, the does, status and how lines with
+    their footnotes. lazy (Home): the windows load on demand, and the rows say "we do not link" nowhere (the label legend
+    says it once)."""
     slug = g["slug"]
-    # Each option: name and what it does; status chip and status in plain words; price pad and how you get it
-    # (docs/copy-home-2026-10-30.md): one line on wide screens, three short lines on phones.
-    # Every FDA-approved option (not marked top_pick: false) gets the goal's "Online clinic" button on its own row, so
-    # each approved medicine shows where to get it (owner, 1 Nov 2026).
-    approved = [p for p in g["peptides"] if p["status"].startswith("FDA approved") and p.get("top_pick", True)]
     rows = []
     for p in g["peptides"]:
         pad = opt_price(p, slug)
-        # The price and the goal's cheapest online-clinic plan are the last items of the "how" line, with their
-        # footnotes; the right side of the row keeps only the button (owner, 1 Nov 2026).
-        plan = GOAL_PLANS.get(slug)
-        # a goal with clinic plans (weight loss) gives each row its own plan (row_plan); the others keep the goal's one plan
-        rp = row_plan(g, p) if g.get("clinic_plans") else (plan if plan and p.get("substance") == plan["substance_slug"] else None)
+        rp = row_plan(g, p)
         cost = price_sentence(p, pad) + (" " + plan_line(g, "plan-in", rp).replace(")<sup>", ").<sup>", 1) if rp else "")
-        sb = sellers_button(p, lazy)
-        act = (f'<span class="pick-act">{sb}{visit(g, small=True, p=p)}</span>' if p in approved else
-               f'<span class="pick-act">{sb}</span>' if sb else
-               # a row with no button says why in one grey line where the button would be (owner, 1 Nov 2026)
-               f'<span class="pick-act"><span class="paid no-link">{p["no_link"]}</span></span>' if p.get("no_link") else
-               f'<span class="pick-act"><span class="paid no-link">{COSMETIC_LATER}</span></span>' if is_cosmetic(p) else "")
+        how, status = how_line(p), plain_status(p, drop_price=bool(pad))
+        if lazy:
+            how, status = unsaid(how), (unsaid(status) if NO_LINK_SAID.search(status) else status)
         rows.append(f'<li class="opt"><details class="opt-more"><summary class="opt-sum"><span class="name">{p["name"]}</span>'
-                    f'<span class="opt-chips">{status_chip(p)}{alt_chip(p)}</span></summary>'
+                    f'<span class="opt-chips">{status_chip(p)}{alt_chip(p)}</span>{opt_line(g, p, rp, pad)}</summary>'
                     f'<div class="opt-body"><p class="opt-does">{p["does"]}{refs(p, slug, price=not pad)}</p>'
-                    f'<p class="opt-status">{plain_status(p, drop_price=bool(pad))}</p><p class="opt-how">{how_line(p)}{cost}</p></div></details>{act}</li>')
+                    f'<p class="opt-status">{status}</p><p class="opt-how">{how}{cost}</p></div></details>{opt_action(g, p, rp, lazy)}</li>')
     return rows
+
+
+def approved_instead(g):
+    """Under a goal's options when none of them has a clinic or a cosmetic button (pages.md, Home, Option rows): one line
+    to the goal's guide (`approved_instead_guide`), never an invented clinic row."""
+    gd = next((x for x in guides.GUIDES if x["slug"] == g.get("approved_instead_guide")), None)
+    linkable = any(row_plan(g, p) and p.get("substance") or (has_window(p) and window_kind(p) == "cosmetic") for p in g["peptides"])
+    return f'<p class="opt-instead">What is approved instead: <a href="/learn/{gd["slug"]}/">{gd["title"]}</a></p>' if gd and not linkable else ""
+
+
+GOAL_PANELS = {}  # goal slug -> its step 2 panel, for /windows/goal-<slug>.json
 
 
 def rail():
@@ -1046,10 +1090,17 @@ def rail():
         rows = option_rows(g, lazy=True)
         link = (f'<a class="btn btn-ink" href="/{slug}/">Compare {g["short"].lower()} options</a>' if g.get("page") else
                 '<p class="small">Full comparison for this goal is not published yet. The legal status above is current as of ' + CHECKED + '.</p>')
-        compare.append(f'<div class="step-panel" id="opts-{slug}" data-goal="{slug}" data-title="{g["panel_title"]}"{hide}><p class="goal-for">{g["for"]}</p>'
-                       f'<p class="goal-intro" tabindex="0" title="{g["intro"]}">{g["intro"]}</p>'
-                       f'<ul class="opts">{"".join(rows)}</ul>'
-                       f'{link}</div>')
+        inner = (f'<p class="goal-for">{g["for"]}</p><p class="goal-intro" tabindex="0" title="{g["intro"]}">{g["intro"]}</p>'
+                 f'<ul class="opts">{"".join(rows)}</ul>{approved_instead(g)}{link}')
+        # Home lists no sources: a footnote opens its line on /sources/, which carries the same ids (owner answer Q3 a, 3 Nov 2026)
+        inner = inner.replace('href="#src-', 'href="/sources/#src-')
+        # Only the first goal's options are in the page; the others load from /windows/goal-<slug>.json when chosen
+        # (Home under 60 KB, Home v2, 3 Nov 2026). Without JavaScript only the first goal shows, as before.
+        if i:
+            GOAL_PANELS[slug] = inner
+        src = f' data-src="/windows/goal-{slug}.json"' if i else ""
+        compare.append(f'<div class="step-panel" id="opts-{slug}" data-goal="{slug}" data-title="{g["panel_title"]}"'
+                       f'{src}{hide}>{"" if i else inner}</div>')
     # The chosen goal's panel title follows the step name in the step 2 heading (ODOBRENO SEO 30 Oct 2026, copy doc
     # section 2); the page carries the first goal's, the goal switch puts in the next one.
     return "".join(chips), "".join(compare), f'<span class="goal-t">: {ALL_GOALS[0]["panel_title"]}</span>'
@@ -1148,11 +1199,8 @@ def legal_rows(only=None):
     return out, checked
 
 
-LEGAL_LIST, LEGAL_CHECKED = legal_rows()
 LEGAL_NOTE = ("Approved means the FDA approved a product containing it for a stated use. Not approved means no approved product "
               "exists; buying it for yourself is not a crime in the US, but nobody has checked what is in the vial.")
-# The first 12 rows show; the rest carry class "more" and stay hidden until "Show all N" (only with JavaScript).
-LEGAL_ROWS = "".join(r if i < 12 else r.replace("<tr>", '<tr class="more">', 1) for i, r in enumerate(LEGAL_LIST))
 
 # Latest FDA warning letters (pages.md, Home, after "Is it legal today?"): from site.seller_enforcement through
 # tools/pull_data.py (site.fda_letters), newest first. Without `letters` in site.json the section is not drawn (never drawn empty).
@@ -1172,28 +1220,6 @@ for _r in sorted(DATA.get("letter_substances") or [], key=lambda r: (r["letter_d
 LETTER_CO = {r["letter_url"]: r["company_name"] for r in LETTERS_ALL}
 LETTERS_URL = "/fda-warning-letters/" if LETTERS_ALL else "/#letters"
 renumber_sources()  # after LETTERS_URL: the option rows' plan lines carry the letter chip
-# Under Home's letters table (pages.md, Home, owner answer Q2 a, 2 Nov 2026): with the letters page, "See all N letters"
-# and then "M of them went to sellers in our database."; without it, the old count line alone.
-LETTERS_FOOT = (f'<p class="letters-all"><a class="btn btn-line" href="/fda-warning-letters/">See all {len(LETTERS_ALL)} letters</a></p>'
-                + (f'<p class="small" style="margin-top:12px">{DATA["letters_total"]} of them went to sellers in our database.</p>' if DATA.get("letters_total") else "")
-                if LETTERS_ALL else
-                f'<p class="small" style="margin-top:16px">{DATA["letters_total"]} letters to sellers in our database since {nice_date(DATA["letters_oldest"])}.</p>'
-                if DATA.get("letters_total") and DATA.get("letters_oldest") else "")
-LETTER_ROWS = "".join(
-    f'<tr><td class="num">{nice_date(r["letter_date"])}</td><td><span class="name">{escape(r["seller_name"])}</span>'
-    f'<span class="sub-phone">{escape(r["letter_subject"]).replace("/", "/<wbr>")}</span></td><td class="subj">{escape(r["letter_subject"])}</td><td><a href="{escape(r["letter_url"])}" rel="nofollow">FDA letter</a></td></tr>' for r in LETTERS)
-LETTERS_SECTION = f"""
-<section class="section" id="letters">
-  <div class="wrap">
-    <div class="sec-hd"><div><h2>Latest FDA warning letters</h2><p>Letters the FDA sent to sellers in our database. Checked {nice_date(DATA["pulled_at"][:10])}.</p></div></div>
-    <div class="tbl-wrap"><table class="tbl tbl-letters">
-      <thead><tr><th scope="col">Date</th><th scope="col">Seller</th><th scope="col" class="subj">Subject</th><th scope="col">Source</th></tr></thead>
-      <tbody>{LETTER_ROWS}</tbody>
-    </table></div>
-    {LETTERS_FOOT}
-  </div>
-</section>
-""" if LETTERS else ""
 
 # The letters page (pages.md, Letters, owner 1 Nov 2026): every letter in `letters_all` (site.fda_letters_all through
 # tools/pull_data.py: peptide-related or sent to a seller we know), newest first. With JavaScript, a company filter and one
@@ -1347,21 +1373,6 @@ def chip_title(t):
 GLOSSARY = "".join(
     f'<div><dt>{chip_title(t)}</dt><dd>{t["text"]}</dd></div>' for t in DATA["glossary"])
 
-CREATOR_ROWS = "".join(
-    f'<li><a href="{c["url"]}" rel="nofollow noopener">{c["name"]}</a><span class="small">{c["what"]}</span></li>' for c in CREATORS["rows"])
-
-# "Is it legal today?" (pages.md, Home): with JavaScript, a name filter above the table and only the first 12 rows until
-# "Show all N"; typing shows every matching row. Without JavaScript the whole table shows and the controls stay hidden.
-LEGAL_JS = """<script>
-(function(){var tb=document.getElementById('legal-table');if(!tb)return;var f=document.querySelector('.legal-filter'),q=document.getElementById('legal-q'),
-c=document.getElementById('legal-clear'),m=document.querySelector('.legal-more'),all=document.getElementById('legal-all'),rows=[].slice.call(tb.tBodies[0].rows),open=false;
-function draw(){var s=q.value.trim().toLowerCase();rows.forEach(function(r){var name=r.cells[0].textContent.toLowerCase();
-r.hidden=s?name.indexOf(s)<0:(!open&&r.classList.contains('more'));});if(m)m.hidden=open||!!s;}
-f.hidden=false;if(m)m.hidden=false;q.addEventListener('input',draw);
-c.addEventListener('click',function(){q.value='';draw();q.focus();});
-if(all)all.addEventListener('click',function(){open=true;draw();});draw();})();
-</script>"""
-
 # The seller window (pages.md, Home): with JavaScript the windows hide until "Compare N sellers" opens one as a modal
 # dialog (Esc and "Close" are the dialog's own; a click on the dimmed area outside closes it; focus returns to the button).
 SELLERS_JS = """<script>
@@ -1381,7 +1392,10 @@ MAP_JS = """<script>
 var chips=[].slice.call(root.querySelectorAll('.goal-item')),cur=chips[0].getAttribute('data-goal');
 var swapS=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--motion-swap'))/1000||0.2;
 root.addEventListener('animationend',function(e){if(e.target.classList.contains('stamp'))root.classList.add('landed');});
-function show(k){root.querySelectorAll('.step-panel').forEach(function(x){x.hidden=x.getAttribute('data-goal')!==k;if(!x.hidden)root.querySelector('.goal-t').textContent=': '+x.getAttribute('data-title');});
+function show(k){var p=root.querySelector('.step-panel[data-goal="'+k+'"][data-src]');
+if(p){var src=p.getAttribute('data-src');p.removeAttribute('data-src');fetch(src).then(function(r){return r.json();}).then(function(j){p.innerHTML=j.html;if(cur===k)show(k);})
+.catch(function(){location.href='/'+k+'/';});return;}
+root.querySelectorAll('.step-panel').forEach(function(x){x.hidden=x.getAttribute('data-goal')!==k;if(!x.hidden)root.querySelector('.goal-t').textContent=': '+x.getAttribute('data-title');});
 if(!window.pcMotion)return;var on=root.querySelectorAll('.step-panel[data-goal="'+k+'"]');
 gsap.fromTo(on,{opacity:0},{opacity:1,duration:swapS,ease:'power1.out'});
 gsap.fromTo(root.querySelectorAll('.step-panel[data-goal="'+k+'"] .opt'),{opacity:0,y:4},{opacity:1,y:0,duration:swapS,ease:'power1.out',stagger:0.04});}
@@ -1413,7 +1427,6 @@ N_CLINICS = len({r["seller_slug"] for r in PLANS})
 N_LETTERS = DATA.get("letters_all_total") or len(LETTERS_ALL)
 N_STATUS = len({r["substance_slug"] for r in LEGAL_DB or []})
 PULLED = nice_date(DATA["pulled_at"][:10]) if DATA.get("pulled_at") else ""
-SCORE_ON = max((r["score_checked_on"] for r in SHOPS.values() if r.get("score_checked_on")), default="")
 # Home's hero counts (pages.md, Home; owner task 2 Nov 2026): one sentence, only when every count and the pull date are there.
 # owner answer Q1 c (2 Nov 2026): shops and online clinics counted apart, as on /sellers/
 _ns, _nc = len(SHOPS), len(CLINIC_PROFILES)
@@ -1421,23 +1434,18 @@ HERO_COUNTS = (f" {_ns} shop{'' if _ns == 1 else 's'}, {f'{_nc} online clinic' +
                f"{len(PEPTIDE_SLUGS)} substances and {N_LETTERS} FDA warning letters, checked {PULLED}."
                if SHOPS and PEPTIDE_SLUGS and N_LETTERS and PULLED else "")
 
-# Sellers we track (pages.md, Home, under "Latest FDA warning letters"): the letters block's look, one line and
-# btn-line "See all sellers". No seller names on Home.
-SELLERS_HOME = f"""
-<section class="section" id="sellers-home">
-  <div class="wrap home-cards">
-    <div class="home-card">
-    <div class="sec-hd"><div><h2>Sellers we track</h2><p>{N_SELLERS} shops that sell peptides online, each with five background checks.{f" Checked {nice_date(SCORE_ON)}." if SCORE_ON else ""}</p></div></div>
-    <p class="letters-all"><a class="btn btn-line" href="/sellers/">See all sellers</a></p>
-    </div><!--compare-card-->
-  </div>
-</section>
-""" if SHOPS else ""
 
+# Home (pages.md, Home; the "Home v2" sketch, 3 Nov 2026): the hero with the chooser and the label legend, then the
+# sections home.py fills in at the markers once every helper exists.
+HOME_LEDE = ((HERO_COUNTS.strip() + " ") if HERO_COUNTS else "") + \
+    "FDA-approved options first, research-use peptides with their real status, every price dated."
+HOME_DESC = ("Find the right option for your goal and where to get it at the best price. FDA-approved options first, "
+             "research-use peptides with their real status.")
 HOME = f"""
 <section class="hero hero-clinic">
   <div class="wrap">
-    <h1 class="hero-h1">The best peptides for your goal, compared honestly.</h1>
+    <h1 class="hero-h1">Find the right option for your goal, and where to get it at the best price.</h1>
+    <p class="hero-lede">{HOME_LEDE}</p>
     <div class="chooser flow" id="goals">
       <div class="flow-hd fh-goal"><span class="step-n" aria-hidden="true">1</span><h2 id="step-goal">Choose a goal</h2></div>
       <div class="figure">{FIGURE}</div>
@@ -1449,74 +1457,23 @@ HOME = f"""
 </section>
 <section class="hero-more">
   <div class="wrap">
-    <div class="hero-pair">
     <p class="what-is"><strong>What is a peptide?</strong> A short chain of amino acids. Some are approved medicines (semaglutide, bremelanotide), some are cosmetics in creams, and many are sold online with no approval and no testing. This site tells you which is which, what it costs, and what the proven alternative is.</p>
-    <p class="lede hero-after">For each goal we put peptide products next to the FDA-approved alternatives and show what the evidence says, what it costs per month and how you would get it. We compare; we never sell.{HERO_COUNTS}</p>
-    </div>
     <section class="glossary" aria-labelledby="glossary-h">
       <h2 id="glossary-h">What the labels mean</h2>
       <dl class="glossary-list">{GLOSSARY}</dl>
     </section>
-    {guides.home_card()}
-    <section class="rate-strip" aria-labelledby="rate-h">
-      <div class="rate-hd"><h2 id="rate-h">How we rate</h2><p>Every seller gets the same five checks, in this order. They are facts we hold about the seller, not a safety grade.</p><a href="/how-we-rate/">Read the full method</a></div>
-      <ul class="criteria">
-        <li><h3>Lab reports</h3><p>A lab report dated in the last 12 months.</p></li>
-        <li><h3>No FDA letter</h3><p>No FDA warning letter matched to its web or street address.</p></li>
-        <li><h3>Company found</h3><p>The business behind the shop found in a state registry.</p></li>
-        <li><h3>Legal pages</h3><p>A terms page and a privacy or refund page, seen in the last 30 days.</p></li>
-        <li><h3>Fresh prices</h3><p>A price per milligram seen in the last 30 days.</p></li>
-      </ul>
-      <nav class="trust-links" aria-label="How we work"><a href="/disclosure/">How we make money</a><a href="/about/">Who checks our facts</a><a href="/corrections/">Mistakes we fixed</a><a href="#sources">Sources</a></nav>
-    </section>
   </div>
 </section>
-
-<section class="section" id="compare">
-  <div class="wrap">
-    <div class="sec-hd"><div><h2>Compare by goal</h2><p>One row per goal. The best proven option is the cheapest one the FDA has approved for that use.</p></div></div>
-    <div class="tbl-wrap"><table class="tbl">
-      <thead><tr><th scope="col">Goal</th><th scope="col">Best proven option</th><th scope="col">Price from</th><th scope="col">FDA status</th>{COMPARE_TH}</tr></thead>
-      <tbody>{goal_rows()}</tbody>
-    </table></div>
-    <p class="small" style="margin-top:16px">{STANDING_LINE}</p>
-  </div>
-</section>
-
-<section class="band-2" id="legal">
-  <div class="wrap">
-    <div class="sec-hd"><div><h2>Is it legal today?</h2><p>FDA status of the peptides people ask about most, each with its source. Checked {LEGAL_CHECKED}.</p></div>{ALL_SUBSTANCES}</div>
-    <div class="legal-filter" hidden><label for="legal-q">Filter by name</label><input class="input" id="legal-q" type="text" autocomplete="off"><button type="button" class="btn btn-line btn-sm" id="legal-clear">Clear</button></div>
-    <div class="tbl-wrap"><table class="tbl tbl-legal" id="legal-table">
-      <thead><tr><th scope="col">Peptide</th><th scope="col">Status</th><th scope="col">What that means</th></tr></thead>
-      <tbody>{LEGAL_ROWS}</tbody>
-    </table></div>
-    {f'<p class="legal-more" hidden><button type="button" class="btn btn-line btn-sm" id="legal-all">Show all {len(LEGAL_LIST)}</button></p>' if len(LEGAL_LIST) > 12 else ""}
-    <p class="small" style="margin-top:16px">{LEGAL_NOTE}</p>
-  </div>
-</section>
-
-{LETTERS_SECTION}
-{SELLERS_HOME}
-<section class="section" id="learn">
-  <div class="wrap">
-    <div class="sec-hd"><div><h2>Who to follow</h2><p>{CREATORS["note"]}</p></div></div>
-    <ul class="creators">{CREATOR_ROWS}</ul>
-    <p class="small" style="margin-top:16px">Reviewed {nice_date(CREATORS["checked"])}. Links open YouTube; we earn nothing from them.</p>
-  </div>
-</section>
+<!--home:where-->
+<!--home:compare-->
+<!--home:learn-->
+<!--home:legal-->
+<!--home:letters-->
+<!--home:creators-->
 
 <div class="wrap sellers-all"></div>
-
-<section class="section" id="sources">
-  <div class="wrap">
-    <h2 class="h-sources">Sources</h2>
-    <ol class="small sources" style="padding-left:1.2em">{SOURCES_HOME}</ol>
-  </div>
-</section>
 {MAP_JS}
 {SELLERS_JS}
-{LEGAL_JS}
 """
 
 CORRECTIONS = f"""
@@ -1595,7 +1552,7 @@ HOW = f"""
 <ul>
 <li>When the FDA has approved a treatment for the goal, it is listed first.</li>
 <li>Research-use peptides are shown with one sentence on their FDA status. We never link to a research-use seller: the price window lists the shops by name, and each name opens our page on that seller.</li>
-<li>Online clinics get a grey "Online clinic" button with "No paid link yet" under it until we have a paid link with that clinic. A paid link is a green button with "Paid link" under it.</li>
+<li>Online clinics get a white "See plans" button to our own page on the clinic until we have a paid link with that clinic. A paid link is a green button with "Paid link" under it.</li>
 <li>Every price shows the date we checked it, and every claim links to its source.</li>
 </ul>
 <h2>What does not change a check</h2>
@@ -1864,6 +1821,7 @@ def category_body(g, table, table_lede):
     # they are (Search Console impressions); the hero keeps the price pad with its Checked stamp, the step 2 option rows
     # follow, the options table sits in the grey band.
     opt_html = "".join(option_rows(g))
+    instead = approved_instead(g)
     # "Is it legal today?" on the page (pages.md, Category; a goal with `legal_section`): Home's rows for the substances
     # of this goal's options, with Home's line under them; the heading line in the flow then links here.
     subs = {x for p in g["peptides"] for x in subs_of(p)}
@@ -1933,7 +1891,7 @@ def category_body(g, table, table_lede):
     </div>
     <div class="chooser flow flow-solo">
       <div class="flow-hd fh-compare"><h2>Compare the options</h2><a class="step-legal" href="{"#legal" if legal else "/#legal"}"><strong>Is it legal today?</strong></a></div>
-      <div class="flow-compare"><div class="step-panel"><p class="goal-for">{g["for"]}</p><ul class="opts">{opt_html}</ul></div></div>
+      <div class="flow-compare"><div class="step-panel"><p class="goal-for">{g["for"]}</p><ul class="opts">{opt_html}</ul>{instead}</div></div>
     </div>
   </div>
 </section>
@@ -1998,19 +1956,10 @@ def is_clinic(r):
     return kind_words(r)[0] == "online clinic"
 
 
-def per_mg(v):
-    """A price per mg as people read it: cents from $0.10 up, else two significant figures ($0.019)."""
-    return f"${v:,.2f}" if v >= 0.1 else f"${v:.2g}"
-
-
 def per_mg_range(lo, hi):
     if lo is None:
         return "unknown"
     return per_mg(lo) if hi is None or per_mg(lo) == per_mg(hi) else f"{per_mg(lo)} to {per_mg(hi)}"
-
-
-def plural(n, word):
-    return f"{n} {word}{'' if n == 1 else 's'}"
 
 
 def sub_label(slug):
@@ -2479,8 +2428,6 @@ def seller_page(r):
 """
 
 
-PPM_LOW, PPM_HIGH = 0.01, 100
-
 
 def compare_ppm(r):
     """The seller's price per mg range from listings between $0.01 and $100/mg: its own lowest and highest, and those of
@@ -2676,8 +2623,7 @@ NOT_FOUND = f"""
 
 PAGES = [
     ("/", "index.html", "Best peptides by goal, compared | Peptide Chooser",
-     "FDA status, real prices and evidence for each goal, checked and dated. Peptides next to the approved alternatives, from a site that never sells.",
-     HOME, ORG_SCHEMA, None),
+     HOME_DESC, HOME, ORG_SCHEMA, None),
     ("/about/", "about/index.html", "About Peptide Chooser",
      "Peptide Chooser is an independent site that compares peptide products and sellers for people in the United States.", ABOUT, "", [("/about/", "About")]),
     ("/how-we-rate/", "how-we-rate/index.html", "How we rate peptide products and sellers | Peptide Chooser",
@@ -3894,28 +3840,6 @@ def foot_cols():
     return "".join(out)
 
 
-HOME_PAIRS = 6
-
-
-def home_compare_card():
-    """Home's Compare card beside "Sellers we track": the six pairs with the most shops or plans, and "Compare any two"."""
-    if not built("/compare/"):
-        return ""
-    top = sorted(CMP_PAGES, key=lambda x: (-x[3], x[1].lower()))[:HOME_PAIRS]
-    items = "".join(f'<li><a href="{p}">{escape(t)}</a></li>' for p, t, *_ in top)
-    pairs = f'<div class="related home-pairs"><ul>{items}</ul></div>' if top else ""
-    return f"""
-    <div class="home-card">
-    <div class="sec-hd"><div><h2>Popular comparisons</h2><p>Two plans, two sellers or two substances side by side, from our data.</p></div></div>
-    {pairs}
-    <p class="letters-all"><a class="btn btn-line" href="/compare/">Compare any two</a></p>
-    </div>"""
-
-
-for _i, _pg in enumerate(PAGES):
-    if _pg[0] == "/":
-        PAGES[_i] = _pg[:4] + (_pg[4].replace("<!--compare-card-->", home_compare_card(), 1),) + _pg[5:]
-
 LLMS_SECTIONS = [("/sellers/", "Sellers and online clinics"), ("/peptides/", "Peptides"), ("/compare/", "Comparisons"),
                  ("/learn/", "Guides"), ("/fda-warning-letters/", "FDA warning letters")]
 
@@ -3974,6 +3898,13 @@ def main():
     if COMPARE_DATA:
         (DIST / "compare" / "data.json").write_text(COMPARE_DATA, encoding="utf-8")
     (DIST / "windows").mkdir(exist_ok=True)
+    for k, html in GOAL_PANELS.items():
+        (DIST / "windows" / f"goal-{k}.json").write_text(json.dumps({"html": html}), encoding="utf-8")
+    if home.JS:
+        (DIST / "assets" / "home.js").write_text(home.JS, encoding="utf-8")
+    if home.ROWS:
+        (DIST / home.WHERE_JSON).write_text(home.ROWS, encoding="utf-8")
+    (DIST / "windows").mkdir(exist_ok=True)
     for key, html in SELLER_WINDOWS.items():
         (DIST / "windows" / f"{key}.json").write_text(json.dumps({"html": html}), encoding="utf-8")
     (DIST / "search-index.json").write_text(json.dumps(search_index(), ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
@@ -3998,6 +3929,8 @@ def main():
 
 # The Learn section (pages.md, Learn and Guide): /learn/ and the guides, from guides.py, which reads this module's helpers.
 PAGES += guides.pages(sys.modules[__name__])
+# Home's sections under the hero (pages.md, Home), from home.py, once every helper above exists.
+PAGES = [home.finish(sys.modules[__name__], p) if p[0] == "/" else p for p in PAGES]
 
 
 # /sources/ (pages.md, Sources; owner task 3 Nov 2026): every source the site cites, read from the numbered source lists of
@@ -4034,15 +3967,25 @@ def used_on(pages, most=3):
     return f"Cited on {links}" + (f" and {plural(len(pages) - most, 'more page')}" if len(pages) > most else "") + "."
 
 
-def src_li(name, url, link, take, checked=""):
+def src_li(name, url, link, take, checked="", ids=()):
+    """One /sources/ entry. `ids`: the ids Home's footnotes link (src-1, src-price-hair, src-plan-...), so a footnote on Home
+    lands on its line here (owner answer Q3 a, 3 Nov 2026); the first is the item's id, the rest empty anchors in it."""
     head = (f'<a href="{url}" rel="nofollow">{name}</a>' if link and url.startswith("http") else
             f'<a href="{url}">{name}</a>' if link else f"{name}: {url}" if url else name)
     when = f'<span class="src-date">Checked {nice_date(checked)}</span>' if checked else ""
-    return f'<li><span class="src-name">{head}</span><span class="src-take">{take}</span>{when}</li>'
+    ids = list(dict.fromkeys(ids))
+    anchors = "".join(f'<span id="{i}"></span>' for i in ids[1:])
+    id_attr = f' id="{ids[0]}"' if ids else ""
+    return f'<li{id_attr}>{anchors}<span class="src-name">{head}</span><span class="src-take">{take}</span>{when}</li>'
 
 
 def sources_body():
     cited = cited_sources()
+    # Home's source ids by url (SOURCES_HOME: the numbered list Home's option rows link), placed on the entry for that url
+    home_ids = {}
+    for sid, url in re.findall(r'<li id="(src-[^"]+)">.*?<a href="([^"]+)"', SOURCES_HOME):
+        home_ids.setdefault(unescape(url), []).append(sid)
+    plan_ids = [sid for sid in re.findall(r'<li id="(src-plan-[^"]+)">', SOURCES_HOME)]
     seller_hosts = {host("https://" + r["domain"]) for r in PROFILES.values() if r.get("domain")}
     seller_hosts |= {host(r["pricing_url"]) for r in PLANS if r.get("pricing_url")}
     db_urls = {r["source_url"] for r in LEGAL_DB or []}
@@ -4052,14 +3995,14 @@ def sources_body():
         if url in db_urls:
             continue  # listed once below, with every substance the database reads from it
         if h.endswith("fda.gov") or h == "dailymed.nlm.nih.gov":
-            fda.append(src_li(text, url, link, used_on(pages)))
+            fda.append(src_li(text, url, link, used_on(pages), ids=home_ids.get(url, ())))
         elif h == "medlineplus.gov":
-            medline.append(src_li(text, url, link, used_on(pages)))
+            medline.append(src_li(text, url, link, used_on(pages), ids=home_ids.get(url, ())))
         elif h == "pubmed.ncbi.nlm.nih.gov":
             for p in [p for p in pages if p[0].startswith("/learn/")] or pages:  # by guide; a study no guide cites, by its page
                 pubmed.setdefault(p, []).append(src_li(text, url, link, ""))
         elif h not in seller_hosts:
-            prices.append(src_li(text, url, link, used_on(pages)))
+            prices.append(src_li(text, url, link, used_on(pages), ids=home_ids.get(url, ())))
     # the database's FDA sources: one entry per source list (the status rows link one page, or one openFDA query per substance)
     by_src = {}
     for r in LEGAL_DB or []:
@@ -4070,7 +4013,7 @@ def sources_body():
         name = cited[url][0] if url in cited and not cited[url][0].startswith("FDA, status of ") else host(url) + urlparse(url).path
         subs = sorted({r["canonical_name"] for r in rows})
         pages = [pg for u in urls if u in cited for pg in cited[u][2]]
-        fda.append(src_li(name, url, True, f"FDA status of {plural(len(subs), 'substance')} in our database: {', '.join(subs[:6])}"
+        fda.append(src_li(name, url, True, ids=[i for u in urls for i in home_ids.get(u, ())], take=f"FDA status of {plural(len(subs), 'substance')} in our database: {', '.join(subs[:6])}"
                           + (f" and {len(subs) - 6} more" if len(subs) > 6 else "") + f", first seen {nice_date(min(r['first_seen_by_us'] for r in rows))}."
                           + (" " + used_on(list(dict.fromkeys(pages))) if pages else "")))
     if LETTERS_ALL:
@@ -4102,7 +4045,8 @@ def sources_body():
         clinics = {r["seller_slug"] for r in PLANS}
         own.append(src_li("Online clinic plan pages", "/sellers/#clinics" if built("/sellers/") else "", built("/sellers/"),
                           f"Monthly price and fees of {plural(len(PLANS), 'plan')} at {plural(len(clinics), 'clinic')}.",
-                          max((r.get("last_seen") or "" for r in PLANS), default="")))
+                          max((r.get("last_seen") or "" for r in PLANS), default=""),
+                          ids=plan_ids + [i for u, ids in home_ids.items() if host(u) in seller_hosts for i in ids]))
     if PROFILES:
         own.append(src_li("Seller checks", "/how-we-rate/", True, f"The five checks on {plural(len(PROFILES), 'seller')}.",
                           max((r.get("score_checked_on") or "" for r in PROFILES.values()), default="")))
