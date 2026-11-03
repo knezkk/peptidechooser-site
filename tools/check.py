@@ -286,15 +286,14 @@ def check_parts(P):
             cls = m.group(1).split()
             if "btn" in cls and not any(c in cls for c in ("btn-ink", "btn-action", "btn-line", "btn-mark", "btn-wait")):
                 errs.append(f"{name}: button without a design-book kind ({cls})")
-        # The paid button: a live one is an <a> to /out/ with rel=sponsored and "Paid link" right under it; a disabled one
-        # (before the affiliate url exists) is a span with aria-disabled, no href or rel, and "No paid link yet" under it.
+        # The paid button: an <a> to /out/ with rel=sponsored and "Paid link" right under it. Before a paid link exists
+        # there is no green button at all, and no page says "No paid link yet" (Home v2, 3 Nov 2026).
+        if "No paid link yet" in html:
+            errs.append(f"{name}: says 'No paid link yet'")
         for m in re.finditer(r'<(\w+)([^>]*class="btn btn-action[^"]*"[^>]*)>[^<]*</\1>(<span class="paid">([^<]*)</span>)?', html):
             tag, attrs, under = m.group(1), m.group(2), m.group(4)
             if 'aria-disabled="true"' in attrs:
-                if tag != "span" or "href=" in attrs or "rel=" in attrs or 'role="button"' not in attrs:
-                    errs.append(f"{name}: disabled Visit must be a span role=button without href or rel")
-                if under != "No paid link yet":
-                    errs.append(f"{name}: disabled Visit without 'No paid link yet' under it")
+                errs.append(f"{name}: a disabled green button (use btn-wait to our own page until a paid link exists)")
             else:
                 if tag != "a" or 'href="/out/' not in attrs or "sponsored" not in attrs:
                     errs.append(f"{name}: green button not an /out/ link with rel=sponsored")
@@ -559,6 +558,35 @@ def check_parts(P):
             n = len(AUTHOR_LINE.findall((DIST / name).read_text(encoding="utf-8")))
             if n != 1:
                 errs.append(f"{name}: {n} author lines (want one: '<team>. Checked <date>.' in p.small.meta)")
+    # Home v2 (pages.md, Home; owner task 3 Nov 2026): each section under the hero ends with its one action (at most one
+    # btn-ink and one btn-line outside its tables: the letters section's pair is the most); the page stays under 60 KB
+    # (the price windows load on demand); "we do not link" is said once, in the label legend.
+    if "index.html" in P:
+        home = (DIST / "index.html").read_text(encoding="utf-8")
+        for m in re.finditer(r'<section class="[^"]*home-sec[^"]*" id="([^"]+)">(.*?)</section>', home, re.S):
+            body = re.sub(r"<table.*?</table>", "", m.group(2), flags=re.S)
+            for kind in ("btn-ink", "btn-line", "btn-wait", "btn-action"):
+                n = len(re.findall(rf'class="btn {kind}\b', body))
+                if n > (0 if kind in ("btn-wait", "btn-action") else 1):
+                    errs.append(f"index.html: section #{m.group(1)} has {n} {kind} buttons outside its tables")
+        # every source link on Home, in the page and in the goal panels it loads, lands on an id on /sources/ (owner answer
+        # Q3 a, 3 Nov 2026)
+        panels = "".join(json.loads(f.read_text(encoding="utf-8"))["html"] for f in sorted((DIST / "windows").glob("goal-*.json")))
+        src_page = (DIST / "sources" / "index.html").read_text(encoding="utf-8") if (DIST / "sources" / "index.html").exists() else ""
+        for sid in sorted(set(re.findall(r'href="/sources/#([^"]+)"', home + panels))):
+            if f'id="{sid}"' not in src_page:
+                errs.append(f"index.html: source link /sources/#{sid} lands on no id on /sources/")
+        for sid in sorted(set(re.findall(r'href="#(src-[^"]+)"', home + panels))):
+            errs.append(f"index.html: source link #{sid} points into Home, which lists no sources")
+        size = len(home.encode("utf-8"))
+        if size > 60 * 1024:
+            errs.append(f"index.html: {size // 1024} KB, over the 60 KB limit")
+        text = re.sub(r"<dialog.*?</dialog>|<script.*?</script>|<[^>]+>", " ", home, flags=re.S)
+        said = re.findall(r"\b[Ww]e (?:do not|don't|never) link\b", text)
+        legend = re.search(r'<dl class="glossary-list">(.*?)</dl>', home, re.S)
+        in_legend = len(re.findall(r"\b[Ww]e (?:do not|don't|never) link\b", legend.group(1))) if legend else 0
+        if len(said) != 1 or in_legend != 1:
+            errs.append(f"index.html: 'we do not link' said {len(said)} times ({in_legend} in the label legend); want once, in the legend")
     # A footnote right after "(<Seller>)" links that seller's own source: its line in Sources starts with the name (owner
     # UX audit, 3 Nov 2026: /hair/ looked as if Keeps and Strut were swapped), or our own database.
     sellers = seller_names()

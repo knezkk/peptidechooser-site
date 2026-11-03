@@ -66,6 +66,15 @@ p { margin: 0 0 1em; }
 /* The first screen holds the H1 on one line and the whole flow card; the lede follows the card. */
 .hero-clinic .hero-h1 { max-width: none; margin: 0 0 16px; font-size: 34px; line-height: 1.15; }
 .hero-after { margin: 20px 0 0; max-width: 62ch; }
+/* Home v2 (owner's sketch, 3 Nov 2026): the H1 promises the option and where to get it; the counts lede sits under it. */
+.hero-lede { margin: 0 0 20px; max-width: 72ch; font-size: var(--ui-size); line-height: 1.5; color: var(--ink-2); }
+/* Two columns from 900px: Guides beside How we rate, the legal check beside "Most checked this month". */
+.home-two { display: grid; gap: 40px; }
+.home-two > * { min-width: 0; }
+.home-two .learn-card { margin-top: 0; }
+#legal .lede { margin: 0 0 20px; max-width: 52ch; }
+#legal h2 { margin: 0 0 8px; font: var(--display-2-weight) var(--display-2-size)/var(--display-2-lh) var(--font-display); letter-spacing: var(--display-2-ls); }
+@media (max-width: 640px) { #legal h2 { font-size: 26px; } }
 
 /* "What the labels mean": one card per label below the rail, inside the hero band, like the criteria cards */
 .glossary { margin-top: 48px; }
@@ -138,7 +147,7 @@ p { margin: 0 0 1em; }
 /* Option rows line up like a table: the same columns in every row (owner, 31 Oct 2026). Name with its chip under it,
    then the price, then the action; a row without a price or an action keeps the empty column. */
 .flow .opt { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 12px; align-items: center; padding: 10px 14px; }
-.opt-sum { display: grid; grid-template-columns: 12px minmax(0, 1fr); grid-template-areas: "m name" ". chip"; align-items: center; gap: 4px 10px; cursor: pointer; list-style: none; min-height: var(--touch); }
+.opt-sum { display: grid; grid-template-columns: 12px minmax(0, 1fr); grid-template-areas: "m name" ". chip" ". plain"; align-items: center; gap: 4px 10px; cursor: pointer; list-style: none; min-height: var(--touch); }
 .opt-sum::before { grid-area: m; }
 .opt-sum .name { grid-area: name; }
 .opt-sum .opt-chips { grid-area: chip; display: flex; flex-wrap: wrap; gap: 4px 6px; justify-self: start; }
@@ -146,12 +155,18 @@ p { margin: 0 0 1em; }
 .opt-sum::before { content: ""; width: 7px; height: 7px; border-right: 2px solid var(--ink-2); border-bottom: 2px solid var(--ink-2); transform: rotate(-45deg); transition: transform var(--motion-quick); flex: none; }
 .opt-more[open] .opt-sum::before { transform: rotate(45deg); }
 .opt-sum .name { font-weight: 700; }
+/* Home v2 (3 Nov 2026): the collapsed row says what the option is in one plain sentence, then its price in bold. */
+.opt-sum .opt-plain { grid-area: plain; font-size: var(--small-size); line-height: 1.45; color: var(--ink-2); }
+.opt-sum .opt-plain strong { color: var(--ink); }
+.opt-instead { margin: 10px 0 0; font-size: var(--small-size); color: var(--ink-2); }
 /* The price and its footnote stay on one line; the goal's online-clinic plan line goes under them (pages.md, Home). */
 .opt-body { padding: 4px 0 6px 17px; display: grid; gap: 4px; }
 .opt-body p { margin: 0; font-size: var(--small-size); line-height: 1.45; }
 .flow .opt > .pick-act { padding-top: 0; align-items: flex-end; }
-/* every row button has one width, so "Online clinic" and "Prices at N shops" line up one under the other (owner, 1 Nov 2026) */
-.flow .opt > .pick-act .btn { width: 160px; }
+/* every row button has at least one width, so the buttons line up one under the other (owner, 1 Nov 2026); "See plans at
+   <clinic> · $X/mo" grows to fit (Home v2, 3 Nov 2026) */
+.flow .opt > .pick-act .btn { min-width: 160px; }
+.flow .opt > .pick-act .paid { text-align: right; }
 .flow-compare .goal-for { margin-bottom: 4px; font-size: var(--small-size); }
 /* The goal's intro (goals[].intro): one ink-2 line under the "for" sentence; the full text on hover (title) and when it
    is clicked or focused on wide screens, always in full on phones. */
@@ -310,6 +325,7 @@ p { margin: 0 0 1em; }
 /* Home's guides card sits in the grey band after "What the labels mean"; two columns of links from 760px. */
 .learn-card { margin-top: 48px; }
 @media (min-width: 760px) { .learn-card ul { columns: 2; column-gap: 32px; } .learn-card li { break-inside: avoid; } }
+@media (min-width: 900px) { .home-two { grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 48px; align-items: start; } #legal .home-two { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
 
 /* Short pages (owner answer Q3 a, 2 Nov 2026): the footer sits at the bottom of the window; main takes the spare height.
    The breadcrumb is a body child with auto side margins, so it is told to stretch to the frame like any .wrap. */
@@ -371,7 +387,7 @@ body > .crumbs { width: -moz-available; width: -webkit-fill-available; width: st
   .creators { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (min-width: 900px) {
-  .flow .opt { grid-template-columns: minmax(0, 1fr) 160px; }
+  .flow .opt { grid-template-columns: minmax(0, 1fr) auto; }
   .flow .opt > .pick-act { grid-column: 2; justify-self: end; }
   .goal-intro { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: default; }
   .goal-intro:focus { white-space: normal; overflow: visible; }
@@ -411,13 +427,10 @@ body > .crumbs { width: -moz-available; width: -webkit-fill-available; width: st
   /* every row with an action ("Online clinic" with its line under it, or "Prices at N shops"): the action sits top
      right beside the name and the chip line starts under the arrow, so each row stays two lines and every hair
      option fits the first screen at 390 by 844 (owner, 1 Nov 2026) */
-  .flow .opt:has(> .pick-act) { grid-template-columns: minmax(0, 1fr) auto; }
-  .flow .opt:has(> .pick-act) > .opt-more { grid-column: 1 / -1; grid-row: 1; }
-  .flow .opt > .pick-act { grid-column: 2; grid-row: 1; justify-self: end; align-self: start; flex-direction: column; align-items: flex-end; gap: 2px; margin-top: 0; padding: 0; }
-  .flow .opt > .pick-act .btn { width: 150px; padding: 0 8px; }
-  .pick-act .no-link { max-width: 150px; }
-  .flow .opt:has(> .pick-act) .opt-sum { grid-template-areas: "m name" "chip chip"; }
-  .flow .opt:has(> .pick-act) .opt-sum .name { padding-right: 160px; }
+  /* Home v2 (owner's phone sketch, 3 Nov 2026): the row's button sits under its plain line, its small line beside it */
+  .flow .opt > .pick-act { flex-direction: row; flex-wrap: wrap; align-items: center; gap: 4px 10px; margin: 0; padding: 4px 0 6px 22px; }
+  .flow .opt > .pick-act .btn { min-width: 0; padding: 0 14px; }
+  .flow .opt > .pick-act .paid, .pick-act .no-link { text-align: left; max-width: none; }
   /* a one-line name stands as tall as the button beside it, so the chip line always starts under the button */
   .flow .opt:has(> .pick-act):not(:has(.btn-action)) .opt-sum .name { min-height: var(--touch); display: flex; align-items: center; }
   .flow-compare .step-panel:not([hidden]) { display: flex; flex-direction: column; }
@@ -464,11 +477,12 @@ body > .crumbs { width: -moz-available; width: -webkit-fill-available; width: st
   h1 { font-size: 32px; }
   h2 { font-size: 22px; }
   .hero { padding: 32px 0 40px; }
-  /* Phones: H1, then the rail, then the lede, so the steps reach the first screen (pages.md, Home) */
+  /* Phones: H1 and its counts line, then the rail (pages.md, Home) */
   .hero-clinic { padding: 12px 0 24px; }
   .hero-more { padding: 24px 0 40px; }
   .hero-clinic .wrap { display: flex; flex-direction: column; }
   .hero-clinic .hero-h1 { order: 1; margin-bottom: 12px; font-size: 22px; line-height: 1.2; }
+  .hero-clinic .hero-lede { order: 1; margin-bottom: 14px; } /* under the H1, as in the phone sketch */
   .hero-after { order: 3; }
   .hero-clinic .flow { order: 2; }
   .opt { padding: 12px 14px; }
@@ -490,7 +504,7 @@ body > .crumbs { width: -moz-available; width: -webkit-fill-available; width: st
   .wrap { max-width: var(--container-wide); padding: 0 32px; }
   body { font-size: 17px; }
   h1 { font-size: 50px; }
-  .sec-hd h2 { font-size: 36px; }
+  .sec-hd h2, #legal h2 { font-size: 36px; }
   .lede { font-size: 19px; }
   .hero-clinic { padding: 28px 0 72px; }
   .flow { grid-template-columns: 220px 260px minmax(0, 1fr); gap: 20px 36px; padding: 32px; }
@@ -507,7 +521,7 @@ body > .crumbs { width: -moz-available; width: -webkit-fill-available; width: st
   .wrap { max-width: var(--container-max); padding: 0 40px; }
   body { font-size: 18px; }
   h1 { font-size: 56px; }
-  .sec-hd h2 { font-size: 40px; }
+  .sec-hd h2, #legal h2 { font-size: 40px; }
   .lede { font-size: 21px; }
   .flow { grid-template-columns: 260px 300px minmax(0, 1fr); gap: 24px 44px; }
   .fig { height: 540px; }

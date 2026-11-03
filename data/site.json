@@ -112,6 +112,7 @@
       "peptides": [
         {
           "name": "Finasteride 1 mg",
+          "plain": "A daily pill on prescription that slows hair loss in most men.",
           "status": "FDA approved",
           "chip": "ok",
           "does": "A daily pill. Slows hair loss and regrows some hair in most men; not for women who may become pregnant.",
@@ -123,6 +124,7 @@
         },
         {
           "name": "Minoxidil",
+          "plain": "A liquid or foam for the scalp, sold without a prescription.",
           "status": "FDA approved",
           "chip": "ok",
           "does": "A liquid or foam you put on the scalp twice a day. Regrows hair for men and women; works while you keep using it.",
@@ -139,6 +141,7 @@
         },
         {
           "name": "GHK-Cu copper peptide serum",
+          "plain": "A cosmetic serum for the scalp, backed by lab studies only.",
           "status": "Cosmetic, no approval needed",
           "chip": "info",
           "does": "A cosmetic serum for the scalp. Small lab and follicle studies; no large trials in people.",
@@ -148,6 +151,7 @@
         },
         {
           "name": "Injectable peptides sold for hair",
+          "plain": "BPC-157, GHK-Cu and TB-500 in research-use vials, with no hair evidence in people.",
           "status": "Not approved for any use",
           "chip": "neutral",
           "does": "Vials from research-use shops, meant to be injected. No human evidence for hair.",
@@ -183,6 +187,7 @@
       "peptides": [
         {
           "name": "Tretinoin cream",
+          "plain": "A prescription cream that reduces fine wrinkles over months.",
           "status": "FDA approved",
           "chip": "ok",
           "does": "A nightly prescription cream. Reduces fine wrinkles and evens skin over months; can irritate at first.",
@@ -192,6 +197,7 @@
         },
         {
           "name": "GHK-Cu copper peptide",
+          "plain": "A cosmetic cream or serum, tested only in small studies.",
           "status": "Cosmetic, no approval needed",
           "chip": "info",
           "does": "A serum or cream. Small studies suggest firmer-looking skin; no large trials.",
@@ -201,6 +207,7 @@
         },
         {
           "name": "Palmitoyl pentapeptide-4 (Matrixyl)",
+          "plain": "The most common peptide in anti-wrinkle creams, with a modest effect in small studies.",
           "status": "Cosmetic, no approval needed",
           "chip": "info",
           "does": "The most common \"anti-wrinkle peptide\" in creams. Modest effect in small studies.",
@@ -210,6 +217,7 @@
         },
         {
           "name": "Acetyl hexapeptide-8 (Argireline)",
+          "plain": "A cosmetic peptide sold as \"Botox in a bottle\" that barely gets through the skin.",
           "status": "Cosmetic, no approval needed",
           "chip": "info",
           "does": "Sold as \"Botox in a bottle\"; barely gets through the skin.",
@@ -253,6 +261,7 @@
       "peptides": [
         {
           "name": "Semaglutide (Wegovy)",
+          "plain": "A weekly shot on prescription that cuts appetite.",
           "status": "FDA approved",
           "chip": "ok",
           "does": "A weekly shot that cuts appetite; about 15 % body weight lost on average in trials.",
@@ -265,6 +274,7 @@
         },
         {
           "name": "Tirzepatide (Zepbound)",
+          "plain": "A weekly shot on prescription, with a larger average loss in trials.",
           "status": "FDA approved",
           "chip": "ok",
           "does": "A weekly shot, same idea, larger average loss in trials.",
@@ -274,6 +284,7 @@
         },
         {
           "name": "Compounded semaglutide or tirzepatide",
+          "plain": "Pharmacy-made copies sold by online clinics, often cheaper, not checked by the FDA batch by batch.",
           "status": "Not FDA approved; pharmacy-made",
           "chip": "warn",
           "does": "Pharmacy-made copies sold by online clinics, often cheaper. Not checked by the FDA batch by batch.",
@@ -284,6 +295,7 @@
         },
         {
           "name": "Retatrutide",
+          "plain": "A newer shot still in trials, sold online only in research-use vials.",
           "status": "Not approved; still in trials",
           "chip": "neutral",
           "does": "A newer three-hormone shot, still in trials. Sold online only from research-use shops.",
@@ -298,6 +310,7 @@
     },
     {
       "slug": "muscle",
+      "approved_instead_guide": "best-peptides-for-muscle-growth",
       "name": "Muscle and hormones",
       "label": "Muscle growth",
       "page": true,
@@ -315,6 +328,7 @@
       "peptides": [
         {
           "name": "Tesamorelin (Egrifta)",
+          "plain": "A prescription shot approved only for belly fat in people with HIV.",
           "status": "FDA approved",
           "chip": "ok",
           "does": "A daily shot approved only to reduce belly fat in people with HIV. Sold off-label by clinics for \"growth hormone\".",
@@ -327,6 +341,7 @@
         },
         {
           "name": "Sermorelin",
+          "plain": "A growth-hormone-releasing shot made by compounding pharmacies; no approved product is on the market.",
           "status": "No FDA-approved product on the market",
           "chip": "neutral",
           "does": "A growth-hormone-releasing shot from compounding pharmacies; the approved brand was taken off the market years ago.",
@@ -336,6 +351,7 @@
         },
         {
           "name": "CJC-1295 / ipamorelin",
+          "plain": "Growth-hormone-releasing peptides in research-use vials, with no large human trials.",
           "status": "Not approved",
           "chip": "neutral",
           "does": "Growth-hormone-releasing peptides sold by research-use shops and some clinics. No approved product, no large human trials.",
@@ -353,6 +369,7 @@
     },
     {
       "slug": "recovery",
+      "approved_instead_guide": "peptides-for-recovery-and-joints",
       "name": "Recovery and joints",
       "label": "Healing and joints",
       "page": true,
@@ -370,6 +387,7 @@
       "peptides": [
         {
           "name": "BPC-157",
+          "plain": "The most searched healing peptide, tested in animals only.",
           "status": "Not approved; FDA proposed excluding it from compounding (Jul 2026)",
           "chip": "neutral",
           "does": "The most searched \"healing peptide\". Animal studies only; the FDA reviewed it for pharmacy compounding on 23 Jul 2026 and proposed keeping it off the list.",
@@ -382,6 +400,7 @@
         },
         {
           "name": "TB-500",
+          "plain": "A copy of a natural repair protein, sold next to BPC-157 in research-use vials.",
           "status": "Not approved; FDA proposed excluding it from compounding (Jul 2026)",
           "chip": "neutral",
           "does": "A copy of a natural repair protein, sold alongside BPC-157. Same July 2026 review, same proposal.",
@@ -416,6 +435,7 @@
       "peptides": [
         {
           "name": "Bremelanotide (Vyleesi)",
+          "plain": "A shot taken before sex, approved for low sexual desire in premenopausal women.",
           "status": "FDA approved",
           "chip": "ok",
           "does": "A shot you take before sex, approved for low sexual desire in premenopausal women.",
@@ -425,6 +445,7 @@
         },
         {
           "name": "PT-141 from online shops",
+          "plain": "The same molecule as Vyleesi, sold without a prescription in research-use vials.",
           "status": "Not an approved product",
           "chip": "neutral",
           "does": "The same molecule as Vyleesi, sold without a prescription by research-use shops: no dose control, no checks.",
@@ -436,6 +457,7 @@
         },
         {
           "name": "Melanotan II",
+          "plain": "A tanning peptide also sold for libido, not approved for any use.",
           "status": "Not approved for any use",
           "chip": "neutral",
           "does": "A tanning peptide also sold \"for libido\". Linked to serious side effects; never approved anywhere.",
@@ -450,6 +472,7 @@
     },
     {
       "slug": "longevity",
+      "approved_instead_guide": "longevity-peptides-epitalon-mots-c-nad",
       "name": "Longevity and energy",
       "label": "Energy and aging",
       "page": true,
@@ -467,6 +490,7 @@
       "peptides": [
         {
           "name": "Epitalon",
+          "plain": "A short peptide sold as an anti-aging shot, with thin and old human evidence.",
           "status": "Not approved; FDA proposed excluding it from compounding (Jul 2026)",
           "chip": "neutral",
           "does": "A four-amino-acid peptide sold as an \"anti-aging\" shot; human evidence is thin and old. Reviewed by the FDA in July 2026; proposed exclusion.",
@@ -479,6 +503,7 @@
         },
         {
           "name": "MOTS-c",
+          "plain": "A peptide sold for energy, tested in animals only.",
           "status": "Not approved; FDA proposed excluding it from compounding (Jul 2026)",
           "chip": "neutral",
           "does": "A \"mitochondrial\" peptide sold for energy; animal studies only. Same July 2026 review.",
@@ -491,6 +516,7 @@
         },
         {
           "name": "NAD+ injections",
+          "plain": "Not a peptide: a vitamin-B3-derived molecule that clinics sell as shots or drips.",
           "status": "Not a peptide; compounded, not FDA approved",
           "chip": "warn",
           "does": "Not a peptide: a vitamin-B3-derived molecule sold by clinics as shots or drips for energy.",
@@ -694,7 +720,29 @@
         "what": "Second opinion: risks of unregulated peptides",
         "url": "https://www.youtube.com/@hubermanlab"
       }
+    ],
+    "cards_checked": "2026-10-25",
+    "cards_source": "Social Blade, vidIQ and SponsorRadar, read for our creator review",
+    "cards": [
+      {"name": "Chris Williamson", "group": "A", "platform": "YouTube", "subscribers": 4470000, "url": "https://www.youtube.com/@chriswillx",
+       "stance": "Cautious yes on peptides; warns about grey-market quality."},
+      {"name": "Thomas DeLauer", "group": "A", "platform": "YouTube", "subscribers": 4040000, "url": "https://www.youtube.com/@thomasdelauerofficial",
+       "stance": "Positive. Sells own-brand supplements, no peptide seller."},
+      {"name": "Mike Mutzel", "group": "A", "platform": "YouTube", "subscribers": 755000, "url": "https://www.youtube.com/@highintensityhealth",
+       "stance": "Positive; not a doctor. General sponsors, no peptide seller."},
+      {"name": "Dr. Dean Jones, DC", "group": "A", "platform": "YouTube", "subscribers": 340000, "url": "https://www.youtube.com/@drjonesdc",
+       "stance": "Cautious on research-use peptides, positive on prescribed GLP-1. Runs a virtual clinic."},
+      {"name": "Dr. Thomas O'Connor", "group": "A", "platform": "YouTube", "subscribers": 274000, "url": "https://youtube.com/@theanabolicdoc",
+       "stance": "Doctor. Cautious and evidence-based."},
+      {"name": "Quinn Stillson, MD", "group": "A", "platform": "YouTube", "subscribers": 61700, "url": "https://www.youtube.com/@quinnstillsonmd",
+       "stance": "Doctor. Evidence-based explainers, no peptide seller."},
+      {"name": "Dr. William Seeds", "group": "A", "platform": "YouTube", "subscribers": 6730, "url": "https://www.youtube.com/@ssrpinstitute",
+       "stance": "Orthopedic surgeon. Positive; teaches paid courses."}
     ]
+  },
+  "home_checked": {
+    "note": "Home, Is it legal today?, Most checked this month: a fixed list until we have page views (owner task 3 Nov 2026).",
+    "slugs": ["bpc-157", "semaglutide", "ghk-cu", "tb-500", "tirzepatide"]
   },
   "glossary": [
     {
