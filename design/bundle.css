@@ -470,6 +470,8 @@ a.legal-card:hover{border-color:var(--clinic)}
    from data in bold with its source line, and one button at the foot. They replace the ℞ price pad. */
 .decide{list-style:none;margin:24px 0 0;padding:0;display:grid;gap:16px}
 .decide-card{display:flex;flex-direction:column;gap:6px;padding:18px 20px}
+/* a long "See plans at <Clinic> · $X/mo" wraps inside the card instead of running past a 320px screen (deploy 3 Nov 2026) */
+.decide-card .btn{white-space:normal;text-align:center;padding-top:8px;padding-bottom:8px}
 .decide-k{margin:0;font-size:var(--small-size);font-weight:600;color:var(--ink-2)}
 .decide-card h2{margin:0;font:700 18px/1.3 var(--font-text);letter-spacing:0}
 .decide-card .chips{display:flex;flex-wrap:wrap;gap:4px 6px}

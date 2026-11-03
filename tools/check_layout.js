@@ -48,17 +48,21 @@ function pages(dir, base = '') {
       const r = await page.evaluate(() => {
         const sw = document.documentElement.scrollWidth, iw = window.innerWidth;
         const wraps = [...document.querySelectorAll('.wrap')];
-        let outside = 0;
+        let outside = 0, which = [];
         for (const el of document.body.querySelectorAll('*')) {
           if (el.closest('.tbl-wrap, .nav')) continue;
           const b = el.getBoundingClientRect();
-          if (b.width && b.right > iw + 1) outside++;
+          if (b.width && b.right > iw + 1) {
+            outside++;
+            // name the element, so a failure in the deploy (real data only) can be fixed without guessing
+            if (which.length < 3) which.push(`${el.tagName.toLowerCase()}.${(el.className || '').toString().split(' ').join('.')} "${(el.textContent || '').trim().slice(0, 40)}"`);
+          }
         }
-        return { sw, iw, outside };
+        return { sw, iw, outside, which };
       });
       n++;
       if (r.sw > r.iw) problems.push(`${w}px ${p}: page scrolls sideways (${r.sw} > ${r.iw})`);
-      if (r.outside) problems.push(`${w}px ${p}: ${r.outside} element(s) past the right edge`);
+      if (r.outside) problems.push(`${w}px ${p}: ${r.outside} element(s) past the right edge: ${r.which.join(', ')}`);
     }
     await page.close();
   }
