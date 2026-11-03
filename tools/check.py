@@ -269,7 +269,19 @@ def window_errs(name, html):
         # The seller score is facts, never a verdict (owner, 2 Nov 2026): no "safe", "trusted" or "best" in the window.
         for w in re.findall(r"\b(safe|trusted|best)\b", re.sub(r"<[^>]+>", " ", m.group(1)), re.I):
             errs.append(f"{name}: seller window says '{w}'")
+        # The two kinds of window never mix (owner answer, 3 Nov 2026, "topical" counts as cosmetic): a cosmetic window
+        # (id cosmetics-...) lists only cosmetic forms and never a vial; a research-use window never a cosmetic form.
+        wid = re.match(r'<dialog class="sellers-dlg" id="([^"]+)"', m.group(0)).group(1)
+        for form in re.findall(r'<tr data-seller="[^"]*" data-form="([^"]*)"', m.group(1)):
+            if wid.startswith("cosmetics-") and (form not in COSMETIC_FORMS or "vial" in form):
+                errs.append(f"{name}: cosmetic window {wid} lists a '{form or 'unknown'}' listing")
+            if wid.startswith("sellers-") and form in COSMETIC_FORMS:
+                errs.append(f"{name}: research-use window {wid} lists a cosmetic '{form}' listing")
     return errs
+
+
+# the cosmetic forms, as build.py and tools/pull_data.py list them
+COSMETIC_FORMS = ("cream", "serum", "lotion", "gel", "topical")
 
 
 def check_parts(P):
