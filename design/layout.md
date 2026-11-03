@@ -19,7 +19,7 @@ Nothing on any page may leave its margins or push the page sideways, at any scre
 5. Buttons: label at most 24 characters. Full width under 640px (except `btn-sm` in tables). A button row wraps onto a new line rather than overflow.
 6. Header nav never scrolls sideways (owner task 3 Nov 2026): from 1180px it is one row, logo, the five categories, the search field and "Find a seller", and an open category's panel is a full-width strip under the header; under 1180px the categories sit behind the "Menu" button as an accordion (the search field stays on the first row from 760px, inside the Menu below) and, with JavaScript off, show open under the logo (pages.md, Every page, Header). No breakpoint beyond the list above: the header uses 1180px and 760px. The wordmark never shrinks below the 16px mark.
 7. Headings use the phone sizes from `tokens.json` under 640px (`display-1` 32px, 28px in the Home hero; `display-2` 26px; `display-3` 22px; `number-xl` 48px).
-8. No element is positioned outside the container (no negative margins, no absolute elements past the edges). Sticky only for the article sidebar, from 900px up.
+8. No element is positioned outside the container (no negative margins, no absolute elements past the edges). Sticky only for the article sidebar and the seller page's right column (the Background check card and Similar sellers; owner task 3 Nov 2026), from 900px up.
 
 ## Touch
 
@@ -27,7 +27,7 @@ Every control is at least 44px tall: nav items, the header button, in-table `btn
 
 ## Vertical spacing
 
-Only spacing tokens. Between landing sections `space-9` (56px on phones). Home first screen 28px top, 32px bottom (12px and 24px on phones), 16px between the H1 and the flow (12px on phones); the grey band after it 32px top, 56px bottom (24px and 40px on phones), 48px above the How we rate strip; category hero 56px. H2 in articles: `space-8` above. Inside panels `space-5`. Nothing else.
+Only spacing tokens. Between landing sections `space-9` (56px on phones). Home first screen 28px top, 32px bottom (12px and 24px on phones), 16px between the H1 and the flow (12px on phones); the grey band after it 32px top, 56px bottom (24px and 40px on phones), 48px above the How we rate strip; category hero 56px. Seller page (owner task 3 Nov 2026): top block 24px top and 32px bottom, sections `space-7` (48px) apart with a hairline between (owner answer 3 Nov 2026: 48px, no 40px token), the two columns `space-6` apart. H2 in articles: `space-8` above. Inside panels `space-5`. Nothing else.
 
 ## Checks before every release
 

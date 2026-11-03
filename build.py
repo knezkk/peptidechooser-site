@@ -2191,23 +2191,26 @@ def card_chip(k, t, r):
 
 
 def check_card(r):
-    """Background check card (pages.md, Seller): right of the H1 like the price pad, without the ℞ mark."""
-    lines = check_lines(r)
-    rows = "".join(
-        f'<li>{card_chip(k, t, r)}<span class="check-line">{lines[k]}</span></li>' for k, t in SCORE_CHECKS)
-    if r.get("first_seen"):  # not a check: when we started tracking the seller (owner answer Q1 b, 3 Nov 2026)
-        rows += f'<li><span class="check-key">Tracked since</span><span class="check-line">{nice_date(r["first_seen"][:10])}.</span></li>'
-    if is_clinic(r):
-        foot = '<p class="check-act"><span class="btn btn-action" role="button" aria-disabled="true">Online clinic</span><span class="paid">No paid link yet</span></p>'
-    else:
-        foot = f'<p class="check-nolink">{kind_words(r)[2]}</p>'
+    """Background check card (pages.md, Seller; owner task 3 Nov 2026): a summary in the right column, sticky from 900px.
+    The five checks as one chip each, the name only: their facts and dates live in the legit section, once."""
+    rows = "".join(f"<li>{card_chip(k, t, r)}</li>" for k, t in SCORE_CHECKS)
     return f"""
       <div class="board check-card" aria-labelledby="check-h">
         <div class="check-head"><h2 id="check-h">Background check</h2><p class="check-n"><span class="num-xl">{r["score"]}</span> <span class="num-unit">of {len(SCORE_CHECKS)} checks</span></p></div>
-        <ul class="check-list">{rows}</ul>{CLINIC_LAB_LINE if r["seller_slug"] in CLINIC_PROFILES else ""}
+        <ul class="check-chips">{rows}</ul>{CLINIC_LAB_LINE if r["seller_slug"] in CLINIC_PROFILES else ""}
         <div class="rx-foot"><span class="stamp">Checked {nice_date(r["score_checked_on"])}</span><span class="fine">Checks are facts we hold about the seller, not a safety or quality grade.</span></div>
-        {foot}
+        <p class="check-how"><a href="/how-we-rate/">How we rate</a></p>
       </div>"""
+
+
+def prices_checked(r):
+    """The newest price date the seller's table shows: plans' last_seen for a clinic, the substances' newest price for a shop."""
+    if r["seller_slug"] in CLINIC_PROFILES:
+        days = [p.get("last_seen") or "" for p in clinic_plan_rows(r)]
+    else:
+        days = [(x.get("newest_price_observed_at") or "")[:10] for x in SELLER_SUBS.get(r["seller_slug"], [])]
+    days = [d for d in days + [(r.get("price_updated_at") or "")[:10]] if d]
+    return max(days) if days else ""
 
 
 def seller_subs_section(r):
@@ -2216,27 +2219,25 @@ def seller_subs_section(r):
         return ""
     trs = []
     for s in rows:
-        g = SUB_GOAL.get(s["substance_slug"])
         label = escape(sub_label(s["substance_slug"]))
-        name = f'<a class="name" href="/{g["slug"]}/">{label}</a>' if g else f'<span class="name">{label}</span>'
+        page = f'/peptides/{s["substance_slug"]}/'  # the substance's own page (audit A24: not the first goal page)
+        name = f'<a class="name" href="{page}">{label}</a>' if s["substance_slug"] in PEPTIDE_SLUGS else f'<span class="name">{label}</span>'
         coa = '<span class="chip chip-ok">Yes</span>' if s.get("has_coa") else '<span class="chip chip-neutral">No</span>'
-        seen = s.get("newest_price_observed_at")
         trs.append(f'<tr><td>{name}</td><td class="num" data-l="Listings">{s["listing_count"]}</td>'
                    f'<td class="num" data-l="Per mg">{per_mg_range(s.get("price_per_mg_min"), s.get("price_per_mg_max"))}</td>'
-                   f'<td data-l="Lab report">{coa}</td><td class="num" data-l="Price checked">{nice_date(seen[:10]) if seen else "unknown"}</td></tr>')
+                   f'<td data-l="Lab report">{coa}</td></tr>')
     total = r.get("substance_count") or len(rows)
-    lede = (f"The {len(rows)} substances with the most listings, of {total}." if total > len(rows)
-            else f"Every substance it lists, {plural(len(rows), 'substance')}.")
+    on = prices_checked(r)
+    more = f'<p class="small seller-more">{plural(total, "substance")} in all.</p>' if total > len(rows) else ""
     return f"""
-<section class="band-2" id="sells">
-  <div class="wrap">
-    <div class="sec-hd"><div><h2>What it sells</h2><p>{lede} A substance with a goal page links to it. We do not link to the products.</p></div></div>
-    <div class="tbl-wrap"><table class="tbl tbl-cards tbl-sells">
-      <thead><tr><th scope="col">Substance</th><th scope="col">Listings</th><th scope="col">Per mg</th><th scope="col">Lab report</th><th scope="col">Price checked</th></tr></thead>
-      <tbody>{"".join(trs)}</tbody>
-    </table></div>
-    <p class="small" style="margin-top:16px">Per mg is the price divided by the stated amount; blends and listings without an amount have none.</p>
-  </div>
+<section class="seller-sec" id="sells" aria-labelledby="sells-h">
+  <h2 id="sells-h">What it sells</h2>
+  {f'<p class="small seller-lede">Prices checked {nice_date(on)}.</p>' if on else ""}
+  <div class="tbl-wrap"><table class="tbl tbl-cards tbl-compact tbl-sells">
+    <thead><tr><th scope="col">Substance</th><th scope="col">Listings</th><th scope="col">Per mg</th><th scope="col">Lab report</th></tr></thead>
+    <tbody>{"".join(trs)}</tbody>
+  </table></div>
+  {more}<p class="small seller-note">Per mg is the price divided by the stated amount; blends and listings without an amount have none. We do not link to the products.</p>
 </section>"""
 
 
@@ -2246,17 +2247,17 @@ def seller_letters_section(r):
         return ""
     trs = "".join(f'<tr><td class="num">{nice_date(x["letter_date"])}</td><td>{escape(clean(x["letter_subject"]))}</td>'
                   f'<td><a href="{escape(x["letter_url"])}" rel="nofollow">FDA letter</a></td></tr>' for x in rows)
-    more = '<p class="small" style="margin-top:16px"><a href="/fda-warning-letters/">Every FDA warning letter to peptide sellers</a></p>' if LETTERS_ALL else ""
+    more = '<p class="small seller-note"><a href="/fda-warning-letters/">Every FDA warning letter to peptide sellers</a></p>' if LETTERS_ALL else ""
+    # id="fda-letters": the letter chips in the tables link here (owner task 3 Nov 2026)
     return f"""
-<section class="section" id="letters">
-  <div class="wrap">
-    <div class="sec-hd"><div><h2>FDA warning letters</h2><p>Letters the FDA sent to this seller, matched by its web address or street address.</p></div></div>
-    <div class="tbl-wrap"><table class="tbl tbl-letters">
-      <thead><tr><th scope="col">Date</th><th scope="col">Subject</th><th scope="col">Source</th></tr></thead>
-      <tbody>{trs}</tbody>
-    </table></div>
-    {more}
-  </div>
+<section class="seller-sec" id="fda-letters" aria-labelledby="fda-letters-h">
+  <h2 id="fda-letters-h">FDA warning letters</h2>
+  <p class="small seller-lede">Matched by the seller's web address or street address.</p>
+  <div class="tbl-wrap"><table class="tbl tbl-compact tbl-letters">
+    <thead><tr><th scope="col">Date</th><th scope="col">Subject</th><th scope="col">Source</th></tr></thead>
+    <tbody>{trs}</tbody>
+  </table></div>
+  {more}
 </section>"""
 
 
@@ -2272,28 +2273,22 @@ def company_source(r):
     return ""
 
 
-def seller_company_section(r):
+def company_ledger(r):
+    """The company as a 3-row ledger under the "Company found" check (owner task 3 Nov 2026): Name, State, Found in with
+    its source; only with a company from a state registry or an FDA letter (owner answer Q4 a)."""
     if not shown_company(r):
         return ""
     rows = [("Name", escape(clean(r["entity_name"])))]
     if r.get("entity_state"):
         rows.append(("State", STATES.get(r["entity_state"], r["entity_state"])))
-    if r.get("entity_evidence") in EVIDENCE_WORDS:
-        rows.append(("Found in", EVIDENCE_WORDS[r["entity_evidence"]][:1].upper() + EVIDENCE_WORDS[r["entity_evidence"]][1:]))
+    found = EVIDENCE_WORDS.get(r.get("entity_evidence"), "")
+    found = found[:1].upper() + found[1:]
     if r.get("registry_status"):
-        rows.append(("Registry status", f'{r["registry_status"][:1].upper() + r["registry_status"][1:]}'
-                     + (f', checked {nice_date(r["registry_checked_on"])}' if r.get("registry_checked_on") else "")))
+        found += f', {r["registry_status"]}' + (f' on {nice_date(r["registry_checked_on"])}' if r.get("registry_checked_on") else "")
     src = company_source(r)
-    if src:
-        rows.append(("Source", src))
-    led = "".join(f'<div class="ledger"><span>{k}</span><span>{v}</span></div>' for k, v in rows)
-    return f"""
-<section class="section" id="company">
-  <div class="wrap">
-    <div class="sec-hd"><div><h2>Company</h2><p>The company behind the shop, and where we found it.</p></div></div>
-    <div class="company-ledger">{led}</div>
-  </div>
-</section>"""
+    if found or src:
+        rows.append(("Found in", found + (": " + src if found and src else src)))
+    return '<div class="company-ledger">' + "".join(f'<div class="ledger"><span>{k}</span><span>{v}</span></div>' for k, v in rows) + "</div>"
 
 
 def similar_sellers(r, n=3):
@@ -2314,18 +2309,15 @@ def card_count(x):
 
 
 def similar_section(r):
-    cards = "".join(
-        f'<li class="panel-line"><a class="name" href="/sellers/{x["seller_slug"]}/">{seller_name(x)}</a>'
-        f'<span class="small">{x["score"]} of {len(SCORE_CHECKS)} checks</span><span class="small">{card_count(x)}</span></li>'
-        for x in similar_sellers(r))
+    """"Similar sellers" under the card (owner task 3 Nov 2026): the three sellers similar_sellers picks, as small links."""
+    items = "".join(f'<li><a href="/sellers/{x["seller_slug"]}/">{seller_name(x)}</a> · {x["score"]} of {len(SCORE_CHECKS)} checks</li>'
+                    for x in similar_sellers(r))
     return f"""
-<section class="section" id="other-sellers">
-  <div class="wrap">
-    <h2 class="h-sources">Compare other {"clinics" if r["seller_slug"] in CLINIC_PROFILES else "sellers"}</h2>
-    <ul class="seller-cards">{cards}</ul>
-    <p class="small" style="margin-top:16px"><a href="/sellers/">All sellers we track</a></p>
-  </div>
-</section>""" if cards else ""
+      <nav class="seller-similar" aria-labelledby="similar-h">
+        <h2 id="similar-h" class="h-sources">Similar sellers</h2>
+        <ul class="small">{items}</ul>
+        <p class="small"><a href="/sellers/">All sellers we track</a></p>
+      </nav>""" if items else ""
 
 
 # Clinic profile (pages.md, Seller, clinics; owner task 2 Nov 2026): the Seller page type for a seller with plans and no
@@ -2392,19 +2384,17 @@ def clinic_plans_section(r):
         trs.append(f'<tr><td><span class="name">{clean(p["plan_name"])}</span></td><td data-l="What it is">{plan_chip(plan_goal(p), p)}</td>'
                    f'<td class="num" data-l="Per month">{usd(p["price_monthly"])}</td>'
                    f'<td data-l="Care fee">{"not known" if fee is None else "none" if float(fee) == 0 else usd(fee) + "/mo"}</td>'
-                   f'<td data-l="Cheapest elsewhere">{elsewhere}</td>'
-                   f'<td data-l="Prices checked">{nice_date(p["last_seen"])}</td></tr>')
+                   f'<td data-l="Cheapest elsewhere">{elsewhere}</td></tr>')
+    on = prices_checked(r)
     return f"""
-<section class="band-2" id="plans">
-  <div class="wrap">
-    <div class="sec-hd"><div><h2>Plans and prices</h2><p>Every plan on the clinic's price page, cheapest first, with the lowest price for the same medication and kind at another clinic we track.</p></div></div>
-    <div class="tbl-wrap"><table class="tbl tbl-cards tbl-clinics tbl-plans">
-      <thead><tr><th scope="col">Plan</th><th scope="col">What it is</th><th scope="col">Per month</th><th scope="col">Care fee</th><th scope="col">Cheapest elsewhere</th><th scope="col">Prices checked</th></tr></thead>
-      <tbody>{"".join(trs)}</tbody>
-    </table></div>
-    <p class="small" style="margin-top:16px">Per month is the clinic's published monthly price for the plan; the care fee is its monthly membership, when it shows one.</p>
-    <p class="cmp-link"><a class="btn btn-ink" href="/compare/?a=p.{r["seller_slug"]}.{plans[0]["plan_slug"]}">Compare with another clinic</a></p>
-  </div>
+<section class="seller-sec" id="plans" aria-labelledby="plans-h">
+  <h2 id="plans-h">Plans and prices</h2>
+  {f'<p class="small seller-lede">Prices checked {nice_date(on)}.</p>' if on else ""}
+  <div class="tbl-wrap"><table class="tbl tbl-cards tbl-clinics tbl-compact tbl-plans">
+    <thead><tr><th scope="col">Plan</th><th scope="col">What it is</th><th scope="col">Per month</th><th scope="col">Care fee</th><th scope="col">Cheapest elsewhere</th></tr></thead>
+    <tbody>{"".join(trs)}</tbody>
+  </table></div>
+  <p class="small seller-note">Per month is the clinic's published monthly price for the plan; the care fee is its monthly membership, when it shows one. Cheapest elsewhere is the lowest price for the same medication and kind at another clinic we track.</p>
 </section>"""
 
 
@@ -2430,43 +2420,62 @@ def legit_description(d):
 
 
 def legit_section(r):
-    """"Is <Name> legit? What we can check" (pages.md, Seller; owner task 2 Nov 2026): right after the short answer, the five
-    checks in the seller page's order, each "Met:" or "Not met:" with the check card's fact, then the closing sentence."""
+    """"Is <Name> legit? What we can check" (pages.md, Seller; owner tasks 2 and 3 Nov 2026): the five checks by name, each
+    "Met:" or "Not met:" with its fact and date (the only place they appear; the marks are in the card), the company
+    ledger under "Company found", then the closing sentence."""
     lines = check_lines(r)
-    # the legal pages check has five states (legal_state; owner task 3 Nov 2026): a check that has not run says so, a
-    # crawl the site blocked or that got no answer says it could not check, with the date of the attempt
     legal = legal_state(r)
     line = lambda k: f"{legal[0]}: {legal[1]}" if k == "score_legal_pages" else f'{"Met" if r.get(k) else "Not met"}: {lines[k]}'
     items = "".join(
-        f'<li>{card_chip(k, t, r)}<span class="check-line">{line(k)}</span></li>'
+        f'<li><span class="check-key">{t}</span><span class="check-line">{line(k)}'
+        f'{company_ledger(r) if k == "score_registered_company" else ""}</span></li>'
         for k, t in SCORE_CHECKS)
     return f"""
-<section class="section legit" id="legit">
-  <div class="wrap">
-    <h2>{legit_heading(r)}</h2>
-    <ul class="check-list legit-list">{items}</ul>
-    <p class="small legit-close">{LEGIT_CLOSE_CLINIC if is_clinic(r) else LEGIT_CLOSE}</p>
-  </div>
+<section class="seller-sec legit" id="legit" aria-labelledby="legit-h">
+  <h2 id="legit-h">{legit_heading(r)}</h2>
+  <ul class="check-list legit-list">{items}</ul>
+  <p class="small legit-close">{LEGIT_CLOSE_CLINIC if is_clinic(r) else LEGIT_CLOSE}</p>
 </section>"""
+
+
+def seller_action(r):
+    """The page's one action on the H1's row (owner task 3 Nov 2026): a clinic compares with another clinic, a shop with
+    another shop, on /compare/ (built whenever seller pages are). A paid link (Visit <Name>) joins when the data carries
+    one; none does yet."""
+    if r["seller_slug"] in CLINIC_PROFILES:
+        plans = clinic_plan_rows(r)
+        return (f'<a class="btn btn-ink" href="/compare/?a=p.{r["seller_slug"]}.{plans[0]["plan_slug"]}">Compare with another clinic</a>'
+                if plans else "")
+    return f'<a class="btn btn-ink" href="/compare/?a=s.{r["seller_slug"]}">Compare with another shop</a>'
 
 
 def seller_page(r):
     clinic = r["seller_slug"] in CLINIC_PROFILES
     answer = " ".join(clinic_answer(r) if clinic else short_answer(r))
     checked = max((r.get("price_updated_at") or "")[:10], (r.get("score_checked_on") or "")[:10], (r.get("first_seen") or "")[:10])
+    on = prices_checked(r)
+    meta = " · ".join(x for x in ("Prices, checks and what we found",
+                                  f'Tracked since {nice_date(r["first_seen"][:10])}' if r.get("first_seen") else "",
+                                  f"Prices checked {nice_date(on)}" if on else "") if x)
     return f"""
-<section class="hero hero-goal seller-pg">
+<section class="seller-top">
   <div class="wrap">
-    <div class="hero-grid">
-      <div>
-        <h1>{seller_name(r)}: prices, checks and what we found.</h1>
+    <div class="seller-head">
+      <div class="seller-id">
+        <h1>{seller_base(seller_name(r))} review</h1>
         <p class="seller-kind"><span class="chip chip-neutral">{kind_words(r)[1]}</span></p>
         {author_line(checked) if checked else ""}
-        <p class="intro">{answer}</p>
-      </div>{check_card(r)}
+        <p class="small seller-meta">{meta}</p>
+      </div>
+      <div class="seller-score"><p class="check-n"><span class="num-xl">{r["score"]}</span> <span class="num-unit">of {len(SCORE_CHECKS)} checks</span></p>{seller_action(r)}</div>
     </div>
+    <p class="intro seller-answer">{answer}</p>
   </div>
-</section>{legit_section(r)}{clinic_plans_section(r) if clinic else seller_subs_section(r)}{seller_letters_section(r)}{seller_company_section(r)}{similar_section(r)}
+</section>
+<div class="wrap seller-body">
+  <div class="seller-main">{clinic_plans_section(r) if clinic else seller_subs_section(r)}{legit_section(r)}{seller_letters_section(r)}</div>
+  <aside class="seller-side" aria-label="Background check">{check_card(r)}{similar_section(r)}</aside>
+</div>
 """
 
 

@@ -208,8 +208,7 @@ p { margin: 0 0 1em; }
 .check-list li:first-child { border-top: 0; }
 .check-list .chip { justify-self: start; }
 .check-list .check-key { color: var(--ink-2); }
-.check-nolink, .check-act { margin: 14px 0 0; font-size: var(--small-size); color: var(--ink-2); }
-.seller-kind { margin: -4px 0 12px; } /* the seller page's kind chip under the H1 (pages.md, Seller; owner answer Q2 b) */
+.check-nolink { margin: 14px 0 0; font-size: var(--small-size); color: var(--ink-2); }
 /* Letters on a peptide page and the FDA listing (pages.md, Peptide; owner task 2 Nov 2026): the first mention in small
    under the company, the FDA's own wording in small under the status */
 .sub-quote, .listing { display: block; margin-top: 2px; font-size: var(--small-size); line-height: 1.4; color: var(--ink-2); font-weight: 400; }
@@ -218,14 +217,45 @@ p { margin: 0 0 1em; }
 .legit-list { max-width: 760px; margin-top: 12px; } /* "Is <Name> legit?" on seller pages: the check card's list at reading width */
 .legit-close { max-width: 64ch; margin: 12px 0 0; color: var(--ink-2); }
 .check-nolab { margin: 4px 0 0; font-size: var(--small-size); line-height: var(--small-lh); color: var(--ink-2); } /* a clinic: why the lab-report check is never met */
-.check-act { display: grid; justify-items: start; gap: 4px; }
-/* Seller page sections: the company ledger at reading width, the other sellers as one row of cards */
+/* Seller page (pages.md, Seller; owner task 3 Nov 2026): the top block (H1 at display-2 with the score and the page's
+   action on its row from 900px), then 8 + 4 columns from 900px: the sections left, the card and "Similar sellers" right,
+   sticky. Sections 48px (space-7) apart with a hairline between. Phones: top block, card, sections, similar sellers. */
+.seller-top { padding: var(--space-5) 0 var(--space-6); border-bottom: 1px solid var(--line); }
+.seller-head { display: grid; gap: 12px 32px; }
+.seller-id h1 { font-size: var(--display-2-size); line-height: var(--display-2-lh); margin: 0 0 10px; }
+.seller-kind { margin: 0 0 8px; }
+.seller-id .meta { margin: 0; }
+.seller-meta { margin: 2px 0 0; color: var(--ink-2); }
+.seller-score { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 24px; }
+.seller-answer { margin: 16px 0 0; max-width: 72ch; text-wrap: pretty; }
+.seller-body { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-6); margin-top: var(--space-6); }
+.seller-side { display: contents; }
+.seller-side .check-card { order: 1; }
+.seller-main { order: 2; }
+.seller-similar { order: 3; }
+.seller-sec { padding: var(--space-7) 0; border-top: 1px solid var(--line); }
+.seller-sec:first-child { border-top: 0; padding-top: 0; }
+.seller-sec h2 { font-size: var(--display-3-size); line-height: var(--display-3-lh); margin: 0 0 4px; }
+.seller-lede { margin: 0 0 12px; color: var(--ink-2); }
+.seller-more, .seller-note { margin: 8px 0 0; max-width: 64ch; color: var(--ink-2); }
+.check-nolab { text-wrap: pretty; }
+.legit .check-list li { grid-template-columns: 140px minmax(0, 1fr); }
+.legit .company-ledger { margin-top: 6px; }
+.legit .company-ledger .ledger { padding: 4px 0; min-height: 0; font-size: var(--small-size); line-height: var(--small-lh); }
+.seller-similar ul { list-style: none; margin: 8px 0; padding: 0; }
+.seller-similar li { padding: 4px 0; color: var(--ink-2); }
+@media (min-width: 900px) {
+  .seller-head { grid-template-columns: minmax(0, 1fr) auto; align-items: start; }
+  .seller-id h1 { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .seller-score { justify-content: flex-end; }
+  .seller-body { grid-template-columns: minmax(0, 8fr) minmax(0, 4fr); gap: var(--space-6); align-items: start; }
+  .seller-side { display: block; position: sticky; top: var(--space-5); }
+  .seller-side .check-card, .seller-main, .seller-similar { order: 0; }
+  .seller-similar { margin-top: var(--space-5); }
+}
 .company-ledger { max-width: 720px; }
 .company-ledger .ledger > span:first-child { color: var(--ink-2); flex: none; }
 .company-ledger .ledger > span:last-child { text-align: right; overflow-wrap: anywhere; }
-.seller-cards { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
-.seller-cards li { display: grid; gap: 4px; }
-.seller-cards .small { color: var(--ink-2); }
 .tbl-sellers td:nth-child(n+3), .tbl-sellers th:nth-child(n+3), .tbl-sells td:nth-child(2), .tbl-sells th:nth-child(2) { white-space: nowrap; }
 .clinics-filter .small { flex-basis: 100%; margin: 0; }
 .sellers-filter .sub-filter .input, .clinics-filter .input { flex: 0 1 auto; min-width: 0; max-width: 100%; } /* the selects size to their options (pages.md, Sellers) */
@@ -334,7 +364,6 @@ body > .crumbs { width: -moz-available; width: -webkit-fill-available; width: st
 }
 
 @media (min-width: 760px) {
-  .seller-cards { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .foot-grid { grid-template-columns: minmax(0, 4fr) repeat(3, minmax(0, 2fr)); gap: 32px; }
   .home-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
   .criteria { grid-template-columns: repeat(2, minmax(0, 1fr)); }
