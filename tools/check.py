@@ -286,15 +286,14 @@ def check_parts(P):
             cls = m.group(1).split()
             if "btn" in cls and not any(c in cls for c in ("btn-ink", "btn-action", "btn-line", "btn-mark", "btn-wait")):
                 errs.append(f"{name}: button without a design-book kind ({cls})")
-        # The paid button: a live one is an <a> to /out/ with rel=sponsored and "Paid link" right under it; a disabled one
-        # (before the affiliate url exists) is a span with aria-disabled, no href or rel, and "No paid link yet" under it.
+        # The paid button: an <a> to /out/ with rel=sponsored and "Paid link" right under it. Before a paid link exists
+        # there is no green button at all, and no page says "No paid link yet" (Home v2, 3 Nov 2026).
+        if "No paid link yet" in html:
+            errs.append(f"{name}: says 'No paid link yet'")
         for m in re.finditer(r'<(\w+)([^>]*class="btn btn-action[^"]*"[^>]*)>[^<]*</\1>(<span class="paid">([^<]*)</span>)?', html):
             tag, attrs, under = m.group(1), m.group(2), m.group(4)
             if 'aria-disabled="true"' in attrs:
-                if tag != "span" or "href=" in attrs or "rel=" in attrs or 'role="button"' not in attrs:
-                    errs.append(f"{name}: disabled Visit must be a span role=button without href or rel")
-                if under != "No paid link yet":
-                    errs.append(f"{name}: disabled Visit without 'No paid link yet' under it")
+                errs.append(f"{name}: a disabled green button (use btn-wait to our own page until a paid link exists)")
             else:
                 if tag != "a" or 'href="/out/' not in attrs or "sponsored" not in attrs:
                     errs.append(f"{name}: green button not an /out/ link with rel=sponsored")

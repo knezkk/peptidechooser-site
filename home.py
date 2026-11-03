@@ -84,22 +84,17 @@ def where_action(b, r):
     """The row's one action (pages.md, Home, Where to get it): a clinic with a paid link (`paid_link` on its profile,
     none yet) gets btn-action "Visit <Name>" through /out/; a clinic without, btn-wait "See plans" to our clinic page;
     a shop, btn-line "Our review" to our page on it. Never a link to a seller's own site."""
-    slug, name = r["seller_slug"], b.seller_name(r)
-    if seller_kind(b, r) == "clinic" and r.get("paid_link"):
-        return (f'<a class="btn btn-action btn-sm" href="/out/{escape(r["paid_link"])}/" rel="sponsored">Visit {name}</a>'
-                f'<span class="paid">Paid link</span>')
     if seller_kind(b, r) == "clinic":
-        return f'<a class="btn btn-wait btn-sm" href="/sellers/{slug}/">See plans</a><span class="paid">Our clinic page</span>'
-    return f'<a class="btn btn-line btn-sm" href="/sellers/{slug}/">Our review</a><span class="paid">5 checks, no shop link</span>'
+        return b.clinic_button(r["seller_slug"], "See plans")
+    return (f'<span class="pick-act"><a class="btn btn-line btn-sm" href="/sellers/{r["seller_slug"]}/">Our review</a>'
+            f'<span class="paid">5 checks, no shop link</span></span>')
 
 
-def where_row(b, r, hide=False):
+def where_row(b, r):
     kind = seller_kind(b, r)
     chip = ('<span class="chip chip-info">Online clinic</span>' if kind == "clinic" else
             f'<span class="chip chip-neutral">{b.kind_words(r)[1]}</span>')
-    subs = b.clinic_subs(r) if kind == "clinic" else b.shop_subs(r)
-    return (f'<tr{" hidden" if hide else ""} data-t="{kind}" data-s="{r.get("score") or 0}" data-subs="{" ".join(subs)}"'
-            f' data-n="{escape(b.seller_name(r).lower())}">'
+    return ('<tr>'
             f'<td><a class="name" href="/sellers/{r["seller_slug"]}/">{b.seller_name(r)}</a><span class="sub">{escape(where_line(b, r))}</span></td>'
             f'<td data-l="Type">{chip}</td>'
             f'<td class="num" data-l="Checks">{r.get("score") or 0} of {len(b.SCORE_CHECKS)}</td>'
