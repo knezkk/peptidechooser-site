@@ -137,6 +137,7 @@ p { margin: 0 0 1em; }
 .tbl-letters .co-seller { display: block; margin-top: 2px; font-size: var(--small-size); line-height: 1.4; color: var(--ink-2); font-weight: 400; }
 .tbl-letters td.office { font-size: var(--small-size); color: var(--ink-2); }
 .tbl-letters-all td.num, .tbl-letters-all td:last-child { white-space: nowrap; }
+.tbl-letters-all .name { overflow-wrap: anywhere; } /* a company named by its web address breaks inside its card */
 /* Goal page (/hair/, pages.md, Category): the step 2 card alone, under the hero text and price pad */
 .chooser.flow-solo { grid-template-columns: minmax(0, 1fr); grid-template-areas: "h2" "cmp"; margin-top: 40px; background: none; border: 0; box-shadow: none; padding: 0; }
 .flow-hd { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; padding-bottom: 10px; border-bottom: 1px solid var(--line); }
@@ -419,7 +420,7 @@ body > .crumbs { width: -moz-available; width: -webkit-fill-available; width: st
   .tbl-letters td:last-child { white-space: nowrap; }
   .tbl-letters th, .tbl-letters td { padding: 12px 10px; }
   /* phones: the subject moves under the seller's name, so the four columns fit without scrolling inside the frame */
-  .tbl-letters .subj, .tbl-letters .office { display: none; }
+  .tbl-letters:not(.tbl-letters-all) .subj { display: none; } /* the letters page keeps its subject column; under 641px its rows are cards */
   .tbl-letters-all td.num { white-space: normal; width: 64px; } /* the date takes two short lines, the company gets the room */
   .tbl-letters .sub-phone { display: block; margin-top: 2px; font-size: var(--small-size); line-height: 1.4; color: var(--ink-2); font-weight: 400; }
 }

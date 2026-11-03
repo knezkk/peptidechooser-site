@@ -94,10 +94,10 @@ try{if(localStorage.getItem('pc-consent')==='yes')pcLoadGA();}catch(e){}
 </section>
 <section class="section" id="legal">
   <div class="wrap">
-    <div class="sec-hd"><div><h2>Is it legal today?</h2><p>FDA status of the peptides on this page, each with its source. Checked 30 Oct 2026.</p></div><a href="/peptides/">All substances</a></div>
+    <div class="sec-hd"><div><h2>Is it legal today?</h2><p>FDA status of the peptides on this page, each with its source. FDA status checked 30 Oct 2026.</p></div><a href="/peptides/">All substances</a></div>
     <div class="tbl-wrap"><table class="tbl tbl-legal">
       <thead><tr><th scope="col">Peptide</th><th scope="col">Status</th><th scope="col">What that means</th></tr></thead>
-      <tbody><tr><td><span class="name">GHK-Cu, Matrixyl, Argireline (creams and serums)</span></td><td><span class="chip chip-info">Cosmetic</span></td><td>cosmetics are regulated but do not need FDA approval to be sold <a class="ref" href="#src-5" aria-label="Source 5"><sup>5</sup></a></td></tr></tbody>
+      <tbody><tr><td><span class="name">GHK-Cu, Matrixyl, Argireline (creams and serums)</span></td><td><span class="chip chip-info">Cosmetic</span></td><td>cosmetics are regulated but do not need FDA approval to be sold <a class="ref" href="#src-5" aria-label="Source 1"><sup>1</sup></a></td></tr></tbody>
     </table></div>
     <p class="small" style="margin-top:16px">Approved means the FDA approved a product containing it for a stated use. Not approved means no approved product exists; buying it for yourself is not a crime in the US, but nobody has checked what is in the vial.</p>
   </div>
@@ -111,7 +111,7 @@ try{if(localStorage.getItem('pc-consent')==='yes')pcLoadGA();}catch(e){}
 <section class="section" id="sources">
   <div class="wrap">
     <h2 class="h-sources">Sources</h2>
-    <ol class="small sources" style="padding-left:1.2em"><li value="5" id="src-5">FDA, FDA Authority Over Cosmetics: How Cosmetics Are Not FDA-Approved, but Are FDA-Regulated: <a href="https://www.fda.gov/cosmetics/laws-regulations/fda-authority-over-cosmetics-how-cosmetics-are-not-fda-approved-are-fda-regulated" rel="nofollow">https://www.fda.gov/cosmetics/laws-regulations/fda-authority-over-cosmetics-how-cosmetics-are-not-fda-approved-are-fda-regulated</a></li></ol>
+    <ol class="small sources" style="padding-left:1.2em"><li value="1" id="src-5">FDA, FDA Authority Over Cosmetics: How Cosmetics Are Not FDA-Approved, but Are FDA-Regulated: <a href="https://www.fda.gov/cosmetics/laws-regulations/fda-authority-over-cosmetics-how-cosmetics-are-not-fda-approved-are-fda-regulated" rel="nofollow">https://www.fda.gov/cosmetics/laws-regulations/fda-authority-over-cosmetics-how-cosmetics-are-not-fda-approved-are-fda-regulated</a></li></ol>
   </div>
 </section>
 <div class="wrap sellers-all"></div>
@@ -229,8 +229,14 @@ var rise=parseFloat(css.getPropertyValue('--motion-rise'));
 // table rows rise only in tables of up to 25 rows; a long data table (letters, sellers, legal) shows at once, since one
 // trigger per row cost seconds of layout on phones (design/site-polish, 2 Nov 2026). Without :has the rows are not pre-hidden.
 var sel='.sec-hd, .criteria li, .creators li';try{if(document.querySelector('.tbl tbody:not(:has(> tr:nth-child(26))) > tr'))sel+=', .tbl tbody:not(:has(> tr:nth-child(26))) > tr';}catch(e){}
+// a jump to an anchor (/weight-loss/#clinics) never lands on a hidden heading (owner UX audit B24, 3 Nov 2026): with a
+// hash, or on a hash change, everything shows at once; otherwise what is already in or above the window shows on load
+var show=function(els){gsap.set(els,{opacity:1,y:0});};
+if(location.hash){show(sel);return;}
+window.addEventListener('hashchange',function(){ScrollTrigger.getAll().forEach(function(t){t.kill();});show(sel);});
+show([].filter.call(document.querySelectorAll(sel),function(el){return el.getBoundingClientRect().top<innerHeight;}));
 ScrollTrigger.batch(sel,{start:'top 92%',once:true,
-onEnter:function(els){gsap.fromTo(els,{opacity:0,y:rise},{opacity:1,y:0,duration:ms('reveal'),ease:'power2.out',stagger:ms('stagger'),overwrite:true});}});
+onEnter:function(els){els=els.filter(function(el){return getComputedStyle(el).opacity!=='1';});if(els.length)gsap.fromTo(els,{opacity:0,y:rise},{opacity:1,y:0,duration:ms('reveal'),ease:'power2.out',stagger:ms('stagger'),overwrite:true});}});
 });
 </script>
 </body>

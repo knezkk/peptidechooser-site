@@ -317,6 +317,9 @@ html:not(.nav-js) .nav-panel .nav-panel-in{display:block;padding:0}
 .cmp .name{font:700 18px/1.3 var(--font-text);color:var(--ink)}
 .cmp a.name{text-decoration:underline;text-underline-offset:.15em}
 .cmp-sub{display:block;margin-top:2px;font-size:var(--small-size);line-height:1.4;font-weight:400;color:var(--ink-2)}
+/* one line per form when two clinics do not sell the same form (owner UX audit A26, 3 Nov 2026): "Pen from $299/mo" */
+.cmp-form{display:block}
+.cmp-form + .cmp-form{margin-top:4px}
 .cmp .num{font-weight:700;font-variant-numeric:tabular-nums}
 .cmp .score{display:flex;flex-direction:column;gap:6px}
 .cmp .score-n{font-weight:600}

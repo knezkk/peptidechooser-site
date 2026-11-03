@@ -82,7 +82,7 @@ def where_letters(b, r):
 
 
 def where_action(b, r):
-    """The row's one action (pages.md, Home, Where to get it): a clinic with a paid link (`paid_link` on its profile,
+    """The row's one action (pages.md, Home, Where to get it): a clinic with a paid link (`paid_url`, no FDA letter; build.clinic_button,
     none yet) gets btn-action "Visit <Name>" through /out/; a clinic without, btn-wait "See plans" to our clinic page;
     a shop, btn-line "Our review" to our page on it. Never a link to a seller's own site."""
     if seller_kind(b, r) == "clinic":

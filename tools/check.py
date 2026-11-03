@@ -320,6 +320,36 @@ def check_parts(P):
         for m in re.finditer(r'>Legal pages(?:<span class="vh">[^<]*</span>)?</span><span class="check-line">([^<]*)</span>', html):
             if not legal_ok.fullmatch(m.group(1)):
                 errs.append(f"{name}: Legal pages line not one of the five states: {m.group(1)!r}")
+    # Every footnote on a goal page lands on an entry of that page's Sources list with the same number (owner UX audit A13,
+    # 3 Nov 2026: footnotes are numbered per page, 1 to N in the order the page cites them).
+    goals = [g["slug"] for g in json.loads((ROOT / "data" / "site.json").read_text(encoding="utf-8"))["goals"] if g.get("page")]
+    for slug in goals:
+        name = f"{slug}/index.html"
+        if name not in P:
+            continue
+        html = re.sub(r"<dialog.*?</dialog>", "", (DIST / name).read_text(encoding="utf-8"), flags=re.S)
+        entries = dict((sid, n) for n, sid in re.findall(r'<li value="(\d+)" id="(src-[^"]+)"', html))
+        cited = re.findall(r'<a\b[^>]*href="#(src-[^"]+)"[^>]*>(?:<sup>)?(\d+)(?:</sup>)?</a>', html)
+        for sid, n in cited:
+            if entries.get(sid) != n:
+                errs.append(f"{name}: footnote {n} ({sid}) has no entry {n} in the page's Sources")
+        if [int(n) for n in dict.fromkeys(n for _, n in cited)] != list(range(1, len(set(n for _, n in cited)) + 1)):
+            errs.append(f"{name}: footnotes not numbered 1 to N in reading order")
+    # A status chip is never followed by its own last word ("FDA approved approved"; owner UX audit A23, 3 Nov 2026).
+    for name in P:
+        for m in re.finditer(r'<span class="chip[^"]*">([^<]+)</span>\s*([A-Za-z]+)', (DIST / name).read_text(encoding="utf-8")):
+            if m.group(1).split()[-1].lower() == m.group(2).lower():
+                errs.append(f"{name}: chip '{m.group(1)}' followed by '{m.group(2)}'")
+    # A trust page's counts are Home's counts (owner UX audit A25, 3 Nov 2026): each "N shops", "N online clinics",
+    # "N substances" and "N FDA warning letters" on /about/ equals the number Home's hero gives.
+    if "index.html" in P and "about/index.html" in P:
+        words = ("shops", "online clinics", "substances", "FDA warning letters")
+        grab = lambda t: {w: m.group(1) for w in words for m in [re.search(rf"\b(\d+) {w}\b", t)] if m}
+        home = grab(re.sub(r"<[^>]+>", "", (DIST / "index.html").read_text(encoding="utf-8")))
+        about = grab(re.sub(r"<[^>]+>", "", (DIST / "about" / "index.html").read_text(encoding="utf-8")))
+        for w, n in about.items():
+            if w in home and home[w] != n:
+                errs.append(f"about/index.html: {n} {w}, Home says {home[w]} (a count must come from the same data)")
     # Home's windows load on demand from dist/windows/<key>.json (owner UX audit, 3 Nov 2026): the same rules apply.
     for f in sorted((DIST / "windows").glob("*.json")) if (DIST / "windows").exists() else []:
         errs += window_errs(f"windows/{f.name}", json.loads(f.read_text(encoding="utf-8"))["html"])
@@ -348,10 +378,13 @@ def check_parts(P):
         for i, r in enumerate(rows, 1):
             cells = re.findall(r"<td[^>]*>(.*?)</td>", r, re.S)
             text = [re.sub(r"<[^>]+>", "", c).strip() for c in cells]
-            if len(cells) < 5 or not text[0] or not text[1] or not text[2]:
+            if len(cells) < 4 or not text[0] or not text[1] or not text[2]:
                 errs.append(f"{name}: row {i} without a date, a company or a subject")
-            elif not re.search(r'href="https://www\.fda\.gov/[^"]+"[^>]*rel="nofollow"', cells[4]):
+            elif not re.search(r'href="https://www\.fda\.gov/[^"]+"[^>]*rel="nofollow"', cells[-1]):
                 errs.append(f"{name}: row {i} without its nofollow fda.gov letter")
+        # the subject once and no Office column (owner UX audit A27, 3 Nov 2026)
+        if body and ("sub-phone" in body.group(1) or 'class="office"' in body.group(1)):
+            errs.append(f"{name}: the subject repeated in the company cell or an Office column")
     # The seller pages (pages.md, Sellers and Seller; owner task 2 Nov 2026): no link to any seller's site; every profile
     # carries the five check marks and the note; the facts are never a verdict.
     for name in (n for n in P if n.startswith("sellers/")):
