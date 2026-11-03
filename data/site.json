@@ -7,6 +7,7 @@
   "goals": [
     {
       "slug": "hair",
+      "guide": "peptides-for-hair-loss-what-works",
       "name": "Hair growth",
       "live": true,
       "best_option": "Finasteride 1 mg (generic, prescription)",
@@ -170,6 +171,7 @@
     },
     {
       "slug": "skin",
+      "guide": "peptides-for-skin-what-works",
       "name": "Skin",
       "label": "Skin",
       "page": true,
@@ -232,6 +234,7 @@
     },
     {
       "slug": "weight-loss",
+      "guide": "compounded-vs-brand-glp-1",
       "name": "Weight loss",
       "label": "Weight loss",
       "page": true,
@@ -310,6 +313,7 @@
     },
     {
       "slug": "muscle",
+      "guide": "best-peptides-for-muscle-growth",
       "approved_instead_guide": "best-peptides-for-muscle-growth",
       "name": "Muscle and hormones",
       "label": "Muscle growth",
@@ -369,6 +373,7 @@
     },
     {
       "slug": "recovery",
+      "guide": "peptides-for-recovery-and-joints",
       "approved_instead_guide": "peptides-for-recovery-and-joints",
       "name": "Recovery and joints",
       "label": "Healing and joints",
@@ -418,6 +423,7 @@
     },
     {
       "slug": "libido",
+      "guide": "peptides-for-libido-what-is-approved",
       "name": "Sexual health",
       "label": "Sex drive",
       "page": true,
@@ -472,6 +478,7 @@
     },
     {
       "slug": "longevity",
+      "guide": "longevity-peptides-epitalon-mots-c-nad",
       "approved_instead_guide": "longevity-peptides-epitalon-mots-c-nad",
       "name": "Longevity and energy",
       "label": "Energy and aging",
@@ -646,6 +653,17 @@
         "substances": [
           "retatrutide"
         ]
+      },
+      {
+        "peptide": "Sermorelin",
+        "status": "Not approved",
+        "chip": "neutral",
+        "note": "no FDA-approved product is on the market; the approved brand was taken off the market years ago",
+        "src": 7,
+        "substances": [
+          "sermorelin"
+        ],
+        "no_page": true
       }
     ],
     "sources": [

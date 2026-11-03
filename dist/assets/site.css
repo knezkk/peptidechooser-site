@@ -51,6 +51,21 @@ p { margin: 0 0 1em; }
 .hero h1 { max-width: 17ch; margin-bottom: 16px; }
 /* A goal page without the price pad: the short answer runs wider (pages.md, Category; owner answer Q3 b, 2 Nov 2026). */
 .hero-solo .intro { max-width: 62ch; }
+/* Goal page v2 (layout.md, Vertical spacing, Goal page; owner task 3 Nov 2026): the first screen decides; every section
+   after it 48px apart; the grey clinic band the same. */
+.hero.goal-first { padding: 24px 0 48px; }
+.goal-first h1 { max-width: 30ch; margin-bottom: 12px; }
+.goal-first .intro { max-width: 62ch; font-size: var(--ui-size); line-height: 1.55; margin: 12px 0 0; }
+.goal-sec { padding: 48px 0 0; }
+.goal-opts { padding-top: 0; }
+.goal-opts .flow-solo { margin-top: 0; }
+.band-2.goal-sec { padding: 48px 0; margin-top: 48px; }
+.goal-h2 { font: var(--display-3-weight) var(--display-3-size)/var(--display-3-lh) var(--font-display); letter-spacing: var(--display-3-ls); margin: 0 0 16px; }
+.goal-two { display: grid; gap: 32px; }
+.goal-two > * { min-width: 0; }
+@media (min-width: 900px) { .goal-two { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 48px; align-items: start; } }
+.goal-sec ~ .section { padding-top: 48px; } /* the goals strip and the sources on this template */
+.goal-sec ~ .section:last-of-type { padding-bottom: 48px; }
 
 /* Home hero: intro line, then the evidence rail beside the body figure, then How we rate and the labels (pages.md, Home) */
 /* The first screen is white with no box around the flow; everything after it sits on the grey band (owner, 31 Oct 2026). */
