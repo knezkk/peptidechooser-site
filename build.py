@@ -4009,8 +4009,8 @@ def sub_form_lows(slug):
     out = {}
     for r in pep_plans(slug):
         kind = "compounded" if plan_kind(r) == "compounded" else "brand" if plan_kind(r) in ("brand", "generic") else None
-        if kind and plan_form(r) in FORM_PLURAL:
-            out.setdefault((kind, plan_form(r)), r)
+        if kind and plan_form_word(r) in FORM_PLURAL:
+            out.setdefault((kind, plan_form_word(r)), r)
     return out
 
 
@@ -4139,7 +4139,9 @@ def cmp_body(h1, checked, answer, table, links, pre, note, verdict="", nxt=""):
 # dosage_form, and per clinic the cheapest compounded plan of each form.
 PLAN_FORM_WORD = {"injection_vial": "Injection", "pen": "Pen", "tablet": "Pill", "capsule": "Pill", "topical": "Topical",
                   "solution": "Topical"}
-plan_form = lambda r: PLAN_FORM_WORD.get(r.get("dosage_form") or "", "Form not stated")
+# its own name (owner, 3 Nov 2026): plan_form above is the goal page filter's "pill"/"shot"; the same name made the later
+# definition replace the earlier one
+plan_form_word = lambda r: PLAN_FORM_WORD.get(r.get("dosage_form") or "", "Form not stated")
 
 
 def clinic_forms(c, sub):
@@ -4147,7 +4149,7 @@ def clinic_forms(c, sub):
     out = {}
     for r in sorted((r for r in PLANS if r["seller_slug"] == c and r["substance_slug"] == sub and r.get("product_kind") == "compounded"
                      and r.get("price_monthly") is not None), key=lambda r: (float(r["price_monthly"]), r["plan_name"])):
-        out.setdefault(plan_form(r), r)
+        out.setdefault(plan_form_word(r), r)
     return out
 
 
@@ -4302,7 +4304,7 @@ def compare_sub(slug):
     s = pep_status(slug)
     forms = {}
     for r in pep_plans(slug):
-        forms.setdefault(plan_form(r), r)
+        forms.setdefault(plan_form_word(r), r)
     low, n = pep_low_shop(slug), len({r["seller_slug"] for r in pep_shops(slug)})
     nl = len(LETTER_SUBS.get(slug, []))
     return {"k": "sub", "h": f'<a class="name" href="/peptides/{slug}/">{escape(pep_short(slug))}</a><span class="cmp-sub">{s["label"]}</span>', "c": [
