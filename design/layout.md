@@ -25,6 +25,17 @@ Nothing on any page may leave its margins or push the page sideways, at any scre
 
 Every control is at least 44px tall: nav items, the header button, in-table `btn-sm`, cookie buttons, goal rows. Body pins have a 48-unit hit circle; the goal list beside the figure is the full-size control for the same choice.
 
+**Phones (owner task 3 Nov 2026, the 390px walkthrough; waits for ODOBRENO DIZAJN):**
+- At 390 by 844, every control is at least 44px tall: the header logo, "Search" and "Menu", the breadcrumbs, the footer links, a section heading's link, "Read the full method →" style links, the letter cards' "FDA letter", the names heading a comparison table, the "Jump to" links.
+- Three things may be smaller:
+  - a link inside a line of text;
+  - a footnote number (24 by 24px, WCAG 2.5.8; its tap areas may touch the next number's);
+  - an FDA letter chip link in a line of text (at least 24px).
+- No text under 13px on a phone: chips, the seller score marks and the Checked stamp are 13px under 640px. Footnote numbers and visually hidden text are the exceptions.
+- No two controls overlap.
+- `tools/check_layout.js` checks all of it on every page at 390px, as a returning visitor (the cookie bar answered).
+- The header on phones holds the logo, "Search" and "Menu" in one row from 375px. Under 375px "Search" is not drawn; the field stays in the menu.
+
 ## Vertical spacing
 
 Only spacing tokens. Between landing sections `space-9` (56px on phones). Home first screen 28px top, 32px bottom (12px and 24px on phones), 16px between the H1 and the flow (12px on phones); the grey band after it 32px top, 56px bottom (24px and 40px on phones), 48px above the How we rate strip; category hero 56px. Goal page (owner task 3 Nov 2026, UX audit 11.2 and 12): the first screen 24px top and `space-7` (48px) bottom, the decision cards `space-5` (24px) under the intro and `space-4` (16px) apart; every section after it `space-7` (48px) top and bottom, the grey bands the same; the H2 + lede + divider pattern only where the lede says something (else the H2 alone, 16px above its content); `tbl-compact` rows 40px. Targets at 1440 by 900: /weight-loss/ under 5 screens with the clinic table starting within the second, /hair/ under 3. Seller page (owner task 3 Nov 2026): top block 24px top and 32px bottom, sections `space-7` (48px) apart with a hairline between (owner answer 3 Nov 2026: 48px, no 40px token), the two columns `space-6` apart. H2 in articles: `space-8` above. Inside panels `space-5`. Nothing else.
