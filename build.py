@@ -175,8 +175,14 @@ var rise=parseFloat(css.getPropertyValue('--motion-rise'));
 // table rows rise only in tables of up to 25 rows; a long data table (letters, sellers, legal) shows at once, since one
 // trigger per row cost seconds of layout on phones (design/site-polish, 2 Nov 2026). Without :has the rows are not pre-hidden.
 var sel='.sec-hd, .criteria li, .creators li';try{{if(document.querySelector('.tbl tbody:not(:has(> tr:nth-child(26))) > tr'))sel+=', .tbl tbody:not(:has(> tr:nth-child(26))) > tr';}}catch(e){{}}
+// a jump to an anchor (/weight-loss/#clinics) never lands on a hidden heading (owner UX audit B24, 3 Nov 2026): with a
+// hash, or on a hash change, everything shows at once; otherwise what is already in or above the window shows on load
+var show=function(els){{gsap.set(els,{{opacity:1,y:0}});}};
+if(location.hash){{show(sel);return;}}
+window.addEventListener('hashchange',function(){{ScrollTrigger.getAll().forEach(function(t){{t.kill();}});show(sel);}});
+show([].filter.call(document.querySelectorAll(sel),function(el){{return el.getBoundingClientRect().top<innerHeight;}}));
 ScrollTrigger.batch(sel,{{start:'top 92%',once:true,
-onEnter:function(els){{gsap.fromTo(els,{{opacity:0,y:rise}},{{opacity:1,y:0,duration:ms('reveal'),ease:'power2.out',stagger:ms('stagger'),overwrite:true}});}}}});
+onEnter:function(els){{els=els.filter(function(el){{return getComputedStyle(el).opacity!=='1';}});if(els.length)gsap.fromTo(els,{{opacity:0,y:rise}},{{opacity:1,y:0,duration:ms('reveal'),ease:'power2.out',stagger:ms('stagger'),overwrite:true}});}}}});
 }});
 </script>"""
 
@@ -570,11 +576,17 @@ def plan_ref(g, r):
     return f"src-plan-{plan_key(r)}", EXTRA_REF[plan_key(r)]
 
 
+def letter_href(slug):
+    """Where a letter chip in a table goes (owner UX audit A17, 3 Nov 2026): the seller's own letters section,
+    /sellers/<slug>/#fda-letters (the id the seller page template gives it), else the letters page."""
+    return f"/sellers/{slug}/#fda-letters" if slug in PROFILES else LETTERS_URL
+
+
 def plan_letter(r):
     """The clinic's FDA letter chip beside a clinic price (owner decision 2 Nov 2026, enforced after the owner UX audit,
     3 Nov 2026: Strut Health's $25/mo showed no letter): every place a plan price appears, or "" without a letter."""
     if (r.get("fda_letter_count") or 0) and r.get("last_fda_letter_date"):
-        return f' <a class="chip chip-warn chip-link" href="{LETTERS_URL}">FDA letter {nice_date(r["last_fda_letter_date"])}</a>'
+        return f' <a class="chip chip-warn chip-link" href="{letter_href(r["seller_slug"])}">FDA letter {nice_date(r["last_fda_letter_date"])}</a>'
     return ""
 
 
@@ -1211,8 +1223,10 @@ def letters_all_rows():
         subj = escape(clean(r["letter_subject"]))
         out.append(
             f'<tr{more if i >= LETTERS_FIRST else ""} data-year="{r["letter_date"][:4]}" data-subs="{" ".join(SUBS_OF_LETTER.get(r["letter_url"], []))}"><td class="num">{nice_date(r["letter_date"])}</td>'
-            f'<td><span class="name">{escape(clean(r["company_name"]))}</span>{seller}<span class="sub-phone">{subj.replace("/", "/<wbr>")}</span></td>'
-            f'<td class="subj">{subj.replace("/", "/<wbr>")}</td>{office_cell(r.get("issuing_office"))}'
+            # the subject once, in its own column (owner UX audit A27, 3 Nov 2026: it was repeated in the company cell for
+            # phones, and the Office column, always CDER, went); phones stack the row as a card
+            f'<td data-l="Company"><span class="name">{escape(clean(r["company_name"]))}</span>{seller}</td>'
+            f'<td class="subj" data-l="Subject">{subj.replace("/", "/<wbr>")}</td>'
             f'<td><a href="{escape(r["letter_url"])}" rel="nofollow">FDA letter</a></td></tr>')
     return "".join(out)
 
@@ -1303,8 +1317,8 @@ LETTERS_PAGE = f"""
       <div class="year-chips" role="group" aria-labelledby="letters-years"><span id="letters-years">Year</span>{YEAR_CHIPS}</div>
       <p class="small" id="letters-n" aria-live="polite"></p>
     </div>
-    <div class="tbl-wrap"><table class="tbl tbl-letters tbl-letters-all" id="letters-table"><caption class="vh">FDA warning letters, newest first</caption>
-      <thead><tr><th scope="col">Date</th><th scope="col">Company</th><th scope="col" class="subj">Subject</th><th scope="col" class="office">Office</th><th scope="col">Source</th></tr></thead>
+    <div class="tbl-wrap"><table class="tbl tbl-letters tbl-letters-all tbl-cards" id="letters-table"><caption class="vh">FDA warning letters, newest first</caption>
+      <thead><tr><th scope="col">Date</th><th scope="col">Company</th><th scope="col" class="subj">Subject</th><th scope="col">Source</th></tr></thead>
       <tbody>{letters_all_rows()}</tbody>
     </table></div>
     {f'<p class="letters-more" hidden><button type="button" class="btn btn-line" id="letters-all">Show all {len(LETTERS_ALL)}</button></p>' if len(LETTERS_ALL) > LETTERS_FIRST else ""}
@@ -1510,7 +1524,8 @@ _track = [f'<li><a href="/sellers/">{N_SELLERS} shops</a> that sell peptides onl
            else f"<li>{N_CLINICS} online clinics with plan prices.</li>") if N_CLINICS else "",
           (f'<li><a href="/fda-warning-letters/">{N_LETTERS} FDA warning letters</a> to peptide sellers, compounders and online clinics.</li>'
            if LETTERS_ALL else f"<li>{N_LETTERS} FDA warning letters to peptide sellers, compounders and online clinics.</li>") if N_LETTERS else "",
-          f"<li>{N_STATUS} substances with an FDA status, each with its source.</li>" if N_STATUS else ""]
+          # the same count as Home's hero, every substance with a page (owner UX audit A25, 3 Nov 2026: About said 38, Home 41)
+          f'<li><a href="/peptides/">{len(PEPTIDE_SLUGS)} substances</a> with an FDA status, each with its source.</li>' if PEPTIDE_SLUGS else ""]
 ABOUT_TRACK = (f"""<h2>What we track</h2>
 <ul>
 {"".join(x + chr(10) for x in _track if x)}</ul>
@@ -1674,7 +1689,34 @@ def peptide_table(g):
             f'<tbody>{"".join(rows)}</tbody>')
 
 
+def page_footnotes(body):
+    """A goal page's footnotes numbered 1 to N in the order the page cites them, and its Sources list made of exactly those
+    entries in that order (owner UX audit A13, 3 Nov 2026: weight loss cited 1, 7, 11, 12 and 13 from Home's list while
+    its own list had five entries). Each entry keeps its id, the one /sources/ links to."""
+    head, sep, tail = body.partition('<section class="section" id="sources">')
+    order = list(dict.fromkeys(re.findall(r'<a\b[^>]*href="#(src-[^"]+)"[^>]*>(?:<sup>)?\d+(?:</sup>)?</a>', head)))
+    num = {sid: i + 1 for i, sid in enumerate(order)}
+
+    def link(m):
+        if m.group(2) not in num:
+            return m.group(0)
+        n = num[m.group(2)]
+        a = re.sub(r'aria-label="Source \d+"', 'aria-label="Source %d"' % n, m.group(1))
+        return f'{a}{m.group(3) or ""}{n}{m.group(4) or ""}</a>'
+    head = re.sub(r'(<a\b[^>]*href="#(src-[^"]+)"[^>]*>)(<sup>)?\d+(</sup>)?</a>', link, head)
+    if not sep:
+        return head
+    ol = re.search(r'(<ol class="small sources"[^>]*>)(.*?)(</ol>)', tail, re.S)
+    items = {m.group(1): m.group(2) for m in re.finditer(r'<li(?: value="\d+")? id="(src-[^"]+)">(.*?)</li>', ol.group(2), re.S)}
+    lis = "".join(f'<li value="{num[sid]}" id="{sid}">{items[sid]}</li>' for sid in order if sid in items)
+    return head + sep + tail[:ol.start()] + ol.group(1) + lis + ol.group(3) + tail[ol.end():]
+
+
 def category_page(g):
+    return page_footnotes(category_body_for(g))
+
+
+def category_body_for(g):
     if not g.get("options"):
         return category_body(g, peptide_table(g), f"{len(g['peptides'])} options, each with its FDA status and how you get it.")
     rows = []
@@ -1739,31 +1781,44 @@ CLINICS_JS = """<script>(function(){var s=document.getElementById('clinics'),m=s
 s.classList.add('clip');m.hidden=false;document.getElementById('clinics-all').addEventListener('click',function(){s.classList.remove('clip');m.hidden=true;});})();</script>"""
 
 
+def clinic_row_act(r):
+    """A clinic plan's button, every kind (owner answer Q1 a, 3 Nov 2026; for compounded plans owner decision C8, 3 Nov 2026: compounded GLP-1 is linked only through clinics without an
+    FDA letter, labelled compounded): btn-action "Visit <Name>" with "Paid link" only when the data carries the clinic's paid
+    link and the clinic has no FDA letter; otherwise btn-wait "See plans" to our clinic page."""
+    name, paid = seller_base(r["seller_name"]), r.get("paid_url")
+    if paid and not (r.get("fda_letter_count") or 0):
+        return (f'<span class="pick-act"><a class="btn btn-action btn-sm" href="/out/{r["seller_slug"]}/" rel="sponsored">Visit {name}</a>'
+                '<span class="paid">Paid link</span></span>')
+    if r["seller_slug"] not in PROFILES:
+        return ""
+    return (f'<span class="pick-act"><a class="btn btn-wait btn-sm" href="/sellers/{r["seller_slug"]}/">See plans</a>'
+            '<span class="paid">Our clinic page</span></span>')
+
+
 def clinic_section(g, rows):
     """"Online clinic prices" (pages.md, Category, weight loss; owner task 2 Nov 2026): one row per plan, cheapest first;
-    the clinic in plain text (no link to any clinic site), its FDA letter linking to our letters page, and the disabled
-    "Online clinic" button until a paid link exists per seller. Stacked cards on phones (bundle.css, Clinic table)."""
+    the clinic in plain text (no link to any clinic site), its FDA letter chip beside the price, and btn-wait "See plans"
+    to our clinic page until a paid link exists per seller (clinic_row_act). Stacked cards on phones (bundle.css, Clinic table)."""
     if not rows:
         return ""
     newest = max(r["last_seen"] for r in rows)
     trs = []
     for i, r in enumerate(rows):
         care = care_note(r)
-        letter = plan_letter(r).strip() or '<span class="no-letter">none</span>'
         # on phones the first CLINICS_FIRST rows show until "Show all N" (owner answer Q2 a, 2 Nov 2026; bundle.css, Clinic table)
         more = ' class="more"' if i >= CLINICS_FIRST else ""
         trs.append(f'<tr{more}><td>{clinic_link(r["seller_slug"], seller_base(r["seller_name"]))}</td><td data-l="Plan">{r["plan_name"]}</td>'
                    f'<td>{plan_chip(g, r)}</td>'
-                   f'<td data-l="Per month"><span class="num">{usd(r["price_monthly"])}</span>{f"<span class=sub>{care}</span>" if care else ""}</td>'
-                   f'<td data-l="FDA letter">{letter}</td>'
-                   f'<td class="act"><span class="pick-act"><span class="btn btn-action btn-sm" role="button" aria-disabled="true">Online clinic</span>'
-                   f'<span class="paid">No paid link yet</span></span></td></tr>')
+                   f'<td data-l="Per month"><span class="num">{usd(r["price_monthly"])}</span>{plan_letter(r)}{f"<span class=sub>{care}</span>" if care else ""}</td>'
+                   # every row: the letter chip by the price, no FDA letter column, "See plans" to our clinic page (owner answers
+                   # Q1 a and Q2 b, 3 Nov 2026)
+                   f'<td class="act">{clinic_row_act(r)}</td></tr>')
     return f"""
 <section class="band-2" id="clinics">
   <div class="wrap">
     <div class="sec-hd"><div><h2>Online clinic prices</h2><p>{len(rows)} plans at the online clinics we track, cheapest first.</p></div></div>
     <div class="tbl-wrap"><table class="tbl tbl-cards tbl-clinics">
-      <thead><tr><th scope="col">Clinic</th><th scope="col">Plan</th><th scope="col">What it is</th><th scope="col">Per month</th><th scope="col">FDA letter</th><th scope="col"><span class="vh">Online clinic</span></th></tr></thead>
+      <thead><tr><th scope="col">Clinic</th><th scope="col">Plan</th><th scope="col">What it is</th><th scope="col">Per month</th><th scope="col"><span class="vh">Our clinic page</span></th></tr></thead>
       <tbody>{"".join(trs)}</tbody>
     </table></div>
     {f'<p class="clinics-more" hidden><button type="button" class="btn btn-line" id="clinics-all">Show all {len(rows)}</button></p>{CLINICS_JS}' if len(rows) > CLINICS_FIRST else ""}
@@ -1786,7 +1841,7 @@ def category_body(g, table, table_lede):
     legal_html = f"""
 <section class="section" id="legal">
   <div class="wrap">
-    <div class="sec-hd"><div><h2>Is it legal today?</h2><p>FDA status of the peptides on this page, each with its source. Checked {legal_checked}.</p></div>{ALL_SUBSTANCES}</div>
+    <div class="sec-hd"><div><h2>Is it legal today?</h2><p>FDA status of the peptides on this page, each with its source. FDA status checked {legal_checked}.</p></div>{ALL_SUBSTANCES}</div>
     <div class="tbl-wrap"><table class="tbl tbl-legal">
       <thead><tr><th scope="col">Peptide</th><th scope="col">Status</th><th scope="col">What that means</th></tr></thead>
       <tbody>{"".join(legal)}</tbody>
@@ -2713,7 +2768,7 @@ def compare_plan(r):
     use = plan_other_use(r)
     chip, label = ("info", f"Brand, {use}") if use else KIND_CHIP[plan_kind(r)]
     n = r.get("fda_letter_count") or 0
-    letter = (f'<a class="chip chip-warn chip-link" href="{LETTERS_URL}">FDA letter {nice_date(r["last_fda_letter_date"])}</a>'
+    letter = (f'<a class="chip chip-warn chip-link" href="{letter_href(r["seller_slug"])}">FDA letter {nice_date(r["last_fda_letter_date"])}</a>'
               if n and r.get("last_fda_letter_date") else "None")
     fee = r.get("membership_fee_monthly")
     care = "Not known" if fee is None else "None, all-in" if float(fee) == 0 else f"{usd(fee)}/mo"
@@ -3009,6 +3064,30 @@ def pep_status_rows(slug):
     return sorted(rows, key=lambda r: (r.get("valid_from") or r.get("first_seen_by_us") or "", r["regime"]), reverse=True)
 
 
+# Each list entry in plain words (owner UX audit A22 and A23, 3 Nov 2026: "503A nomination: Not approved withdrawn (503A)"
+# and "FDA approved approved"): (row name, sentence). The date is the list's own date, else the day we first saw it.
+PLAIN_STATUS = {
+    ("fda_approval", "approved"): ("FDA approval", "An approved product is listed in Drugs@FDA"),
+    ("fda_nomination_withdrawn", "withdrawn"): ("Pharmacy compounding", "Not on the list of substances pharmacies may compound; its nomination was withdrawn"),
+    ("fda_503a_category", "category_1"): ("Pharmacy compounding", "On the list of substances pharmacies may compound while the FDA reviews it"),
+    ("fda_503a_category", "category_2"): ("Pharmacy compounding", "On the FDA list of substances with safety concerns; pharmacies may not compound it"),
+    ("fda_503a_category", "category_3"): ("Pharmacy compounding", "Nominated without enough data; pharmacies may not compound it"),
+    ("fda_cat2_safety", "category_2"): ("Outsourcing facilities", "On the FDA list of substances with safety concerns; outsourcing facilities (503B) may not compound it"),
+    ("fda_shortage", "in_shortage"): ("Shortage list", "On the FDA shortage list"),
+    ("fda_shortage", "to_be_discontinued"): ("Shortage list", "On the FDA shortage list as to be discontinued"),
+}
+
+
+def list_words(r):
+    """(row name, sentence) for one database list entry, from PLAIN_STATUS, the form it applies to and its date."""
+    name, said = PLAIN_STATUS.get((r["regime"], r["status_value"]), (REGIME_WORDS.get(r["regime"], "FDA list"), fact_words(r)))
+    if r["regime"] == "fda_cat2_safety" and r.get("scope") == "503A":
+        name, said = "Pharmacy compounding", "On the FDA list of substances with safety concerns; pharmacies may not compound it"
+    form = f' for the {r["scope"]}' if r["regime"] == "fda_shortage" and r.get("scope") else ""
+    day = r.get("valid_from") or r.get("first_seen_by_us")
+    return name, f"{said}{form}{f' ({nice_date(day)})' if day else ''}."
+
+
 def fact_words(r):
     """A list entry in the database's words: "category 1 (scope), since 1 Jan 2024"."""
     v = VALUE_WORDS.get(r["status_value"], r["status_value"].replace("_", " "))
@@ -3032,12 +3111,13 @@ def pep_facts(slug, s):
         chip, label = DB_STATUS[(r["regime"], r["status_value"])][1:3]
         listing = f'<span class="listing">FDA listing: "{escape(r["fda_listing"])}"</span>' if r.get("fda_listing") else ""
         host = "FDA source" if "fda.gov" in r["source_url"] else "Source"
-        rows.append((REGIME_WORDS.get(r["regime"], "FDA list"), f'<span class="chip chip-{chip}">{label}</span> {fact_words(r)}{listing}'
+        name, said = list_words(r)
+        rows.append((name, f'<span class="chip chip-{chip}">{label}</span> {said}{listing}'
                      f' <a href="{escape(r["source_url"])}" rel="nofollow">{host}</a>'))
     for r in sorted(pep_db_rows(slug), key=lambda r: r["regime"]):
         if r["regime"] not in REGIME_WORDS or (r["regime"], r["status_value"]) in DB_STATUS:
             continue
-        rows.append((REGIME_WORDS[r["regime"]], fact_words(r)))
+        rows.append(list_words(r))
     brands = pep_brands(slug)
     if brands and pep_group(s) == "approved":
         rows.append(("Approved brands", ", ".join(brands)))
@@ -3236,26 +3316,64 @@ PEP_GROUPS = [("approved", "FDA approved", "Approved medicines: an FDA-approved 
               ("cosmetic", "Cosmetic", "Sold in creams and serums; cosmetics do not need FDA approval.")]
 
 
+def pep_checked_price(slug):
+    """A goal page's hand-checked price for the substance (the option row's price with its source), as (dollars, word):
+    the word is the last item of the price's bracket in the option's copy ("generic, pharmacy coupon" -> "pharmacy
+    coupon"), else the source's name ("Keeps"). None without one."""
+    for g in ALL_GOALS:
+        for p in g["peptides"]:
+            if subs_of(p) != [slug]:
+                continue
+            if p.get("price") in PRICE_REF:
+                g2 = next(x for x in LIVE_GOALS if x["slug"] == p["price"])
+                dollars, name = g2["price_from_usd"], g2["price_source_name"]
+            elif p.get("price_source") and p.get("price_from_usd") is not None:
+                dollars, name = p["price_from_usd"], p["price_source"]["name"]
+            else:
+                continue
+            said = re.search(r"\$[\d.,]+/mo \(([^)]*)\)", p.get("status_plain", ""))
+            return dollars, said.group(1).split(",")[-1].strip() if said else name.split(",")[0].strip()
+    return None
+
+
 def pep_low(slug):
-    s = pep_status(slug)
+    """One rule for a substance's lowest price (owner UX audit A20, 3 Nov 2026: /peptides/ showed minoxidil at $30/mo from
+    a clinic plan, /hair/ at $10/mo checked): the goal page's checked price with its source word, else the lowest clinic
+    plan that is not compounded for an approved medicine, else the lowest price per mg at the shops shown."""
+    checked = pep_checked_price(slug)
+    if checked:
+        return f"${checked[0]}/mo, {checked[1]}"
+    plan = pep_low_plan(slug) if pep_group(pep_status(slug)) == "approved" else None
+    if plan:
+        return f'{usd(plan["price_monthly"])}/mo, clinic'
     low = pep_low_shop(slug)
-    if low:
-        return f'{per_mg(low["price_per_mg"])}/mg'
-    plan = pep_low_plan(slug) if pep_group(s) == "approved" else None
-    return f'{usd(plan["price_monthly"])}/mo' if plan else "none shown"
+    return f'{per_mg(low["price_per_mg"])}/mg, shop' if low else "none shown"
+
+
+# A substance that is a drug in one form and a cosmetic in another (GHK-Cu) gets a row in each group, named apart as on
+# the goal pages' legal tables (owner UX audit A21, 3 Nov 2026): "GHK-Cu (injection)" under Not approved, "GHK-Cu (cream
+# or serum)" under Cosmetic, from the hand-written cosmetic row and the FDA listing.
+PEP_COSMETIC_TOO = {x: r for r in LEGAL["rows"] if r.get("status") == "Cosmetic" for x in r.get("substances") or []
+                    if x in PEPTIDE_SLUGS and pep_group(pep_status(x)) != "cosmetic"}
+PEP_ROUTE = {x: f' ({"injection" if "inject" in (pep_status(x).get("listing") or "").lower() else "as a drug"})' for x in PEP_COSMETIC_TOO}
 
 
 def peptides_index():
     sections = []
     for key, label, line in PEP_GROUPS:
-        slugs = sorted((x for x in PEPTIDE_SLUGS if pep_group(pep_status(x)) == key), key=lambda x: pep_name(x).lower())
+        rows = [(pep_name(x) + PEP_ROUTE.get(x, ""), x, pep_status(x)["chip"], pep_status(x)["label"], pep_status(x)["sentence"], pep_low(x))
+                for x in PEPTIDE_SLUGS if pep_group(pep_status(x)) == key]
+        if key == "cosmetic":
+            rows += [(f"{pep_name(x)} (cream or serum)", x, r["chip"], r["status"], r["note"], "none shown") for x, r in PEP_COSMETIC_TOO.items()]
+        rows.sort(key=lambda t: t[0].lower())
+        slugs = rows
         if not slugs:
             continue
         trs = "".join(
-            f'<tr><td><a class="name" href="/peptides/{x}/">{escape(pep_name(x))}</a></td>'
-            f'<td data-l="Status"><span class="chip chip-{pep_status(x)["chip"]}">{pep_status(x)["label"]}</span></td>'
-            f'<td data-l="What that means">{pep_status(x)["sentence"]}</td><td class="num" data-l="Lowest price">{pep_low(x)}</td></tr>'
-            for x in slugs)
+            f'<tr><td><a class="name" href="/peptides/{x}/">{escape(name)}</a></td>'
+            f'<td data-l="Status"><span class="chip chip-{chip}">{label}</span></td>'
+            f'<td data-l="What that means">{sentence}</td><td class="num" data-l="Lowest price">{low}</td></tr>'
+            for name, x, chip, label, sentence, low in rows)
         sections.append(f"""
     <div class="sec-hd pep-group"><div><h2 id="g-{key}">{label}</h2><p>{plural(len(slugs), "substance")}. {line}</p></div></div>
     <div class="tbl-wrap"><table class="tbl tbl-cards tbl-peptides" aria-labelledby="g-{key}">
@@ -3268,7 +3386,7 @@ def peptides_index():
   <div class="wrap">
     <h1>Peptides and their FDA status</h1>
     <p class="lede">Every peptide and approved alternative we track, {len(PEPTIDE_SLUGS)} in all, with its FDA status, its source and the lowest price we show. Each name opens its page; we do not link to shops or clinics.</p>
-    <p class="letters-stamp"><span class="stamp">Checked {nice_date(checked)}</span><span class="small">Lowest price: per mg at the shops we show, or per month at the online clinics for an approved medicine.</span></p>
+    <p class="letters-stamp"><span class="stamp">Checked {nice_date(checked)}</span><span class="small">Lowest price: the price a goal page checked by hand, else per month at the online clinics for an approved medicine, else per mg at the shops we show.</span></p>
   </div>
 </section>
 <section class="band-2" id="peptides-list">
@@ -3505,7 +3623,33 @@ def cmp_body(h1, checked, answer, table, links, pre, note):
 """
 
 
-def cmp_clinic_cells(c, subs):
+# Like with like (owner UX audit A26, 3 Nov 2026: a pair compared a pill with an injection): a plan's form from its
+# dosage_form, and per clinic the cheapest compounded plan of each form.
+PLAN_FORM_WORD = {"injection_vial": "Injection", "pen": "Pen", "tablet": "Pill", "capsule": "Pill", "topical": "Topical",
+                  "solution": "Topical"}
+plan_form = lambda r: PLAN_FORM_WORD.get(r.get("dosage_form") or "", "Form not stated")
+
+
+def clinic_forms(c, sub):
+    """{form: the clinic's cheapest compounded plan of the substance in that form}, cheapest form first."""
+    out = {}
+    for r in sorted((r for r in PLANS if r["seller_slug"] == c and r["substance_slug"] == sub and r.get("product_kind") == "compounded"
+                     and r.get("price_monthly") is not None), key=lambda r: (float(r["price_monthly"]), r["plan_name"])):
+        out.setdefault(plan_form(r), r)
+    return out
+
+
+def cmp_form_cell(c, other, sub):
+    """One side's price cell: the plan and its form when both clinics sell the substance in the same single form, else one
+    line per form ("Pen from $299/mo")."""
+    mine, theirs = clinic_forms(c, sub), clinic_forms(other, sub)
+    if len(mine) == 1 and list(mine) == list(theirs):
+        (form, r), = mine.items()
+        return f'<span class="num">{usd(r["price_monthly"])}/mo</span><span class="cmp-sub">{escape(clean(r["plan_name"]))} · {form}</span>'
+    return "".join(f'<span class="cmp-form">{form} from <span class="num">{usd(r["price_monthly"])}/mo</span></span>' for form, r in mine.items())
+
+
+def cmp_clinic_cells(c, subs, other=None):
     p = PROFILES[c]
     plans = [cmp_clinic_plan(c, s) for s in subs]
     marks = "".join(f'<span class="chip chip-{"ok" if p.get(k) else "neutral"} mark-{"yes" if p.get(k) else "no"}">{t}'
@@ -3516,9 +3660,9 @@ def cmp_clinic_cells(c, subs):
     company = ("No registered company found" if not shown_company(p) else
                f'{escape(clean(p["entity_name"]))}{", " + state if state else ""}'
                f'<span class="cmp-sub">{"State registry" if p["entity_evidence"] == "registry" else "Named in an FDA letter"}</span>')
-    return [f'<span class="num">{usd(r["price_monthly"])}/mo</span><span class="cmp-sub">{escape(clean(r["plan_name"]))}</span>' for r in plans] + [
+    return [cmp_form_cell(c, other, s) for s in subs] + [
         "Not known" if fee is None else "None, all-in" if float(fee) == 0 else f"{usd(fee)}/mo",
-        f'<a class="chip chip-warn chip-link" href="{LETTERS_URL}">FDA letter {nice_date(last)}</a>' if n and last else "None",
+        f'<a class="chip chip-warn chip-link" href="{letter_href(p["seller_slug"])}">FDA letter {nice_date(last)}</a>' if n and last else "None",
         f'<span class="score"><span class="score-n"><span class="num">{p["score"]}</span> of {len(SCORE_CHECKS)} checks</span>'
         f'<span class="score-marks">{marks}</span></span>',
         company,
@@ -3530,12 +3674,28 @@ def cmp_clinic_answer(a, b, subs):
     na, nb = cmp_clinic_name(a), cmp_clinic_name(b)
     out = []
     for s in subs:
-        pa, pb = cmp_clinic_plan(a, s), cmp_clinic_plan(b, s)
+        fa, fb = clinic_forms(a, s), clinic_forms(b, s)
+        # the verdict compares one form both sell (the cheapest such form), and names it
+        common = sorted((f for f in fa if f in fb and f != "Form not stated"),
+                        key=lambda f: float(fa[f]["price_monthly"]) + float(fb[f]["price_monthly"]))
+        if list(fa) == list(fb) == ["Form not stated"]:
+            common = ["Form not stated"]
+        if not common:
+            # no form both state: no "cheaper", each side's lowest price with its form, or that it states none
+            side = lambda n, fs: "; ".join(f"{n} {usd(r['price_monthly'])} a month" + ("" if f == "Form not stated" else f" ({f.lower()})")
+                                           for f, r in list(fs.items())[:1]) + (", form not stated" if list(fs)[0] == "Form not stated" else "")
+            out.append(f"For compounded {s}, the two do not list the same form, so neither is called cheaper: "
+                       f"{side(na, fa)}; {side(nb, fb)}.")
+            continue
+        form = common[0]
+        pa, pb = fa[form], fb[form]
+        what = (f"compounded {s} (neither plan states the form)" if form == "Form not stated" else
+                f"compounded {s} as {'an' if form[0] in 'AEIOU' else 'a'} {form.lower()}")
         if float(pa["price_monthly"]) == float(pb["price_monthly"]):
-            out.append(f"For compounded {s}, both list {usd(pa['price_monthly'])} a month.")
+            out.append(f"For {what}, both list {usd(pa['price_monthly'])} a month.")
             continue
         lo, hi = sorted(((na, pa), (nb, pb)), key=lambda x: float(x[1]["price_monthly"]))
-        out.append(f"For compounded {s}, {lo[0]} is cheaper: {usd(lo[1]['price_monthly'])} a month ({care_note(lo[1])}) "
+        out.append(f"For {what}, {lo[0]} is cheaper: {usd(lo[1]['price_monthly'])} a month ({care_note(lo[1])}) "
                    f"against {usd(hi[1]['price_monthly'])} ({care_note(hi[1])}).")
     la, lb = [(PROFILES[x].get("fda_letter_count") or 0, PROFILES[x].get("last_fda_letter_date")) for x in (a, b)]
     if la[0] and lb[0]:
@@ -3554,7 +3714,7 @@ def cmp_clinic_page(a, b, subs):
     checked = max(r["last_seen"] for x in (a, b) for r in (cmp_clinic_plan(x, s) for s in subs))
     heads = [f'<a class="name" href="/sellers/{x}/">{escape(cmp_clinic_name(x))}</a><span class="cmp-sub">Online clinic</span>' for x in (a, b)]
     rows = [f"Compounded {s}" for s in subs] + ["Care fee", "FDA letter", "Checks", "Company", "Prices checked"]
-    table = cmp_table(f"{na} and {nb}", heads, list(zip(rows, cmp_clinic_cells(a, subs), cmp_clinic_cells(b, subs))))
+    table = cmp_table(f"{na} and {nb}", heads, list(zip(rows, cmp_clinic_cells(a, subs, b), cmp_clinic_cells(b, subs, a))))
     pre = f'?a=p.{plans[0]["seller_slug"]}.{plans[0]["plan_slug"]}&amp;b=p.{plans[1]["seller_slug"]}.{plans[1]["plan_slug"]}'
     answer = cmp_clinic_answer(a, b, subs)
     body = cmp_body(f"{na} vs {nb}", checked, answer, table, [(f"/sellers/{a}/", na), (f"/sellers/{b}/", nb)], pre,
