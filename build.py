@@ -370,6 +370,7 @@ def page(path, title, description, body, schema="", crumb=None):
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="fo-verify" content="41ddb585-e16e-4806-bd89-69e5c21f4752" />
 <title>{title}</title>
 <meta name="description" content="{description}">{'<meta name="robots" content="noindex">' if path in NOINDEX else ""}
 <link rel="canonical" href="{canonical}">{FEED_LINK if LETTERS_ALL and path in ("/", "/fda-warning-letters/") else ""}
@@ -1800,7 +1801,7 @@ COMPARE_LINK = ('<p class="cmp-link"><a class="btn btn-line" href="/compare/">Co
                 if DATA.get("plans") or DATA.get("seller_profiles") else "")
 # With JavaScript the clinic table is clipped on phones (CSS hides tr.more under .clip) and "Show all N" opens it; without
 # JavaScript every row shows and the button stays hidden.
-CLINICS_JS = """<script>(function(){var s=document.getElementById('clinics'),m=s&&s.querySelector('.clinics-more');if(!m)return;
+CLINICS_JS = """<script>(function(){var s=document.getElementById('clinics')||document.querySelector('.pep-sold'),m=s&&s.querySelector('.clinics-more');if(!m)return;
 s.classList.add('clip');m.hidden=false;document.getElementById('clinics-all').addEventListener('click',function(){s.classList.remove('clip');m.hidden=true;});})();</script>"""
 
 
@@ -3199,8 +3200,9 @@ def pep_db_rows(slug):
     return [r for r in LEGAL_DB or [] if r["substance_slug"] == slug]
 
 
-def pep_answer(slug):
-    """The short answer, one sentence per fact, each with its link; a missing fact drops its sentence."""
+def pep_answer(slug, first=None):
+    """The short answer, one sentence per fact, each with its link; a missing fact drops its sentence. The price sentence
+    names the seller shown first in "Where to get it" (`first`; owner task 3 Nov 2026), else the cheapest."""
     s = pep_status(slug)
     host = "FDA source" if "fda.gov" in s["url"] else "Source"
     out = [f'{s["label"]}: {s["sentence"]}. <a href="{escape(s["url"])}" rel="nofollow">{host}</a>, {nice_date(s["seen"])}.']
@@ -3213,11 +3215,12 @@ def pep_answer(slug):
         links = [f'<a href="/{g["slug"]}/">{g["name"].lower()}</a>' for g in gs]
         joined = links[0] if len(links) == 1 else ", ".join(links[:-1]) + " and " + links[-1]
         out.append(f'Our {joined} page{"s list" if len(links) > 1 else " lists"} it.')
-    low = pep_low_shop(slug)
+    low = first if first is not None and pep_group(s) != "approved" and first.get("price_per_mg") is not None else (pep_low_shop(slug) if first is None else None)
     if low:
         n = len({r["seller_slug"] for r in pep_shops(slug)})
         seen = low.get("price_observed_at") or low.get("last_seen")
-        out.append(f'The lowest price at the {plural(n, "shop")} shown below is {per_mg(low["price_per_mg"])}/mg '
+        sc = SELLERS.get(low["seller_slug"], {}).get("score")
+        out.append(f'The best-checked of the {plural(n, "shop")} shown below{f" ({sc} of {len(SCORE_CHECKS)} checks)" if sc is not None else ""} lists it at {per_mg(low["price_per_mg"])}/mg '
                    f'({clinic_link(low["seller_slug"], clean(SELLERS.get(low["seller_slug"], {}).get("seller_name") or low["seller_name"]), True)})'
                    f'{", checked " + nice_date(seen) if seen else ""}.')
     n = len(LETTER_SUBS.get(slug, [])) if pep_group(s) != "approved" else 0
@@ -3225,9 +3228,9 @@ def pep_answer(slug):
     # UX audit B15, 3 Nov 2026)
     if n:  # the count of letters that name it (owner task 2 Nov 2026), linking the section below
         out.append(f'<a href="#letters">{plural(n, "FDA warning letter")}</a> name{"s" if n == 1 else ""} it.')
-    p = pep_low_plan(slug) if pep_group(s) == "approved" else None
+    p = (first or pep_low_plan(slug)) if pep_group(s) == "approved" else None
     if p:
-        out.append(f'The lowest monthly plan that is not compounded, at the online clinics we track, is {usd(p["price_monthly"])} '
+        out.append(f'The first plan below, the lowest {"compounded plan" if p.get("product_kind") == "compounded" else "monthly plan that is not compounded"} at the online clinics we track, is {usd(p["price_monthly"])} '
                    f'({clinic_link(p["seller_slug"], seller_base(p["seller_name"]), True)}, {clean(p["plan_name"])}), checked {nice_date(p["last_seen"])}.')
     return out
 
@@ -3427,8 +3430,14 @@ def pep_evidence(slug, src):
 </section>"""
 
 
+def shop_checks(r):
+    """"N of 5 checks" in one line for a compact table (the five marks are on the seller's page), or "not checked yet"."""
+    sc = SELLERS.get(r["seller_slug"], {}).get("score")
+    return f'<span class="num">{sc}</span> of {len(SCORE_CHECKS)} checks' if sc is not None else "not checked yet"
+
+
 def pep_shops_section(slug):
-    rows = pep_shops(slug)
+    rows = sorted(pep_shops(slug), key=shop_rank)  # the same order as "Where to get it": best-checked first
     if not rows:
         return ""
     trs, newest = [], ""
@@ -3441,7 +3450,7 @@ def pep_shops_section(slug):
         seen = r.get("price_observed_at") or r.get("last_seen") or ""
         newest = max(newest, seen)
         trs.append(f'<tr><td>{name}</td><td class="num" data-l="Size">{size}</td><td class="num" data-l="Price">{price}</td>'
-                   f'<td class="num" data-l="Per mg">{ppm}</td><td data-l="Checks">{score_line(r) or "not checked yet"}</td></tr>')
+                   f'<td class="num" data-l="Per mg">{ppm}</td><td data-l="Checks">{shop_checks(r)}</td></tr>')
     return f"""
 <section class="section" id="sold">
   <div class="wrap">
@@ -3451,7 +3460,6 @@ def pep_shops_section(slug):
       <tbody>{"".join(trs)}</tbody>
     </table></div>
     <p class="small" style="margin-top:16px">Price per mg is the price divided by the stated amount. Checks are facts we hold about the seller, not a safety or quality grade. <a href="/how-we-rate/">How we rate</a></p>
-    {f'<p class="small" style="margin-top:8px"><a href="/sellers/#substance={slug}">All shops with {escape(pep_name(slug))} on the sellers page</a></p>' if any(slug in shop_subs(r) for r in SHOPS.values()) else ""}
   </div>
 </section>"""
 
@@ -3466,7 +3474,7 @@ def pep_plans_section(slug):
     return clinic_section(g, rows).replace('id="clinics"', 'id="sold"', 1)
 
 
-PEP_LETTERS_SHOWN = 10
+PEP_LETTERS_SHOWN = 5  # the five newest on the substance page; the letters page has them all (owner task 3 Nov 2026)
 
 
 def quote_text(q):
@@ -3525,30 +3533,120 @@ def pep_guides(slug):
             f'<ul>{items}</ul></section>')
 
 
+def unwrap(section):
+    """(id, inner html) of a "<section ... id=..."><div class="wrap">...</div></section>" block, for a page that places it
+    in its own grid; ("", "") for an empty block."""
+    m = re.match(r'\s*<section[^>]*?(?:id="([^"]*)")?[^>]*>\s*<div class="wrap">(.*)</div>\s*</section>\s*$', section, re.S)
+    return (m.group(1) or "", m.group(2)) if m else ("", section)
+
+
+def shop_rank(r):
+    """Best-checked first (owner task 3 Nov 2026, audit 11.3: BPC-157 led with a 2-of-5 shop): most checks, then the lowest
+    price per mg, then the name."""
+    sc = SELLERS.get(r["seller_slug"], {}).get("score")
+    return (-(sc if sc is not None else -1), r.get("price_per_mg") is None, r.get("price_per_mg") or 0, r["seller_slug"])
+
+
+def pep_where(slug):
+    """"Where to get it", the substance page's first block (pages.md, Peptide; owner task 3 Nov 2026): an approved medicine's
+    three cheapest clinic plans (brand first, then compounded), each with btn-wait "See plans", and the compare pair with the
+    most plans; a research-use peptide's three best-checked shops with btn-line "Our review"; a cosmetic's serums and creams;
+    a cosmetic with none says "Sold as a cosmetic; prices come later." Returns (html, the seller shown first or None)."""
+    s = pep_status(slug)
+    grp = pep_group(s)
+    lines, first, foot = [], None, ""
+    if grp == "approved":
+        plans = [r for r in pep_plans(slug) if r["seller_slug"] in PROFILES]
+        plans = sorted(plans, key=lambda r: (r.get("product_kind") == "compounded", float(r["price_monthly"]), r["seller_name"]))[:3]
+        named = set()
+        for r in plans:
+            kind = '<span class="chip chip-warn">Compounded</span>' if r.get("product_kind") == "compounded" else ""
+            lines.append(f'<li><span class="where-who">{clinic_link(r["seller_slug"], seller_base(r["seller_name"]))}'
+                         f'<span class="sub">{explain_brand(r["plan_name"], named)}{kind}</span></span>'
+                         f'<span class="where-price"><span class="num">{usd(r["price_monthly"])}/mo</span>{plan_letter(r)}</span>'
+                         f'{clinic_button(r["seller_slug"], "See plans", plan=r)}</li>')
+        first = plans[0] if plans else None
+        # the pair pages are built after the substance pages: cmp_links_in fills the marker (or drops it)
+        foot = f"<!--pair-foot:{slug}-->"
+    else:
+        kind = "cosmetic" if grp == "cosmetic" else "research"
+        rows = sorted(seller_rows(slug, kind), key=shop_rank)[:3]
+        for r in rows:
+            sc = SELLERS.get(r["seller_slug"], {}).get("score")
+            ppm = f'{per_mg(r["price_per_mg"])}/mg' if r.get("price_per_mg") is not None else money(r["price_usd"]) if r.get("price_usd") is not None else "price unknown"
+            what = clean(r["product_name"]) if kind == "cosmetic" else f'{sc} of {len(SCORE_CHECKS)} checks' if sc is not None else "not checked yet"
+            review = (f'<a class="btn btn-line btn-sm" href="/sellers/{r["seller_slug"]}/">Our review</a>' if r["seller_slug"] in PROFILES else "")
+            lines.append(f'<li><span class="where-who"><span class="name">{escape(clean(SELLERS.get(r["seller_slug"], {}).get("seller_name") or r["seller_name"]))}</span>'
+                         f'<span class="sub">{escape(what)}</span></span><span class="where-price"><span class="num">{ppm}</span></span>{review}</li>')
+        first = rows[0] if rows else None
+        if not rows and grp == "cosmetic":
+            return f'<div class="panel-line pep-where"><h2>Where to get it</h2><p class="small">{COSMETIC_LATER}</p></div>', None
+    if not lines:
+        # nothing to list: the block still says so, from data (owner task 3 Nov 2026: every substance page has it)
+        none = ("No clinic plan we track carries it yet." if grp == "approved" else "No shop we track lists it yet.")
+        return f'<div class="panel-line pep-where" id="where"><h2>Where to get it</h2><p class="small">{none}</p></div>', None
+    lede = ("The cheapest plans at the online clinics we track, brand first." if grp == "approved" else
+            "Serums and creams from the shops we track." if grp == "cosmetic" else
+            "The best-checked shops first. Research-use shops; every name opens our review.")
+    return (f'<div class="panel-line pep-where" id="where"><h2>Where to get it</h2><p class="small">{lede}</p>'
+            f'<ul class="where-list">{"".join(lines)}</ul>{foot}</div>'), first
+
+
+def pep_next(slug):
+    """"What to do next" before the sources (pages.md, Peptide; as on the goal page): the goal page, the compare pair with
+    the most plans and shops, and /sellers/ filtered to the substance; each left out when its target is missing."""
+    links = []
+    goals = list(dict.fromkeys(g["slug"] for g, _ in pep_goals(slug)))
+    if goals:
+        g = next(x for x in ALL_GOALS if x["slug"] == goals[0])
+        links.append(f'<li><a href="/{g["slug"]}/">Compare every option for {g["name"].lower()}</a></li>')
+    links.append(f"<!--pair-li:{slug}-->")  # every pair with the substance, filled by cmp_links_in once the pair pages exist
+    # /sellers/ is built whenever the data has seller pages (it is added after the substance pages)
+    if PROFILES and (any(slug in shop_subs(r) for r in SHOPS.values()) or any(slug in clinic_subs(r) for r in CLINIC_PROFILES.values())):
+        links.append(f'<li><a href="/sellers/#substance={slug}">Every seller of {escape(pep_short(slug))}, with its five checks</a></li>')
+    return f'<div><h2 class="h-sources">What to do next</h2><ul class="next-list">{"".join(links)}</ul></div>' if links else ""
+
+
 def pep_page(slug):
+    """The substance page in one screen (pages.md, Peptide; owner task 3 Nov 2026, audit 11.3, B14, B15): H1, the author
+    line, the status line in plain words, "Where to get it"; then the full table (tbl-compact); then Evidence and Facts
+    side by side (8 + 4) and the FDA letters; then "What to do next", the guides and the sources."""
     s = pep_status(slug)
     src = PepSources()
     src.n(f'{"FDA" if "fda.gov" in s["url"] else "Source"}, status of {pep_short(slug)}, {nice_date(s["seen"])}', s["url"])
-    evidence = pep_evidence(slug, src)
-    sold = pep_plans_section(slug) if pep_group(s) == "approved" else pep_shops_section(slug)
+    host = "FDA source" if "fda.gov" in s["url"] else "Source"
+    status = (f'<p class="pep-status"><span class="chip chip-{s["chip"]}">{s["label"]}</span> {pep_means(slug)} '
+              f'<a href="{escape(s["url"])}" rel="nofollow">{host}</a></p>')
+    where, first = pep_where(slug)
+    ev_id, evidence = unwrap(pep_evidence(slug, src))
+    lt_id, letters = unwrap(pep_letters_section(slug))
+    sold_id, sold = unwrap(pep_plans_section(slug) if pep_group(s) == "approved" else pep_shops_section(slug))
+    sold = sold.replace('class="tbl tbl-cards', 'class="tbl tbl-compact tbl-cards', 1)
+    left = ((f'<div class="panel-line pep-block" id="evidence">{evidence}</div>' if evidence else "")
+            + (f'<div class="panel-line pep-block" id="letters">{letters}</div>' if letters else ""))
+    blocks = f'<div class="pep-body"><div class="pep-left">{left}</div><div class="pep-right">{pep_facts(slug, s)}{pep_guides(slug)}</div></div>'
+    nxt = pep_next(slug)
     return f"""
 <section class="hero hero-goal seller-pg pep-pg">
   <div class="wrap">
-    <div class="hero-grid">
+    <div class="pep-first">
       <div>
         <h1>{escape(pep_name(slug))}</h1>
-        {pep_chips(slug, s)}
-        {author_line(pep_checked(slug))}{SOURCE_LINE}
-        <p class="intro">{" ".join(pep_answer(slug))}</p>{f'<p class="small pep-listing">FDA listing: "{escape(s["listing"])}"</p>' if s.get("listing") and len(pep_status_rows(slug)) < 2 else ""}
-      </div>{pep_facts(slug, s)}
+        {author_line(pep_checked(slug))}
+        {status}
+        <p class="intro">{" ".join(pep_answer(slug, first)[1:])}</p>
+      </div>
+      {where}
     </div>
   </div>
-</section>{evidence}{sold}{pep_letters_section(slug)}
+</section>
+{f'<section class="section pep-sold" id="{sold_id or "sold"}"><div class="wrap">{sold}</div></section>' if sold else ""}
+<section class="section pep-blocks"><div class="wrap">{blocks}</div></section>
 <section class="section pep-foot">
   <div class="wrap">
-    {pep_guides(slug)}
+    <div class="goal-two">{nxt}
     <section class="pep-sources" aria-labelledby="sources-h"><h2 id="sources-h" class="h-sources">Sources</h2>
-    <ol class="small sources">{src.html()}</ul></section>
+    <ol class="small sources">{src.html()}</ol></section></div>
   </div>
 </section>
 """
@@ -4034,7 +4132,13 @@ def cmp_links_in():
         if path == "/compare/" and popular:
             body = body.replace(COMPARE_JS, popular + COMPARE_JS, 1)
         elif path.startswith("/peptides/") and path.count("/") == 3:
-            line = cmp_compared_with(path.split("/")[2])
+            slug = path.split("/")[2]
+            pairs = [c for c in CMP_PAGES if slug in (c[4], c[5])]
+            c = max(pairs, key=lambda c: (c[3], c[1])) if pairs else None
+            body = body.replace(f"<!--pair-foot:{slug}-->", f'<p class="small where-foot"><a href="{c[0]}">Compare side by side: {escape(c[1])}</a></p>' if c else "")
+            body = body.replace(f"<!--pair-li:{slug}-->", "".join(f'<li><a href="{x[0]}">Compare side by side: {escape(x[1])}</a></li>'
+                                                                 for x in sorted(pairs, key=lambda x: (-x[3], x[1]))))
+            line = ""  # the pair is in "What to do next" now (owner task 3 Nov 2026)
             body = body.replace('<section class="section pep-foot">\n  <div class="wrap">', '<section class="section pep-foot">\n  <div class="wrap">\n    ' + line, 1)
         elif path.startswith("/sellers/") and path.split("/")[2] in CLINIC_PROFILES:
             line = cmp_compared_with(path.split("/")[2])
