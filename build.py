@@ -8,7 +8,8 @@ import json
 import os
 import sys
 import re
-from html import escape
+from html import escape, unescape
+from urllib.parse import urlparse
 import shutil
 from datetime import date
 
@@ -25,6 +26,8 @@ AUTHOR = "Peptide Chooser editorial team"
 DATA = json.loads(Path(os.environ.get("SITE_JSON") or ROOT / "data" / "site.json").read_text(encoding="utf-8"))
 TOKENS = json.loads((ROOT / "design" / "tokens.json").read_text(encoding="utf-8"))
 LIVE_GOALS = [g for g in DATA["goals"] if g.get("live")]
+# the newest data date of this build: the database pull when connected, else the hand-checked date (owner, Q1 a, 2 Nov 2026)
+DATA_CHECKED = max(DATA["checked"], (DATA.get("pulled_at") or "")[:10])
 COLOR = {t["name"]: t["value"] for t in TOKENS["color"]["tokens"]}
 
 
@@ -86,6 +89,32 @@ setTimeout(function(){if(!window.pcMotion)d.classList.remove('motion');},3000);}
 # paints, so the closed menu never flashes; with JavaScript off the mark is missing and the links show as a wrapped row.
 NAV_HEAD = "<script>document.documentElement.classList.add('nav-js');</script>"
 NAV_JS = """<script>
+// Header categories (pages.md, Every page, Header; owner task 3 Nov 2026): one open at a time. From 1180px a mouse opens
+// a category on hover and closes it 250ms after leaving; a click, Enter or Space opens it too (a mouse click never closes
+// one the hover opened). Arrow keys: left and right between the categories, down into the panel, up and down inside it.
+// Escape, a click outside or focus leaving closes it. Under 1180px the same buttons open the accordion inside the Menu.
+(function(){var cats=[].slice.call(document.querySelectorAll('.nav-cat'));if(!cats.length)return;
+var btns=cats.map(function(c){return c.querySelector('.nav-cat-btn');}),wide=matchMedia('(min-width: 1180px)'),t=null,ptr='';
+function cur(){for(var j=0;j<cats.length;j++)if(cats[j].classList.contains('open'))return j;return -1;}
+function set(i){clearTimeout(t);cats.forEach(function(c,j){c.classList.toggle('open',j===i);btns[j].setAttribute('aria-expanded',j===i?'true':'false');});}
+function links(i){return [].slice.call(cats[i].querySelectorAll('.nav-panel a'));}
+cats.forEach(function(c,i){var b=btns[i];
+b.addEventListener('pointerdown',function(e){ptr=e.pointerType;});
+b.addEventListener('click',function(){var m=ptr==='mouse'&&wide.matches;ptr='';set(m||cur()!==i?i:-1);});
+c.addEventListener('pointerenter',function(e){if(e.pointerType==='mouse'&&wide.matches)set(i);});
+c.addEventListener('pointerleave',function(e){if(e.pointerType==='mouse'&&wide.matches&&cur()===i){clearTimeout(t);t=setTimeout(function(){set(-1);},250);}});
+b.addEventListener('keydown',function(e){var k=e.key,n=btns.length;
+if(wide.matches&&(k==='ArrowRight'||k==='ArrowLeft')){e.preventDefault();var j=(i+(k==='ArrowRight'?1:n-1))%n;btns[j].focus();if(cur()>=0)set(j);}
+else if(k==='ArrowDown'){e.preventDefault();set(i);var l=links(i);if(l[0])l[0].focus();}});
+c.querySelector('.nav-panel').addEventListener('keydown',function(e){var l=links(i),p=l.indexOf(document.activeElement);if(p<0)return;
+if(e.key==='ArrowDown'){e.preventDefault();l[(p+1)%l.length].focus();}
+else if(e.key==='ArrowUp'){e.preventDefault();if(p===0)b.focus();else l[p-1].focus();}});});
+document.addEventListener('click',function(e){if(cur()>=0&&!e.target.closest('.nav-cat,.nav-toggle'))set(-1);});
+document.addEventListener('focusin',function(e){if(wide.matches&&cur()>=0&&!e.target.closest('.nav-cat'))set(-1);});
+// registered before the Menu's own Escape, so the first Escape closes only the open category
+document.addEventListener('keydown',function(e){var i=cur();if(e.key==='Escape'&&i>=0){e.stopImmediatePropagation();set(-1);btns[i].focus();}});
+wide.addEventListener('change',function(){set(-1);});
+var tg=document.querySelector('.nav-toggle');if(tg)tg.addEventListener('click',function(){if(tg.getAttribute('aria-expanded')!=='true'&&cur()<0)set(0);});})();
 (function(){var b=document.querySelector('.nav-toggle'),n=document.getElementById('site-nav');if(!b||!n)return;
 function set(o){n.classList.toggle('open',o);b.setAttribute('aria-expanded',o?'true':'false');}
 // opening the menu moves focus to its first visible link: the links come before the button in the page, so Tab alone
@@ -93,12 +122,6 @@ function set(o){n.classList.toggle('open',o);b.setAttribute('aria-expanded',o?'t
 b.addEventListener('click',function(){var o=!n.classList.contains('open');set(o);if(o){var f=[].filter.call(n.querySelectorAll('a,button,input'),function(x){return x.offsetParent;})[0];if(f)f.focus();}});
 n.addEventListener('click',function(e){if(e.target.closest('a'))set(false);});
 document.addEventListener('keydown',function(e){if(e.key==='Escape'&&n.classList.contains('open')){set(false);b.focus();}});})();
-(function(){var w=document.querySelector('.nav-goals'),b=w&&w.querySelector('.nav-goals-btn');if(!b)return;
-function set(o){w.classList.toggle('open',o);b.setAttribute('aria-expanded',o?'true':'false');}
-b.addEventListener('click',function(){set(!w.classList.contains('open'));});
-w.addEventListener('click',function(e){if(e.target.closest('a'))set(false);});
-document.addEventListener('click',function(e){if(w.classList.contains('open')&&!w.contains(e.target))set(false);});
-document.addEventListener('keydown',function(e){if(e.key==='Escape'&&w.classList.contains('open')){set(false);b.focus();}});})();
 </script>"""
 # Design book, Every page, Header, Search (owner task 2 Nov 2026): a plain field right of the links on wide screens, the first
 # item inside the phone Menu. Typing filters /search-index.json in the page (no library): at most 8 results under the field,
@@ -206,18 +229,57 @@ def goals_strip(heading, skip=None):
 </section>""" if links else ""
 
 
-def nav_items(path):
-    # Design book, Pages and buttons, Header (owner, 1 Nov 2026): "Peptides by goal" (a menu of the seven goals: a goal
-    # with its own page links there, the others to Home with the goal chosen, /#goals-<slug>), then Legal status, FDA
-    # letters (the letters page once it exists, else Home's section), How we rate, About; Learn (/learn/, the guides; owner task 2 Nov 2026) after FDA letters.
-    current = ' aria-current="page"'
-    goals = "".join(f'<li><a href="{goal_href(g)}">{g["label"]}</a></li>' for g in ALL_GOALS)
-    # "Sellers" after "Peptides by goal" once the seller pages exist (pages.md, Seller; owner task 2 Nov 2026)
-    items = [("/sellers/", "Sellers")] if PROFILES else []
-    items += [("/#legal", "Legal status"), (LETTERS_URL, "FDA letters"), ("/learn/", "Learn"), ("/how-we-rate/", "How we rate"), ("/about/", "About")]
-    return (f'<div class="nav-goals"><button type="button" class="nav-goals-btn" aria-expanded="false" aria-controls="goal-menu">Peptides by goal</button>'
-            f'<span class="nav-group">Peptides by goal</span><ul class="goal-menu" id="goal-menu">{goals}</ul></div>'
-            + "".join(f'<a href="{href}"{current if href == path else ""}>{label}</a>' for href, label in items))
+# Header categories (pages.md, Every page, Header; owner task 3 Nov 2026, the "Home v2" sketch): five buttons, each opening
+# a panel of links to pages (never a section of Home). A link shows only when its page is in this build, a category only
+# when it has a link. By goal groups the goal pages as below, each with its option count and the cheapest price the data has.
+NAV_GOAL_GROUPS = [("Hair and skin", ("hair", "skin")), ("Weight", ("weight-loss",)), ("Body", ("muscle", "recovery")),
+                   ("Drive and aging", ("libido", "longevity"))]
+# "Body" added (owner answer 2 a to w2, 3 Nov 2026): /learn/ has a sixth topic for the muscle, skin, recovery, libido and aging guides
+LEARN_TOPICS = [("hair", "Hair"), ("glp1", "GLP-1"), ("legal", "Legal"), ("buying", "Buying"), ("data", "Data"), ("body", "Body")]
+
+
+def goal_from(g):
+    """"from $10/mo" for the goal's cheapest price: its checked price (the Home price source), else its cheapest
+    FDA-approved clinic plan; None when the data has neither."""
+    if g["slug"] in PRICE_REF:
+        return f'${g["price_from_usd"]}/mo'
+    plan = cheapest_plan(g)
+    return f'{usd(plan["price_monthly"])}/mo' if plan else None
+
+
+def nav_link(path, href, label, sub=""):
+    cur = ' aria-current="page"' if href == path else ""
+    sub = f'<span class="nav-sub">{sub}</span>' if sub else ""
+    return f'<li><a href="{href}"{cur}><span class="nav-l">{label}</span>{sub}</a></li>'
+
+
+def nav_cats(path):
+    goals = {g["slug"]: g for g in ALL_GOALS if g.get("page") and built(f'/{g["slug"]}/')}
+    cols = []
+    for head, slugs in NAV_GOAL_GROUPS:
+        items = "".join(nav_link(path, f"/{s}/", goals[s]["label"],
+                                 plural(len(goals[s]["peptides"]), "option") + (f", from {goal_from(goals[s])}" if goal_from(goals[s]) else ""))
+                        for s in slugs if s in goals)
+        if items:
+            cols.append(f'<div class="nav-col"><p class="nav-h">{head}</p><ul>{items}</ul></div>')
+    flat = {
+        "sellers": ("Sellers", [("/sellers/#clinics", "Online clinics", CLINIC_PROFILES), ("/sellers/", "Research-use shops", SHOPS),
+                                ("/compare/", "Compare any two", True)]),
+        "peptides": ("Peptides", [("/peptides/", "A to Z", True), ("/learn/are-peptides-legal-in-the-us/", "Legal status", True),
+                                  ("/fda-warning-letters/", "FDA warning letters", True)]),
+        "learn": ("Learn", [(f"/learn/#{t}", label, True) for t, label in LEARN_TOPICS] + [("/learn/", "All guides", True)]),
+        "about": ("About", [("/how-we-rate/", "How we rate", True), ("/about/", "About", True), ("/contact/", "Contact", True),
+                            ("/disclosure/", "How we make money", True)]),
+    }
+    panels = [("goal", "By goal", "".join(cols))]
+    for key, (label, items) in flat.items():
+        links = "".join(nav_link(path, h, t) for h, t, has in items if has and built(h.split("#")[0]))
+        if links:
+            panels.append((key, label, f'<ul class="nav-flat">{links}</ul>'))
+    return '<ul class="nav-cats">' + "".join(
+        f'<li class="nav-cat"><button type="button" class="nav-cat-btn" aria-expanded="false" aria-controls="nav-p-{key}">{label}</button>'
+        f'<div class="nav-panel" id="nav-p-{key}"><div class="wrap nav-panel-in">{inner}</div></div></li>'
+        for key, label, inner in panels if inner) + "</ul>"
 
 
 def crumbs(items):
@@ -275,12 +337,13 @@ def page(path, title, description, body, schema="", crumb=None):
 </head>
 <body>
 <a class="skip" href="#main">Skip to content</a>
-<div class="notice"><div class="wrap"><span>We compare, we don't sell.</span><span class="more">Some links pay us. <a href="/disclosure/">How we make money</a></span></div></div>
+<div class="notice"><div class="wrap"><p>Independent. Every price checked and dated. Some links pay us. <a href="/disclosure/">How we make money</a></p></div></div>
 <header class="site-head">
   <div class="wrap">
     <a class="brand" href="/"><img src="/assets/logo.svg" alt="" width="50" height="20">Peptide Chooser</a>
-    <nav class="nav" id="site-nav" aria-label="Main">{SEARCH_FORM}{nav_items(path)}</nav>
-    <div class="head-cta"><a class="btn btn-ink" href="/#goals">Compare by goal</a></div>
+    <nav class="nav" id="site-nav" aria-label="Main">{nav_cats(path)}</nav>
+    {SEARCH_FORM}
+    {head_cta()}
     <button type="button" class="btn btn-line btn-sm nav-toggle" aria-expanded="false" aria-controls="site-nav">Menu</button>
   </div>
 </header>
@@ -293,18 +356,11 @@ def page(path, title, description, body, schema="", crumb=None):
     <div class="foot-grid">
       <div>
         <a class="brand" href="/"><img src="/assets/logo-dark.svg" alt="" width="50" height="20">Peptide Chooser</a>
-        <p>An independent comparison site for people in the United States. We do not sell peptides or any other product. Not medical advice. Talk to a doctor before starting any treatment.</p>
+        <p>An independent comparison site for the United States that sells nothing and is not medical advice: talk to a doctor before starting any treatment.</p>
       </div>
-      {foot_browse()}
-      <ul class="foot-links">
-        <li><a href="/about/">About</a></li>
-        <li><a href="/how-we-rate/">How we rate</a></li>
-        <li><a href="/contact/">Contact</a></li>
-        <li><a href="/disclosure/">Affiliate and medical disclosure</a></li>
-        <li><a href="/privacy/">Privacy policy</a></li>
-      </ul>
+      {foot_cols()}
     </div>
-    <div class="trust"><span>&copy; 2026 Peptide Chooser</span><a href="/disclosure/">How we make money</a><span>{EMAIL}</span></div>
+    <p class="trust">&copy; 2026 Peptide Chooser · {EMAIL} · Data checked {nice_date(DATA_CHECKED)}</p>
   </div>
 </footer>
 {COOKIE_BAR}
@@ -1022,6 +1078,9 @@ def rail():
                 '<p class="small">Full comparison for this goal is not published yet. The legal status above is current as of ' + CHECKED + '.</p>')
         inner = (f'<p class="goal-for">{g["for"]}</p><p class="goal-intro" tabindex="0" title="{g["intro"]}">{g["intro"]}</p>'
                  f'<ul class="opts">{"".join(rows)}</ul>{approved_instead(g)}{link}')
+        # Home lists no sources: a footnote opens the same numbered line on the goal page (same ids and numbers, 3 Nov 2026)
+        if g.get("page"):
+            inner = inner.replace('href="#src-', f'href="/{slug}/#src-')
         # Only the first goal's options are in the page; the others load from /windows/goal-<slug>.json when chosen
         # (Home under 60 KB, Home v2, 3 Nov 2026). Without JavaScript only the first goal shows, as before.
         if i:
@@ -1933,6 +1992,28 @@ def seller_description(r):
     return out
 
 
+def legal_state(r):
+    """The Legal pages check in one of five states (owner task 3 Nov 2026; pages.md, Seller), from the newest legal-pages
+    crawl (site.seller_profile legal_check_outcome and legal_checked_on): (state, sentence). A blocked or failed attempt
+    is not met; the score does not change. Data from before the two columns falls back to the seen pages alone."""
+    pages = (("terms", "Terms"), ("privacy", "Privacy"), ("refund", "Refund"))
+    seen = [r.get(f"{k}_seen") for k, _ in pages]
+    out, on = r.get("legal_check_outcome"), r.get("legal_checked_on")
+    date = f" ({nice_date(on)})" if on else ""
+    if r.get("score_legal_pages"):
+        return "Met", "Terms, privacy and refund pages found."
+    if out == "blocked":
+        return "Could not check", f"the site blocks our crawler{date}."
+    if out == "failed":
+        return "Could not check", f"the site did not answer{date}."
+    if out is None and all(x is None for x in seen):
+        return "Not checked yet", "Terms, privacy and refund pages."
+    return "Not met", "Missing: " + ", ".join(t.lower() for (k, t), x in zip(pages, seen) if not x) + " page."
+
+
+LEGAL_STATES = ("Met", "Not met", "Could not check", "Not checked yet")
+
+
 def check_lines(r):
     """One plain line per check for the Background check card, each with its date."""
     lab = "None found." if r["seller_slug"] in CLINIC_PROFILES else (f"{plural(r['coa_count'], 'lab report')}, the newest dated {nice_date(r['newest_coa_date'])}."
@@ -1946,11 +2027,9 @@ def check_lines(r):
                f"{r['registry_status']} in the state registry on {nice_date(r['registry_checked_on'])}."
                if r.get("score_registered_company") and r.get("entity_name") and r.get("registry_status") and r.get("registry_checked_on")
                else "Not found in a state registry.")
-    pages = [(k, t) for k, t in (("terms", "Terms"), ("privacy", "Privacy"), ("refund", "Refund"))]
-    seen = [r.get(f"{k}_seen") for k, _ in pages]
-    legal = ("Terms, privacy and refund pages found." if r.get("score_legal_pages") else
-             "Terms, privacy and refund pages: not checked yet." if all(s is None for s in seen) else
-             "Missing: " + ", ".join(t.lower() for (k, t), s in zip(pages, seen) if not s) + " page.")
+    state, said = legal_state(r)
+    legal = ({"Not checked yet": "Terms, privacy and refund pages: not checked yet.",
+              "Could not check": f"Could not check: {said}"}.get(state, said))
     seen_on = r.get("price_updated_at")
     fresh = (f"Prices checked {nice_date(seen_on)}." if r.get("score_fresh_prices") and seen_on else
              f"No recent price; the newest is from {nice_date(seen_on)}." if seen_on else "No price seen.")
@@ -2217,13 +2296,12 @@ def legit_section(r):
     """"Is <Name> legit? What we can check" (pages.md, Seller; owner task 2 Nov 2026): right after the short answer, the five
     checks in the seller page's order, each "Met:" or "Not met:" with the check card's fact, then the closing sentence."""
     lines = check_lines(r)
-    # a check that has not run yet says so, not "Not met" (owner answer Q3 b, 2 Nov 2026): today the legal pages, while
-    # terms, privacy and refund are all unknown
-    unrun = {"score_legal_pages": "Terms, privacy and refund pages."} if all(
-        r.get(f"{x}_seen") is None for x in ("terms", "privacy", "refund")) and not r.get("score_legal_pages") else {}
-    state = lambda k: "Not checked yet" if k in unrun else "Met" if r.get(k) else "Not met"
+    # the legal pages check has five states (legal_state; owner task 3 Nov 2026): a check that has not run says so, a
+    # crawl the site blocked or that got no answer says it could not check, with the date of the attempt
+    legal = legal_state(r)
+    line = lambda k: f"{legal[0]}: {legal[1]}" if k == "score_legal_pages" else f'{"Met" if r.get(k) else "Not met"}: {lines[k]}'
     items = "".join(
-        f'<li>{card_chip(k, t, r)}<span class="check-line">{state(k)}: {unrun.get(k, lines[k])}</span></li>'
+        f'<li>{card_chip(k, t, r)}<span class="check-line">{line(k)}</span></li>'
         for k, t in SCORE_CHECKS)
     return f"""
 <section class="section legit" id="legit">
@@ -3092,7 +3170,7 @@ def pep_page(slug):
   <div class="wrap">
     {pep_guides(slug)}
     <section class="pep-sources" aria-labelledby="sources-h"><h2 id="sources-h" class="h-sources">Sources</h2>
-    <ol class="small sources">{src.html()}</ol></section>
+    <ol class="small sources">{src.html()}</ul></section>
   </div>
 </section>
 """
@@ -3486,13 +3564,29 @@ def built(path):
     return any(p[0] == path for p in PAGES)
 
 
-def foot_browse():
-    """The footer's Browse column: each section this build has, then Home's legal table."""
-    items = [("/peptides/", "Peptides A to Z"), ("/sellers/", "Sellers"), ("/compare/", "Compare"), ("/learn/", "Guides"),
-             ("/fda-warning-letters/", "FDA warning letters")]
-    links = "".join(f'<li><a href="{u}">{t}</a></li>' for u, t in items if built(u))
-    return (f'<nav class="foot-browse" aria-labelledby="foot-browse-h"><h2 class="foot-h" id="foot-browse-h">Browse</h2>'
-            f'<ul class="foot-links">{links}<li><a href="/#legal">Legal status</a></li></ul></nav>')
+def head_cta():
+    """The header's one btn-ink, "Find a seller" (owner task 3 Nov 2026); under 1180px the last row of the open Menu."""
+    return '<div class="head-cta"><a class="btn btn-ink" href="/sellers/">Find a seller</a></div>' if built("/sellers/") else ""
+
+
+# Footer (pages.md, Every page; owner task 3 Nov 2026, the "Home v2" sketch): the logo column, then Browse, Trust and Data,
+# each link only when its page is in this build.
+FOOT_COLS = [("Browse", [("/", "Peptides by goal"), ("/sellers/", "Sellers"), ("/peptides/", "Peptides A to Z"), ("/compare/", "Compare"),
+                         ("/learn/", "Guides")]),
+             ("Trust", [("/how-we-rate/", "How we rate"), ("/disclosure/", "How we make money"), ("/corrections/", "Corrections"),
+                        ("/privacy/", "Privacy")]),
+             ("Data", [("/sources/", "Sources"), ("/fda-warning-letters/feed.xml", "FDA warning letters feed"), ("/about/", "About and contact")])]
+
+
+def foot_cols():
+    out = []
+    for head, items in FOOT_COLS:
+        links = "".join(f'<li><a href="{u}">{t}</a></li>' for u, t in items
+                        if built(u) or u.endswith("feed.xml") and LETTERS_ALL)
+        if links:
+            hid = f"foot-{head.lower()}-h"
+            out.append(f'<nav class="foot-col" aria-labelledby="{hid}"><h2 class="foot-h" id="{hid}">{head}</h2><ul class="foot-links">{links}</ul></nav>')
+    return "".join(out)
 
 
 LLMS_SECTIONS = [("/sellers/", "Sellers and online clinics"), ("/peptides/", "Peptides"), ("/compare/", "Comparisons"),
@@ -3554,15 +3648,16 @@ def main():
         (DIST / "compare" / "data.json").write_text(COMPARE_DATA, encoding="utf-8")
     (DIST / "windows").mkdir(exist_ok=True)
     for k, html in GOAL_PANELS.items():
-        (DIST / "windows" / f"goal-{k}.json").write_text(json.dumps({"html": html.replace('href="#src-', 'href="/sources/#src-')}), encoding="utf-8")
+        (DIST / "windows" / f"goal-{k}.json").write_text(json.dumps({"html": html}), encoding="utf-8")
+    if home.JS:
+        (DIST / "assets" / "home.js").write_text(home.JS, encoding="utf-8")
     if home.ROWS:
         (DIST / home.WHERE_JSON).write_text(home.ROWS, encoding="utf-8")
     (DIST / "windows").mkdir(exist_ok=True)
     for key, html in SELLER_WINDOWS.items():
         (DIST / "windows" / f"{key}.json").write_text(json.dumps({"html": html}), encoding="utf-8")
     (DIST / "search-index.json").write_text(json.dumps(search_index(), ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
-    # lastmod: the newest data date of this build, the database pull when connected, else the hand-checked date (owner, Q1 a, 2 Nov 2026)
-    lastmod = max(DATA["checked"], (DATA.get("pulled_at") or "")[:10])
+    lastmod = DATA_CHECKED  # sitemap lastmod and the footer's "Data checked"
     urls = "".join(f"<url><loc>{SITE}{p[0]}</loc><lastmod>{lastmod}</lastmod></url>" for p in PAGES if p[0] not in NOINDEX)
     (DIST / "sitemap.xml").write_text(
         f'<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">{urls}</urlset>\n')
@@ -3572,12 +3667,152 @@ def main():
         print(f"peptide pages: {len(PEPTIDE_SLUGS) - len(PEP_THIN)} indexed, {len(PEP_THIN)} noindex (fewer than {PEP_MIN_SIGNALS} of the six)")
         for x in PEP_THIN:
             print(f"  noindex /peptides/{x}/: has {', '.join(k for k, v in pep_signals(x).items() if v) or 'only its status'}")
+    if PROFILES:  # the Legal pages check per state on the seller pages (owner task 3 Nov 2026), for the report
+        n = {k: 0 for k in LEGAL_STATES}
+        for r in PROFILES.values():
+            n[legal_state(r)[0]] += 1
+        out = [r.get("legal_check_outcome") for r in PROFILES.values() if legal_state(r)[0] == "Could not check"]
+        print("legal pages: " + ", ".join(f"{k} {v}" for k, v in n.items())
+              + (f" (blocked {out.count('blocked')}, failed {out.count('failed')})" if out else ""))
 
 
 # The Learn section (pages.md, Learn and Guide): /learn/ and the guides, from guides.py, which reads this module's helpers.
 PAGES += guides.pages(sys.modules[__name__])
 # Home's sections under the hero (pages.md, Home), from home.py, once every helper above exists.
 PAGES = [home.finish(sys.modules[__name__], p) if p[0] == "/" else p for p in PAGES]
+
+
+# /sources/ (pages.md, Sources; owner task 3 Nov 2026): every source the site cites, read from the numbered source lists of
+# the pages this build has, plus the database's own sources (FDA status rows, warning letters, state registries, the pages
+# the crawler reads). Nothing is typed: a name, link and date come from the list item or the data, and a group with no
+# entries is left out.
+def cited_sources():
+    """{url: [text, has_link, [(path, title), ...]]} from every page's source lists, in first-cited order."""
+    out = {}
+    for path, _, title, _, body, *_ in PAGES:
+        for ol in re.findall(r'<ol class="[^"]*\bsources\b[^"]*"[^>]*>(.*?)</ol>', body, re.S):
+            for li in re.findall(r"<li[^>]*>(.*?)</li>", ol, re.S):
+                m = re.match(r'(.*?):\s*(?:<a href="(https?://[^"]+)"[^>]*>[^<]*</a>|(https?://\S+))\s*$', li.strip(), re.S)
+                if not m:
+                    continue
+                url = unescape(m.group(2) or m.group(3))
+                e = out.setdefault(url, [m.group(1).strip(), bool(m.group(2)), []])
+                # a list the database reads for many substances is cited on each peptide page as "FDA, status of X";
+                # the page's own title, where another page cites one, names it better
+                if e[0].startswith("FDA, status of ") and not m.group(1).startswith("FDA, status of "):
+                    e[0] = m.group(1).strip()
+                name = "Home" if path == "/" else title.replace(" | Peptide Chooser", "")
+                if (path, name) not in e[2]:
+                    e[2].append((path, name))
+    return out
+
+
+def host(url):
+    return re.sub(r"^www\.", "", urlparse(url).netloc)
+
+
+def used_on(pages, most=3):
+    links = ", ".join(f'<a href="{p}">{escape(t)}</a>' for p, t in pages[:most])
+    return f"Cited on {links}" + (f" and {plural(len(pages) - most, 'more page')}" if len(pages) > most else "") + "."
+
+
+def src_li(name, url, link, take, checked=""):
+    head = (f'<a href="{url}" rel="nofollow">{name}</a>' if link and url.startswith("http") else
+            f'<a href="{url}">{name}</a>' if link else f"{name}: {url}" if url else name)
+    when = f'<span class="src-date">Checked {nice_date(checked)}</span>' if checked else ""
+    return f'<li><span class="src-name">{head}</span><span class="src-take">{take}</span>{when}</li>'
+
+
+def sources_body():
+    cited = cited_sources()
+    seller_hosts = {host("https://" + r["domain"]) for r in PROFILES.values() if r.get("domain")}
+    seller_hosts |= {host(r["pricing_url"]) for r in PLANS if r.get("pricing_url")}
+    db_urls = {r["source_url"] for r in LEGAL_DB or []}
+    fda, medline, pubmed, prices = [], [], {}, []
+    for url, (text, link, pages) in cited.items():
+        h = host(url)
+        if url in db_urls:
+            continue  # listed once below, with every substance the database reads from it
+        if h.endswith("fda.gov") or h == "dailymed.nlm.nih.gov":
+            fda.append(src_li(text, url, link, used_on(pages)))
+        elif h == "medlineplus.gov":
+            medline.append(src_li(text, url, link, used_on(pages)))
+        elif h == "pubmed.ncbi.nlm.nih.gov":
+            for p in [p for p in pages if p[0].startswith("/learn/")] or pages:  # by guide; a study no guide cites, by its page
+                pubmed.setdefault(p, []).append(src_li(text, url, link, ""))
+        elif h not in seller_hosts:
+            prices.append(src_li(text, url, link, used_on(pages)))
+    # the database's FDA sources: one entry per source list (the status rows link one page, or one openFDA query per substance)
+    by_src = {}
+    for r in LEGAL_DB or []:
+        by_src.setdefault(r["source_id"], []).append(r)
+    for rows in by_src.values():
+        urls = sorted({r["source_url"] for r in rows})
+        url = urls[0] if len(urls) == 1 else urls[0].split("?")[0]
+        name = cited[url][0] if url in cited and not cited[url][0].startswith("FDA, status of ") else host(url) + urlparse(url).path
+        subs = sorted({r["canonical_name"] for r in rows})
+        pages = [pg for u in urls if u in cited for pg in cited[u][2]]
+        fda.append(src_li(name, url, True, f"FDA status of {plural(len(subs), 'substance')} in our database: {', '.join(subs[:6])}"
+                          + (f" and {len(subs) - 6} more" if len(subs) > 6 else "") + f", first seen {nice_date(min(r['first_seen_by_us'] for r in rows))}."
+                          + (" " + used_on(list(dict.fromkeys(pages))) if pages else "")))
+    if LETTERS_ALL:
+        urls = [r["letter_url"] for r in LETTERS_ALL if r.get("letter_url")]
+        index = os.path.commonprefix(urls).rsplit("/", 1)[0] + "/" if len(urls) > 1 else ""
+        dates = sorted(r["letter_date"] for r in LETTERS_ALL if r.get("letter_date"))
+        if index.count("/") > 3 and dates:
+            fda.append(src_li("FDA warning letters", index, True,
+                              f'{plural(len(LETTERS_ALL), "letter")} to peptide sellers, compounders and online clinics, '
+                              f'{nice_date(dates[0])} to {nice_date(dates[-1])}, each read and listed on '
+                              f'<a href="/fda-warning-letters/">our letters page</a>.'))
+    # state registries: the seller checks that found the company in a state's own file
+    regs = {}
+    for r in PROFILES.values():
+        if r.get("entity_evidence") == "registry" and r.get("entity_source_url"):
+            regs.setdefault((r.get("entity_state") or "", r["entity_source_url"]), []).append(r)
+    registries = [src_li(f"{st} state company registry" if st else "State company registry", url, url.startswith("http"),
+                         f'Company found for {plural(len(rows), "seller")}: '
+                         + ", ".join(f'<a href="/sellers/{r["seller_slug"]}/">{escape(clean(r["seller_name"]))}</a>' for r in rows) + ".",
+                         max((r.get("registry_checked_on") or "" for r in rows), default=""))
+                  for (st, url), rows in sorted(regs.items())]
+    # our own database: what the crawler reads, with the newest date each part was seen
+    own = []
+    if PRODUCTS:
+        shops = {r["seller_slug"] for r in PRODUCTS}
+        own.append(src_li("Shop product pages", "/sellers/", True, f"Price, amount and lab report of {plural(len(PRODUCTS), 'product')} "
+                          f"at {plural(len(shops), 'shop')}.", max((r.get("last_seen") or "" for r in PRODUCTS), default="")))
+    if PLANS:
+        clinics = {r["seller_slug"] for r in PLANS}
+        own.append(src_li("Online clinic plan pages", "/sellers/#clinics" if built("/sellers/") else "", built("/sellers/"),
+                          f"Monthly price and fees of {plural(len(PLANS), 'plan')} at {plural(len(clinics), 'clinic')}.",
+                          max((r.get("last_seen") or "" for r in PLANS), default="")))
+    if PROFILES:
+        own.append(src_li("Seller checks", "/how-we-rate/", True, f"The five checks on {plural(len(PROFILES), 'seller')}.",
+                          max((r.get("score_checked_on") or "" for r in PROFILES.values()), default="")))
+    if DATA.get("pulled_at") and own:
+        own.append(src_li("Peptide Chooser database", "", False, "The copy this build of the site was made from.", DATA["pulled_at"][:10]))
+    groups = [("src-fda", "FDA", fda), ("src-medlineplus", "MedlinePlus", medline)]
+    sec = []
+    for gid, head, items in groups + [("src-prices", "Price pages", prices), ("src-registries", "State registries", registries),
+                                      ("src-database", "Our own database", own)]:
+        if gid == "src-prices" and pubmed:
+            sec.append('<section class="src-group" id="src-pubmed" aria-labelledby="src-pubmed-h"><h2 id="src-pubmed-h">PubMed studies</h2>'
+                       + "".join(f'<h3><a href="{p}">{escape(t)}</a></h3><ul class="src-list">{"".join(items)}</ul>' for (p, t), items in pubmed.items())
+                       + "</section>")
+        if items:
+            sec.append(f'<section class="src-group" id="{gid}" aria-labelledby="{gid}-h"><h2 id="{gid}-h">{head}</h2>'
+                       f'<ul class="src-list">{"".join(items)}</ul></section>')
+    return f"""
+<section class="page sources-page"><div class="wrap prose">
+<h1>Sources</h1>
+<p class="lede">Where every number on this site comes from: each source, what we take from it and when we last checked it.</p>
+{"".join(sec)}
+</div></section>
+"""
+
+
+PAGES.append(("/sources/", "sources/index.html", "Sources: where every number comes from | Peptide Chooser",
+              "Every source behind the numbers on Peptide Chooser: FDA pages and openFDA, MedlinePlus, PubMed studies, state registries and our own database.",
+              sources_body(), "", [("/sources/", "Sources")]))
 
 
 if __name__ == "__main__":

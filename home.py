@@ -361,16 +361,20 @@ SECTIONS = [("where", None), ("compare", goals_section), ("learn", learn_rate_se
             ("letters", letters_section), ("creators", creators_section)]
 
 
+JS = ""  # Home's scripts; build.py's main() writes them to /assets/home.js
 ROWS = ""  # every seller row for the Where filter; build.py's main() writes it to WHERE_JSON
 
 
 def finish(b, page):
-    """Home's PAGES entry with every <!--home:name--> marker replaced by its section, and the footnotes pointing to
-    /sources/ (Home lists no sources of its own since the Sources page exists; the ids stay the same)."""
+    """Home's PAGES entry with every <!--home:name--> marker replaced by its section."""
     global ROWS
     path, out, title, desc, body, *rest = page
     where, ROWS = where_section(b)
     for key, fn in SECTIONS:
         body = body.replace(f"<!--home:{key}-->", where if key == "where" else fn(b))
-    body = body.replace('href="#src-', 'href="/sources/#src-')
+    # Home's own scripts (goal switch, price windows, seller filter, legal check) go to one cached file, so the page stays
+    # under 60 KB with the shared header (pages.md, Home); deferred, they run once the page is parsed, as they did inline.
+    global JS
+    JS = "\n".join(m.strip()[len("<script>"):-len("</script>")] for m in re.findall(r"<script>.*?</script>", body, re.S))
+    body = re.sub(r"<script>.*?</script>\s*", "", body, flags=re.S) + '<script src="/assets/home.js" defer></script>\n'
     return (path, out, title, desc, body, *rest)

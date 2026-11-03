@@ -167,43 +167,61 @@ body:has(.sellers-dlg[open]){overflow:hidden}
 @media (min-width:641px){.clinics-more{display:none}}
 .clinics-more{margin:12px 0 0}
 
-/* Header menu (pages.md, Every page, Header, 31 Oct 2026; up to 900px since 2 Nov 2026, up to 1179px with the search field,
-   owner task 2 Nov 2026): below 1180px the nav opens from a plain "Menu" button
-   (btn-line btn-sm, no icon); .nav-js is set by the head script, so with JavaScript off the links stay a wrapped row */
+/* Header menu (pages.md, Every page, Header, 31 Oct 2026; up to 1179px since 2 Nov 2026): below 1180px the categories
+   open from a plain "Menu" button (btn-line btn-sm, no icon); .nav-js is set by the head script, so with JavaScript off
+   the categories show open under the logo */
 .nav-toggle{display:none}
 @media (max-width:1179px){
 .nav-js .nav-toggle{display:inline-flex}
 .nav-js .nav:not(.open){display:none}
-.nav-js .nav.open{flex-direction:column;align-items:stretch;border-top:1px solid var(--line);padding-top:6px}
+.nav-js .nav.open{flex-direction:column;align-items:stretch;border-top:1px solid var(--line);padding-top:2px}
 }
 
-/* Goal menu in the header (pages.md, Every page, Header, 1 Nov 2026): "Peptides by goal" opens a list of the seven goals
-   under it; Escape, a click outside or choosing a goal closes it. JavaScript off: no button, the label and the goals show
-   as a plain row under the other links. Phones: one more group inside the Menu, always open. */
-.nav-goals{position:relative;display:flex;align-items:center}
-.nav-goals-btn{display:inline-flex;align-items:center;min-height:var(--touch);padding:0 12px;border:0;border-radius:var(--radius-control);background:none;font:600 15px var(--font-text);color:var(--ink);cursor:pointer;white-space:nowrap}
-.nav-goals-btn:hover,.nav-goals.open .nav-goals-btn{background:var(--neutral-tint)}
-.nav-goals-btn:focus-visible{outline:3px solid var(--clinic);outline-offset:2px}
-.goal-menu{list-style:none;margin:0;padding:0}
-.nav-group{font:600 13px var(--font-text);color:var(--ink-2);padding:0 12px;white-space:nowrap}
-html:not(.nav-js) .site-head .wrap{flex-wrap:wrap;padding-top:10px;padding-bottom:10px}
-html:not(.nav-js) .site-head .brand{order:1;flex:none}
-html:not(.nav-js) .head-cta{order:2;margin-left:auto}
-html:not(.nav-js) .nav{order:3;flex-basis:100%;margin-left:0;flex-wrap:wrap;overflow:visible}
-html:not(.nav-js) .nav-goals-btn{display:none}
-html:not(.nav-js) .nav-goals{order:9;flex-basis:100%;flex-wrap:wrap;align-items:center}
-html:not(.nav-js) .goal-menu{display:flex;flex-wrap:wrap}
-.nav-js .nav{overflow:visible}
-.nav-js .nav-group{display:none}
-.nav-js .goal-menu{display:none;position:absolute;top:calc(100% + 6px);left:0;z-index:30;min-width:220px;padding:6px;background:var(--white);border:1px solid var(--line-strong);border-radius:var(--radius-panel);box-shadow:var(--shadow-card)}
-.nav-js .nav-goals.open .goal-menu{display:block}
-.nav-js .goal-menu a{display:flex;width:100%;box-sizing:border-box}
-@media (max-width:1179px){
-.nav-js .nav-goals{flex-direction:column;align-items:stretch}
-.nav-js .nav-goals-btn{display:none}
-.nav-js .nav-group{display:block;padding:8px 12px 2px}
-.nav-js .goal-menu{display:block;position:static;min-width:0;padding:0;border:0;box-shadow:none;background:none}
+/* Header categories (pages.md, Every page, Header; owner task 3 Nov 2026, the "Home v2" sketch): five plain text buttons
+   (600, 15px, 44px tall, aria-expanded, no icon), neutral-tint on hover, the open one clinic-text. From 1180px the open
+   one has a 2px clinic line under it and its panel is a full-width white strip under the header (line hairlines,
+   shadow-card) with the links in the container on four columns: a group label (700, small) over links (600) with one
+   small ink-2 line each. Under 1180px the categories are an accordion inside the Menu (48px rows, 700, hairlines between),
+   the open one listing its links two to a row, without labels or lines. JavaScript off: every category shows open, as
+   columns under the logo. */
+.nav-cats{display:flex;align-items:center;gap:2px;list-style:none;margin:0;padding:0}
+.nav-cat-btn{display:inline-flex;align-items:center;min-height:var(--touch);padding:0 12px;border:0;border-radius:var(--radius-control);background:none;font:600 15px var(--font-text);color:var(--ink);cursor:pointer;white-space:nowrap}
+.nav-cat-btn:hover{background:var(--neutral-tint)}
+.nav-cat.open .nav-cat-btn{color:var(--clinic-text)}
+.nav-cat-btn:focus-visible{outline:3px solid var(--clinic);outline-offset:2px}
+.nav-panel ul{list-style:none;margin:0;padding:0}
+.nav-h{margin:0 0 4px;font:700 var(--small-size)/1.4 var(--font-text);color:var(--ink)}
+.nav-panel a{display:flex;flex-direction:column;justify-content:center;min-height:var(--touch);font:600 15px/1.3 var(--font-text);color:var(--ink);text-decoration:none}
+.nav-panel a:hover,.nav-panel a[aria-current="page"]{color:var(--clinic-text)}
+.nav-panel a:hover .nav-l,.nav-panel a[aria-current="page"] .nav-l{text-decoration:underline}
+.nav-panel a:focus-visible{outline:3px solid var(--clinic);outline-offset:2px;border-radius:var(--radius-control)}
+.nav-sub{font:400 var(--small-size)/1.4 var(--font-text);color:var(--ink-2)}
+.nav-panel .nav-panel-in{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px 28px;padding-top:20px;padding-bottom:22px}
+.nav-flat{display:contents}
+@media (min-width:1180px){
+.nav-js .nav-panel{display:none;position:absolute;left:0;right:0;top:100%;z-index:30;background:var(--white);border-top:1px solid var(--line);border-bottom:1px solid var(--line);box-shadow:var(--shadow-card)}
+.nav-js .nav-cat.open .nav-panel{display:block}
+.nav-js .nav-cat.open .nav-cat-btn{box-shadow:inset 0 -2px 0 var(--clinic)}
 }
+@media (max-width:1179px){
+.nav-cats{flex-direction:column;align-items:stretch;gap:0}
+.nav-cat+.nav-cat{border-top:1px solid var(--line)}
+.nav-cat-btn{width:100%;min-height:48px;padding:0 4px;border-radius:0;font-weight:700}
+.nav-js .nav-panel{display:none}
+.nav-js .nav-cat.open .nav-panel{display:block}
+.nav-panel .nav-panel-in{grid-template-columns:repeat(2,minmax(0,1fr));gap:0 16px;max-width:none;padding:0 4px 10px}
+.nav-col,.nav-col ul{display:contents}
+.nav-h,.nav-sub{display:none}
+}
+html:not(.nav-js) .site-head>.wrap{flex-wrap:wrap;padding-top:10px;padding-bottom:10px}
+html:not(.nav-js) .site-head .brand{order:1}
+html:not(.nav-js) .head-search{order:2;margin-left:auto}
+html:not(.nav-js) .head-cta{order:3;width:auto;padding:0}
+html:not(.nav-js) .nav{order:4;flex-basis:100%;margin-left:0;padding-bottom:12px}
+html:not(.nav-js) .nav-cats{width:100%;display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));align-items:start;gap:8px 24px}
+html:not(.nav-js) .nav-cat{border:0}
+html:not(.nav-js) .nav-cat-btn{pointer-events:none;padding:0}
+html:not(.nav-js) .nav-panel .nav-panel-in{display:block;padding:0}
 /* Legal filter (pages.md, Home, "Is it legal today?", 1 Nov 2026): a labelled plain input and btn-line "Clear" above
    the table; "Show all N" (btn-line) under it. Shown only with JavaScript. */
 .legal-filter{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin-bottom:16px}
@@ -249,7 +267,7 @@ html:not(.nav-js) .goal-menu{display:flex;flex-wrap:wrap}
    Goal, Peptide, Seller, Page) and one ink-2 line; the chosen row (arrow keys) and a hovered row are neutral-tint.
    Inside the Menu the list sits in the flow, without the shadow. The /search/ page shows the same rows, hairlines
    between them, in one white frame under its own field and btn-ink "Search". */
-.head-search{position:relative;order:99;flex:1 1 200px;max-width:280px;min-width:0;margin:0 0 0 8px}
+.head-search{position:relative;flex:0 1 280px;min-width:180px;margin:0}
 .head-search .input{width:100%;min-height:var(--touch);padding:0 12px;font-size:15px}
 .search-list{position:absolute;top:calc(100% + 6px);right:0;z-index:30;width:min(420px,calc(100vw - 32px));margin:0;padding:6px;list-style:none;background:var(--white);border:1px solid var(--line-strong);border-radius:var(--radius-panel);box-shadow:var(--shadow-card);box-sizing:border-box}
 .search-list[hidden]{display:none}
@@ -260,11 +278,11 @@ html:not(.nav-js) .goal-menu{display:flex;flex-wrap:wrap}
 .search-line{grid-column:1/-1;font-size:var(--small-size);line-height:1.4;color:var(--ink-2)}
 .search-none{padding:10px 12px;font-size:var(--small-size);color:var(--ink-2)}
 @media (max-width:1179px){
-.nav-js .head-search{order:0;flex:none;max-width:none;margin:6px 0 8px}
 .head-search .input{font-size:16px}
+}
+@media (max-width:760px){
 .nav-js .search-list{position:static;width:auto;margin-top:6px;box-shadow:none}
 }
-html:not(.nav-js) .head-search{order:0;flex:1 1 100%;max-width:420px;margin:0 0 8px}
 .search-form{max-width:720px;margin-top:8px}
 .search-form>label{display:block;font-weight:600;font-size:var(--small-size);margin-bottom:6px}
 .search-row{display:flex;flex-wrap:wrap;gap:8px}
@@ -333,7 +351,7 @@ html:not(.nav-js) .head-search{order:0;flex:1 1 100%;max-width:420px;margin:0 0 
 .related li,.learn-card li{margin:0;padding:10px 0;border-top:1px solid var(--line)}
 .guide-list li{margin:0;padding:20px 0;border-top:1px solid var(--line)}
 .guide-list li:last-child,.related li:last-child,.learn-card li:last-child{border-bottom:1px solid var(--line)}
-.prose .guide-list h2{font-size:var(--display-4-size);line-height:var(--display-4-lh);margin:0 0 6px;padding:0;border:0}
+.prose .guide-list h3{font-size:var(--display-4-size);line-height:var(--display-4-lh);margin:0 0 6px;padding:0;border:0}
 .guide-list p{margin:0 0 4px}
 .guide-list .small{color:var(--ink-2)}
 .learn-card{padding:20px 24px;background:var(--white);border:1px solid var(--line);border-radius:var(--radius-panel)}
@@ -435,3 +453,16 @@ a.legal-card:hover{border-color:var(--clinic)}
 }
 @keyframes pc-draw{from{transform:scaleY(0)}to{transform:none}}
 @media (prefers-reduced-motion:reduce){.btn{transition:none}}
+/* Sources (pages.md, Sources; owner task 3 Nov 2026): one group per kind of source under its h2 (PubMed by guide, an h3
+   per guide); each source a row between hairlines: its name (600, the link), what we take from it and "Checked <date>"
+   in small ink-2 lines under it. No buttons. */
+.prose .src-list{list-style:none;margin:12px 0 0;padding:0}
+.prose .src-list li{margin:0;padding:12px 0;border-top:1px solid var(--line)}
+.src-list li:last-child{border-bottom:1px solid var(--line)}
+.src-name{display:block;font-weight:600;overflow-wrap:anywhere}
+.src-take,.src-date{display:block;margin-top:2px;font-size:var(--small-size);line-height:1.45;color:var(--ink-2)}
+.src-take:empty{display:none}
+.prose .src-group h3{margin:24px 0 0;font-size:var(--display-4-size);line-height:var(--display-4-lh)}
+/* Learn topics (pages.md, Learn): an h2 per topic over its guides */
+.prose .learn-topic{margin:48px 0 0}
+.learn-topic+.guide-list{margin-top:8px}
