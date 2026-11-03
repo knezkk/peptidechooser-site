@@ -955,7 +955,7 @@ def seller_window(p):
     checked = f" Prices checked {nice_date(newest)}." if newest else ""
     return f"""<dialog class="sellers-dlg" id="{key}" aria-labelledby="{key}-h"><div class="dlg-in">
   <div class="dlg-hd"><h2 id="{key}-h">{title}</h2><form method="dialog"><button class="btn btn-line btn-sm" type="submit">Close</button></form></div>
-  <p class="dlg-lede">{window_who(p)}. We do not link to them.{checked}</p>
+  <p class="dlg-lede">{window_who(p)}, with our checks.{checked}</p>
   {"".join(parts)}
   {"" if kind == "cosmetic" else '<p class="dlg-foot">Price per mg is price divided by the stated amount; blends have no per-mg price.</p>'}
   {f'<p class="dlg-foot dlg-score">Checks are facts we hold about the seller, not a safety or quality grade. Checked {nice_date(scored)}.</p>' if scored else ""}
@@ -980,7 +980,7 @@ def how_line(p):
     whether any clinic plan in our data carries the substance (owner UX audit, 3 Nov 2026)."""
     if has_window(p) and window_kind(p) == "research" and not re.search(r"shop|do not link", p["how"], re.I):
         clinics = any(r["substance_slug"] in subs_of(p) for r in PLANS)
-        return "Research-use shops; we do not link to them." + (" Online clinics also prescribe it." if clinics else "")
+        return "Research-use shops, with our checks." + (" Online clinics also prescribe it." if clinics else "")
     return p["how"]
 
 
@@ -2397,7 +2397,7 @@ def seller_subs_section(r):
     <thead><tr><th scope="col">Substance</th><th scope="col">Listings</th><th scope="col">Per mg</th><th scope="col">Lab report</th></tr></thead>
     <tbody>{"".join(trs)}</tbody>
   </table></div>
-  {more}<p class="small seller-note">Per mg is the price divided by the stated amount; blends and listings without an amount have none. We do not link to the products.</p>
+  {more}<p class="small seller-note">Per mg is the price divided by the stated amount; blends and listings without an amount have none. A substance name opens our page on that substance.</p>
 </section>"""
 
 
@@ -2922,10 +2922,10 @@ for _g in ALL_GOALS:
 
 if PROFILES:
     PAGES.append(("/sellers/", "sellers/index.html", "Peptide sellers and their checks | Peptide Chooser",
-                  (f"The {len(SHOPS)} peptide shops and {len(CLINIC_PROFILES)} online clinics in our database, each with five background "
-                   "checks, products or plans and FDA warning letters. We never link to them.") if CLINIC_PROFILES else
-                  (f"Every peptide seller in our database, {len(PROFILES)} in all, with five background checks, product and "
-                   "substance counts and FDA warning letters. We never link to them."),
+                  (f"The {len(SHOPS)} peptide shops and {len(CLINIC_PROFILES)} online clinics in our database, each on its own page "
+                   "with five background checks, products or plans and FDA warning letters.") if CLINIC_PROFILES else
+                  (f"Every peptide seller in our database, {len(PROFILES)} in all, each on its own page with five background checks, "
+                   "product and substance counts and FDA warning letters."),
                   sellers_index(),
                   # ItemList (owner task 2 Nov 2026): one item per seller page on our site, never the seller's own domain
                   item_list_schema("Peptide sellers and their checks",
@@ -3138,7 +3138,7 @@ def compare_page():
 <section class="section letters-hd">
   <div class="wrap">
     <h1>Compare any two plans or sellers</h1>
-    <p class="lede">Pick two online clinic plans, two peptide shops or two substances and see them side by side: price and care fee for a plan; the five checks, products, price per mg and FDA letters for a shop; FDA status, prices and letters for a substance. Seller names open our page on the seller; we do not link to the shops.</p>
+    <p class="lede">Pick two online clinic plans, two peptide shops or two substances and see them side by side: price and care fee for a plan; the five checks, products, price per mg and FDA letters for a shop; FDA status, prices and letters for a substance. Seller names open our page on the seller.</p>
     <p class="letters-stamp">{f'<span class="stamp">Checked {nice_date(checked)}</span>' if checked else ""}<span class="small">{plural(len(plans), "clinic plan")} and {plural(len(sellers), "seller")}.</span></p>
   </div>
 </section>
@@ -3520,7 +3520,7 @@ def pep_shops_section(slug):
     return f"""
 <section class="section" id="sold">
   <div class="wrap">
-    <div class="sec-hd"><div><h2>Where it is sold</h2><p>The {plural(len(rows), "shop")} in the price window on our goal pages, each with its cheapest listing by price per mg, most checks first. Research-use sellers; we do not link to them.{" Prices checked " + nice_date(newest) + "." if newest else ""}</p></div></div>
+    <div class="sec-hd"><div><h2>Where it is sold</h2><p>The {plural(len(rows), "shop")} in the price window on our goal pages, each with its cheapest listing by price per mg, most checks first. Research-use sellers, with our checks.{" Prices checked " + nice_date(newest) + "." if newest else ""}</p></div></div>
     <div class="tbl-wrap"><table class="tbl tbl-cards tbl-sold">
       <thead><tr><th scope="col">Shop</th><th scope="col">Size</th><th scope="col">Price</th><th scope="col">Per mg</th><th scope="col">Checks</th></tr></thead>
       <tbody>{"".join(trs)}</tbody>
@@ -3814,7 +3814,7 @@ def peptides_index():
 <section class="section letters-hd">
   <div class="wrap">
     <h1>Peptides and their FDA status</h1>
-    <p class="lede">Every peptide and approved alternative we track, {len(PEPTIDE_SLUGS)} in all, with its FDA status, its source and the lowest price we show. Each name opens its page; we do not link to shops or clinics.</p>
+    <p class="lede">Every peptide and approved alternative we track, {len(PEPTIDE_SLUGS)} in all, with its FDA status, its source and the lowest price we show. Each name opens its page.</p>
     <p class="letters-stamp"><span class="stamp">Checked {nice_date(checked)}</span><span class="small">Lowest price: the price a goal page checked by hand, else per month at the online clinics for an approved medicine, else per mg at the shops we show.</span></p>
   </div>
 </section>
@@ -4160,7 +4160,7 @@ def cmp_body(h1, checked, answer, table, links, pre, note, verdict="", nxt=""):
 <section class="band-2" id="compare-two">
   <div class="wrap">
     {table}
-    <p class="small" style="margin-top:16px">Our pages on each: {more}. We do not link to the shops or the clinics.</p>
+    <p class="small" style="margin-top:16px">Our pages on each: {more}.</p>
     {f'<p class="cmp-link"><a class="btn btn-line" href="/compare/{pre}">Compare any two</a></p>' if pre else ""}
     {nxt}
   </div>

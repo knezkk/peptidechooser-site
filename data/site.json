@@ -156,7 +156,7 @@
           "status": "Not approved for any use",
           "chip": "neutral",
           "does": "Vials from research-use shops, meant to be injected. No human evidence for hair.",
-          "how": "We do not link to them.",
+          "how": "Research-use shops, with our checks.",
           "status_plain": "Not approved for any use.",
           "substances": [
             "bpc-157",
@@ -302,7 +302,7 @@
           "status": "Not approved; still in trials",
           "chip": "neutral",
           "does": "A newer three-hormone shot, still in trials. Sold online only from research-use shops.",
-          "how": "We do not link to them.",
+          "how": "Research-use shops, with our checks.",
           "status_plain": "Not approved; in trials.",
           "substance": "retatrutide"
         }
@@ -359,7 +359,7 @@
           "status": "Not approved",
           "chip": "neutral",
           "does": "Growth-hormone-releasing peptides sold by research-use shops and some clinics. No approved product, no large human trials.",
-          "how": "We do not link to shops.",
+          "how": "Research-use shops, with our checks.",
           "status_plain": "Not approved for any use.",
           "substances": [
             "cjc-1295",
@@ -455,7 +455,7 @@
           "status": "Not an approved product",
           "chip": "neutral",
           "does": "The same molecule as Vyleesi, sold without a prescription by research-use shops: no dose control, no checks.",
-          "how": "We do not link to them.",
+          "how": "Research-use shops, with our checks.",
           "status_plain": "Not an approved product.",
           "substances": [
             "bremelanotide"
@@ -467,7 +467,7 @@
           "status": "Not approved for any use",
           "chip": "neutral",
           "does": "A tanning peptide also sold \"for libido\". Linked to serious side effects; never approved anywhere.",
-          "how": "We do not link to them.",
+          "how": "Research-use shops, with our checks.",
           "status_plain": "Not approved for any use.",
           "substance": "melanotan-2"
         }
