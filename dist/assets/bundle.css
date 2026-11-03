@@ -476,6 +476,10 @@ a.legal-card:hover{border-color:var(--clinic)}
 .decide-price{margin:4px 0 0;font-size:var(--small-size);line-height:1.45;color:var(--ink-2)}
 .decide-price strong{color:var(--ink);font-size:var(--ui-size)}
 .decide-card .pick-act{margin-top:auto;padding-top:10px}
+/* The long clinic buttons ("See plans at <clinic> · $X/mo", in the cards and the option rows) may wrap onto two lines and
+   never grow past their column (deploy of #69, 3 Nov 2026: 324px wide on a 320px phone). */
+.decide-card .pick-act,.flow .opt>.pick-act{max-width:100%}
+.decide-card .btn,.flow .opt>.pick-act .btn{white-space:normal;max-width:100%;height:auto;padding-top:8px;padding-bottom:8px;text-align:center;line-height:1.3}
 @media (min-width:900px){.decide{grid-template-columns:repeat(3,minmax(0,1fr))}}
 /* The facts line in an opened option row: what the old "Every option, side by side" table showed and the row did not. */
 .opt-facts{display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px;color:var(--ink-2)}
