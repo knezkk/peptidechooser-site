@@ -520,6 +520,15 @@ def check_parts(P):
                 n = len(re.findall(rf'class="btn {kind}\b', body))
                 if n > (0 if kind in ("btn-wait", "btn-action") else 1):
                     errs.append(f"index.html: section #{m.group(1)} has {n} {kind} buttons outside its tables")
+        # every source link on Home, in the page and in the goal panels it loads, lands on an id on /sources/ (owner answer
+        # Q3 a, 3 Nov 2026)
+        panels = "".join(json.loads(f.read_text(encoding="utf-8"))["html"] for f in sorted((DIST / "windows").glob("goal-*.json")))
+        src_page = (DIST / "sources" / "index.html").read_text(encoding="utf-8") if (DIST / "sources" / "index.html").exists() else ""
+        for sid in sorted(set(re.findall(r'href="/sources/#([^"]+)"', home + panels))):
+            if f'id="{sid}"' not in src_page:
+                errs.append(f"index.html: source link /sources/#{sid} lands on no id on /sources/")
+        for sid in sorted(set(re.findall(r'href="#(src-[^"]+)"', home + panels))):
+            errs.append(f"index.html: source link #{sid} points into Home, which lists no sources")
         size = len(home.encode("utf-8"))
         if size > 60 * 1024:
             errs.append(f"index.html: {size // 1024} KB, over the 60 KB limit")

@@ -36,10 +36,11 @@ def seller_kind(b, r):
 
 
 def where_order(b, r):
-    """Most checks first; at equal score clinics before shops; then most products or plans, then name."""
+    """Online clinics first, then shops (owner answer Q1 a, 3 Nov 2026); in each group most checks first, then most plans or
+    products, then name."""
     clinic = seller_kind(b, r) == "clinic"
     size = len(b.clinic_plan_rows(r)) if clinic else (r.get("product_count") or 0)
-    return (-(r.get("score") if r.get("score") is not None else -1), 0 if clinic else 1, -size, b.seller_name(r).lower())
+    return (0 if clinic else 1, -(r.get("score") if r.get("score") is not None else -1), -size, b.seller_name(r).lower())
 
 
 def where_line(b, r):
@@ -130,8 +131,8 @@ def where_section(b):
       <div class="where-f"><label for="where-min">Checks</label><select class="input" id="where-min">{mins}</select></div>
       <div class="where-f where-q"><label for="where-q">Seller name</label><input class="input" id="where-q" type="text" autocomplete="off"></div>
     </form>
-    <p class="small where-n" id="where-n" aria-live="polite">Showing {min(WHERE_FIRST, n)} of {n} · most checks first</p>
-    <div class="tbl-wrap"><table class="tbl tbl-cards tbl-where" id="where-table"><caption class="vh">Sellers, most checks first</caption>
+    <p class="small where-n" id="where-n" aria-live="polite">Showing {min(WHERE_FIRST, n)} of {n} · online clinics first, then by checks</p>
+    <div class="tbl-wrap"><table class="tbl tbl-cards tbl-where" id="where-table"><caption class="vh">Sellers, online clinics first, then by checks</caption>
       <thead><tr><th scope="col">Seller</th><th scope="col">Type</th><th scope="col">Checks</th><th scope="col">From</th><th scope="col">FDA letters</th><th scope="col"><span class="vh">Action</span></th></tr></thead>
       <tbody>{body}</tbody>
     </table></div>
@@ -155,7 +156,7 @@ function draw(){var s=q.value.trim().toLowerCase(),u=sb.value,k=parseInt(mn.valu
 return(!s||r.n.indexOf(s)>=0)&&(!u||r.u.indexOf(u)>=0)&&r.s>=k&&(!t||r.t===t);});
 tb.tBodies[0].innerHTML=hit.slice(0,FIRST).map(function(r){return r.h;}).join('');
 [].forEach.call(tb.tBodies[0].rows,function(r){r.style.opacity=1;});
-n.textContent=hit.length?'Showing '+Math.min(FIRST,hit.length)+' of '+hit.length+' that match · most checks first':'No seller matches. Try fewer filters.';
+n.textContent=hit.length?'Showing '+Math.min(FIRST,hit.length)+' of '+hit.length+' that match · online clinics first, then by checks':'No seller matches. Try fewer filters.';
 var h=[];if(u)h.push('substance='+u);if(k)h.push('min='+k);if(t)h.push('type='+t);if(s)h.push('q='+encodeURIComponent(s));
 all.href='/sellers/'+(h.length?'#'+h.join('&'):'');}
 function ch(){if(rows)return draw();fetch('/sellers/home.json').then(function(r){return r.json();}).then(function(d){rows=d;draw();});}

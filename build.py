@@ -1078,9 +1078,8 @@ def rail():
                 '<p class="small">Full comparison for this goal is not published yet. The legal status above is current as of ' + CHECKED + '.</p>')
         inner = (f'<p class="goal-for">{g["for"]}</p><p class="goal-intro" tabindex="0" title="{g["intro"]}">{g["intro"]}</p>'
                  f'<ul class="opts">{"".join(rows)}</ul>{approved_instead(g)}{link}')
-        # Home lists no sources: a footnote opens the same numbered line on the goal page (same ids and numbers, 3 Nov 2026)
-        if g.get("page"):
-            inner = inner.replace('href="#src-', f'href="/{slug}/#src-')
+        # Home lists no sources: a footnote opens its line on /sources/, which carries the same ids (owner answer Q3 a, 3 Nov 2026)
+        inner = inner.replace('href="#src-', 'href="/sources/#src-')
         # Only the first goal's options are in the page; the others load from /windows/goal-<slug>.json when chosen
         # (Home under 60 KB, Home v2, 3 Nov 2026). Without JavaScript only the first goal shows, as before.
         if i:
@@ -3716,15 +3715,25 @@ def used_on(pages, most=3):
     return f"Cited on {links}" + (f" and {plural(len(pages) - most, 'more page')}" if len(pages) > most else "") + "."
 
 
-def src_li(name, url, link, take, checked=""):
+def src_li(name, url, link, take, checked="", ids=()):
+    """One /sources/ entry. `ids`: the ids Home's footnotes link (src-1, src-price-hair, src-plan-...), so a footnote on Home
+    lands on its line here (owner answer Q3 a, 3 Nov 2026); the first is the item's id, the rest empty anchors in it."""
     head = (f'<a href="{url}" rel="nofollow">{name}</a>' if link and url.startswith("http") else
             f'<a href="{url}">{name}</a>' if link else f"{name}: {url}" if url else name)
     when = f'<span class="src-date">Checked {nice_date(checked)}</span>' if checked else ""
-    return f'<li><span class="src-name">{head}</span><span class="src-take">{take}</span>{when}</li>'
+    ids = list(dict.fromkeys(ids))
+    anchors = "".join(f'<span id="{i}"></span>' for i in ids[1:])
+    id_attr = f' id="{ids[0]}"' if ids else ""
+    return f'<li{id_attr}>{anchors}<span class="src-name">{head}</span><span class="src-take">{take}</span>{when}</li>'
 
 
 def sources_body():
     cited = cited_sources()
+    # Home's source ids by url (SOURCES_HOME: the numbered list Home's option rows link), placed on the entry for that url
+    home_ids = {}
+    for sid, url in re.findall(r'<li id="(src-[^"]+)">.*?<a href="([^"]+)"', SOURCES_HOME):
+        home_ids.setdefault(unescape(url), []).append(sid)
+    plan_ids = [sid for sid in re.findall(r'<li id="(src-plan-[^"]+)">', SOURCES_HOME)]
     seller_hosts = {host("https://" + r["domain"]) for r in PROFILES.values() if r.get("domain")}
     seller_hosts |= {host(r["pricing_url"]) for r in PLANS if r.get("pricing_url")}
     db_urls = {r["source_url"] for r in LEGAL_DB or []}
@@ -3734,14 +3743,14 @@ def sources_body():
         if url in db_urls:
             continue  # listed once below, with every substance the database reads from it
         if h.endswith("fda.gov") or h == "dailymed.nlm.nih.gov":
-            fda.append(src_li(text, url, link, used_on(pages)))
+            fda.append(src_li(text, url, link, used_on(pages), ids=home_ids.get(url, ())))
         elif h == "medlineplus.gov":
-            medline.append(src_li(text, url, link, used_on(pages)))
+            medline.append(src_li(text, url, link, used_on(pages), ids=home_ids.get(url, ())))
         elif h == "pubmed.ncbi.nlm.nih.gov":
             for p in [p for p in pages if p[0].startswith("/learn/")] or pages:  # by guide; a study no guide cites, by its page
                 pubmed.setdefault(p, []).append(src_li(text, url, link, ""))
         elif h not in seller_hosts:
-            prices.append(src_li(text, url, link, used_on(pages)))
+            prices.append(src_li(text, url, link, used_on(pages), ids=home_ids.get(url, ())))
     # the database's FDA sources: one entry per source list (the status rows link one page, or one openFDA query per substance)
     by_src = {}
     for r in LEGAL_DB or []:
@@ -3752,7 +3761,7 @@ def sources_body():
         name = cited[url][0] if url in cited and not cited[url][0].startswith("FDA, status of ") else host(url) + urlparse(url).path
         subs = sorted({r["canonical_name"] for r in rows})
         pages = [pg for u in urls if u in cited for pg in cited[u][2]]
-        fda.append(src_li(name, url, True, f"FDA status of {plural(len(subs), 'substance')} in our database: {', '.join(subs[:6])}"
+        fda.append(src_li(name, url, True, ids=[i for u in urls for i in home_ids.get(u, ())], take=f"FDA status of {plural(len(subs), 'substance')} in our database: {', '.join(subs[:6])}"
                           + (f" and {len(subs) - 6} more" if len(subs) > 6 else "") + f", first seen {nice_date(min(r['first_seen_by_us'] for r in rows))}."
                           + (" " + used_on(list(dict.fromkeys(pages))) if pages else "")))
     if LETTERS_ALL:
@@ -3784,7 +3793,8 @@ def sources_body():
         clinics = {r["seller_slug"] for r in PLANS}
         own.append(src_li("Online clinic plan pages", "/sellers/#clinics" if built("/sellers/") else "", built("/sellers/"),
                           f"Monthly price and fees of {plural(len(PLANS), 'plan')} at {plural(len(clinics), 'clinic')}.",
-                          max((r.get("last_seen") or "" for r in PLANS), default="")))
+                          max((r.get("last_seen") or "" for r in PLANS), default=""),
+                          ids=plan_ids + [i for u, ids in home_ids.items() if host(u) in seller_hosts for i in ids]))
     if PROFILES:
         own.append(src_li("Seller checks", "/how-we-rate/", True, f"The five checks on {plural(len(PROFILES), 'seller')}.",
                           max((r.get("score_checked_on") or "" for r in PROFILES.values()), default="")))
