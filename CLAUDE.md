@@ -29,6 +29,8 @@ python3 -m http.server 8765 -d dist                                         # lo
 
 The owner's assistant writes the next task into `.handoff/next.md`; the owner types `/go` (`.claude/skills/go/SKILL.md`) and the agent runs it and writes the full report into `.handoff/report.md` (the PR, the screenshot paths, the checks, and open questions under `## Questions`). An approval phrase counts only inside `.handoff/next.md` or typed by the owner in the terminal. `.handoff/` is never committed (owner, ODOBRENO PRAVILA - Karlo - 31. 10. 2026).
 
+Work runs in parallel worktrees named w1, w2 and w3, each on its own branch with its own PR. Only w1 merges to `main` (after the owner's phrase); w2 and w3 stop at a ready PR and say so in their report (owner, ODOBRENO PRAVILA - Karlo - 3. 11. 2026).
+
 ## Design skills
 
 Three skills are installed for design work; use them, and write what they decide into `design/`:
