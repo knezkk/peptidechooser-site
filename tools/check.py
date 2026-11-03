@@ -92,6 +92,8 @@ def page_path(name):
 def pages():
     out = {}
     for f in sorted(DIST.rglob("*.html")):
+        if 'http-equiv="refresh"' in f.read_text(encoding="utf-8"):
+            continue  # a redirect page (data/redirects.json), checked in check_parts
         p = Text()
         p.feed(f.read_text(encoding="utf-8"))
         out[str(f.relative_to(DIST))] = p
@@ -704,6 +706,40 @@ def check_parts(P):
             for num, word in re.findall(r"(\d+) (seller|substance|FDA letter)s?\b", cnt):
                 if int(num) != want[word]:
                     errs.append(f"{name}: header count '{num} {word}' but the build has {want[word]}")
+    # Guides and /learn/ (pages.md, Learn, Guide; owner task w2, 3 Nov 2026): the short answer opens with a sentence
+    # under 160 characters; "What to do next" links at least one built page; no /learn/ group is empty; no guide title
+    # twice. A redirect page (data/redirects.json) is noindex, carries its canonical and points at a built page.
+    titles = {}
+    for name in (n for n in P if re.fullmatch(r"learn/[^/]+/index\.html", n)):
+        html = (DIST / name).read_text(encoding="utf-8")
+        sa = re.search(r'<section class="short-answer".*?<p>(.*?)</p>', html, re.S)
+        text = re.sub(r"<[^>]+>", "", re.sub(r"<sup>.*?</sup>", "", sa.group(1))) if sa else ""
+        first = re.split(r"(?<=[.?!])\s", text.strip(), 1)[0]
+        if not first or len(first) >= 160:
+            errs.append(f"{name}: the short answer's first sentence is {len(first)} characters (under 160)")
+        nxt = re.search(r"<h2>What to do next</h2>(.*?)(?:<section|</div></article>)", html, re.S)
+        hrefs = re.findall(r'href="(/[^"#?]*)', nxt.group(1)) if nxt else []
+        if not any((DIST / h.strip("/") / "index.html").exists() or h == "/" for h in hrefs):
+            errs.append(f"{name}: 'What to do next' links no built page")
+        t = P[name].title.strip()
+        if t in titles:
+            errs.append(f"{name}: guide title {t!r} also on {titles[t]}")
+        titles[t] = name
+    if "learn/index.html" in P:
+        html = (DIST / "learn" / "index.html").read_text(encoding="utf-8")
+        for topic, block in re.findall(r'<h2 class="learn-topic" id="([^"]+)">.*?<ul class="guide-list">(.*?)</ul>', html, re.S):
+            if "<li>" not in block:
+                errs.append(f"learn/index.html: the {topic} group is empty")
+        cards = re.findall(r'<ul class="guide-list">.*?</ul>', html, re.S)
+        h3 = re.findall(r"<h3><a [^>]*>([^<]+)</a></h3>", "".join(cards))
+        for t in {x for x in h3 if h3.count(x) > 1}:
+            errs.append(f"learn/index.html: guide {t!r} listed twice")
+    for f in sorted(DIST.rglob("*.html")):
+        html = f.read_text(encoding="utf-8")
+        if 'http-equiv="refresh"' in html:
+            m = re.search(r'url=(/[^"]*)"', html)
+            if 'content="noindex"' not in html or 'rel="canonical"' not in html or not m or not (DIST / m.group(1).strip("/") / "index.html").exists():
+                errs.append(f"{f.relative_to(DIST)}: redirect page without noindex, canonical or a built target")
     # /sources/ (pages.md, Sources): every group shown has at least one source
     src = DIST / "sources" / "index.html"
     if src.exists():

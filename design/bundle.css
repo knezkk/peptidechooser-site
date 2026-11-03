@@ -534,6 +534,18 @@ a.legal-card:hover{border-color:var(--clinic)}
 /* Learn topics (pages.md, Learn): an h2 per topic over its guides */
 .prose .learn-topic{margin:48px 0 0}
 .learn-topic+.guide-list{margin-top:8px}
+/* Learn and Guide, answer first (pages.md, Learn, Guide; owner task w2, 3 Nov 2026): one ink-2 line under each topic
+   heading; "Start here" at the top, the h-sources heading over three links between hairlines (the related strip's
+   list); on a guide, the pages its subject has as a plain link list under the two "What to do next" buttons. */
+.prose .learn-line{margin:4px 0 0;color:var(--ink-2)}
+.learn-line+.guide-list{margin-top:8px}
+.learn-start{margin:32px 0 0}
+.prose .learn-start ul{list-style:none;margin:0;padding:0}
+.learn-start li{margin:0;padding:10px 0;border-top:1px solid var(--line);font-weight:600}
+.learn-start li:last-child{border-bottom:1px solid var(--line)}
+.prose .next-links{list-style:none;margin:16px 0 0;padding:0}
+.prose .next-links li{margin:0;padding:8px 0;border-top:1px solid var(--line)}
+.prose .next-links li:last-child{border-bottom:1px solid var(--line)}
 /* Compact table (tbl-compact; pages.md, Seller; owner task 3 Nov 2026): the DataTable at 40px rows with 13px cells and
    tighter padding, for the tables in the seller page's 8-column body; inside .tbl-wrap like every table, never wider
    than its column (the frame scrolls). Under 640px a tbl-cards table still turns into cards. */

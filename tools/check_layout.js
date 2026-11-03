@@ -27,7 +27,9 @@ function pages(dir, base = '') {
   const out = [];
   for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
     if (e.isDirectory()) out.push(...pages(path.join(dir, e.name), base + '/' + e.name));
-    else if (e.name.endsWith('.html')) out.push(base + '/' + (e.name === 'index.html' ? '' : e.name));
+    // a redirect page (data/redirects.json) moves on at once and has no layout of its own
+    else if (e.name.endsWith('.html') && !fs.readFileSync(path.join(dir, e.name), 'utf8').includes('http-equiv="refresh"'))
+      out.push(base + '/' + (e.name === 'index.html' ? '' : e.name));
   }
   return out;
 }
