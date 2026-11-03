@@ -71,6 +71,10 @@ def author_line(iso):
     to every page): the team linked to /about/ and the newest data date the page shows."""
     return f'<p class="small meta"><a href="/about/">{AUTHOR}</a>. Checked {nice_date(iso)}.</p>'
 
+
+# its own line under the author line on the goal and peptide pages (owner answer Q2 b, 3 Nov 2026)
+SOURCE_LINE = '\n        <p class="small meta">Every claim links to its source.</p>'
+
 # Design book, Motion. The head script marks the page for motion only when the visitor allows it; CSS then
 # pre-hides what will be revealed. If GSAP has not started within 3 s, the mark is removed and everything shows.
 # With JavaScript off or reduced motion on, nothing is ever hidden.
@@ -1682,7 +1686,7 @@ def category_body(g, table, table_lede):
     <div class="hero-grid{"" if pad else " hero-solo"}">
       <div>
         <h1>{g["h1"]}</h1>
-        {author_line(GOAL_CHECKED)}
+        {author_line(GOAL_CHECKED)}{SOURCE_LINE}
         <p class="intro">{g["short_answer"]}</p>
       </div>{pad}
     </div>
@@ -1919,6 +1923,8 @@ def check_card(r):
         f'<li><span class="chip chip-{"ok" if r.get(k) else "neutral"} mark-{"yes" if r.get(k) else "no"}">{t}'
         f'<span class="vh">: {"yes" if r.get(k) else "no"}</span></span><span class="check-line">{lines[k]}</span></li>'
         for k, t in SCORE_CHECKS)
+    if r.get("first_seen"):  # not a check: when we started tracking the seller (owner answer Q1 b, 3 Nov 2026)
+        rows += f'<li><span class="check-key">Tracked since</span><span class="check-line">{nice_date(r["first_seen"][:10])}.</span></li>'
     if is_clinic(r):
         foot = '<p class="check-act"><span class="btn btn-action" role="button" aria-disabled="true">Online clinic</span><span class="paid">No paid link yet</span></p>'
     else:
@@ -2923,8 +2929,8 @@ def pep_page(slug):
       <div>
         <h1>{escape(pep_name(slug))}</h1>
         {pep_chips(slug, s)}
-        {author_line(pep_checked(slug))}
-        <p class="intro">{" ".join(pep_answer(slug))}</p>{f'<p class="small pep-listing">FDA listing: "{escape(s["listing"])}"</p>' if s.get("listing") else ""}
+        {author_line(pep_checked(slug))}{SOURCE_LINE}
+        <p class="intro">{" ".join(pep_answer(slug))}</p>{f'<p class="small pep-listing">FDA listing: "{escape(s["listing"])}"</p>' if s.get("listing") and len(pep_status_rows(slug)) < 2 else ""}
       </div>{pep_facts(slug, s)}
     </div>
   </div>

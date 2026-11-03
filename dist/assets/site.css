@@ -217,6 +217,7 @@ p { margin: 0 0 1em; }
 .check-list li { display: grid; grid-template-columns: 124px minmax(0, 1fr); gap: 12px; align-items: baseline; padding: 10px 0; border-top: 1px solid var(--line); font-size: var(--small-size); line-height: var(--small-lh); }
 .check-list li:first-child { border-top: 0; }
 .check-list .chip { justify-self: start; }
+.check-list .check-key { color: var(--ink-2); }
 .check-nolink, .check-act { margin: 14px 0 0; font-size: var(--small-size); color: var(--ink-2); }
 .seller-kind { margin: -4px 0 12px; } /* the seller page's kind chip under the H1 (pages.md, Seller; owner answer Q2 b) */
 /* Letters on a peptide page and the FDA listing (pages.md, Peptide; owner task 2 Nov 2026): the first mention in small
