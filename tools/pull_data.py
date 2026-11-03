@@ -62,7 +62,8 @@ def substances(d):
 
 
 # Cosmetic product forms (products.product_form): a cosmetic option's window lists only these (build.py COSMETIC_FORMS)
-COSMETIC_FORMS = {"cream", "serum", "lotion", "gel"}
+# "topical" too (owner answer, 3 Nov 2026: the database holds GHK-Cu, SNAP-8 and AHK-Cu listings as topical)
+COSMETIC_FORMS = ("cream", "serum", "lotion", "gel", "topical")
 
 
 def keep_products(all_rows, subs, n=10):
@@ -210,7 +211,7 @@ def main():
     for r in products:
         if r.get("form") in COSMETIC_FORMS and r["substance_slug"] in substances(d):
             cos[r["substance_slug"]] = cos.get(r["substance_slug"], 0) + 1
-    print("pull_data: cosmetic listings (cream, serum, lotion, gel): "
+    print(f"pull_data: cosmetic listings ({', '.join(COSMETIC_FORMS)}): "
           + (", ".join(f"{k} {v}" for k, v in sorted(cos.items())) or "none"))
     return 0
 
