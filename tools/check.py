@@ -599,6 +599,36 @@ def check_parts(P):
             # our own database (the shop prices in a guide) is a source for every shop
             if who in sellers and li and not src.startswith((who, "Peptide Chooser database")):
                 errs.append(f"{name}: footnote {m.group(2)} after ({who}) is not that seller's source")
+    # Goal pages v2 (pages.md, Category; owner task 3 Nov 2026): the decision cards (at most three, one button each, every
+    # number on a card also elsewhere in the page's data), no "Every option, side by side", the clinic table's first row a
+    # brand plan when the table has one, and the H1 and title of every goal exactly as data/site.json has them.
+    for g in json.loads((ROOT / "data" / "site.json").read_text(encoding="utf-8"))["goals"]:
+        name = f'{g["slug"]}/index.html'
+        if not g.get("page") or name not in P:
+            continue
+        html = (DIST / name).read_text(encoding="utf-8")
+        if "Every option, side by side" in html:
+            errs.append(f"{name}: still has 'Every option, side by side'")
+        m = re.search(r'<ul class="decide">(.*?)</ul>', html, re.S)
+        if m:
+            cards = re.findall(r'<li class="panel-line decide-card">(.*?)</li>(?=<li class="panel-line decide-card">|$)', m.group(1), re.S)
+            if len(cards) > 3:
+                errs.append(f"{name}: {len(cards)} decision cards (at most three)")
+            rest = html.replace(m.group(0), "")
+            for c in cards:
+                if len(re.findall(r'class="btn ', c)) != 1:
+                    errs.append(f"{name}: a decision card without exactly one button")
+                for num in set(re.findall(r"\$[\d,]+(?:\.\d+)?", re.sub(r"<[^>]+>", " ", c))):
+                    if num not in rest:
+                        errs.append(f"{name}: decision card number {num} is nowhere else on the page")
+        t = re.search(r'<table class="tbl tbl-compact tbl-cards tbl-clinics">.*?<tbody>(.*?)</tbody>', html, re.S)
+        if t and "chip-ok\">Brand<" in t.group(1).replace('"', '\"') and not re.match(r'\s*<tr[^>]*data-k="brand"', t.group(1)):
+            errs.append(f"{name}: the clinic table's first row is not a brand plan")
+        if P[name].title != g["title"]:
+            errs.append(f"{name}: title is not the goal's title in data/site.json")
+        h1 = re.search(r"<h1[^>]*>(.*?)</h1>", html, re.S)
+        if not h1 or re.sub(r"<[^>]+>", "", h1.group(1)).strip() != g["h1"]:
+            errs.append(f"{name}: H1 is not the goal's h1 in data/site.json")
     # The letters feed (pages.md, Letters): it parses as XML and every item links to the letter on fda.gov.
     feed = DIST / "fda-warning-letters" / "feed.xml"
     if feed.exists():

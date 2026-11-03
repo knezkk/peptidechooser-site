@@ -473,6 +473,16 @@ def clinic_plans(g):
     return sorted(rows, key=lambda r: (float(r["price_monthly"]), r["seller_name"], r["plan_name"]))
 
 
+def goal_plans(g):
+    """Every clinic plan for a goal, cheapest first: its `clinic_plans` rows, else the plans of its options' substances
+    (any kind; the goal page's Cheapest card, owner task 3 Nov 2026)."""
+    if g.get("clinic_plans"):
+        return clinic_plans(g)
+    subs = {s for p in g["peptides"] for s in ([p["substance"]] if p.get("substance") else [])}
+    return sorted((r for r in PLANS if r["substance_slug"] in subs and r.get("price_monthly") is not None),
+                  key=lambda r: (float(r["price_monthly"]), r["seller_name"], r["plan_name"]))
+
+
 def other_use(g, r):
     """A brand plan whose brand is approved for another use (`clinic_plans.other_use`, e.g. Ozempic: diabetes), or ""."""
     return next((use for brand, use in (g.get("clinic_plans") or {}).get("other_use", {}).items()
@@ -509,7 +519,7 @@ def row_plan(g, p):
 plan_key = lambda r: f'{r["seller_slug"]}-{r["plan_slug"]}'
 EXTRA_PLANS = {}
 for _g in ALL_GOALS:
-    _rows = clinic_plans(_g)
+    _rows = goal_plans(_g)
     for _r in [row_plan(_g, _p) for _p in _g["peptides"]] + _rows[:1]:
         if _r and _r is not GOAL_PLANS.get(_g["slug"]):
             EXTRA_PLANS.setdefault(plan_key(_r), _r)
@@ -691,7 +701,7 @@ SHOPS = {k: r for k, r in PROFILES.items() if (r.get("product_count") or 0) > 0}
 CLINIC_PROFILES = {k: r for k, r in PROFILES.items() if k not in SHOPS}
 
 
-def clinic_button(seller_slug, label, small="Our clinic page", plan=None):
+def clinic_button(seller_slug, label, small="Our clinic page", plan=None, paid_ok=True):
     """A clinic's one action (Home v2, 3 Nov 2026), on clinic_row_act's rule (owner answer Q1 a and decision C8, 3 Nov
     2026): btn-action "Visit <Name> ..." through /out/<seller>/ with "Paid link" under it only when the data carries the
     clinic's paid link (`paid_url` on the plan row, else on its profile; none yet) and the clinic has no FDA letter; else
@@ -700,7 +710,7 @@ def clinic_button(seller_slug, label, small="Our clinic page", plan=None):
     if not r:
         return ""
     paid = (plan or {}).get("paid_url") or r.get("paid_url")
-    if paid and not (r.get("fda_letter_count") or (plan or {}).get("fda_letter_count") or 0):
+    if paid_ok and paid and not (r.get("fda_letter_count") or (plan or {}).get("fda_letter_count") or 0):
         tail = label.split(" · ", 1)[1] if " · " in label else ""
         return (f'<span class="pick-act"><a class="btn btn-action btn-sm" href="/out/{seller_slug}/" rel="sponsored">'
                 f'Visit {seller_base(r["seller_name"])}{" · " + tail if tail else ""}</a><span class="paid">Paid link</span></span>')
@@ -851,6 +861,22 @@ def window_key(p):
     return ("cosmetics-" if is_cosmetic(p) else "sellers-") + "-".join(s for s in subs_of(p) if seller_rows(s, window_kind(p)))
 
 
+def window_who(p):
+    """Who sells in a window, from its listings' sellers (owner UX audit A18, 3 Nov 2026: NAD+ listings come from clinics, so
+    the window may not say "Research-use sellers"): cosmetic listings "Cosmetic shops"; all research-use shops "Research-use
+    sellers"; all clinics or pharmacies "Clinics and pharmacies"; a mix "Sellers"."""
+    kind = window_kind(p)
+    if kind == "cosmetic":
+        return "Cosmetic shops"
+    kinds = {(SELLERS.get(r["seller_slug"]) or PROFILES.get(r["seller_slug"]) or {}).get("seller_kind") or ""
+             for s in subs_of(p) for r in seller_rows(s, kind)}
+    if kinds and all(k == "S1_RUO" for k in kinds):
+        return "Research-use sellers"
+    if kinds and all(any(w in k for w in ("CLINIC", "TELEHEALTH", "PHARMACY")) for k in kinds):
+        return "Clinics and pharmacies"
+    return "Sellers" if kinds - {""} else "Research-use sellers"
+
+
 def seller_window(p):
     """One seller window for an option row (a dialog; a plain section with JavaScript off). One substance: its table
     under the substance name. Several: the option's name as the heading and one table per substance under the
@@ -868,7 +894,7 @@ def seller_window(p):
     checked = f" Prices checked {nice_date(newest)}." if newest else ""
     return f"""<dialog class="sellers-dlg" id="{key}" aria-labelledby="{key}-h"><div class="dlg-in">
   <div class="dlg-hd"><h2 id="{key}-h">{title}</h2><form method="dialog"><button class="btn btn-line btn-sm" type="submit">Close</button></form></div>
-  <p class="dlg-lede">{"Cosmetic shops" if kind == "cosmetic" else "Research-use sellers"}. We do not link to them.{checked}</p>
+  <p class="dlg-lede">{window_who(p)}. We do not link to them.{checked}</p>
   {"".join(parts)}
   <p class="dlg-foot">Price per mg is price divided by the stated amount; blends have no per-mg price.</p>
   {f'<p class="dlg-foot dlg-score">Checks are facts we hold about the seller, not a safety or quality grade. Checked {nice_date(scored)}.</p>' if scored else ""}
@@ -1047,6 +1073,18 @@ def unsaid(t):
     return (out + ("" if out.endswith(".") else ".")) if out else "Research-use shops."
 
 
+def opt_facts(g, p):
+    """The facts the goal page's old "Every option, side by side" table showed that the row does not (owner task 3 Nov
+    2026): from the goal's hand-checked `options` entry for this row, its evidence chip, and whether it needs a prescription."""
+    first = p["name"].split()[0].lower()
+    o = next((o for o in g.get("options") or [] if first in o["name"].lower()), None)
+    if not o:
+        return ""
+    rx = {True: "Needs a prescription", False: "No prescription needed", None: ""}[needs_rx(p)]
+    return (f'<p class="opt-facts">Evidence in people: <span class="chip chip-{o["evidence_chip"]}">{o["evidence"]}</span>'
+            f'{" · " + rx if rx else ""}</p>')
+
+
 def option_rows(g, lazy=False):
     """One goal's step 2 option rows (pages.md, Home, Option rows; also the goal pages): collapsed, the name and chips,
     the `plain` sentence and the price in bold, and one button (opt_action); opened, the does, status and how lines with
@@ -1064,7 +1102,7 @@ def option_rows(g, lazy=False):
         rows.append(f'<li class="opt"><details class="opt-more"><summary class="opt-sum"><span class="name">{p["name"]}</span>'
                     f'<span class="opt-chips">{status_chip(p)}{alt_chip(p)}</span>{opt_line(g, p, rp, pad)}</summary>'
                     f'<div class="opt-body"><p class="opt-does">{p["does"]}{refs(p, slug, price=not pad)}</p>'
-                    f'<p class="opt-status">{status}</p><p class="opt-how">{how}{cost}</p></div></details>{opt_action(g, p, rp, lazy)}</li>')
+                    f'<p class="opt-status">{status}</p><p class="opt-how">{how}{cost}</p>{"" if lazy else opt_facts(g, p)}</div></details>{opt_action(g, p, rp, lazy)}</li>')
     return rows
 
 
@@ -1131,7 +1169,8 @@ def hand_legal(slug):
 
 
 PEPTIDE_SLUGS = sorted({r["substance_slug"] for r in LEGAL_DB or [] if db_status(r["substance_slug"])}
-                       | {s for r in LEGAL["rows"] for s in r.get("substances") or [] if not db_status(s) and hand_legal(s)})
+                       | {s for r in LEGAL["rows"] for s in r.get("substances") or []
+                          if not db_status(s) and hand_legal(s) and not r.get("no_page")})  # no_page: a legal row only (sermorelin)
 
 
 def legal_name(slugs, name):
@@ -1641,21 +1680,6 @@ def page_sources(rows_html, own):
     return "".join(out)
 
 
-def peptide_table(g):
-    """"Every option, side by side" for a goal with no hand-checked `options` table: its step 2 rows, each with the three
-    lay lines (does; status chip and status_plain; how). No evidence or price column: those need checked data that the
-    goal does not have yet, and nothing is typed into the page to fill them (pages.md, Category)."""
-    rows = []
-    for p in g["peptides"]:
-        rows.append(f"""<tr>
-  <td><span class="name">{p["name"]}</span>{alt_chip(p)}<span class="opt-does">{p["does"]}{refs(p, g["slug"])}</span></td>
-  <td>{status_chip(p)}<span class="opt-status">{plain_status(p)}</span></td>
-  <td>{how_line(p)}</td>
-</tr>""")
-    return ('<thead><tr><th scope="col">Option</th><th scope="col">FDA status</th><th scope="col">How you get it</th></tr></thead>'
-            f'<tbody>{"".join(rows)}</tbody>')
-
-
 def page_footnotes(body):
     """A goal page's footnotes numbered 1 to N in the order the page cites them, and its Sources list made of exactly those
     entries in that order (owner UX audit A13, 3 Nov 2026: weight loss cited 1, 7, 11, 12 and 13 from Home's list while
@@ -1680,28 +1704,7 @@ def page_footnotes(body):
 
 
 def category_page(g):
-    return page_footnotes(category_body_for(g))
-
-
-def category_body_for(g):
-    if not g.get("options"):
-        return category_body(g, peptide_table(g), f"{len(g['peptides'])} options, each with its FDA status and how you get it.")
-    rows = []
-    for o in g["options"]:
-        src_refs = (" <sup>" + ", ".join(f'<a href="#src-{n}">{n}</a>' for n in o["sources"]) + "</sup>") if o["sources"] else ""
-        price = (f'<span class="num-l">{o["price"]}<span class="num-unit">{o["price_unit"]}</span></span><span class="note">{o["price_note"]}</span>'
-                 if o["price"] else f'<span class="note">{o["price_note"]}</span>')
-        rows.append(f"""<tr>
-  <td><span class="name">{o["name"]}{src_refs}</span><span class="note">{o["kind"]}</span><span class="opt-does">{o["does"]}</span></td>
-  <td>{status_chip(o, "fda_chip", "fda")}<span class="opt-status">{o["status_plain"]}</span></td>
-  <td><span class="chip chip-{o["evidence_chip"]}">{o["evidence"]}</span></td>
-  <td>{price}</td>
-  <td>{o["how_plain"]}</td>
-</tr>""")
-    table = ('<thead><tr><th scope="col">Option</th><th scope="col">FDA status for hair loss</th><th scope="col">Evidence in people</th><th scope="col">Price from</th><th scope="col">How you get it</th></tr></thead>\n'
-             f'      <tbody>{"".join(rows)}</tbody>')
-    # the count is the cards' own list, never a typed number (owner UX audit, 3 Nov 2026: "3 options" under four cards)
-    return category_body(g, table, f'{len(g["peptides"])} options checked on the same rule. Rows that are not approved for human use carry no price and no seller.')
+    return page_footnotes(category_body(g))
 
 
 KIND_CHIP = {"brand": ("ok", "Brand"), "compounded": ("warn", "Compounded"), "program": ("neutral", "Program"),
@@ -1815,94 +1818,225 @@ def clinic_section(g, rows):
 </section>"""
 
 
-def category_body(g, table, table_lede):
+def plan_form(r):
+    """"pill" or "shot" from the plan's dosage form; "" when the data names none or another form (it counts under All only)."""
+    f = (r.get("dosage_form") or "").lower()
+    return "pill" if f in ("tablet", "capsule", "oral") else "shot" if f in ("injection_vial", "pen", "injection") else ""
+
+
+def clinic_order(r):
+    """Brand plans first, then compounded, then the rest, each by price (owner task 3 Nov 2026)."""
+    k = plan_kind(r)
+    return (0 if k in ("brand", "generic") else 1 if k == "compounded" else 2, float(r["price_monthly"]), r["seller_name"], r["plan_name"])
+
+
+# The clinic filter (pages.md, Category, Clinic prices; the Letters filter parts): kind, form and "No FDA letter" hide rows by
+# their data- attributes; the count line says how many show. Without JavaScript the filter stays hidden and every row shows.
+CLINIC_FILTER_JS = """<script>
+(function(){var s=document.getElementById('clinics'),f=s&&s.querySelector('.clinic-filter');if(!f)return;var tb=s.querySelector('tbody'),
+rows=[].slice.call(tb.rows),n=document.getElementById('clinic-n'),no=f.querySelector('.year-chip');
+function val(g){var on=f.querySelector('[data-g="'+g+'"][aria-pressed="true"]');return on?on.getAttribute('data-v'):'';}
+function draw(){var k=val('kind'),fm=val('form'),nl=no.getAttribute('aria-pressed')==='true',i=0;s.classList.remove('clip');
+rows.forEach(function(r){var ok=(!k||r.getAttribute('data-k')===k)&&(!fm||r.getAttribute('data-f')===fm)&&(!nl||r.getAttribute('data-l')==='0');
+r.hidden=!ok;r.style.opacity=1;if(ok)i++;});n.textContent=i+' of '+rows.length+' plans';var m=s.querySelector('.clinics-more');if(m)m.hidden=true;}
+f.hidden=false;f.addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;
+if(b.classList.contains('year-chip')){b.setAttribute('aria-pressed',b.getAttribute('aria-pressed')==='true'?'false':'true');}
+else{f.querySelectorAll('[data-g="'+b.getAttribute('data-g')+'"]').forEach(function(x){x.setAttribute('aria-pressed',x===b?'true':'false');});}draw();});})();
+</script>"""
+
+
+def goal_clinic_section(g, rows):
+    """"Online clinic prices" on a goal page (pages.md, Category, Clinic prices; owner task 3 Nov 2026): brand plans first, then compounded,
+    each by price; compact rows: the plan (a brand's substance in brackets at its first mention), its kind chip, the price
+    per month with the clinic's FDA letter chip beside it and the care fee, the clinic (our page), and btn-wait "See plans"
+    (clinic_row_act). Above it the clinic filter. Stacked cards on phones (bundle.css, Clinic table)."""
+    if not rows:
+        return ""
+    rows = sorted(rows, key=clinic_order)
+    newest = max(r["last_seen"] for r in rows)
+    trs, named = [], set()
+    for i, r in enumerate(rows):
+        care = care_note(r)
+        k = plan_kind(r)
+        kind = "brand" if k in ("brand", "generic") else "compounded" if k == "compounded" else "other"
+        more = ' class="more"' if i >= CLINICS_FIRST else ""
+        trs.append(f'<tr{more} data-k="{kind}" data-f="{plan_form(r)}" data-l="{1 if (r.get("fda_letter_count") or 0) else 0}">'
+                   f'<td><span class="name">{explain_brand(r["plan_name"], named)}</span></td>'
+                   f'<td data-l="What it is">{plan_chip(g, r)}</td>'
+                   f'<td data-l="Per month"><span class="num">{usd(r["price_monthly"])}</span>{plan_letter(r)}{f"<span class=sub>{care}</span>" if care else ""}</td>'
+                   f'<td data-l="Clinic">{clinic_link(r["seller_slug"], seller_base(r["seller_name"]), True)}</td>'
+                   f'<td class="act">{clinic_row_act(r)}</td></tr>')
+    seg = lambda grp, opts: (f'<div class="seg" role="group" aria-label="{grp[1]}">'
+                             + "".join(f'<button type="button" class="seg-b" data-g="{grp[0]}" data-v="{v}" aria-pressed="{"true" if not v else "false"}">{t}</button>'
+                                       for v, t in opts) + "</div>")
+    filt = (f'<div class="clinic-filter" hidden>{seg(("kind", "Kind of plan"), (("brand", "Brand"), ("compounded", "Compounded"), ("", "All")))}'
+            f'{seg(("form", "Form"), (("pill", "Pill"), ("shot", "Shot"), ("", "All")))}'
+            '<button type="button" class="year-chip" aria-pressed="false">No FDA letter</button></div>')
+    return f"""
+<section class="band-2 goal-sec" id="clinics">
+  <div class="wrap">
+    <h2 class="goal-h2">Online clinic prices</h2>
+    {filt}
+    <p class="small clinic-n" id="clinic-n" aria-live="polite">{len(rows)} of {len(rows)} plans</p>
+    <div class="tbl-wrap"><table class="tbl tbl-compact tbl-cards tbl-clinics">
+      <thead><tr><th scope="col">Plan</th><th scope="col">What it is</th><th scope="col">Per month</th><th scope="col">Clinic</th><th scope="col"><span class="vh">Our clinic page</span></th></tr></thead>
+      <tbody>{"".join(trs)}</tbody>
+    </table></div>
+    {f'<p class="clinics-more" hidden><button type="button" class="btn btn-line" id="clinics-all">Show all {len(rows)}</button></p>{CLINICS_JS}' if len(rows) > CLINICS_FIRST else ""}
+    <p class="small" style="margin-top:12px">Brand plans first, then compounded, each cheapest first. Prices are the clinics' published monthly prices on {nice_date(newest)}. A clinic with an FDA warning letter is still listed; the letter is public record.</p>
+    {COMPARE_LINK}
+  </div>
+</section>{CLINIC_FILTER_JS}"""
+
+
+def plan_src(g, r):
+    """A plan's footnote on the goal page, when the plan has a numbered source; else ""."""
+    try:
+        sid, n = plan_ref(g, r)
+    except KeyError:
+        return ""
+    return f'<sup><a class="ref" href="#{sid}" aria-label="Source {n}">{n}</a></sup>'
+
+
+def decide_card(key, name, chips, price, act):
+    return (f'<li class="panel-line decide-card"><p class="decide-k">{key}</p><h2>{name}</h2>'
+            f'{f"<span class=chips>{chips}</span>" if chips else ""}<p class="decide-price">{price}</p>{act}</li>')
+
+
+def decide_cards(g):
+    """The goal page's decision cards (pages.md, Category; owner task 3 Nov 2026), in place of the price pad: Best approved,
+    Cheapest, No prescription. Every number from data; a card whose data is missing is left out."""
+    cards = []
+    # Best approved: the FDA-approved option with the most clinics, its cheapest plan that is not compounded
+    best = None
+    for p in g["peptides"]:
+        if not (approved_row(p) and p.get("top_pick", True) and needs_rx(p) is not False):
+            continue
+        rp = row_plan(g, p)
+        if not rp or rp.get("product_kind") == "compounded":
+            continue
+        n = plan_clinics(g, p, rp)
+        if not best or (n, -float(rp["price_monthly"])) > (best[2], -float(best[1]["price_monthly"])):
+            best = (p, rp, n)
+    if best:
+        p, rp, n = best
+        name = seller_base(rp["seller_name"])
+        cards.append(decide_card("Best approved", p["name"], status_chip(p) + alt_chip(p),
+                                 f'<strong>From {usd(rp["price_monthly"])}/mo at {plural(n, "clinic")}</strong>{plan_src(g, rp)}{plan_letter(rp)}',
+                                 clinic_button(rp["seller_slug"], f'See plans at {name} · {usd(rp["price_monthly"])}/mo', plan=rp)))
+    # Cheapest: the lowest monthly price among the goal's plans, labelled with its kind
+    plans = goal_plans(g)
+    if plans and not (best and plans[0] is best[1]):
+        c, name = plans[0], seller_base(plans[0]["seller_name"])
+        k = plan_kind(c)
+        chip = ('<span class="chip chip-warn">Compounded, not FDA approved</span>' if k == "compounded" else
+                '<span class="chip chip-ok">Brand</span>' if k in ("brand", "generic") else plan_chip(g, c))
+        cards.append(decide_card("Cheapest", clean(c["plan_name"]), chip,
+                                 f'<strong>From {usd(c["price_monthly"])}/mo at {name}</strong>{plan_src(g, c)}{plan_letter(c)}',
+                                 clinic_button(c["seller_slug"], f'See plans at {name} · {usd(c["price_monthly"])}/mo', plan=c,
+                                               paid_ok=k != "compounded")))
+    # No prescription: the over-the-counter or cosmetic option; a goal without one, its research-use option
+    otc = next((p for p in g["peptides"] if approved_row(p) and needs_rx(p) is False), None)
+    cos = next((p for p in g["peptides"] if is_cosmetic(p)), None)
+    if otc:
+        rp = row_plan(g, otc)
+        if rp:
+            name = seller_base(rp["seller_name"])
+            cards.append(decide_card("No prescription", otc["name"], status_chip(otc) + alt_chip(otc),
+                                     f'<strong>From {usd(rp["price_monthly"])}/mo</strong>{plan_src(g, rp)}{plan_letter(rp)}',
+                                     clinic_button(rp["seller_slug"], f'See plans at {name} · {usd(rp["price_monthly"])}/mo',
+                                                   "Pharmacy, no prescription", rp)))
+    elif cos:
+        if has_window(cos) and window_kind(cos) == "cosmetic":
+            low, n = window_low(cos)
+            what = "serum" if "serum" in cos["name"].lower() else "product"
+            if low is not None:
+                cards.append(decide_card("No prescription", cos["name"], status_chip(cos),
+                                         f'<strong>From {money(low)} a {"bottle" if what == "serum" else "product"}</strong>, {plural(n, "shop")}',
+                                         f'<span class="pick-act">{sellers_button(cos, False, f"Compare {plural(n, what)}", "btn-wait")}</span>'))
+    else:
+        ru = next((p for p in g["peptides"] if has_window(p) and window_kind(p) == "research"), None)
+        if ru:
+            low, n = window_low(ru)
+            if low is not None:
+                cards.append(decide_card("No prescription", ru["name"], status_chip(ru),
+                                         f'Research-use only, not approved. <strong>From {per_mg(low)}/mg at {plural(n, "shop")}</strong>',
+                                         f'<span class="pick-act">{sellers_button(ru, False)}<span class="paid">Our checks, no shop links</span></span>'))
+    return f'<ul class="decide">{"".join(cards)}</ul>' if cards else ""
+
+
+def intro_split(text):
+    """The intro's first two sentences for the first screen, the rest for "Is it legal today?" (owner task 3 Nov 2026:
+    nothing deleted, only moved)."""
+    parts = re.split(r"(?<=\.)\s+(?=[A-Z])", text.strip())
+    return " ".join(parts[:2]), " ".join(parts[2:])
+
+
+# The legal accordion opens on a #legal link (the Compare heading's "Is it legal today?") and for print.
+LEGAL_ACC_JS = """<script>
+(function(){var d=document.getElementById('legal-acc');if(!d)return;function o(){if(location.hash==='#legal')d.open=true;}
+o();window.addEventListener('hashchange',o);window.addEventListener('beforeprint',function(){d.open=true;});})();
+</script>"""
+
+
+def category_body(g):
+    """The goal page (pages.md, Category; owner task 3 Nov 2026, UX audit 11.2 and 12): the first screen decides (H1, the
+    intro's first two sentences, three decision cards), the option rows follow, then the clinic prices, then the reference
+    material: "Is it legal today?" as an accordion, the goals strip, "What to do next" and the sources. The old "Every option,
+    side by side" table is gone; its facts the rows did not show are in the opened rows (opt_facts)."""
     srcs = "".join(f'<li id="src-{s["n"]}">{s["text"]}: <a href="{s["url"]}" rel="nofollow">{s["url"]}</a></li>' for s in g.get("sources", []))
-    # The Clinic intake look (owner, 31 Oct 2026): Home's parts on the goal page. Title, H1, description and URL stay as
-    # they are (Search Console impressions); the hero keeps the price pad with its Checked stamp, the step 2 option rows
-    # follow, the options table sits in the grey band.
     opt_html = "".join(option_rows(g))
     instead = approved_instead(g)
-    # "Is it legal today?" on the page (pages.md, Category; a goal with `legal_section`): Home's rows for the substances
-    # of this goal's options, with Home's line under them; the heading line in the flow then links here.
+    lead, moved = intro_split(g["short_answer"])
     subs = {x for p in g["peptides"] for x in subs_of(p)}
     legal, legal_checked = legal_rows(subs) if g.get("legal_section") else ([], "")
     legal_html = f"""
-<section class="section" id="legal">
+<section class="section goal-sec" id="legal">
   <div class="wrap">
-    <div class="sec-hd"><div><h2>Is it legal today?</h2><p>FDA status of the peptides on this page, each with its source. FDA status checked {legal_checked}.</p></div>{ALL_SUBSTANCES}</div>
-    <div class="tbl-wrap"><table class="tbl tbl-legal">
-      <thead><tr><th scope="col">Peptide</th><th scope="col">Status</th><th scope="col">What that means</th></tr></thead>
-      <tbody>{"".join(legal)}</tbody>
-    </table></div>
-    <p class="small" style="margin-top:16px">{LEGAL_NOTE}</p>
+    <details class="legal-acc" id="legal-acc"><summary><h2>Is it legal today?</h2><span class="stamp">FDA status checked {legal_checked}</span></summary>
+    <div class="legal-acc-in">
+      {f"<p>{moved}</p>" if moved else ""}
+      <p class="small">FDA status of the peptides on this page, each with its source.</p>
+      <div class="tbl-wrap"><table class="tbl tbl-legal">
+        <thead><tr><th scope="col">Peptide</th><th scope="col">Status</th><th scope="col">What that means</th></tr></thead>
+        <tbody>{"".join(legal)}</tbody>
+      </table></div>
+      <p class="small" style="margin-top:12px">{LEGAL_NOTE} {ALL_SUBSTANCES}</p>
+    </div></details>
   </div>
-</section>""" if legal else ""
+</section>{LEGAL_ACC_JS}""" if legal else (f'<section class="section goal-sec"><div class="wrap"><p>{moved}</p></div></section>' if moved else "")
     plans = clinic_plans(g)
-    # the pad's clinic plan (a goal with clinic plans and no hand-checked price): the cheapest, with its source
-    pad_plan = plans[0] if plans and not g.get("price_source") else None
-    pad_sid, pad_n = plan_ref(g, pad_plan) if pad_plan else ("", 0)
-    pad_ref = f'<sup><a class="ref" href="#{pad_sid}" aria-label="Source {pad_n}">{pad_n}</a></sup>' if pad_plan else ""
+    cards = decide_cards(g)
     own = {f'src-{s["n"]}' for s in g.get("sources", [])}
-    srcs += page_sources(opt_html + legal_html + pad_ref, own)
-    if plans:
+    srcs += page_sources(opt_html + legal_html + cards, own)
+    if plans or goal_plans(g):
         # no link to any clinic site on a page with clinic plans: the plan sources show their address as plain text
         srcs = re.sub(r'(<li value="\d+" id="src-plan-[^"]+">.*?)<a href="([^"]+)" rel="nofollow">\2</a>', r"\1\2", srcs)
-    # Sources only when the page links one (never an empty heading; e.g. /muscle/, whose rows carry no footnote)
     sources_html = f"""<section class="section" id="sources">
   <div class="wrap">
     <h2 class="h-sources">Sources</h2>
     <ol class="small sources" style="padding-left:1.2em">{srcs}</ol>
   </div>
 </section>""" if srcs else ""
-    # The price pad only for a goal with a priced proven option and its source (skin and recovery have none yet). Its last
-    # line is the priced option's prescription status, from its "how" line (owner UX audit, 3 Nov 2026: "Not a
-    # prescription." under finasteride read as if the pill needed none).
-    pad_opt = next((p for p in g["peptides"] if p.get("price") == g["slug"]), None)
-    pad = f"""
-      <div class="board rx" aria-label="Price pad">
-        <div class="rx-head"><span class="rx-mark" aria-hidden="true">&#8478;</span><h2>Cheapest proven option, per month</h2></div>
-        <p class="hero-num"><span class="num-xl">${g["price_from_usd"]}</span> <span class="num-unit">/mo from</span></p>
-        <div class="ledger"><span>{g["best_option"]}</span></div>
-        <div class="rx-foot"><span class="stamp">Checked {STAMP_CHECKED}</span><span class="fine">{g["price_note"]}.{RX_LINE[needs_rx(pad_opt)] if pad_opt else ""}</span></div>
-      </div>""" if g.get("price_from_usd") is not None and g.get("price_source") else ""
-    if pad_plan:
-        # The pad shows a clinic plan when the goal has no hand-checked generic price (pages.md, Category; owner task 2 Nov 2026).
-        r = pad_plan
-        what = {"brand": "FDA-approved brand", "compounded": "Compounded, not FDA approved", "program": "A program; the medicine is not named",
-                "other": "A membership or a bundle", "generic": "FDA-approved generic"}[plan_kind(r)]
-        care = care_note(r)
-        pad = f"""
-      <div class="board rx" aria-label="Price pad">
-        <div class="rx-head"><span class="rx-mark" aria-hidden="true">&#8478;</span><h2>Cheapest clinic plan, per month</h2></div>
-        <p class="hero-num"><span class="num-xl">{usd(r["price_monthly"])}</span> <span class="num-unit">/mo from</span>{pad_ref}</p>
-        <div class="ledger"><span>{r["plan_name"]}, {clinic_link(r["seller_slug"], seller_base(r["seller_name"]), True)}</span>{plan_letter(r)}</div>
-        <div class="rx-foot"><span class="stamp">Checked {nice_date(max(x["last_seen"] for x in plans))}</span><span class="fine">{what}{", " + care if care else ""}. Needs a prescription.</span></div>
-      </div>"""
     windows = "".join({window_key(p): seller_window(p) for p in g["peptides"] if has_window(p)}.values())
     return f"""
-<section class="hero hero-goal">
+<section class="hero hero-goal goal-first">
   <div class="wrap">
-    <div class="hero-grid{"" if pad else " hero-solo"}">
-      <div>
-        <h1>{g["h1"]}</h1>
-        {author_line(GOAL_CHECKED)}{SOURCE_LINE}
-        <p class="intro">{g["short_answer"]}</p>
-      </div>{pad}
-    </div>
+    <h1>{g["h1"]}</h1>
+    {author_line(GOAL_CHECKED)}{SOURCE_LINE}
+    <p class="intro">{lead}</p>
+    {cards}
+  </div>
+</section>
+<section class="goal-sec goal-opts">
+  <div class="wrap">
     <div class="chooser flow flow-solo">
       <div class="flow-hd fh-compare"><h2>Compare the options</h2><a class="step-legal" href="{"#legal" if legal else "/#legal"}"><strong>Is it legal today?</strong></a></div>
       <div class="flow-compare"><div class="step-panel"><p class="goal-for">{g["for"]}</p><ul class="opts">{opt_html}</ul>{instead}</div></div>
     </div>
   </div>
-</section>
-<section class="band-2" id="options">
-  <div class="wrap">
-    <div class="sec-hd"><div><h2>Every option, side by side</h2><p>{table_lede}</p></div></div>
-    <div class="tbl-wrap"><table class="tbl">
-      {table}
-    </table></div>
-  </div>
-</section>{legal_html}{clinic_section(g, plans)}{goals_strip("Compare other goals", g["slug"])}
+</section>{goal_clinic_section(g, plans)}{legal_html}
+<!--next:{g["slug"]}-->
 {sources_html}
 <div class="wrap sellers-all">{windows}</div>
 {SELLERS_JS}
@@ -3931,6 +4065,37 @@ def main():
 PAGES += guides.pages(sys.modules[__name__])
 # Home's sections under the hero (pages.md, Home), from home.py, once every helper above exists.
 PAGES = [home.finish(sys.modules[__name__], p) if p[0] == "/" else p for p in PAGES]
+
+
+def what_next(g):
+    """"What to do next" on a goal page (pages.md, Category; owner UX audit B12, 3 Nov 2026), before the sources: three
+    links from data, each left out when its target is missing: the goal's guide (`guide`), the compare pair with the most
+    plans and shops among the goal's substances, and /sellers/ filtered to the goal's substance with the most sellers."""
+    subs = {x for p in g["peptides"] for x in subs_of(p)}
+    links = []
+    gd = next((x for x in guides.GUIDES if x["slug"] == g.get("guide")), None)
+    if gd:
+        links.append(f'<li><a href="/learn/{gd["slug"]}/">Read the guide: {gd["title"]}</a></li>')
+    pairs = [c for c in CMP_PAGES if c[2] == "sub" and (c[4] in subs or c[5] in subs) and built(c[0])]
+    if pairs:
+        c = max(pairs, key=lambda c: (c[3], c[1]))
+        links.append(f'<li><a href="{c[0]}">Compare side by side: {escape(c[1])}</a></li>')
+    if built("/sellers/"):
+        count = {s: sum(s in shop_subs(r) for r in SHOPS.values()) + sum(s in clinic_subs(r) for r in CLINIC_PROFILES.values()) for s in subs}
+        best = max((s for s in count if count[s]), key=lambda s: (count[s], s), default=None)
+        if best:
+            name = escape(re.sub(r" *\(.*\)$", "", sub_label(best)))
+            links.append(f'<li><a href="/sellers/#substance={best}">Every seller of {name}, with its five checks</a></li>')
+    # beside it from 900px, the goals strip (pages.md, Category): one section, two columns, so the page stays short
+    strip = re.search(r'<div class="wrap">(.*?)</div>\s*</section>', goals_strip("Compare other goals", g["slug"]), re.S)
+    nxt = f'<div><h2 class="h-sources">What to do next</h2><ul class="next-list">{"".join(links)}</ul></div>' if links else ""
+    other = f'<div id="other-goals">{strip.group(1)}</div>' if strip else ""
+    return f'<section class="section goal-sec goal-next" id="next"><div class="wrap goal-two">{nxt}{other}</div></section>' if nxt or other else ""
+
+
+_GOALS_BY_SLUG = {g["slug"]: g for g in ALL_GOALS}
+PAGES = [p[:4] + (re.sub(r"<!--next:([a-z0-9-]+)-->", lambda m: what_next(_GOALS_BY_SLUG[m.group(1)]), p[4]),) + p[5:]
+         if "<!--next:" in p[4] else p for p in PAGES]
 
 
 # /sources/ (pages.md, Sources; owner task 3 Nov 2026): every source the site cites, read from the numbered source lists of
