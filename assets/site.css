@@ -588,3 +588,19 @@ body > .crumbs { width: -moz-available; width: -webkit-fill-available; width: st
 }
 .az-jump, .pep-filter { margin-bottom: 16px; } /* /peptides/: letters, then the status filter, then the table */
 .pep-filter #pep-n { margin: 0 0 0 8px; }
+/* Substance page v2 (pages.md, Peptide; owner task 3 Nov 2026): the status line, Where to get it under the intro, the table,
+   then Evidence and Facts side by side (8 + 4 from 900px) and the letters panel under them */
+.pep-pg .pep-status { margin: 12px 0 0; } /* the chip, the sentence and the source flow as one line of text */
+.pep-pg .pep-status .chip { margin-right: 6px; }
+.pep-pg .intro { margin-top: 12px; }
+.pep-pg .pep-where { margin-top: var(--space-5); }
+.pep-first { display: grid; gap: 0; }
+.pep-first > * { min-width: 0; }
+@media (min-width: 900px) { .pep-first { grid-template-columns: minmax(0, 6fr) minmax(0, 6fr); gap: var(--space-6); align-items: start; } .pep-first .pep-where { margin-top: 0; } }
+.pep-body { display: grid; gap: var(--space-5); }
+.pep-body > * { min-width: 0; }
+@media (min-width: 900px) { .pep-body { grid-template-columns: minmax(0, 8fr) minmax(0, 4fr); align-items: start; } }
+.pep-left > * + * { margin-top: var(--space-5); } /* Evidence, then the FDA letters, beside Facts */
+.pep-sold, .pep-blocks, .pep-foot { padding-top: 32px; } /* the substance page's sections sit closer, so the page stays short */
+.pep-foot:last-of-type { padding-bottom: 32px; }
+.pep-right > * + * { margin-top: var(--space-5); } /* Facts, then the guides that name the substance */
