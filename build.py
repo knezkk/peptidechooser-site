@@ -110,7 +110,7 @@ SEARCH_FORM = ('<form class="head-search" role="search" action="/search/" method
                'role="combobox" aria-expanded="false" aria-controls="hs-list" aria-autocomplete="list">'
                '<ul class="search-list" id="hs-list" role="listbox" aria-label="Search results" hidden></ul></form>')
 SEARCH_JS = """<script>
-(function(){var idx=null,wait=[],ORDER={Goal:0,Peptide:1,Seller:2,Page:3};
+(function(){var idx=null,wait=[],ORDER={Goal:0,Peptide:1,Seller:2,Clinic:3,Comparison:4,Guide:5,Page:6};
 function load(cb){if(idx)return cb(idx);wait.push(cb);if(wait.length>1)return;
 fetch('/search-index.json').then(function(r){return r.json();}).then(function(d){idx=d;var w=wait;wait=[];w.forEach(function(f){f(d);});}).catch(function(){wait=[];});}
 function c(s){return String(s||'').toLowerCase().replace(/[^a-z0-9]+/g,'');}
@@ -341,15 +341,18 @@ def item_list_schema(name, items):
                           "numberOfItems": len(els), "itemListElement": els}) + "</script>")
 
 
-def visit(g, small=False):
+def visit(g, small=False, p=None):
     """The paid Visit button for a goal: a sponsored /out/ link with "Paid link" under it once data/site.json has the
-    goal's affiliate url, until then a disabled span (no link, no rel) with "No paid link yet" under it."""
+    goal's affiliate url, until then a disabled span (no link, no rel) with "No paid link yet" under it. On an option row
+    whose medicine needs no prescription (minoxidil) it reads "Pharmacy" (owner UX audit, 3 Nov 2026; "Pharmacy, no prescription"
+    does not fit the 160px button, and the row's how line already says "No prescription")."""
     size = " btn-sm" if small else ""
+    label = "Pharmacy" if p is not None and needs_rx(p) is False else "Online clinic"
     a = g.get("affiliate") or {}
     if a.get("url") and a.get("name"):
-        return (f'<a class="btn btn-action{size}" href="/out/{a["name"]}/" rel="sponsored">Online clinic</a>'
+        return (f'<a class="btn btn-action{size}" href="/out/{a["name"]}/" rel="sponsored">{label}</a>'
                 f'<span class="paid">Paid link</span>')
-    return f'<span class="btn btn-action{size}" role="button" aria-disabled="true">Online clinic</span><span class="paid">No paid link yet</span>'
+    return f'<span class="btn btn-action{size}" role="button" aria-disabled="true">{label}</span><span class="paid">No paid link yet</span>'
 
 
 def top_pick(g):
@@ -511,6 +514,14 @@ def plan_ref(g, r):
     return f"src-plan-{plan_key(r)}", EXTRA_REF[plan_key(r)]
 
 
+def plan_letter(r):
+    """The clinic's FDA letter chip beside a clinic price (owner decision 2 Nov 2026, enforced after the owner UX audit,
+    3 Nov 2026: Strut Health's $25/mo showed no letter): every place a plan price appears, or "" without a letter."""
+    if (r.get("fda_letter_count") or 0) and r.get("last_fda_letter_date"):
+        return f' <a class="chip chip-warn chip-link" href="{LETTERS_URL}">FDA letter {nice_date(r["last_fda_letter_date"])}</a>'
+    return ""
+
+
 def plan_line(g, cls, r=None):
     """"Online clinics from $25/mo (Strut Health)" with its footnote: the goal's plan, or the plan row given; "" when
     there is none."""
@@ -519,7 +530,7 @@ def plan_line(g, cls, r=None):
         return ""
     sid, n = plan_ref(g, r)
     return (f'<span class="{cls}">Online clinics from {usd(r["price_monthly"])}/mo ({clinic_link(r["seller_slug"], seller_base(r["seller_name"]), True)})'
-            f'<sup><a class="ref" href="#{sid}" aria-label="Source {n}">{n}</a></sup></span>')
+            f'<sup><a class="ref" href="#{sid}" aria-label="Source {n}">{n}</a></sup>{plan_letter(r)}</span>')
 
 # Numbers from the database (tools/pull_data.py writes these keys when SITE_DATABASE_URL is set). Without them the
 # page renders the hand-written statuses and dates above, unchanged.
@@ -695,13 +706,27 @@ def substance_name(slug):
     return row or db or min(opts, key=len)
 
 
-def seller_rows(slug):
-    """The listings for one substance, one per seller (its cheapest by price per mg, blends and unknown amounts last).
-    The rows are sorted by the seller's score, high first, then by how many products it lists, more first, then by name
-    (owner, 2 Nov 2026); a seller without a score goes last."""
+# Cosmetic product forms (peptide-data products.product_form): a cosmetic option's window lists only these, a research-use
+# option's window never does (owner UX audit, 3 Nov 2026: the GHK-Cu serum row opened injectable vials).
+COSMETIC_FORMS = {"cream", "serum", "lotion", "gel"}
+is_cosmetic = lambda p: p["status"].startswith("Cosmetic")
+
+
+def form_ok(r, kind):
+    """kind None: every listing; "cosmetic": cosmetic forms only; "research": every listing that is not a cosmetic form."""
+    if kind is None:
+        return True
+    return (r.get("form") in COSMETIC_FORMS) == (kind == "cosmetic")
+
+
+def seller_rows(slug, kind=None):
+    """The listings for one substance, one per seller (its cheapest by price per mg, blends and unknown amounts last),
+    of one kind (form_ok). The rows are sorted by the seller's score, high first, then by how many products it lists,
+    more first, then by name (owner, 2 Nov 2026); a seller without a score goes last."""
     key = lambda r: (r.get("price_per_mg") is None, r.get("price_per_mg") or 0, r.get("price_usd") or 0, r["seller_slug"])
     best = {}
-    for r in sorted((r for r in PRODUCTS if r["substance_slug"] == slug and r["seller_slug"] not in CLINIC_PROFILES), key=key):
+    for r in sorted((r for r in PRODUCTS if r["substance_slug"] == slug and r["seller_slug"] not in CLINIC_PROFILES
+                     and form_ok(r, kind)), key=key):
         best.setdefault(r["seller_slug"], r)
     def order(r):
         s = SELLERS.get(r["seller_slug"], {})
@@ -748,9 +773,9 @@ def check_chips(r):
     return f'<span class="chips">{coa}{letters}{company}{status}{first}{checked}</span>'
 
 
-def seller_table(slug):
+def seller_table(slug, kind=None):
     """One substance's sellers as a table, its source lines and its newest last_seen. No link to a seller."""
-    rows = seller_rows(slug)
+    rows = seller_rows(slug, kind)
     newest = max((r["last_seen"] for r in rows if r.get("last_seen")), default="")
     scored = max((SELLERS.get(r["seller_slug"], {}).get("score_checked_on") or "" for r in rows), default="")
     trs, src = [], []
@@ -783,19 +808,24 @@ def subs_of(p):
     return [p["substance"]] if p.get("substance") else list(p.get("substances") or [])
 
 
+def window_kind(p):
+    return "cosmetic" if is_cosmetic(p) else "research"
+
+
 def window_key(p):
-    return "sellers-" + "-".join(s for s in subs_of(p) if seller_rows(s))
+    return ("cosmetics-" if is_cosmetic(p) else "sellers-") + "-".join(s for s in subs_of(p) if seller_rows(s, window_kind(p)))
 
 
 def seller_window(p):
     """One seller window for an option row (a dialog; a plain section with JavaScript off). One substance: its table
     under the substance name. Several: the option's name as the heading and one table per substance under the
     substance name as a sub-heading. No Visit, no link to a seller."""
-    subs = [s for s in subs_of(p) if seller_rows(s)]
+    kind = window_kind(p)
+    subs = [s for s in subs_of(p) if seller_rows(s, kind)]
     key = window_key(p)
     parts, src, newest, scored = [], [], "", ""
     for s in subs:
-        table, lines, seen, sc = seller_table(s)
+        table, lines, seen, sc = seller_table(s, kind)
         parts.append((f'<h3 class="dlg-sub">{substance_name(s)}</h3>' if len(subs) > 1 else "") + table)
         src += lines
         newest, scored = max(newest, seen), max(scored, sc)
@@ -803,7 +833,7 @@ def seller_window(p):
     checked = f" Prices checked {nice_date(newest)}." if newest else ""
     return f"""<dialog class="sellers-dlg" id="{key}" aria-labelledby="{key}-h"><div class="dlg-in">
   <div class="dlg-hd"><h2 id="{key}-h">{title}</h2><form method="dialog"><button class="btn btn-line btn-sm" type="submit">Close</button></form></div>
-  <p class="dlg-lede">Research-use sellers. We do not link to them.{checked}</p>
+  <p class="dlg-lede">{"Cosmetic shops" if kind == "cosmetic" else "Research-use sellers"}. We do not link to them.{checked}</p>
   {"".join(parts)}
   <p class="dlg-foot">Price per mg is price divided by the stated amount; blends have no per-mg price.</p>
   {f'<p class="dlg-foot dlg-score">Checks are facts we hold about the seller, not a safety or quality grade. Checked {nice_date(scored)}.</p>' if scored else ""}
@@ -819,22 +849,43 @@ def approved_row(p):
 
 
 def has_window(p):
-    return not approved_row(p) and any(seller_rows(s) for s in subs_of(p))
+    return not approved_row(p) and any(seller_rows(s, window_kind(p)) for s in subs_of(p))
+
+
+def how_line(p):
+    """The option's "how you get it" line, true to its window: a research-use row whose window lists shops but whose
+    line names none (sermorelin: "Prescription through clinics.") says where the window's listings come from, and
+    whether any clinic plan in our data carries the substance (owner UX audit, 3 Nov 2026)."""
+    if has_window(p) and window_kind(p) == "research" and not re.search(r"shop|do not link", p["how"], re.I):
+        clinics = any(r["substance_slug"] in subs_of(p) for r in PLANS)
+        return "Research-use shops; we do not link to them." + (" Online clinics also prescribe it." if clinics else "")
+    return p["how"]
+
+
+# A cosmetic option with no cosmetic listing gets no window and says why where the button would be.
+COSMETIC_LATER = "Sold as a cosmetic; prices come later."
 
 
 # One window per distinct set of substances (two rows for the same substance share it).
-SELLER_WINDOWS = "".join({window_key(p): seller_window(p) for g in ALL_GOALS for p in g["peptides"] if has_window(p)}.values())
+# Home loads them on demand from /windows/<key>.json (sellers_button, lazy); goal pages keep their own inline.
+SELLER_WINDOWS = {window_key(p): seller_window(p) for g in ALL_GOALS for p in g["peptides"] if has_window(p)}
 
 
-def sellers_button(p):
+def sellers_button(p, lazy=False):
     """"Prices at N shops" on a research-use option row with listings, N the distinct sellers across its substances;
-    a link to the window without JS. FDA-approved rows never get it."""
+    a link to the window without JS. FDA-approved rows never get it. lazy (Home): the window is not in the page; the
+    script loads it from /windows/<key>.json on the first click, and without JS the button opens the substance page's
+    shop table (owner UX audit, 3 Nov 2026: every window inline made Home about 148 KB)."""
     if not has_window(p):
         return ""
-    n = len({r["seller_slug"] for s in subs_of(p) for r in seller_rows(s)})
+    n = len({r["seller_slug"] for s in subs_of(p) for r in seller_rows(s, window_kind(p))})
     key = window_key(p)
-    return (f'<a class="btn btn-line btn-sm sellers-open" href="#{key}" data-dlg="{key}">'
-            f'Prices at {n} shop{"s" if n != 1 else ""}</a>')
+    label = f'Prices at {n} shop{"s" if n != 1 else ""}'
+    if lazy:
+        first = next(s for s in subs_of(p) if seller_rows(s, window_kind(p)))
+        href = f"/peptides/{first}/#sold" if first in PEPTIDE_SLUGS else "/sellers/"
+        return f'<a class="btn btn-line btn-sm sellers-open" href="{href}" data-dlg="{key}" data-src="/windows/{key}.json">{label}</a>'
+    return f'<a class="btn btn-line btn-sm sellers-open" href="#{key}" data-dlg="{key}">{label}</a>'
 
 
 def opt_price(p, slug):
@@ -863,6 +914,18 @@ def price_sentence(p, pad):
     return f" {said}{sup}"
 
 
+def needs_rx(p):
+    """True when the option's "how" line says it takes a prescription, False when it says none is needed (over the
+    counter, or "no prescription"), None when it says neither (owner UX audit, 3 Nov 2026)."""
+    how = p.get("how", "").lower()
+    if "no prescription" in how or "over the counter" in how:
+        return False
+    return True if how.startswith("prescription") else None
+
+
+RX_LINE = {True: " Needs a prescription.", False: " No prescription needed.", None: ""}
+
+
 def alt_chip(p):
     """"Proven alternative" (chip-info) after the status chip, for an option that is not a peptide but is in the list
     as the proven choice (`proven_alternative` in data/site.json); "Not a peptide" (chip-neutral) for one sold
@@ -872,7 +935,7 @@ def alt_chip(p):
     return '<span class="chip chip-neutral">Not a peptide</span>' if p.get("not_peptide") else ""
 
 
-def option_rows(g):
+def option_rows(g, lazy=False):
     """One goal's step 2 option rows (pages.md, Home, step 2; also /hair/): name and chips; opened, the does, status
     and how lines, the price and plan line ending the how line; "Prices at N shops" for research-use rows, "Online clinic" on
     every FDA-approved row."""
@@ -891,15 +954,16 @@ def option_rows(g):
         # a goal with clinic plans (weight loss) gives each row its own plan (row_plan); the others keep the goal's one plan
         rp = row_plan(g, p) if g.get("clinic_plans") else (plan if plan and p.get("substance") == plan["substance_slug"] else None)
         cost = price_sentence(p, pad) + (" " + plan_line(g, "plan-in", rp).replace(")<sup>", ").<sup>", 1) if rp else "")
-        sb = sellers_button(p)
-        act = (f'<span class="pick-act">{sb}{visit(g, small=True)}</span>' if p in approved else
+        sb = sellers_button(p, lazy)
+        act = (f'<span class="pick-act">{sb}{visit(g, small=True, p=p)}</span>' if p in approved else
                f'<span class="pick-act">{sb}</span>' if sb else
                # a row with no button says why in one grey line where the button would be (owner, 1 Nov 2026)
-               f'<span class="pick-act"><span class="paid no-link">{p["no_link"]}</span></span>' if p.get("no_link") else "")
+               f'<span class="pick-act"><span class="paid no-link">{p["no_link"]}</span></span>' if p.get("no_link") else
+               f'<span class="pick-act"><span class="paid no-link">{COSMETIC_LATER}</span></span>' if is_cosmetic(p) else "")
         rows.append(f'<li class="opt"><details class="opt-more"><summary class="opt-sum"><span class="name">{p["name"]}</span>'
                     f'<span class="opt-chips">{status_chip(p)}{alt_chip(p)}</span></summary>'
                     f'<div class="opt-body"><p class="opt-does">{p["does"]}{refs(p, slug, price=not pad)}</p>'
-                    f'<p class="opt-status">{plain_status(p, drop_price=bool(pad))}</p><p class="opt-how">{p["how"]}{cost}</p></div></details>{act}</li>')
+                    f'<p class="opt-status">{plain_status(p, drop_price=bool(pad))}</p><p class="opt-how">{how_line(p)}{cost}</p></div></details>{act}</li>')
     return rows
 
 
@@ -911,7 +975,7 @@ def rail():
         slug, hide = g["slug"], "" if i == 0 else " hidden"
         chips.append(f'<button type="button" class="goal-item" data-goal="{slug}" aria-pressed="{"true" if i == 0 else "false"}" '
                      f'aria-controls="opts-{slug}"><span>{g["label"]}</span><span class="small">{len(g["peptides"])} options</span></button>')
-        rows = option_rows(g)
+        rows = option_rows(g, lazy=True)
         link = (f'<a class="btn btn-ink" href="/{slug}/">Compare {g["short"].lower()} options</a>' if g.get("page") else
                 '<p class="small">Full comparison for this goal is not published yet. The legal status above is current as of ' + CHECKED + '.</p>')
         compare.append(f'<div class="step-panel" id="opts-{slug}" data-goal="{slug}" data-title="{g["panel_title"]}"{hide}><p class="goal-for">{g["for"]}</p>'
@@ -921,6 +985,23 @@ def rail():
     # The chosen goal's panel title follows the step name in the step 2 heading (ODOBRENO SEO 30 Oct 2026, copy doc
     # section 2); the page carries the first goal's, the goal switch puts in the next one.
     return "".join(chips), "".join(compare), f'<span class="goal-t">: {ALL_GOALS[0]["panel_title"]}</span>'
+
+
+def renumber_sources():
+    """The price, option and plan sources numbered in the order the option rows link them, goal by goal (on /hair/:
+    finasteride's price 8 and clinic plan 9, then minoxidil's own source 10; owner UX audit, 3 Nov 2026), so footnotes
+    count up down the page. A source no row links keeps its place after them."""
+    global SOURCES_HOME
+    lis = {m.group(2): m.group(1) for m in re.finditer(r'(<li id="(src-(?:price|opt|plan)-[^"]+)">.*?</li>)', SOURCES_HOME)}
+    seen = list(dict.fromkeys(s for g in ALL_GOALS for s in re.findall(r'href="#(src-(?:price|opt|plan)-[^"]+)"', "".join(option_rows(g)))))
+    order = [s for s in seen if s in lis] + [s for s in lis if s not in seen]
+    num = {s: len(LEGAL["sources"]) + i + 1 for i, s in enumerate(order)}
+    PRICE_REF.update({k: num[f"src-price-{k}"] for k in PRICE_REF})
+    OPT_REF.update({k: (num[f"src-{a}"], a) for k, (_, a) in OPT_REF.items()})
+    PLAN_REF.update({k: num[f"src-plan-{k}"] for k in PLAN_REF})
+    EXTRA_REF.update({k: num[f"src-plan-{k}"] for k in EXTRA_REF})
+    SOURCES_HOME = SOURCES_HOME.split('<li id="src-price-', 1)[0] + "".join(lis[s] for s in order)
+
 
 
 # Peptide pages (pages.md, Peptide; owner task 2 Nov 2026): one page per substance with a status, from the database or
@@ -949,7 +1030,20 @@ def legal_rows(only=None):
     substance from the database with its own source link and the date we first saw that status. `only` keeps the rows
     for those substances (a goal page shows the rows for its own options)."""
     keep = lambda slugs: only is None or bool(set(slugs) & only)
-    hand = lambda r: (f'<tr><td>{legal_name(r.get("substances") or [], r["peptide"])}</td><td><span class="chip chip-{r["chip"]}">{r["status"]}</span></td>'
+    # A substance that is both a drug row and a cosmetic row says which is which (owner UX audit, 3 Nov 2026: two rows
+    # both named "GHK-Cu"): the drug row takes its route from the FDA listing ("injection"), the cosmetic row on a page
+    # that shows one of its substances names that one "(cream or serum)".
+    cosmetic = {x for r in LEGAL["rows"] if r.get("status") == "Cosmetic" and keep(r.get("substances", []))
+                for x in r.get("substances", [])}
+    route = lambda slug, s: (f' ({"injection" if "inject" in (s.get("listing") or "").lower() else "as a drug"})'
+                             if slug in cosmetic else "")
+
+    def hand_name(r):
+        mine = [x for x in r.get("substances") or [] if only is not None and x in only]
+        if r.get("status") == "Cosmetic" and len(mine) == 1 and len(r["substances"]) > 1:
+            return f"{substance_name(mine[0])} (cream or serum)"
+        return r["peptide"]
+    hand = lambda r: (f'<tr><td>{legal_name(r.get("substances") or [], hand_name(r))}</td><td><span class="chip chip-{r["chip"]}">{r["status"]}</span></td>'
                       f'<td>{r["note"]} <a class="ref" href="#src-{r["src"]}" aria-label="Source {r["src"]}"><sup>{r["src"]}</sup></a></td></tr>')
     out, seen = [], []
     for r in LEGAL["rows"]:
@@ -968,7 +1062,7 @@ def legal_rows(only=None):
             n = r.get("note_each", r.get("note", ""))  # the note for one substance when a grouped row splits ("them" -> "it")
             note = (f'. {n[0].upper() + n[1:]}. <a class="ref" href="#src-{r["src"]}" aria-label="Source {r["src"]}">'
                     f'<sup>{r["src"]}</sup></a>') if r.get("note_with_db") else ""
-            out.append(f'<tr><td>{legal_name([slug], s["name"])}</td><td><span class="chip chip-{s["chip"]}">{s["label"]}</span></td>'
+            out.append(f'<tr><td>{legal_name([slug], s["name"] + route(slug, s))}</td><td><span class="chip chip-{s["chip"]}">{s["label"]}</span></td>'
                        f'<td>{s["sentence"]}{" " + r["use"] if r.get("use") else ""} <a class="ref" href="{s["url"]}" rel="nofollow">FDA source</a>, {nice_date(s["seen"])}{note}{listing_html(s)}</td></tr>')
     # Every other substance with a database status gets its own row (owner, 1 Nov 2026: the table lists every substance
     # the database has a status for, plus the hand rows it lacks), then all rows are sorted by name.
@@ -979,7 +1073,7 @@ def legal_rows(only=None):
         if not s or not keep([slug]):
             continue
         seen.append(s["seen"])
-        out.append(f'<tr><td>{legal_name([slug], s["name"])}</td><td><span class="chip chip-{s["chip"]}">{s["label"]}</span></td>'
+        out.append(f'<tr><td>{legal_name([slug], s["name"] + route(slug, s))}</td><td><span class="chip chip-{s["chip"]}">{s["label"]}</span></td>'
                    f'<td>{s["sentence"]} <a class="ref" href="{s["url"]}" rel="nofollow">FDA source</a>, {nice_date(s["seen"])}{listing_html(s)}</td></tr>')
     out.sort(key=lambda row: re.sub(r"<[^>]+>", "", row.split("</td>")[0]).strip().lower())
     checked = nice_date(max(seen)) if seen else nice_date(LEGAL["checked"])
@@ -1009,6 +1103,7 @@ for _r in sorted(DATA.get("letter_substances") or [], key=lambda r: (r["letter_d
     SUBS_OF_LETTER.setdefault(_r["letter_url"], []).append(_r["substance_slug"])
 LETTER_CO = {r["letter_url"]: r["company_name"] for r in LETTERS_ALL}
 LETTERS_URL = "/fda-warning-letters/" if LETTERS_ALL else "/#letters"
+renumber_sources()  # after LETTERS_URL: the option rows' plan lines carry the letter chip
 # Under Home's letters table (pages.md, Home, owner answer Q2 a, 2 Nov 2026): with the letters page, "See all N letters"
 # and then "M of them went to sellers in our database."; without it, the old count line alone.
 LETTERS_FOOT = (f'<p class="letters-all"><a class="btn btn-line" href="/fda-warning-letters/">See all {len(LETTERS_ALL)} letters</a></p>'
@@ -1192,7 +1287,10 @@ if(all)all.addEventListener('click',function(){open=true;draw();});draw();})();
 SELLERS_JS = """<script>
 (function(){if(!window.HTMLDialogElement)return;document.documentElement.classList.add('sellers-js');
 document.addEventListener('click',function(e){var b=e.target.closest('.sellers-open');if(b){var d=document.getElementById(b.getAttribute('data-dlg'));
-if(d){e.preventDefault();d.showModal();}return;}
+if(d){e.preventDefault();d.showModal();return;}var src=b.getAttribute('data-src');if(!src)return;e.preventDefault();
+fetch(src).then(function(r){return r.json();}).then(function(j){document.querySelector('.sellers-all').insertAdjacentHTML('beforeend',j.html);
+var n=document.getElementById(b.getAttribute('data-dlg'));n.querySelectorAll('tbody > tr').forEach(function(t){t.style.opacity='1';});
+n.showModal();}).catch(function(){location.href=b.href;});return;}
 var d=e.target.closest('.sellers-dlg');if(d&&e.target===d)d.close();});})();
 </script>"""
 
@@ -1328,7 +1426,7 @@ HOME = f"""
   </div>
 </section>
 
-<div class="wrap sellers-all">{SELLER_WINDOWS}</div>
+<div class="wrap sellers-all"></div>
 
 <section class="section" id="sources">
   <div class="wrap">
@@ -1514,7 +1612,7 @@ def peptide_table(g):
         rows.append(f"""<tr>
   <td><span class="name">{p["name"]}</span>{alt_chip(p)}<span class="opt-does">{p["does"]}{refs(p, g["slug"])}</span></td>
   <td>{status_chip(p)}<span class="opt-status">{plain_status(p)}</span></td>
-  <td>{p["how"]}</td>
+  <td>{how_line(p)}</td>
 </tr>""")
     return ('<thead><tr><th scope="col">Option</th><th scope="col">FDA status</th><th scope="col">How you get it</th></tr></thead>'
             f'<tbody>{"".join(rows)}</tbody>')
@@ -1537,7 +1635,8 @@ def category_page(g):
 </tr>""")
     table = ('<thead><tr><th scope="col">Option</th><th scope="col">FDA status for hair loss</th><th scope="col">Evidence in people</th><th scope="col">Price from</th><th scope="col">How you get it</th></tr></thead>\n'
              f'      <tbody>{"".join(rows)}</tbody>')
-    return category_body(g, table, f'{g["options_checked"]} options checked on the same rule. Rows that are not approved for human use carry no price and no seller.')
+    # the count is the cards' own list, never a typed number (owner UX audit, 3 Nov 2026: "3 options" under four cards)
+    return category_body(g, table, f'{len(g["peptides"])} options checked on the same rule. Rows that are not approved for human use carry no price and no seller.')
 
 
 KIND_CHIP = {"brand": ("ok", "Brand"), "compounded": ("warn", "Compounded"), "program": ("neutral", "Program"),
@@ -1594,9 +1693,7 @@ def clinic_section(g, rows):
     trs = []
     for i, r in enumerate(rows):
         care = care_note(r)
-        n = r.get("fda_letter_count") or 0
-        letter = (f'<a class="chip chip-warn chip-link" href="{LETTERS_URL}">FDA letter {nice_date(r["last_fda_letter_date"])}</a>'
-                  if n and r.get("last_fda_letter_date") else '<span class="no-letter">none</span>')
+        letter = plan_letter(r).strip() or '<span class="no-letter">none</span>'
         # on phones the first CLINICS_FIRST rows show until "Show all N" (owner answer Q2 a, 2 Nov 2026; bundle.css, Clinic table)
         more = ' class="more"' if i >= CLINICS_FIRST else ""
         trs.append(f'<tr{more}><td>{clinic_link(r["seller_slug"], seller_base(r["seller_name"]))}</td><td data-l="Plan">{r["plan_name"]}</td>'
@@ -1658,13 +1755,16 @@ def category_body(g, table, table_lede):
     <ol class="small sources" style="padding-left:1.2em">{srcs}</ol>
   </div>
 </section>""" if srcs else ""
-    # The price pad only for a goal with a priced proven option and its source (skin and recovery have none yet).
+    # The price pad only for a goal with a priced proven option and its source (skin and recovery have none yet). Its last
+    # line is the priced option's prescription status, from its "how" line (owner UX audit, 3 Nov 2026: "Not a
+    # prescription." under finasteride read as if the pill needed none).
+    pad_opt = next((p for p in g["peptides"] if p.get("price") == g["slug"]), None)
     pad = f"""
       <div class="board rx" aria-label="Price pad">
         <div class="rx-head"><span class="rx-mark" aria-hidden="true">&#8478;</span><h2>Cheapest proven option, per month</h2></div>
         <p class="hero-num"><span class="num-xl">${g["price_from_usd"]}</span> <span class="num-unit">/mo from</span></p>
         <div class="ledger"><span>{g["best_option"]}</span></div>
-        <div class="rx-foot"><span class="stamp">Checked {STAMP_CHECKED}</span><span class="fine">{g["price_note"]}. Not a prescription.</span></div>
+        <div class="rx-foot"><span class="stamp">Checked {STAMP_CHECKED}</span><span class="fine">{g["price_note"]}.{RX_LINE[needs_rx(pad_opt)] if pad_opt else ""}</span></div>
       </div>""" if g.get("price_from_usd") is not None and g.get("price_source") else ""
     if pad_plan:
         # The pad shows a clinic plan when the goal has no hand-checked generic price (pages.md, Category; owner task 2 Nov 2026).
@@ -1676,8 +1776,8 @@ def category_body(g, table, table_lede):
       <div class="board rx" aria-label="Price pad">
         <div class="rx-head"><span class="rx-mark" aria-hidden="true">&#8478;</span><h2>Cheapest clinic plan, per month</h2></div>
         <p class="hero-num"><span class="num-xl">{usd(r["price_monthly"])}</span> <span class="num-unit">/mo from</span>{pad_ref}</p>
-        <div class="ledger"><span>{r["plan_name"]}, {clinic_link(r["seller_slug"], seller_base(r["seller_name"]), True)}</span></div>
-        <div class="rx-foot"><span class="stamp">Checked {nice_date(max(x["last_seen"] for x in plans))}</span><span class="fine">{what}{", " + care if care else ""}. Not a prescription.</span></div>
+        <div class="ledger"><span>{r["plan_name"]}, {clinic_link(r["seller_slug"], seller_base(r["seller_name"]), True)}</span>{plan_letter(r)}</div>
+        <div class="rx-foot"><span class="stamp">Checked {nice_date(max(x["last_seen"] for x in plans))}</span><span class="fine">{what}{", " + care if care else ""}. Needs a prescription.</span></div>
       </div>"""
     windows = "".join({window_key(p): seller_window(p) for p in g["peptides"] if has_window(p)}.values())
     return f"""
@@ -1916,13 +2016,23 @@ def check_lines(r):
 CLINIC_LAB_LINE = '<p class="check-nolab">Online clinics prescribe; they do not publish lab reports, so a clinic meets at most 4 of the 5 checks.</p>'
 
 
+def card_chip(k, t, r):
+    """One check's chip in the Background check card and the "Is <Name> legit?" list: its name, with the state spoken.
+    The letter check says what it found instead of "No FDA letter: no" (owner UX audit, 3 Nov 2026): "FDA warning
+    letter: none" when met, "FDA warning letter: yes (N)" when not."""
+    on = bool(r.get(k))
+    if k == "score_no_fda_letter":
+        t, state = ("FDA warning letter: none" if on else f'FDA warning letter: yes ({r.get("fda_letter_count") or 1})'), ""
+    else:
+        state = f'<span class="vh">: {"yes" if on else "no"}</span>'
+    return f'<span class="chip chip-{"ok" if on else "neutral"} mark-{"yes" if on else "no"}">{t}{state}</span>'
+
+
 def check_card(r):
     """Background check card (pages.md, Seller): right of the H1 like the price pad, without the ℞ mark."""
     lines = check_lines(r)
     rows = "".join(
-        f'<li><span class="chip chip-{"ok" if r.get(k) else "neutral"} mark-{"yes" if r.get(k) else "no"}">{t}'
-        f'<span class="vh">: {"yes" if r.get(k) else "no"}</span></span><span class="check-line">{lines[k]}</span></li>'
-        for k, t in SCORE_CHECKS)
+        f'<li>{card_chip(k, t, r)}<span class="check-line">{lines[k]}</span></li>' for k, t in SCORE_CHECKS)
     if r.get("first_seen"):  # not a check: when we started tracking the seller (owner answer Q1 b, 3 Nov 2026)
         rows += f'<li><span class="check-key">Tracked since</span><span class="check-line">{nice_date(r["first_seen"][:10])}.</span></li>'
     if is_clinic(r):
@@ -2137,6 +2247,9 @@ def clinic_plans_section(r):
 
 
 LEGIT_CLOSE = "These are the facts we hold; we do not call any seller legit or safe, and we never link to the shop."
+# a clinic is not a research-use shop: no link until a paid one exists, and then it is marked (owner UX audit, 3 Nov 2026)
+LEGIT_CLOSE_CLINIC = ("These are the facts we hold; we do not call any seller legit or safe. We do not link to the clinic "
+                      "until it has a paid link, and we say so when it does.")
 
 
 def legit_heading(r):
@@ -2164,15 +2277,14 @@ def legit_section(r):
         r.get(f"{x}_seen") is None for x in ("terms", "privacy", "refund")) and not r.get("score_legal_pages") else {}
     state = lambda k: "Not checked yet" if k in unrun else "Met" if r.get(k) else "Not met"
     items = "".join(
-        f'<li><span class="chip chip-{"ok" if r.get(k) else "neutral"} mark-{"yes" if r.get(k) else "no"}">{t}</span>'
-        f'<span class="check-line">{state(k)}: {unrun.get(k, lines[k])}</span></li>'
+        f'<li>{card_chip(k, t, r)}<span class="check-line">{state(k)}: {unrun.get(k, lines[k])}</span></li>'
         for k, t in SCORE_CHECKS)
     return f"""
 <section class="section legit" id="legit">
   <div class="wrap">
     <h2>{legit_heading(r)}</h2>
     <ul class="check-list legit-list">{items}</ul>
-    <p class="small legit-close">{LEGIT_CLOSE}</p>
+    <p class="small legit-close">{LEGIT_CLOSE_CLINIC if is_clinic(r) else LEGIT_CLOSE}</p>
   </div>
 </section>"""
 
@@ -2444,7 +2556,8 @@ if PROFILES:
 # /search-index.json holds one entry per page, substance with a database status and seller; the header field and /search/
 # filter it in the page. /compare/ puts two clinic plans or two sellers side by side from data embedded in the page.
 NOINDEX = {"/search/"}
-TYPE_ORDER = {"Goal": 0, "Peptide": 1, "Seller": 2, "Clinic": 3, "Page": 4}
+# a comparison before a guide of the same name (owner UX audit, 3 Nov 2026: "BPC-157 vs TB-500" listed twice alike)
+TYPE_ORDER = {"Goal": 0, "Peptide": 1, "Seller": 2, "Clinic": 3, "Comparison": 4, "Guide": 5, "Page": 6}
 
 
 def search_index():
@@ -2461,8 +2574,11 @@ def search_index():
             out.append({"type": "Goal", "name": g["label"], "aliases": sorted({g["name"], g["short"], g["slug"].replace("-", " ")} - {g["label"]}),
                         "url": path, "line": f"Goal page: {plural(len(g['peptides']), 'option')} with FDA status and prices"})
         else:
-            out.append({"type": "Page", "name": "Home" if path == "/" else title.replace(" | Peptide Chooser", ""), "aliases": [],
-                        "url": path, "line": desc.split(". ")[0].rstrip(".") + "."})
+            kind = ("Comparison" if re.match(r"/compare/[^/]+-vs-[^/]+/$", path) else
+                    "Guide" if path.startswith("/learn/") and path != "/learn/" else "Page")
+            line = desc.split(". ")[0].rstrip(".") + "."
+            out.append({"type": kind, "name": "Home" if path == "/" else title.replace(" | Peptide Chooser", ""), "aliases": [],
+                        "url": path, "line": f"{kind}: {line}" if kind != "Page" else line})
     for slug in PEPTIDE_SLUGS:  # a substance goes to its own page (owner task 2 Nov 2026)
         s = pep_status(slug)
         names = {r["peptide"] for r in LEGAL["rows"] if slug in (r.get("substances") or [])}
@@ -2682,7 +2798,7 @@ def pep_goals(slug):
 def pep_shops(slug):
     """The window's rows (shops only, the same ten), never for an FDA-approved substance (no window there)."""
     s = pep_status(slug)
-    return [] if pep_group(s) == "approved" else seller_rows(slug)
+    return [] if pep_group(s) == "approved" else seller_rows(slug, "research")  # the research-use window's rows
 
 
 def pep_low_shop(slug):
@@ -3515,6 +3631,9 @@ def main():
     # the search index (pages.md, Every page, Header, Search): one entry per page, substance and seller
     if COMPARE_DATA:
         (DIST / "compare" / "data.json").write_text(COMPARE_DATA, encoding="utf-8")
+    (DIST / "windows").mkdir(exist_ok=True)
+    for key, html in SELLER_WINDOWS.items():
+        (DIST / "windows" / f"{key}.json").write_text(json.dumps({"html": html}), encoding="utf-8")
     (DIST / "search-index.json").write_text(json.dumps(search_index(), ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
     # lastmod: the newest data date of this build, the database pull when connected, else the hand-checked date (owner, Q1 a, 2 Nov 2026)
     lastmod = max(DATA["checked"], (DATA.get("pulled_at") or "")[:10])

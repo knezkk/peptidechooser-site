@@ -101,6 +101,8 @@ def pages():
 # /sellers/<slug>/ page, the H2 "Is <Name> legit? What we can check" and the fixed closing sentence under it.
 LEGIT_H2 = re.compile(r"Is [^<>]{1,80} legit\? What we can check")
 LEGIT_CLOSE = "These are the facts we hold; we do not call any seller legit or safe, and we never link to the shop."
+LEGIT_CLOSE_CLINIC = ("These are the facts we hold; we do not call any seller legit or safe. We do not link to the clinic "
+                      "until it has a paid link, and we say so when it does.")
 
 
 def legit_allowed(name, text, h2s):
@@ -111,7 +113,7 @@ def legit_allowed(name, text, h2s):
     for h in h2s:
         if LEGIT_H2.fullmatch(h.strip()):
             text = text.replace(h.strip(), " ")
-    return text.replace(LEGIT_CLOSE, " ")
+    return text.replace(LEGIT_CLOSE, " ").replace(LEGIT_CLOSE_CLINIC, " ")
 
 
 def legit_cases():
@@ -247,6 +249,27 @@ DOSE = re.compile(r"\b\d+(?:\.\d+)?\s?(?:mg|mcg|µg|iu|units?|ml)\b\s*(?:per|a|a
                   r"(?:day|daily|week|weekly|dose|kg|injection|night|morning)\b|\b(?:take|inject)\s+\d", re.I)
 
 
+def window_errs(name, html):
+    """The seller window rules (owner, 31 Oct 2026): no <a> to a seller's domain, no Visit inside it, no clinic in a
+    price window, and no verdict words."""
+    errs = []
+    for m in re.finditer(r'<dialog class="sellers-dlg"[^>]*>(.*?)</dialog>', html, re.S):
+        for href in re.findall(r'<a\b[^>]*href="([^"]*)"', m.group(1)):
+            host = re.sub(r"^www\.", "", re.sub(r"^[a-z]+://", "", href).split("/")[0].lower())
+            if host and any(host == d or host.endswith("." + d) for d in seller_domains()):
+                errs.append(f"{name}: seller window links to a seller ({href})")
+        if "btn-action" in m.group(1):
+            errs.append(f"{name}: Visit button inside the seller window")
+        # A price window lists shops only (pages.md, Rules that apply to every page): no clinic in it.
+        for slug in clinic_slugs():
+            if f"/sellers/{slug}/" in m.group(1) or f'data-seller="{slug}"' in m.group(1):
+                errs.append(f"{name}: clinic {slug} inside a price window")
+        # The seller score is facts, never a verdict (owner, 2 Nov 2026): no "safe", "trusted" or "best" in the window.
+        for w in re.findall(r"\b(safe|trusted|best)\b", re.sub(r"<[^>]+>", " ", m.group(1)), re.I):
+            errs.append(f"{name}: seller window says '{w}'")
+    return errs
+
+
 def check_parts(P):
     errs = []
     css = (ROOT / "assets" / "site.css").read_text()
@@ -277,21 +300,22 @@ def check_parts(P):
                     errs.append(f"{name}: green button not an /out/ link with rel=sponsored")
                 if under != "Paid link":
                     errs.append(f"{name}: green button without 'Paid link' under it")
-        # The seller window links to no seller (owner, 31 Oct 2026): no <a> to a seller's domain, no Visit inside it.
-        for m in re.finditer(r'<dialog class="sellers-dlg"[^>]*>(.*?)</dialog>', html, re.S):
-            for href in re.findall(r'<a\b[^>]*href="([^"]*)"', m.group(1)):
-                host = re.sub(r"^www\.", "", re.sub(r"^[a-z]+://", "", href).split("/")[0].lower())
-                if host and any(host == d or host.endswith("." + d) for d in seller_domains()):
-                    errs.append(f"{name}: seller window links to a seller ({href})")
-            if "btn-action" in m.group(1):
-                errs.append(f"{name}: Visit button inside the seller window")
-            # A price window lists shops only (pages.md, Rules that apply to every page): no clinic in it.
-            for slug in clinic_slugs():
-                if f"/sellers/{slug}/" in m.group(1) or f'data-seller="{slug}"' in m.group(1):
-                    errs.append(f"{name}: clinic {slug} inside a price window")
-            # The seller score is facts, never a verdict (owner, 2 Nov 2026): no "safe", "trusted" or "best" in the window.
-            for w in re.findall(r"\b(safe|trusted|best)\b", re.sub(r"<[^>]+>", " ", m.group(1)), re.I):
-                errs.append(f"{name}: seller window says '{w}'")
+        errs += window_errs(name, html)
+    # A clinic page closes its legit list with the clinic sentence, never the shops' "we never link to the shop" (owner
+    # UX audit, 3 Nov 2026).
+    for slug in clinic_slugs():
+        f = DIST / "sellers" / slug / "index.html"
+        if f.exists() and "we never link to the shop" in f.read_text(encoding="utf-8"):
+            errs.append(f"sellers/{slug}/index.html: clinic page says 'we never link to the shop'")
+    # Home's windows load on demand from dist/windows/<key>.json (owner UX audit, 3 Nov 2026): the same rules apply.
+    for f in sorted((DIST / "windows").glob("*.json")) if (DIST / "windows").exists() else []:
+        errs += window_errs(f"windows/{f.name}", json.loads(f.read_text(encoding="utf-8"))["html"])
+    for name, p in P.items():
+        html = (DIST / name).read_text(encoding="utf-8")
+        # Home's "Prices at N shops" buttons point at a window file that exists
+        for src in re.findall(r'data-src="/(windows/[^"]+)"', html):
+            if not (DIST / src).exists():
+                errs.append(f"{name}: window file {src} missing")
     # The letters page (pages.md, Letters): every row has a date, a company, a subject and its fda.gov letter; the only
     # links leaving the site go to fda.gov, so no seller domain is linked anywhere on the page.
     if "fda-warning-letters/index.html" in P:
@@ -377,7 +401,7 @@ def check_parts(P):
             errs.append(f"search-index.json: does not parse ({e})")
             idx = []
         for e in idx:
-            if set(e) != {"type", "name", "aliases", "url", "line"} or e.get("type") not in ("Goal", "Peptide", "Seller", "Clinic", "Page") \
+            if set(e) != {"type", "name", "aliases", "url", "line"} or e.get("type") not in ("Goal", "Peptide", "Seller", "Clinic", "Comparison", "Guide", "Page") \
                     or not e.get("name") or not e.get("line"):
                 errs.append(f"search-index.json: bad entry {e}")
                 continue
@@ -472,6 +496,18 @@ def check_parts(P):
             n = len(AUTHOR_LINE.findall((DIST / name).read_text(encoding="utf-8")))
             if n != 1:
                 errs.append(f"{name}: {n} author lines (want one: '<team>. Checked <date>.' in p.small.meta)")
+    # A footnote right after "(<Seller>)" links that seller's own source: its line in Sources starts with the name (owner
+    # UX audit, 3 Nov 2026: /hair/ looked as if Keeps and Strut were swapped), or our own database.
+    sellers = seller_names()
+    for name in P:
+        html = (DIST / name).read_text(encoding="utf-8")
+        for m in re.finditer(r'\((?:<a [^>]*>)?([^()<>]{2,80}?)(?:</a>)?\)\.?<sup><a class="ref" href="#(src-[^"]+)"', html):
+            who = re.split(r"[,;]", m.group(1))[0].strip()
+            li = re.search(rf'<li (?:value="\d+" )?id="{re.escape(m.group(2))}">(.*?)</li>', html, re.S)
+            src = re.sub(r"<[^>]+>", "", li.group(1)).strip() if li else ""
+            # our own database (the shop prices in a guide) is a source for every shop
+            if who in sellers and li and not src.startswith((who, "Peptide Chooser database")):
+                errs.append(f"{name}: footnote {m.group(2)} after ({who}) is not that seller's source")
     # The letters feed (pages.md, Letters): it parses as XML and every item links to the letter on fda.gov.
     feed = DIST / "fda-warning-letters" / "feed.xml"
     if feed.exists():
@@ -494,6 +530,13 @@ def clinic_slugs():
     """The online clinics site.json knows: seller pages with no products (peptide-data decision 26)."""
     d = json.loads((ROOT / "data" / "site.json").read_text(encoding="utf-8"))
     return {r["seller_slug"] for r in d.get("seller_profiles") or [] if not (r.get("product_count") or 0)}
+
+
+def seller_names():
+    """Every seller and clinic name site.json knows, as the pages write it (without the company in brackets)."""
+    d = json.loads((ROOT / "data" / "site.json").read_text(encoding="utf-8"))
+    rows = (d.get("plans") or []) + (d.get("seller_profiles") or []) + (d.get("sellers") or [])
+    return {re.sub(r"\s*\(.*\)", "", r["seller_name"]).strip() for r in rows if r.get("seller_name")}
 
 
 def seller_domains():
