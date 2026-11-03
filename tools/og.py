@@ -2,10 +2,12 @@
 logo mark (design book: README, Logo).
 Run after build.py: python3 tools/og.py   -> writes assets/og/<name>.png (1200x630) and assets/favicon-16.png,
 favicon-32.png, apple-touch-icon.png (180), icon-512.png, then rebuild.
+python3 tools/og.py --missing draws only the pages that have no image yet and leaves the favicons (--missing --count
+prints how many); the deploy runs it, so a page born from new data gets its image there (owner answer Q1 a, 3 Nov 2026).
 """
 import json
+import sys
 from pathlib import Path
-from playwright.sync_api import sync_playwright
 
 ROOT = Path(__file__).resolve().parent.parent
 pages = json.loads((ROOT / "dist" / "pages.json").read_text())
@@ -28,16 +30,27 @@ body{{margin:0;width:1200px;height:630px;background:{paper};color:{ink};font-fam
 
 out = ROOT / "assets" / "og"
 out.mkdir(parents=True, exist_ok=True)
+missing = "--missing" in sys.argv
+og_name = lambda item: "home" if item["path"] == "/" else item["path"].strip("/").replace("/", "-")
+if missing:
+    pages = [i for i in pages if not (out / f"{og_name(i)}.png").exists()]
+    print(len(pages) if "--count" in sys.argv else f"og: {len(pages)} missing")
+    if not pages or "--count" in sys.argv:
+        sys.exit(0)
+from playwright.sync_api import sync_playwright  # noqa: E402 (not needed to count)
 with sync_playwright() as p:
     b = p.chromium.launch()
     pg = b.new_page(viewport={"width": 1200, "height": 630})
     for item in pages:
-        name = "home" if item["path"] == "/" else item["path"].strip("/").replace("/", "-")
+        name = og_name(item)
         title = item["title"].split(" | ")[0]
         pg.set_content(TEMPLATE.format(paper=col["paper"], ink=col["ink"], ink2=col["ink-2"], mark=col["mark"], svg=mark, title=title))
         pg.wait_for_timeout(600)
         pg.screenshot(path=str(out / f"{name}.png"))
         print("og", name)
+    if missing:
+        b.close()
+        sys.exit(0)
     # Favicons (README, Logo): the mark alone. 16 and 32 on a clear background, filling the 56 grid; the apple touch icon
     # (180) and the manifest icon (512) on white with half the mark's height as clear space on every side.
     icons = [("favicon-16.png", 16, "1 1 54 54", "transparent"), ("favicon-32.png", 32, "1 1 54 54", "transparent"),

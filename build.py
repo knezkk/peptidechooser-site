@@ -3154,10 +3154,23 @@ def cmp_clinic_name(slug):
     return seller_base(PROFILES[slug]["seller_name"])
 
 
+def live_paths():
+    """The paths already published: the live sitemap the deploy fetches into LIVE_SITEMAP, else the last build's
+    dist/sitemap.xml (read before dist is cleared), else none."""
+    for f in (os.environ.get("LIVE_SITEMAP"), DIST / "sitemap.xml"):
+        if f and Path(f).is_file():
+            return set(re.findall(re.escape(SITE) + r"(/[^<]*)</loc>", Path(f).read_text(encoding="utf-8")))
+    return set()
+
+
+LIVE_PATHS = live_paths()
+
+
 def cmp_clinic_pairs():
     """{(a, b): [substances]} for every two clinic pages that both have a compounded plan of a substance in
-    CMP_CLINIC_SUBS, keyed by the clinics' URL names in alphabetical order. Over CMP_MAX pairs, only pairs where both
-    clinics meet 2 or more of the 5 checks are kept (owner task 2 Nov 2026), then the first CMP_MAX."""
+    CMP_CLINIC_SUBS, keyed by the clinics' URL names in alphabetical order. Over CMP_MAX pairs, a pair already live
+    always stays (owner answer Q2 a, 3 Nov 2026; rule 8); the others fill up to CMP_MAX, only those where both clinics
+    meet 2 or more of the 5 checks (owner task 2 Nov 2026), in order."""
     out = {}
     for sub in CMP_CLINIC_SUBS:
         clinics = sorted({r["seller_slug"] for r in PLANS if r["seller_slug"] in CLINIC_PROFILES and cmp_clinic_plan(r["seller_slug"], sub)},
@@ -3165,9 +3178,12 @@ def cmp_clinic_pairs():
         for i, a in enumerate(clinics):
             for b in clinics[i + 1:]:
                 out.setdefault((a, b), []).append(sub)
-    if len(out) > CMP_MAX:
-        out = {k: v for k, v in out.items() if all((PROFILES[x].get("score") or 0) >= 2 for x in k)}
-    return dict(list(out.items())[:CMP_MAX])
+    if len(out) <= CMP_MAX:
+        return out
+    live = {k: v for k, v in out.items() if cmp_path(*k, clinic=True) in LIVE_PATHS}
+    rest = [(k, v) for k, v in out.items() if k not in live and all((PROFILES[x].get("score") or 0) >= 2 for x in k)]
+    keep = set(live) | {k for k, _ in rest[:max(CMP_MAX - len(live), 0)]}
+    return {k: v for k, v in out.items() if k in keep}
 
 
 def cmp_path(a, b, clinic=False):
