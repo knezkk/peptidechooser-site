@@ -107,6 +107,32 @@ GUIDES = [
      "h1": "How to check a peptide seller yourself, in ten minutes.",
      "desc": "Five checks you can do alone before you buy: the lab report and its date, the FDA letter list, the state business registry, the legal pages and prices.",
      "line": "Five checks you can do alone, with the public pages to use for each."},
+    # guides 23 to 28: built on our own numbers (letters by substance, seller checks, plan prices; owner task 2 Nov 2026,
+    # feat/learn-5). The pages update with every build.
+    {"slug": "fda-warning-letters-peptides-2026", "title": "FDA warning letters to peptide sellers, 2026: what happened",
+     "h1": "FDA warning letters to peptide sellers in 2026: what happened.",
+     "desc": "Every FDA warning letter we track from 2026, counted by month, by kind of seller and by the substances named, with the common subjects and what a letter asks.",
+     "line": "This year's letters by month, by kind of seller and by substance."},
+    {"slug": "cheapest-bpc-157-per-mg", "title": "BPC-157 price per mg: what shops charge and what it hides",
+     "h1": "BPC-157 price per mg: what shops charge, and what the number hides.",
+     "desc": "What research-use shops charge per mg of BPC-157, from our price crawl, the ten shops in our window, and why the price per mg is not the whole story.",
+     "line": "The price range per mg, the shops in our window and what a low price leaves out."},
+    {"slug": "ozempic-vs-wegovy-price", "title": "Ozempic vs Wegovy: what clinics charge and what each treats",
+     "h1": "Ozempic vs Wegovy: what online clinics charge, and what each is approved for.",
+     "desc": "Ozempic and Wegovy are both semaglutide. What the FDA approved each for, every brand plan at the online clinics we track, and the care fees on top.",
+     "line": "One molecule, two labels: what each is approved for and what clinics charge."},
+    {"slug": "finasteride-vs-minoxidil", "title": "Finasteride vs minoxidil: the trials and what clinics charge",
+     "h1": "Finasteride vs minoxidil: what the trials show and what clinics charge.",
+     "desc": "The two FDA-approved hair loss medicines: what their main trials found in plain words, their side effects, and every plan at the online clinics we track.",
+     "line": "The two approved hair loss medicines: trial results, side effects and plans."},
+    {"slug": "what-research-use-only-means", "title": "What “research use only” means on a peptide label",
+     "h1": "What “research use only” means on a peptide label.",
+     "desc": "“Research use only” is the seller's own wording, not an approval. What the FDA says about it in its letters, what shops' pages show, and what it means for you.",
+     "line": "The seller's own label, what the FDA says about it and what it means for you."},
+    {"slug": "peptide-seller-checks-by-the-numbers", "title": "Peptide sellers by the numbers: lab reports, FDA letters",
+     "h1": "Peptide sellers by the numbers: lab reports, FDA letters, companies.",
+     "desc": "How many of the peptide shops we track meet each of our five checks, how the scores are spread, and how many online clinics have an FDA warning letter.",
+     "line": "How many shops meet each check, how scores spread, and clinic letters."},
 ]
 # Home's card shows the first six with "All guides" under them (owner task 2 Nov 2026: the first six when space is tight)
 HOME_CARD = 6
@@ -119,12 +145,15 @@ TOPIC = {"is-bpc-157-legal": "legal", "are-peptides-safe": "legal", "how-to-read
          "are-peptides-legal-in-the-us": "legal", "how-we-check-sellers": "legal", "semaglutide-vs-tirzepatide-price": "glp1",
          "peptides-for-recovery-and-joints": "body", "peptides-for-libido-what-is-approved": "body",
          "longevity-peptides-epitalon-mots-c-nad": "body", "online-clinic-vs-research-shop": "buying",
-         "what-is-a-503a-pharmacy": "buying", "how-to-check-a-peptide-seller": "buying"}
+         "what-is-a-503a-pharmacy": "buying", "how-to-check-a-peptide-seller": "buying",
+         "fda-warning-letters-peptides-2026": "data", "cheapest-bpc-157-per-mg": "data",
+         "peptide-seller-checks-by-the-numbers": "data", "ozempic-vs-wegovy-price": "glp1", "finasteride-vs-minoxidil": "hair",
+         "what-research-use-only-means": "legal"}
 RELATED_MAX = 5
 
 LEARN_TITLE = "Peptide guides in plain words | Peptide Chooser"
 LEARN_H1 = "Peptide guides in plain words"
-LEARN_DESC = ("Twenty-two short guides on peptides in the US: what is legal, how to check a seller, GLP-1 prices, and peptides "
+LEARN_DESC = ("Twenty-eight short guides on peptides in the US: what is legal, how to check a seller, GLP-1 prices, and peptides "
               "for hair, skin, muscle, libido and aging.")
 
 # Outside pages the guides cite (fda.gov and MedlinePlus only, plus the sources already on the site, which build.py
@@ -210,6 +239,13 @@ SOURCES = {
                    "Int J Mol Sci 19(7), 2018, PubMed 29986520", "https://pubmed.ncbi.nlm.nih.gov/29986520/"),
     "pm-najafi": ("Najafi N et al., A systematic review of the mechanisms and therapeutic applications of GHK-Cu in topical microneedle "
                   "delivery, Arch Intern Med Res 9(3), 2026, PubMed 42787770", "https://pubmed.ncbi.nlm.nih.gov/42787770/"),
+    # guides 23 to 28
+    "pm-olsen": ("Olsen EA et al., A randomized clinical trial of 5% topical minoxidil versus 2% topical minoxidil and placebo in the "
+                 "treatment of androgenetic alopecia in men, J Am Acad Dermatol 47(3), 2002, PubMed 12196747",
+                 "https://pubmed.ncbi.nlm.nih.gov/12196747/"),
+    "medline-finasteride": ("MedlinePlus, Finasteride", "https://medlineplus.gov/druginfo/meds/a698016.html"),
+    "fda-wl-ruo": ("FDA, warning letter to NuScience Peptides LLC, 24 Aug 2026, reference 733652, current as of 1 Sep 2026",
+                   "https://www.fda.gov/inspections-compliance-enforcement-and-criminal-investigations/warning-letters/nuscience-peptides-llc-733652-08242026"),
     "pm-inci": ("Skin Res Technol 32(8), 2026: a study naming the ingredient \"copper tripeptide-1 GHK-Cu\", PubMed 42573538",
                 "https://pubmed.ncbi.nlm.nih.gov/42573538/"),
 }
@@ -335,7 +371,7 @@ def known_sources(b, f):
         if st:
             k[f"db-{slug}"] = (f"FDA status of {b.substance_name(slug)} in the Peptide Chooser database, first seen {nice(st['seen'])}",
                                st["url"], "link")
-    for r in f["hair_plans"] + f["sema_all"] + f["tirz_all"]:
+    for r in b.PLANS:
         k[f"plan-{r['seller_slug']}-{r['plan_slug']}"] = (f"{b.seller_base(r['seller_name'])}, {r['plan_name']}, {nice(r['last_seen'])}",
                                                           r["pricing_url"], "text")
     # our own pages (the seller guide): How we rate, the sellers list and each seller's page
@@ -1691,6 +1727,399 @@ def g_self_check(b, f, N):
            ("/learn/how-we-check-sellers/", "How we check sellers"))
     return short, body, nxt
 
+# Guides 23 to 28 (owner task 2 Nov 2026, feat/learn-5): pages built on our own numbers. Every count is worked out from
+# data/site.json at build time, so the page changes with each data pull; a table or sentence without its data is left out.
+
+MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
+
+
+def count_table(caption, heads, rows):
+    """A plain two- or three-column table of counts (the site's tbl part); the caption names it for screen readers."""
+    th = "".join(f'<th scope="col">{h}</th>' for h in heads)
+    trs = "".join("<tr>" + "".join(f'<td data-l="{heads[i]}">{c}</td>' if i else f"<td>{c}</td>" for i, c in enumerate(r)) + "</tr>"
+                  for r in rows)
+    return (f'<div class="tbl-wrap"><table class="tbl"><caption class="vh">{caption}</caption><thead><tr>{th}</tr></thead>'
+            f"<tbody>{trs}</tbody></table></div>")
+
+
+def letter_kind(r):
+    """The kind of seller a letter went to, as our letters page counts it: research-use shops by our match, online
+    clinics by our match or the FDA's "(Telehealth)" subject, compounders and prescription pharmacies by our match or the
+    FDA's "Compounding Pharmacy" subject; the rest are companies we have not matched."""
+    subj = r.get("letter_subject") or ""
+    if r.get("seller_kind") == "S1_RUO":
+        return "Research-use peptide shops"
+    if r.get("seller_kind") == "S2_GLP1_TELEHEALTH" or "(Telehealth)" in subj:
+        return "Online clinics and telehealth companies"
+    if r.get("seller_kind") == "S3_RX_CLINIC_PHARMACY" or "Compounding Pharmacy" in subj:
+        return "Compounding pharmacies and prescription clinics"
+    return "Other companies, such as internet pharmacies"
+
+
+def g_letters_year(b, f, N):
+    on = f["letters_on"] or BUILD_DATE
+    year = on[:4]
+    rows = [r for r in b.LETTERS_ALL if (r.get("letter_date") or "").startswith(year)]
+    n = len(rows)
+    if not n:
+        short = (f"We have no FDA warning letters to peptide sellers from {year} in our data yet. Our "
+                 f'<a href="{b.LETTERS_URL}">letters page</a> lists the older ones.{N("db-letters") if f["letters"] else ""}')
+        return short, "<h2>Where are the letters?</h2><p>This page fills in from our database once it holds this year's letters.</p>", \
+            ((b.LETTERS_URL, "See FDA warning letters"), ("/learn/what-an-fda-warning-letter-means/", "What a letter means"))
+    by_month = Counter(r["letter_date"][5:7] for r in rows)
+    last = int(on[5:7]) if on[:4] == year else 12
+    month_rows = [(f"{MONTHS[m - 1]} {year}", by_month.get(f"{m:02d}", 0)) for m in range(1, last + 1)]
+    busiest = sorted(month_rows, key=lambda x: -x[1])[:2]
+    kinds = Counter(letter_kind(r) for r in rows).most_common()
+    # the substances this year's letters name: one count per letter and substance (site.letter_substances)
+    subs = Counter()
+    for slug, letters in b.LETTER_SUBS.items():
+        subs[slug] = sum((x.get("letter_date") or "").startswith(year) for x in letters)
+    top = [(s, c) for s, c in subs.most_common() if c][:6]
+    named = len({x["letter_url"] for v in b.LETTER_SUBS.values() for x in v if (x.get("letter_date") or "").startswith(year)})
+    subj = Counter(re.sub(r"\s*\([^)]*\)$", "", b.clean(r["letter_subject"])) for r in rows if r.get("letter_subject")).most_common(4)
+    low = lambda n: n if any(ch.isdigit() or ch == "+" for ch in n) or n.isupper() else n.lower()  # "semaglutide", "BPC-157"
+    sub_words = and_list(f"{low(b.pep_short(s))} ({c})" for s, c in top[:3])
+    short = (f"From 1 January to {nice(on)}, the FDA sent {n} warning letters that our letters page tracks to peptide sellers, "
+             f"compounders and online clinics.{N('db-letters')} "
+             f"{kinds[0][1]} went to {kinds[0][0].lower()}. "
+             + (f"The substances named most were {sub_words}.{N('db-letters')} " if top else "")
+             + (f"The busiest months were {busiest[0][0].split()[0]} ({busiest[0][1]}) and {busiest[1][0].split()[0]} ({busiest[1][1]}). "
+                if len(busiest) > 1 else "")
+             + f"A letter asks the company to reply within 15 business days with the steps it took to fix the problems.{N('fda-wl-ruo')}")
+    sub_rows = [(pep_link(b, s, b.pep_short(s)), f'<a href="{b.LETTERS_URL}?sub={s}">{c}</a>') for s, c in top]
+    body = f"""
+<h2>How many letters were there this year?</h2>
+<p>Our letters page lists every FDA warning letter we find that names a peptide or goes to a seller in our database. This year it holds {n}, out of {f['letters']} since {nice(f['letters_oldest'])}.{N('db-letters')} The FDA posts its letters on fda.gov, where you can search them all.{N('fda-wl-list')}</p>
+<p>By the month on the letter:</p>
+{count_table(f"FDA warning letters to peptide sellers by month, {year}", ("Month", "Letters"), month_rows)}
+<p>Letters come in waves. The FDA often sends many on the same day to companies selling the same kind of product, so one busy month can hold most of a year.</p>
+
+<h2>Which kinds of seller got them?</h2>
+<p>We sort each letter by the seller we matched it to, or by the FDA's own subject when it says "Telehealth" or "Compounding Pharmacy":</p>
+{count_table(f"FDA warning letters by kind of seller, {year}", ("Kind of seller", "Letters"), kinds)}
+<p>Online clinics sell a prescription after a visit; research-use shops sell vials labeled not for people. Our guide <a href="/learn/online-clinic-vs-research-shop/">Online clinic vs research-use shop</a> explains the difference.</p>
+
+<h2>Which substances do the letters name?</h2>
+""" + (f"""<p>{named} of this year's letters name at least one substance we track. Many name more than one, so the counts add up to more than the letters:{N('db-letters')}</p>
+{count_table(f"Substances named in FDA warning letters, {year}", ("Substance", "Letters"), sub_rows)}
+<p>Each count opens the letters that name it. Each name opens our page on that substance, with its FDA status.</p>""" if top else "<p>We show the substances once our database has read this year's letters.</p>") + f"""
+<p>{"Semaglutide and tirzepatide are FDA approved as brand medicines, so these letters are about copies of them or about how they were sold. " if {"semaglutide", "tirzepatide"} <= {x for x, _ in top} else ""}The FDA says it has warned companies selling these drugs labeled "for research purposes" or "not for human consumption".{N('fda-glp1-concerns')}</p>
+
+<h2>What did the letters say was wrong?</h2>
+<p>Every letter has a subject, the FDA's short label for the problem. The most common this year:</p>
+<ul>{"".join(f"<li>{escape(s)}: {c}</li>" for s, c in subj)}</ul>
+<p>"Misbranded" means the label or the website says something the FDA believes is false or not allowed. "Unapproved new drug" means a product sold as a medicine without FDA approval.{N('fda-letters')} Our guide <a href="/learn/what-an-fda-warning-letter-means/">What an FDA warning letter means</a> explains the words.</p>
+
+<h2>What does a letter ask the company to do?</h2>
+<p>The company is asked to reply in writing within 15 business days, with the steps it took to correct each problem, how it will stop them from happening again and copies of its papers. If it believes it did nothing wrong, it can send its reasons instead.{N('fda-wl-ruo')}</p>
+<p>When the FDA has checked that the problems were really fixed, usually with a follow-up inspection, it may send a close-out letter. A promise to fix is not enough.{N('fda-letters')}</p>
+
+<h2>What does this mean for you?</h2>
+<p>A letter is the FDA's view at the time, not a court ruling. A seller with a letter is still listed on our pages, with the letter linked, so you can read it and decide. Our <a href="/weight-loss/">weight loss page</a> shows each clinic's newest letter, and every <a href="/peptides/">peptide page</a> counts the letters that name it.</p>
+<p>This page counts again each time we pull our data. None of this is legal or medical advice.</p>"""
+    nxt = ((b.LETTERS_URL, "See FDA warning letters"), ("/learn/what-an-fda-warning-letter-means/", "What a letter means"))
+    return short, body, nxt
+
+
+def g_bpc_price(b, f, N):
+    s = f["subs"].get("bpc-157") or {}
+    win = [r for r in b.seller_rows("bpc-157") if r.get("price_per_mg") is not None]
+    letters = len(b.LETTER_SUBS.get("bpc-157", [])) if b.LETTER_SUBS_ON else None
+    rng = ""
+    if s.get("ppm_min") is not None and s.get("ppm_max") is not None:
+        rng = (f"Across the {s['shops']} shops that list BPC-157, prices run from {b.per_mg(s['ppm_min'])} to {b.per_mg(s['ppm_max'])} "
+               f"per mg, with a middle price of {b.money(s['ppm_median'])}.{N('db-sellers')}")
+    elif s.get("ppm_median") is not None:
+        rng = (f"Across the {s['shops']} shops that list BPC-157, the middle price is {b.money(s['ppm_median'])} per mg."
+               f"{N('db-sellers')}")
+        if win:
+            lo, hi = min(r["price_per_mg"] for r in win), max(r["price_per_mg"] for r in win)
+            rng += f" The {len(win)} shops in our window charge {b.per_mg_range(lo, hi)} per mg.{N('db-sellers')}"
+    st = db_sentence(b, "bpc-157", N)
+    short = ((rng + " " if rng else "")
+             + "Price per mg is the price of a vial divided by the amount of peptide the shop says is in it; it says nothing about "
+             "what is really in the vial. "
+             + (f"BPC-157 is not FDA approved: {st} " if st else "BPC-157 is not FDA approved for any use. ")
+             + (("No FDA warning letter we track names it." if not letters else "One FDA warning letter we track names it." if letters == 1
+                 else f"{letters} FDA warning letters we track name it.") + N('db-letters') if letters is not None else ""))
+    coa = sum(bool(r.get("has_coa")) for r in win)
+    items = "".join(
+        f'<tr><td>{b.clinic_link(r["seller_slug"], b.seller_base(b.clean(b.SELLERS.get(r["seller_slug"], {}).get("seller_name") or r["seller_name"])))}</td>'
+        f'<td data-l="Per mg"><span class="num">{b.per_mg(r["price_per_mg"])}</span></td>'
+        f'<td data-l="Vial">{escape(b.clean(r.get("variant_title") or "")) or "not stated"}</td>'
+        f'<td data-l="Lab report">{"yes" if r.get("has_coa") else "none found"}</td>'
+        f'<td data-l="Checked">{nice(r["price_observed_at"]) if r.get("price_observed_at") else "not known"}</td></tr>' for r in win)
+    table = (f'<div class="tbl-wrap"><table class="tbl tbl-cards"><caption class="vh">BPC-157 listings in our window</caption><thead><tr>'
+             f'<th scope="col">Shop</th><th scope="col">Per mg</th><th scope="col">Vial</th><th scope="col">Lab report</th>'
+             f'<th scope="col">Checked</th></tr></thead><tbody>{items}</tbody></table></div>') if win else ""
+    body = f"""
+<h2>What do shops charge per mg?</h2>
+<p>{rng or "We show the price per mg once our price crawl has BPC-157 listings."} The middle price is the one in the middle when all listings are put in order, so a few very cheap or very dear vials do not pull it.</p>
+<p>We crawl the shops' own pages for the price and the amount on the label. We never link to a research-use shop, and we do not sell anything.</p>
+
+<h2>How do we work out the price per mg?</h2>
+<p>We take the listed price and divide it by the amount of BPC-157 the label gives. A pack of ten 10 mg vials counts as 100 mg. Blends, listings with no amount and prices outside $0.01 to $100 per mg, which are almost always a typing error on the shop's page, are left out of the range.</p>
+<p>Prices change. Our Fresh prices check counts a shop's prices as current when our crawl saw one in the last 30 days, and each row below shows the day we last saw that price.{N('own-how-we-rate')}</p>
+
+<h2>Which shops are in our window?</h2>
+""" + (f"""<p>On our <a href="/recovery/">recovery page</a>, the BPC-157 row opens a window with the cheapest listing of each shop, up to ten, ordered by the shop's checks. Today it holds these {len(win)}:{N('db-sellers')}</p>
+{table}
+<p>Each name opens our page on that shop, with its five checks. {coa} of the {len(win)} listings have a lab report we could find.</p>""" if win else "<p>We show the shops once our price crawl has BPC-157 listings.</p>") + f"""
+
+<h2>Why is price per mg not the whole story?</h2>
+<ul>
+<li><strong>Vial size.</strong> A big vial or a pack of vials often has a lower price per mg. Compare the same size, or compare the whole price.</li>
+<li><strong>The amount is the shop's word.</strong> The mg on the label is what the shop says. Only a test of that batch shows what is in the vial.</li>
+<li><strong>Blends.</strong> A vial that mixes BPC-157 with TB-500 or another peptide rarely says how much of each is in it, so we leave blends out of the price per mg.</li>
+<li><strong>Shipping and extras.</strong> The price we see is the listed price, before shipping, taxes or a coupon.</li>
+</ul>
+
+<h2>What does a lab report cover?</h2>
+<p>A certificate of analysis (COA) is a lab's test of one batch: how pure it was and, if tested, how much peptide was in the vial. It covers that batch only, tested once, and it is worth more when a lab outside the shop did the test. Our guide <a href="/learn/how-to-read-a-coa/">How to read a peptide COA</a> shows each line.</p>
+<p>{f"Of the {f['sellers']} research-use and cosmetic shops we check, {f['coa_12m']} posted a lab report in the last 12 months.{N('db-sellers')}" if f['coa_12m'] is not None else ""}</p>
+
+<h2>What does a low price leave out?</h2>
+<p>A low price per mg does not mean a good buy. BPC-157 is not approved for use in people, and the FDA found little or no information on its safety in people.{N('fda-bulk-risks')} The cheapest vial and the dearest one share that.</p>
+<p>Our five checks (Lab reports, No FDA letter, Company found, Legal pages, Fresh prices) tell you facts about the shop, not about the vial.{N('own-how-we-rate')} Our <a href="/peptides/bpc-157/">BPC-157 page</a> has its FDA status and the letters that name it, and our guide <a href="/learn/is-bpc-157-legal/">Is BPC-157 legal?</a> explains the July 2026 review.</p>
+<p>We do not give doses. None of this is medical advice.</p>"""
+    nxt = (("/recovery/", "Compare recovery options"), ("/learn/how-to-read-a-coa/", "How to read a COA"))
+    return short, body, nxt
+
+
+def g_oz_weg(b, f, N):
+    plans = sorted((r for r in b.PLANS if r["substance_slug"] == "semaglutide" and r.get("product_kind") in b.BRANDED
+                    and r.get("price_monthly") is not None), key=lambda r: (float(r["price_monthly"]), r["seller_name"]))
+    oz = [r for r in plans if b.brand_base(r["plan_name"]) == "Ozempic"]
+    weg = [r for r in plans if b.brand_base(r["plan_name"]) == "Wegovy"]
+    ref = lambda r: N(pkey(r))
+    low = lambda rows, name: f"{name} from {b.usd(rows[0]['price_monthly'])} a month ({b.care_note(rows[0])}){ref(rows[0])}" if rows else ""
+    parts = [x for x in (low(weg, "Wegovy"), low(oz, "Ozempic")) if x]
+    short = ("Ozempic and Wegovy both contain semaglutide. Ozempic is FDA approved for blood sugar in adults with type 2 diabetes; "
+             f"Wegovy is FDA approved for weight management.{N('label-ozempic')}{N('label-wegovy')} "
+             + (f"At the online clinics we track, brand plans start at: {and_list(parts)}. " if parts else "")
+             + "Some clinics add a monthly care fee on top, so compare the total.")
+    fees = [r for r in plans if r.get("membership_fee_monthly") is not None and float(r["membership_fee_monthly"]) > 0]
+    table = plan_table(b, plans, N, "glp1") if plans else "<p>We show the brand plans once the clinic plans are in our database.</p>"
+    newest = max((r["last_seen"] for r in plans), default=None)
+    both = sorted({r["seller_slug"] for r in oz} & {r["seller_slug"] for r in weg})
+    only_weg = sorted({r["seller_slug"] for r in weg} - {r["seller_slug"] for r in oz})
+    name = lambda slug: b.clinic_link(slug, b.seller_base(next(r["seller_name"] for r in plans if r["seller_slug"] == slug)), True)
+    both_html = ""
+    if oz and weg:
+        both_html = ("<h2>Which clinics sell which?</h2><p>"
+                     + (f"{and_list(name(x) for x in both)} {'sells' if len(both) == 1 else 'sell'} both. " if both else
+                        "No clinic we track sells both. ")
+                     + (f"{and_list(name(x) for x in only_weg)} {'sells' if len(only_weg) == 1 else 'sell'} Wegovy only. " if only_weg else "")
+                     + f"{len({r['seller_slug'] for r in plans})} clinics in all sell a brand semaglutide plan, out of the "
+                     f"{len(b.CLINIC_PROFILES) or len({r['seller_slug'] for r in b.PLANS})} online clinics we track.{N('own-sellers')}</p>")
+    body = f"""
+<h2>Why does the same medicine have two names?</h2>
+<p>Ozempic and Wegovy have the same active ingredient, semaglutide, and the same maker.{N('label-ozempic')}{N('label-wegovy')} They were approved for different uses, after different trials, so they carry different labels, different strengths and different dosing schedules. The label is the FDA-approved text that says what a medicine is for.{N('fda-approval')}</p>
+<p>Semaglutide is a peptide, but it is not a research-use peptide: these are approved medicines, sold on a prescription. Our <a href="/peptides/semaglutide/">semaglutide page</a> has its FDA status and the warning letters that name it.</p>
+
+<h2>What is each one approved for?</h2>
+<ul>
+<li><strong>Ozempic</strong>: to improve blood sugar in adults with type 2 diabetes, along with diet and exercise, and to lower heart risk in some of them.{N('label-ozempic')}</li>
+<li><strong>Wegovy</strong>: to reduce excess body weight and keep it off in adults with obesity, or with overweight and a weight-related condition, and to lower the risk of heart attack and stroke in some adults.{N('label-wegovy')}</li>
+</ul>
+<p>Some clinics sell Ozempic plans to people without diabetes. That is a prescriber's choice outside the label, and your prescriber can tell you which fits you.</p>
+
+<h2>What do online clinics charge?</h2>
+<p>Every brand semaglutide plan at the online clinics we track, cheapest first{f", checked {nice(newest)}" if newest else ""}. Under each price is the care fee:</p>
+{table}
+<p>A clinic with an FDA warning letter is still listed; the chip opens our <a href="{b.LETTERS_URL}">letters page</a>. Each clinic's name opens our page on it. We do not link to clinic sites from this guide.</p>
+
+<h2>What does the care fee add?</h2>
+<p>"All-in" means the price covers the prescriber and the check-ins. A monthly amount means a fee on top of the medicine. "Care fee not known" means the clinic's page did not say.{f" {len(fees)} of the {len(plans)} plans above add a fee on top." if fees else ""} Add the fee before you compare two plans.</p>
+
+<h2>Why do the prices differ so much?</h2>
+<p>Clinic prices follow what the clinic pays for the brand and how it bills, and some plans are for a pen while others are for a pill. Check the plan name in the table to see which form a price is for, and ask whether the price changes as the dose goes up.</p>
+
+{both_html}
+<h2>What should you ask a clinic?</h2>
+<ul>
+<li>Is the plan for Ozempic or Wegovy, a pen or a pill? The plan name says, and the label says what each is approved for.{N('label-wegovy')}</li>
+<li>Is the price the same at every dose, or does it go up as the dose goes up?</li>
+<li>Is there a care fee on top, and is there a minimum number of months?</li>
+<li>Has the clinic had an FDA warning letter? Our <a href="/weight-loss/">weight loss page</a> shows the newest one for each clinic.</li>
+</ul>
+
+<h2>What about compounded semaglutide?</h2>
+<p>This guide covers the brands only. A compounded semaglutide is a pharmacy-made copy; it is not FDA approved, and the FDA does not check it before it is sold.{N('fda-compounding')} Our guide <a href="/learn/compounded-semaglutide-price/">Compounded semaglutide price</a> lists those plans, and <a href="/learn/semaglutide-vs-tirzepatide-price/">Semaglutide vs tirzepatide</a> compares the two medicines.</p>
+<p>None of this is medical advice.</p>"""
+    nxt = (("/weight-loss/", "Compare clinic prices"), ("/learn/compounded-semaglutide-price/", "Compounded semaglutide guide"))
+    return short, body, nxt
+
+
+def g_fin_minox(b, f, N):
+    plans = f["hair_plans"]
+    fin_st, min_st = db_sentence(b, "finasteride", N), db_sentence(b, "minoxidil", N)
+    low = plans[0] if plans else None
+    short = ("Finasteride (a tablet, on a prescription) and minoxidil (on the scalp, without a prescription) are the two FDA-approved "
+             f"medicines for male pattern hair loss.{N('medline-finasteride')}{N('medline-minoxidil')} In two one-year trials in "
+             f"1,553 men, finasteride raised hair counts above placebo, while men on placebo kept losing hair.{N('pm-kaufman')} In a "
+             f"48-week trial in 393 men, 5% minoxidil beat 2% minoxidil and placebo on hair counts.{N('pm-olsen')} Neither is a peptide."
+             + (f" At the online clinics we track, hair plans start at {b.usd(low['price_monthly'])} a month "
+                f"({b.seller_base(low['seller_name'])}, {low['plan_name']}).{N(pkey(low))}" if low else ""))
+    cmp = ('<a href="/compare/finasteride-vs-minoxidil/">finasteride and minoxidil side by side</a>'
+           if any(p[0] == "/compare/finasteride-vs-minoxidil/" for p in b.PAGES) else "")
+    body = f"""
+<h2>What are finasteride and minoxidil?</h2>
+<p><strong>Finasteride</strong> is a tablet. It blocks the body from making a male hormone in the scalp that stops hair growth. It is only for use in men.{N('medline-finasteride')} {f"In our database: {fin_st}" if fin_st else ""}</p>
+<p><strong>Minoxidil</strong> is a liquid or foam put on the scalp. It is meant to grow hair and slow balding, and works best in people under 40 whose hair loss is recent; it has no effect on a receding hairline.{N('medline-minoxidil')} {f"In our database: {min_st}" if min_st else ""}</p>
+<p>Neither one is a peptide. They are small-molecule medicines, and they are here because they are what a peptide sold for hair has to be compared with. Our <a href="/hair/">hair page</a> puts them next to the peptides sold for hair.</p>
+
+<h2>What did the finasteride trials show?</h2>
+<p>In two trials of one year, 1,553 men aged 18 to 41 with male pattern hair loss took finasteride or a placebo; 1,215 of them went on for a second year.{N('pm-kaufman')}</p>
+<p>The researchers counted hairs in a circle one inch across on the crown, where the men started with about 876 hairs. Men on finasteride had 107 more hairs than men on placebo after one year and 138 more after two. Men on placebo kept losing hair. The men's own ratings, the doctors' ratings and photos all pointed the same way.{N('pm-kaufman')}</p>
+
+<h2>What did the minoxidil trial show?</h2>
+<p>In a 48-week trial, 393 men aged 18 to 49 used 5% minoxidil, 2% minoxidil or a placebo liquid. The 5% solution did better than both on hair counts and on how the men and the doctors rated scalp coverage, and it worked sooner than the 2% one.{N('pm-olsen')} Itching and irritation of the scalp were more common with the 5% solution.{N('pm-olsen')}</p>
+
+<h2>What do they not do?</h2>
+<ul>
+<li>Both work only while you use them. Hair that grew back on finasteride is likely lost within 12 months of stopping;{N('medline-finasteride')} most new hair from minoxidil is lost within a few months.{N('medline-minoxidil')}</li>
+<li>Both take months. Finasteride may take at least 3 months to show; if 12 months show nothing, more probably will not help.{N('medline-finasteride')}</li>
+<li>Finasteride can lower sexual desire and cause erection and ejaculation problems, during and after treatment. Women who are or may become pregnant should not touch broken tablets.{N('medline-finasteride')}</li>
+</ul>
+
+<h2>What do online clinics charge?</h2>
+""" + (f"""<p>Every finasteride and minoxidil plan at the online clinics we track, cheapest first. Some are pharmacy-made mixes of both, which are not FDA approved as a mix:</p>
+{plan_table(b, plans, N, "hair")}
+<p>Each clinic's name opens our page on it, with its checks. A clinic with an FDA warning letter is still listed, and the chip opens our <a href="{b.LETTERS_URL}">letters page</a>.</p>""" if plans else "<p>We show the clinic plans once they are in our database.</p>") + f"""
+
+<h2>Which one should you use?</h2>
+<p>That is a question for a prescriber, who will ask about your hair loss, your health and whether you plan children. Some people use both. {f"Our comparison page puts {cmp}, with their FDA status, and our guide" if cmp else "Our guide"} <a href="/learn/peptides-for-hair-loss-what-works/">Peptides for hair loss</a> shows what the peptides sold for hair have behind them. Every substance has its own page under <a href="/peptides/">Peptides A to Z</a>.</p>
+<p>We do not give doses. None of this is medical advice.</p>"""
+    nxt = (("/hair/", "Compare hair options"), ("/learn/peptides-for-hair-loss-what-works/", "Peptides for hair loss guide"))
+    return short, body, nxt
+
+
+def g_ruo(b, f, N):
+    shops = list(b.SHOPS.values())
+    ruo = [r for r in shops if r.get("seller_kind") == "S1_RUO"]
+    terms = [r for r in ruo if r.get("terms_seen")] if any("terms_seen" in r for r in ruo) else None
+    legal = [r for r in ruo if r.get("score_legal_pages")]
+    short = ("\"Research use only\" is wording the seller puts on its own label. It is not an FDA approval and says nothing about "
+             "what is in the vial. The FDA looks at how a product is sold: in its letters it says that when a website shows the "
+             f"product is meant for people, the label does not change that.{N('fda-wl-ruo')}"
+             + (f" {f['ruo_letters']} of the FDA warning letters on our letters page went to research-use peptide shops.{N('db-letters')}"
+                if f["letters"] else ""))
+    pages = ""
+    if ruo:
+        pages = f"<p>We track {len(ruo)} research-use peptide shops.{N('own-sellers')} "
+        if terms is not None:
+            pages += f"Our crawler found a terms page on {len(terms)} of them. "
+        pages += (f"{len(legal)} meet our Legal pages check: a terms page and a privacy or refund page, seen in the last 30 days."
+                  f"{N('own-how-we-rate')}</p>")
+    who = (f'Of the {f["letters"]} letters on our <a href="{b.LETTERS_URL}">letters page</a>, {f["ruo_letters"]} went to '
+           f'research-use peptide shops.{N("db-letters")}') if f["letters"] else "Our letters page lists them."
+    body = f"""
+<h2>What does the label say?</h2>
+<p>Research-use shops label their vials with words such as "research use only", "for laboratory use" or "not for human consumption". The shop writes these words itself; no regulator gives or checks them.</p>
+<p>An approved medicine is different: its maker sent the FDA trial data and the FDA found the benefits outweigh the known risks for the people it is meant for.{N('fda-approval')} A research-use vial has been through none of that.</p>
+
+<h2>What does the FDA say about it?</h2>
+<p>The FDA looks at what a product is meant for, from all of the seller's words and pages, not only the label. In an August 2026 letter to a peptide shop, it said that despite the shop's "for laboratory, research, and analytical use" wording, its website showed the products were meant as drugs for people. The letter pointed to a "peptide calculator" sold alongside mixing water.{N('fda-wl-ruo')}</p>
+<p>The FDA has also warned companies selling GLP-1 drugs labeled "for research purposes" or "not for human consumption" that were in fact sold to people with dosing instructions, and it urges people not to buy them.{N('fda-glp1-concerns')}</p>
+
+<h2>What do the shops' own pages say?</h2>
+{pages or "<p>We show how many shops have terms pages once our crawler has read them.</p>"}
+<p>A shop's terms page often repeats the research-only wording and asks the buyer to agree that the product is not for people. Having the page says nothing about what it promises; read the refund part before you trust it.</p>
+
+<h2>Why do shops use the label?</h2>
+<p>A product sold as a medicine for people needs FDA approval before it is sold.{N('fda-approval')} The research-only label is the shop's way of saying its vial is not a medicine. The FDA's letters show it does not accept that when the rest of the site, such as dosing charts, mixing guides or claims about what the peptide does, points the other way.{N('fda-wl-ruo')}</p>
+
+<h2>Which shops have had letters?</h2>
+<p>{who} A letter is the FDA's view at the time, not a court ruling; our guide <a href="/learn/what-an-fda-warning-letter-means/">What an FDA warning letter means</a> explains what happens next.</p>
+
+<h2>What should a buyer take from it?</h2>
+<ul>
+<li>The label tells you the product was not made, tested or approved for people. Read it as a warning, not as a loophole.</li>
+<li>There is no dose on the box, no prescriber and no pharmacy behind it, and no one to call if something goes wrong.</li>
+<li>A lab report, if there is one, covers one batch; our guide <a href="/learn/how-to-read-a-coa/">How to read a COA</a> shows what it can and cannot tell you.</li>
+</ul>
+<p>For most peptides sold this way, such as BPC-157 and TB-500, there is no approved version at all. Each one's page under <a href="/peptides/">Peptides A to Z</a> shows its FDA status, and our <a href="/recovery/">recovery page</a> puts them next to the usual treatments.</p>
+
+<h2>How do we show research-use shops?</h2>
+<p>We list them so you can see the facts, never to sell. We do not link to any research-use shop, we take no money from them and they get no Paid link. Each one has a page with its five checks, and the seller windows on our goal pages show its prices next to the others.{N('own-how-we-rate')}</p>
+
+<h2>Is it legal to buy?</h2>
+<p>The FDA's letters go to sellers, not to people who buy for themselves. What the law means for you as a buyer is a legal question, and a lawyer can answer for your state. Our guide <a href="/learn/are-peptides-legal-in-the-us/">Are peptides legal in the US?</a> explains the four kinds of peptide.</p>
+<p>None of this is legal or medical advice.</p>"""
+    nxt = (("/recovery/", "Compare recovery options"), ("/learn/are-peptides-legal-in-the-us/", "Are peptides legal? guide"))
+    return short, body, nxt
+
+
+def g_by_numbers(b, f, N):
+    shops = list(b.SHOPS.values())
+    scored = [r for r in shops if r.get("score") is not None]
+    on = max((r.get("score_checked_on") or "" for r in scored), default="")
+    total = len(scored)
+    clinics = list(b.CLINIC_PROFILES.values())
+    c_letter = [r for r in clinics if (r.get("fda_letter_count") or 0) > 0]
+    s_letter = [r for r in scored if not r.get("score_no_fda_letter")]
+    if not total:
+        short = "We show these numbers once our seller checks are in our database."
+        return short, "<h2>Where are the numbers?</h2><p>This page fills in from our database.</p>", \
+            (("/how-we-rate/", "How we rate"), ("/learn/how-we-check-sellers/", "How we check sellers"))
+    met = [(t, sum(bool(r.get(k)) for r in scored)) for k, t in b.SCORE_CHECKS]
+    spread = Counter(r["score"] for r in scored)
+    mid = sorted(r["score"] for r in scored)[total // 2]
+    coa, letter, company = (dict(met).get(x, 0) for x in ("Lab reports", "No FDA letter", "Company found"))
+    short = (f"As of {nice(on)}, we check {total} peptide shops.{N('own-sellers')} {coa} meet our Lab reports check, {letter} have no FDA "
+             f"warning letter matched to them and {company} have a company we found in a state registry.{N('own-sellers')} The middle "
+             f"score is {mid} of 5."
+             + (f" {len(c_letter)} of the {len(clinics)} online clinics we track have at least one FDA warning letter.{N('own-sellers')}"
+                if clinics else ""))
+    check_rows = [(t, n, f"{round(100 * n / total)}%") for t, n in met]
+    ruo = sum(r.get("seller_kind") == "S1_RUO" for r in scored)
+    cos = sum(r.get("seller_kind") == "S4_SUPPLEMENT_COSMETIC" for r in scored)
+    kinds_words = (f"Of the {total} shops, {ruo} sell research-use peptides, labeled not for people, and {cos} sell supplements "
+                   f"or cosmetics with peptides in them.{N('own-sellers')} Our guide <a href=\"/learn/what-research-use-only-means/\">"
+                   "What research use only means</a> explains the label." if ruo or cos else "")
+    spread_rows = [(f"{s} of 5", spread.get(s, 0)) for s in range(5, -1, -1)]
+    body = f"""
+<h2>What are these numbers?</h2>
+<p>Every peptide shop we track gets the same five yes or no checks: Lab reports, No FDA letter, Company found, Legal pages and Fresh prices. The score is how many it meets.{N('own-how-we-rate')} This page counts them again each time we pull our data; these numbers are as of {nice(on)}.</p>
+<p>Our guide <a href="/learn/how-we-check-sellers/">How we check sellers</a> explains each check with an example.</p>
+
+<h2>Which kinds of shop are they?</h2>
+<p>{kinds_words}</p>
+
+<h2>How many shops meet each check?</h2>
+{count_table(f"Peptide shops meeting each check, {nice(on)}", ("Check", "Shops", f"Of {total}"), check_rows)}
+<p>A miss is not a finding against a shop, except for one: a missed "No FDA letter" means the FDA sent the shop a letter. {len(s_letter)} {"shop has" if len(s_letter) == 1 else "shops have"} one; each one's page links its letter.{N('own-sellers')}</p>
+
+<h2>How are the scores spread?</h2>
+{count_table(f"Peptide shops by score, {nice(on)}", ("Score", "Shops"), spread_rows)}
+<p>Half the shops score {mid} or less. The score is a count of facts we found, not a safety or quality grade: a shop with five of five still sells a product that is not approved for use in people.{N('own-how-we-rate')}</p>
+
+<h2>What does each check measure?</h2>
+<ul>
+<li><strong>Lab reports</strong>: at least one lab report dated in the last 12 months, for any product.</li>
+<li><strong>No FDA letter</strong>: no warning letter matched to the shop by web address or street address.</li>
+<li><strong>Company found</strong>: the business behind the shop found in a state registry, with high confidence.</li>
+<li><strong>Legal pages</strong>: a terms page and a privacy or refund page, seen in the last 30 days.</li>
+<li><strong>Fresh prices</strong>: a price per mg seen by our crawl in the last 30 days.</li>
+</ul>
+<p>The time windows are fixed, so a shop can lose a check without changing anything, simply because its newest lab report or price got older.{N('own-how-we-rate')}</p>
+<p>A met Lab reports check means a report exists, not that every product was tested. A report covers one batch, tested once, and it means more when a lab outside the shop did the test. Our guide <a href="/learn/how-to-read-a-coa/">How to read a peptide COA</a> shows what each line on a report means and what to check before you trust it.</p>
+
+<h2>Why can a real company show as not found?</h2>
+<p>Many shops do not name the business behind them, and we match a company only with high confidence. We do not search every state registry yet, so a real company can still show as not found.{N('own-how-we-rate')} Our guide <a href="/learn/how-to-check-a-peptide-seller/">How to check a peptide seller yourself</a> shows how to look one up.</p>
+
+<h2>What about online clinics?</h2>
+""" + (f"""<p>We track {len(clinics)} online clinics.{N('own-sellers')} {len(c_letter)} of them have at least one FDA warning letter matched to them by web address or street address.</p>
+<p>A clinic with a letter is still listed, and our <a href="/weight-loss/">weight loss page</a> shows the date of its newest one.</p>""" if clinics else "<p>We show the clinic numbers once they are in our database.</p>") + f"""
+
+<h2>Where can you see each seller?</h2>
+<p>Our <a href="/sellers/">sellers list</a> shows every shop and clinic with its score, and each seller's page shows its five checks with their dates. The seller windows on our goal pages, such as the <a href="/recovery/">recovery page</a>, show the shops for one peptide, and every substance has its own page under <a href="/peptides/">Peptides A to Z</a>.</p>
+<p>Paid links do not change a check, and nobody can buy a higher score.{N('own-how-we-rate')}</p>"""
+    nxt = (("/sellers/", "See all sellers"), ("/learn/how-we-check-sellers/", "How we check sellers"))
+    return short, body, nxt
+
 
 TEXTS = {"is-bpc-157-legal": g_bpc, "are-peptides-safe": g_safe, "how-to-read-a-coa": g_coa,
          "compounded-vs-brand-glp-1": g_glp1, "what-an-fda-warning-letter-means": g_letter,
@@ -1701,7 +2130,10 @@ TEXTS = {"is-bpc-157-legal": g_bpc, "are-peptides-safe": g_safe, "how-to-read-a-
          "peptides-for-skin-what-works": g_skin, "how-we-check-sellers": g_checks,
          "peptides-for-recovery-and-joints": g_joints, "peptides-for-libido-what-is-approved": g_libido,
          "longevity-peptides-epitalon-mots-c-nad": g_longevity, "online-clinic-vs-research-shop": g_clinic_shop,
-         "what-is-a-503a-pharmacy": g_503a, "how-to-check-a-peptide-seller": g_self_check}
+         "what-is-a-503a-pharmacy": g_503a, "how-to-check-a-peptide-seller": g_self_check,
+         "fda-warning-letters-peptides-2026": g_letters_year, "cheapest-bpc-157-per-mg": g_bpc_price,
+         "ozempic-vs-wegovy-price": g_oz_weg, "finasteride-vs-minoxidil": g_fin_minox,
+         "what-research-use-only-means": g_ruo, "peptide-seller-checks-by-the-numbers": g_by_numbers}
 
 
 def article_schema(b, g):
