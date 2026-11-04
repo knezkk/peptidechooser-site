@@ -322,6 +322,7 @@ p { margin: 0 0 1em; }
 /* Tables */
 .tbl .act { text-align: right; }
 .tbl .chip { white-space: nowrap; }
+@media (max-width: 640px) { .tbl-cards .chip { white-space: normal; max-width: 100%; } } /* a card is the phone's width: a long chip ("Limited: lab and follicle-culture studies") wraps inside it (deploy 4 Nov 2026) */
 .tbl .name { font: 600 var(--ui-size) var(--font-text); }
 .tbl .note { display: block; font-size: var(--small-size); color: var(--ink-2); }
 
