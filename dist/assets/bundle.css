@@ -536,6 +536,7 @@ p.not-in{margin:4px 0 0}
 .tool-row p{flex:1 1 320px;margin:0}
 /* A real logo beside a clinic's H1 (pages.md, Seller tile): 28px tall, its width its own, no frame. */
 .h1-logo{display:block;flex:none;height:28px;width:auto;max-width:140px;margin-top:8px}
+@media (max-width:639px){.seller-id:has(>.h1-logo){flex-direction:column;gap:8px}.h1-logo{margin-top:0}}
 /* What to do next: three text links between hairlines, no card. */
 .next-list{list-style:none;margin:0;padding:0}
 .next-list li{padding:10px 0;border-top:1px solid var(--line)}

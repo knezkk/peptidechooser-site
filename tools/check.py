@@ -953,6 +953,8 @@ def check_parts(P):
         e = logos.get(f.stem) or {}
         if not (e.get("logo_source") and e.get("logo_checked_at")):
             errs.append(f"assets/logos/{f.name}: no source and date in data/seller_logos.json")
+        if not (DIST / "assets" / "logos" / f.name).exists():
+            errs.append(f"assets/logos/{f.name}: not in the build")
     # Tools block (pages.md, Category): a coupon row stays hidden until its seller's data sets the flag; never a research-use shop
     for g in site.get("goals") or []:
         page = DIST / g["slug"] / "index.html"

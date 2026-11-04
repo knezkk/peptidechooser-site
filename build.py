@@ -4707,6 +4707,8 @@ def main():
     (DIST / "assets" / "fonts").mkdir()
     for f in (ROOT / "assets" / "fonts").iterdir():
         shutil.copy(f, DIST / "assets" / "fonts" / f.name)
+    if (ROOT / "assets" / "logos").exists():
+        shutil.copytree(ROOT / "assets" / "logos", DIST / "assets" / "logos")
     for f in (ROOT / "assets" / "og").glob("*.png"):
         shutil.copy(f, DIST / "assets" / "og" / f.name)
     (DIST / "assets" / "tokens.css").write_text(tokens_css(), encoding="utf-8")
