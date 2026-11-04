@@ -845,6 +845,25 @@ def seller_rows(slug, kind=None):
 SCORE_CHECKS = [("score_lab_testing", "Lab reports"), ("score_no_fda_letter", "No FDA letter"),
                 ("score_registered_company", "Company found"), ("score_legal_pages", "Legal pages"),
                 ("score_fresh_prices", "Fresh prices")]
+# Online clinics are scored out of 4 (owner decision C9, 3 Nov 2026; pages.md, Seller): they publish no lab reports, so
+# the lab check is never counted for a clinic. A score is never compared across the two kinds.
+CLINIC_RULE = ("Online clinics prescribe and ship medicines; they publish no lab reports, so a clinic is checked on four facts, "
+               "not five: no FDA warning letter, registered company, legal pages, fresh prices. A shop is checked on five. "
+               "A score is never compared across the two kinds.")
+
+
+def seller_checks(r):
+    """The checks this seller is scored on: a clinic's four, a shop's five."""
+    return SCORE_CHECKS[1:] if r["seller_slug"] in CLINIC_PROFILES else SCORE_CHECKS
+
+
+def score_of(r):
+    """A clinic's score: the count of its four met checks, from the booleans (the lab check never counts). A shop's: `score`."""
+    return sum(bool(r.get(k)) for k, _ in seller_checks(r)) if r["seller_slug"] in CLINIC_PROFILES else r.get("score")
+
+
+def out_of(r):
+    return len(seller_checks(r))
 
 
 def score_line(r):
@@ -1606,7 +1625,7 @@ CORRECTIONS = f"""
 
 # What we track (pages.md, Trust pages, About; owner task 2 Nov 2026): one line per count that site.json holds.
 _track = [f'<li><a href="/sellers/">{N_SELLERS} shops</a> that sell peptides online, each with its five checks.</li>' if N_SELLERS else "",
-          (f'<li><a href="/sellers/#clinics">{N_CLINICS} online clinics</a> with plan prices, each with its five checks.</li>' if N_CLINIC_PAGES
+          (f'<li><a href="/sellers/#clinics">{N_CLINICS} online clinics</a> with plan prices, each with its four checks.</li>' if N_CLINIC_PAGES
            else f"<li>{N_CLINICS} online clinics with plan prices.</li>") if N_CLINICS else "",
           (f'<li><a href="/fda-warning-letters/">{N_LETTERS} FDA warning letters</a> to peptide sellers, compounders and online clinics.</li>'
            if LETTERS_ALL else f"<li>{N_LETTERS} FDA warning letters to peptide sellers, compounders and online clinics.</li>") if N_LETTERS else "",
@@ -1651,10 +1670,11 @@ ABOUT = f"""
 HOW = f"""
 <section class="page"><div class="wrap prose">
 <h1>How we rate peptide products and sellers</h1>
-<p class="lede">We judge every seller by the same five checks and build every goal page by the same rule. The checks are facts we hold about a seller, not a safety grade.</p>
+<p class="lede">We judge every shop by five checks and every online clinic by four, and build every goal page by the same rule. The checks are facts we hold about a seller, not a safety grade.</p>
 <p class="small meta">{AUTHOR}. Last updated {STAMP_CHECKED}. Every claim links to its source. Prices checked {STAMP_CHECKED}.</p>
-<h2>The five seller checks</h2>
-<p>{f'We track <a href="/sellers/">{N_SELLERS} shops{f" and {N_CLINIC_PAGES} online clinics" if N_CLINIC_PAGES else ""}</a>. ' if N_SELLERS else ""}Every seller page and every price window shows a line such as "3 of 5 checks". These are the five, in the order the seller page shows them. We recompute all five each time we pull our data, and the seller page shows the date as "Checked" and a date{f"; the last pull was on {PULLED}" if PULLED else ""}.</p>
+<h2>The seller checks</h2>
+<p>{CLINIC_RULE}</p>
+<p>{f'We track <a href="/sellers/">{N_SELLERS} shops{f" and {N_CLINIC_PAGES} online clinics" if N_CLINIC_PAGES else ""}</a>. ' if N_SELLERS else ""}Every shop page and every price window shows a line such as "3 of 5 checks", every clinic page "3 of 4 checks". These are the five, in the order the seller page shows them; a clinic has all but the first. We recompute them each time we pull our data, and the seller page shows the date as "Checked" and a date{f"; the last pull was on {PULLED}" if PULLED else ""}.</p>
 <h3>Lab reports</h3>
 <p>Met when the seller has published at least one lab report (a certificate of analysis) dated in the last 12 months, for any of its products. We read the reports on the seller's own pages. A miss means we found no report from the last 12 months; it does not mean a product failed a test. A lab report shows what one batch contained on the day it was tested, not that a product is safe or that it works.</p>
 <h3>No FDA letter</h3>
@@ -2266,8 +2286,8 @@ def clinic_description(r):
     care = "care fee not known" if fee is None else "no care fee" if float(fee) == 0 else f"plus {usd(fee)}/mo care"
     price = f"{plural(len(plans), 'plan')} from {usd(plans[0]['price_monthly'])}/mo, {care}." if plans else ""
     on = nice_date(r["score_checked_on"]) if r.get("score_checked_on") else ""
-    score = f"{r['score']} of {len(SCORE_CHECKS)} checks met on {on}." if on else ""
-    checked = f"{r['score']} of {len(SCORE_CHECKS)} checks met." if on else ""
+    score = f"{score_of(r)} of {out_of(r)} checks met on {on}." if on else ""
+    checked = f"{score_of(r)} of {out_of(r)} checks met." if on else ""
     since = f"Tracked since {nice_date(r['first_seen'])}." if r.get("first_seen") else ""
     whats = ([subs[0] if len(subs) == 1 else ", ".join(subs[:-1]) + " and " + subs[-1], f"{len(subs)} medicines"] if len(subs) > 1
              else [subs[0]] if subs else [""])
@@ -2337,7 +2357,7 @@ def check_lines(r):
     return dict(zip([k for k, _ in SCORE_CHECKS], (lab, letter, company, legal, fresh)))
 
 
-CLINIC_LAB_LINE = '<p class="check-nolab">Online clinics prescribe; they do not publish lab reports, so a clinic meets at most 4 of the 5 checks.</p>'
+CLINIC_LAB_LINE = '<p class="check-nolab">Online clinics prescribe and publish no lab reports, so a clinic is checked on four facts, not five.</p>'
 
 
 def card_chip(k, t, r):
@@ -2355,11 +2375,12 @@ def card_chip(k, t, r):
 
 def check_card(r):
     """Background check card (pages.md, Seller; owner task 3 Nov 2026): a summary in the right column, sticky from 900px.
-    The five checks as one chip each, the name only: their facts and dates live in the legit section, once."""
-    rows = "".join(f"<li>{card_chip(k, t, r)}</li>" for k, t in SCORE_CHECKS)
+    The seller's checks as one chip each (a shop's five, a clinic's four), the name only: their facts and dates live in the
+    legit section, once."""
+    rows = "".join(f"<li>{card_chip(k, t, r)}</li>" for k, t in seller_checks(r))
     return f"""
       <div class="board check-card" aria-labelledby="check-h">
-        <div class="check-head"><h2 id="check-h">Background check</h2><p class="check-n"><span class="num-xl">{r["score"]}</span> <span class="num-unit">of {len(SCORE_CHECKS)} checks</span></p></div>
+        <div class="check-head"><h2 id="check-h">Background check</h2><p class="check-n"><span class="num-xl">{score_of(r)}</span> <span class="num-unit">of {out_of(r)} checks</span></p></div>
         <ul class="check-chips">{rows}</ul>{CLINIC_LAB_LINE if r["seller_slug"] in CLINIC_PROFILES else ""}
         <div class="rx-foot"><span class="stamp">Checked {nice_date(r["score_checked_on"])}</span><span class="fine">Checks are facts we hold about the seller, not a safety or quality grade.</span></div>
         <p class="check-how"><a href="/how-we-rate/">How we rate</a></p>
@@ -2473,7 +2494,7 @@ def card_count(x):
 
 def similar_section(r):
     """"Similar sellers" under the card (owner task 3 Nov 2026): the three sellers similar_sellers picks, as small links."""
-    items = "".join(f'<li><a href="/sellers/{x["seller_slug"]}/">{seller_name(x)}</a> · {x["score"]} of {len(SCORE_CHECKS)} checks</li>'
+    items = "".join(f'<li><a href="/sellers/{x["seller_slug"]}/">{seller_name(x)}</a> · {score_of(x)} of {out_of(x)} checks</li>'
                     for x in similar_sellers(r))
     return f"""
       <nav class="seller-similar" aria-labelledby="similar-h">
@@ -2574,16 +2595,18 @@ def legit_heading(r):
 
 
 LEGIT_TAIL = " Is it legit? See the five checks."
+LEGIT_TAIL_CLINIC = " Is it legit? See the four checks."
 
 
-def legit_description(d):
+def legit_description(d, r):
     """A seller page's description under 150 characters gets LEGIT_TAIL (owner task 2 Nov 2026), when it still fits
     in the 160 characters tools/check.py allows."""
-    return d + LEGIT_TAIL if len(d) < 150 and len(d) + len(LEGIT_TAIL) <= 160 else d
+    tail = LEGIT_TAIL_CLINIC if r["seller_slug"] in CLINIC_PROFILES else LEGIT_TAIL
+    return d + tail if len(d) < 150 and len(d) + len(tail) <= 160 else d
 
 
 def legit_section(r):
-    """"Is <Name> legit? What we can check" (pages.md, Seller; owner tasks 2 and 3 Nov 2026): the five checks by name, each
+    """"Is <Name> legit? What we can check" (pages.md, Seller; owner tasks 2 and 3 Nov 2026): the seller's checks by name (a shop's five, a clinic's four), each
     "Met:" or "Not met:" with its fact and date (the only place they appear; the marks are in the card), the company
     ledger under "Company found", then the closing sentence."""
     lines = check_lines(r)
@@ -2592,7 +2615,7 @@ def legit_section(r):
     items = "".join(
         f'<li><span class="check-key">{t}</span><span class="check-line">{line(k)}'
         f'{company_ledger(r) if k == "score_registered_company" else ""}</span></li>'
-        for k, t in SCORE_CHECKS)
+        for k, t in seller_checks(r))
     return f"""
 <section class="seller-sec legit" id="legit" aria-labelledby="legit-h">
   <h2 id="legit-h">{legit_heading(r)}</h2>
@@ -2630,7 +2653,7 @@ def seller_page(r):
         {author_line(checked) if checked else ""}
         <p class="small seller-meta">{meta}</p>
       </div>
-      <div class="seller-score"><p class="check-n"><span class="num-xl">{r["score"]}</span> <span class="num-unit">of {len(SCORE_CHECKS)} checks</span></p>{seller_action(r)}</div>
+      <div class="seller-score"><p class="check-n"><span class="num-xl">{score_of(r)}</span> <span class="num-unit">of {out_of(r)} checks</span></p>{seller_action(r)}</div>
     </div>
     <p class="intro seller-answer">{answer}</p>
   </div>
@@ -2761,7 +2784,8 @@ chips.forEach(function(x){x.setAttribute('aria-pressed',cks.indexOf(x.getAttribu
 // Home's "See all" sends type=clinic or type=shop; a substance link without a type opens the tab that carries it
 type=(t==='shops'||t==='shop')&&tb?'shops':(t==='clinics'||t==='clinic')&&ct?'clinics':ct?'clinics':'shops';
 if(!t&&sb.value&&ct&&tb&&!crows.some(function(r){return has(r,'subs',sb.value);}))type='shops';}
-function draw(){var s=q.value.trim().toLowerCase(),u=sb.value,k=parseInt(mn.value,10),cl=type==='clinics',
+function mins(){var c=type==='clinics';[].forEach.call(mn.options,function(o){if(o.value==='5'){o.hidden=c;o.disabled=c;}if(o.value==='4')o.textContent=c?'4 of 4':'4 or more';});if(c&&mn.value==='5')mn.value='4';}
+function draw(){mins();var s=q.value.trim().toLowerCase(),u=sb.value,k=parseInt(mn.value,10),cl=type==='clinics',
 any=false,j=0,R=cl?crows:rows,T=cl?ct:tb;
 segs.forEach(function(b){b.setAttribute('aria-pressed',b.getAttribute('data-type')===type?'true':'false');});
 if(secC)secC.hidden=!cl;if(secS)secS.hidden=cl;
@@ -2790,11 +2814,11 @@ def subs_words(names, total=None, n=3):
 
 
 def check_bar(r):
-    """"4 of 5" and the five checks as a bar of miniature marks (the Background check card's chips at 10px; pages.md,
+    """"4 of 5" (a clinic: "3 of 4") and the seller's checks as a bar of miniature marks (the Background check card's chips at 10px; pages.md,
     Sellers), each spoken."""
     marks = "".join(f'<span class="chip chip-{"ok" if r.get(k) else "neutral"} mark-{"yes" if r.get(k) else "no"}">'
-                    f'<span class="vh">{t}: {"yes" if r.get(k) else "no"}</span></span>' for k, t in SCORE_CHECKS)
-    return f'<span class="num">{r["score"]} of {len(SCORE_CHECKS)}</span><span class="check-bar">{marks}</span>'
+                    f'<span class="vh">{t}: {"yes" if r.get(k) else "no"}</span></span>' for k, t in seller_checks(r))
+    return f'<span class="num">{score_of(r)} of {out_of(r)}</span><span class="check-bar">{marks}</span>'
 
 
 ACT_TH = '<th scope="col"><span class="vh">Our page</span></th>'
@@ -2877,7 +2901,7 @@ def clinics_directory(clinics):
         <thead><tr><th scope="col">Clinic</th><th scope="col">What it prescribes</th><th scope="col">From</th><th scope="col">Checks</th><th scope="col">FDA letters</th>{ACT_TH}</tr></thead>
         <tbody>{"".join(trs)}</tbody>
       </table></div>
-      <p class="small sellers-note">Clinics prescribe and publish no lab reports, so a clinic meets at most 4 of the 5 checks.</p>
+      <p class="small sellers-note">Online clinics publish no lab reports, so a clinic is checked on four facts, a shop on five. A score is never compared across the two kinds.</p>
     </section>"""
 
 
@@ -2899,7 +2923,7 @@ PAGES = [
     ("/about/", "about/index.html", "About Peptide Chooser",
      "Peptide Chooser is an independent site that compares peptide products and sellers for people in the United States.", ABOUT, "", [("/about/", "About")]),
     ("/how-we-rate/", "how-we-rate/index.html", "How we rate peptide products and sellers | Peptide Chooser",
-     "The five checks Peptide Chooser runs on every peptide seller (lab reports, FDA letters, company, legal pages, fresh prices) and how each goal page is built.", HOW, "", [("/how-we-rate/", "How we rate")]),
+     "The checks Peptide Chooser runs on every peptide seller (lab reports for shops, FDA letters, company, legal pages, fresh prices) and how goal pages are built.", HOW, "", [("/how-we-rate/", "How we rate")]),
     ("/contact/", "contact/index.html", "Contact | Peptide Chooser",
      "Email Peptide Chooser for corrections with a source, questions about a listing, press and partnerships. We cannot answer personal medical questions.", CONTACT, "", [("/contact/", "Contact")]),
     ("/disclosure/", "disclosure/index.html", "Affiliate and medical disclosure | Peptide Chooser",
@@ -2926,7 +2950,7 @@ for _g in ALL_GOALS:
 if PROFILES:
     PAGES.append(("/sellers/", "sellers/index.html", "Peptide sellers and their checks | Peptide Chooser",
                   (f"The {len(SHOPS)} peptide shops and {len(CLINIC_PROFILES)} online clinics in our database, each on its own page "
-                   "with five background checks, products or plans and FDA warning letters.") if CLINIC_PROFILES else
+                   "with background checks, products or plans and FDA warning letters.") if CLINIC_PROFILES else
                   (f"Every peptide seller in our database, {len(PROFILES)} in all, each on its own page with five background checks, "
                    "product and substance counts and FDA warning letters."),
                   sellers_index(),
@@ -2936,7 +2960,7 @@ if PROFILES:
                   [("/sellers/", "Sellers")]))
     for _r in sorted(PROFILES.values(), key=lambda x: x["seller_slug"]):
         PAGES.append((f"/sellers/{_r['seller_slug']}/", f"sellers/{_r['seller_slug']}/index.html", seller_title(_r),
-                      legit_description(clinic_description(_r) if _r["seller_slug"] in CLINIC_PROFILES else seller_description(_r)), seller_page(_r), "",
+                      legit_description(clinic_description(_r) if _r["seller_slug"] in CLINIC_PROFILES else seller_description(_r), _r), seller_page(_r), "",
                       [("/sellers/", "Sellers"), (f"/sellers/{_r['seller_slug']}/", seller_name(_r))]))
 
 
@@ -2977,7 +3001,7 @@ def search_index():
                     + (f' FDA listing: "{s["listing"]}".' if s.get("listing") else "")})
     for r in sorted(CLINIC_PROFILES.values(), key=sellers_order):
         out.append({"type": "Clinic", "name": seller_name(r), "aliases": [r["domain"]] if r.get("domain") else [],
-                    "url": f"/sellers/{r['seller_slug']}/", "line": f"Online clinic, {card_count(r)}, {r['score']} of {len(SCORE_CHECKS)} checks"})
+                    "url": f"/sellers/{r['seller_slug']}/", "line": f"Online clinic, {card_count(r)}, {score_of(r)} of {out_of(r)} checks"})
     for r in sorted(SHOPS.values(), key=sellers_order):
         out.append({"type": "Seller", "name": seller_name(r), "aliases": [r["domain"]] if r.get("domain") else [],
                     "url": f"/sellers/{r['seller_slug']}/", "line": f"{kind_words(r)[1]}, {r['score']} of {len(SCORE_CHECKS)} checks"})
@@ -3672,7 +3696,7 @@ def pep_next(slug):
     links.append(f"<!--pair-li:{slug}-->")  # every pair with the substance, filled by cmp_links_in once the pair pages exist
     # /sellers/ is built whenever the data has seller pages (it is added after the substance pages)
     if PROFILES and (any(slug in shop_subs(r) for r in SHOPS.values()) or any(slug in clinic_subs(r) for r in CLINIC_PROFILES.values())):
-        links.append(f'<li><a href="/sellers/#substance={slug}">Every seller of {escape(pep_short(slug))}, with its five checks</a></li>')
+        links.append(f'<li><a href="/sellers/#substance={slug}">Every seller of {escape(pep_short(slug))}, with its checks</a></li>')
     return f'<div><h2 class="h-sources">What to do next</h2><ul class="next-list">{"".join(links)}</ul></div>' if links else ""
 
 
@@ -4203,7 +4227,7 @@ def cmp_clinic_cells(c, subs, other=None):
     p = PROFILES[c]
     plans = [cmp_clinic_plan(c, s) for s in subs]
     marks = "".join(f'<span class="chip chip-{"ok" if p.get(k) else "neutral"} mark-{"yes" if p.get(k) else "no"}">{t}'
-                    f'<span class="vh">: {"yes" if p.get(k) else "no"}</span></span>' for k, t in SCORE_CHECKS)
+                    f'<span class="vh">: {"yes" if p.get(k) else "no"}</span></span>' for k, t in seller_checks(p))
     fee = plans[0].get("membership_fee_monthly")
     n, last = p.get("fda_letter_count") or 0, p.get("last_fda_letter_date")
     state = STATES.get(p.get("entity_state") or "", p.get("entity_state") or "")
@@ -4213,7 +4237,7 @@ def cmp_clinic_cells(c, subs, other=None):
     return [cmp_form_cell(c, other, s) for s in subs] + [
         "Not known" if fee is None else "None, all-in" if float(fee) == 0 else f"{usd(fee)}/mo",
         f'<a class="chip chip-warn chip-link" href="{letter_href(p["seller_slug"])}">FDA letter {nice_date(last)}</a>' if n and last else "None",
-        f'<span class="score"><span class="score-n"><span class="num">{p["score"]}</span> of {len(SCORE_CHECKS)} checks</span>'
+        f'<span class="score"><span class="score-n"><span class="num">{score_of(p)}</span> of {out_of(p)} checks</span>'
         f'<span class="score-marks">{marks}</span></span>',
         company,
         nice_date(max(r["last_seen"] for r in plans)),
@@ -4278,10 +4302,10 @@ def cmp_clinic_facts(a, b, subs):
     if bool(la) != bool(lb):
         side(not la).append(("you want a clinic with no FDA warning letter",
                              f"{na if lb else nb} has an FDA warning letter and {nb if lb else na} has none"))
-    sa, sb = (PROFILES[x].get("score") or 0 for x in (a, b))
+    sa, sb = (score_of(PROFILES[x]) or 0 for x in (a, b))
     if sa != sb:
-        side(sa > sb).append((f"you want more of our five checks met: {max(sa, sb)} against {min(sa, sb)}",
-                              f"{na if sa > sb else nb} meets {max(sa, sb)} of our five checks, against {min(sa, sb)}"))
+        side(sa > sb).append((f"you want more of our four checks met: {max(sa, sb)} against {min(sa, sb)}",
+                              f"{na if sa > sb else nb} meets {max(sa, sb)} of our four checks, against {min(sa, sb)}"))
     return fa, fb
 
 
@@ -4302,7 +4326,7 @@ def cmp_clinic_page(a, b, subs):
                     "Prices are the clinics' published monthly prices. Checks are facts we hold about the clinic, not a safety or quality grade.",
                     verdict, nxt)
     what = " and ".join(f"compounded {s}" for s in subs)
-    desc = cmp_fit([f"{na} vs {nb} for {what}: monthly price, care fee, FDA warning letters and five background checks.",
+    desc = cmp_fit([f"{na} vs {nb} for {what}: monthly price, care fee, FDA warning letters and four background checks.",
                     answer[-1], f"Checked {nice_date(checked)}."])
     if len(desc) < 110:
         desc = cmp_fit([desc, "We compare and never sell."])
@@ -4556,7 +4580,7 @@ def what_next(g):
         best = max((s for s in count if count[s]), key=lambda s: (count[s], s), default=None)
         if best:
             name = escape(re.sub(r" *\(.*\)$", "", sub_label(best)))
-            links.append(f'<li><a href="/sellers/#substance={best}">Every seller of {name}, with its five checks</a></li>')
+            links.append(f'<li><a href="/sellers/#substance={best}">Every seller of {name}, with its checks</a></li>')
     # beside it from 900px, the goals strip (pages.md, Category): one section, two columns, so the page stays short
     strip = re.search(r'<div class="wrap">(.*?)</div>\s*</section>', goals_strip("Compare other goals", g["slug"]), re.S)
     nxt = f'<div><h2 class="h-sources">What to do next</h2><ul class="next-list">{"".join(links)}</ul></div>' if links else ""
@@ -4684,7 +4708,7 @@ def sources_body():
                           max((r.get("last_seen") or "" for r in PLANS), default=""),
                           ids=plan_ids + [i for u, ids in home_ids.items() if host(u) in seller_hosts for i in ids]))
     if PROFILES:
-        own.append(src_li("Seller checks", "/how-we-rate/", True, f"The five checks on {plural(len(PROFILES), 'seller')}.",
+        own.append(src_li("Seller checks", "/how-we-rate/", True, f"The checks on {plural(len(PROFILES), 'seller')}.",
                           max((r.get("score_checked_on") or "" for r in PROFILES.values()), default="")))
     if DATA.get("pulled_at") and own:
         own.append(src_li("Peptide Chooser database", "", False, "The copy this build of the site was made from.", DATA["pulled_at"][:10]))
