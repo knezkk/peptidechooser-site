@@ -18,9 +18,10 @@ const LOOKS = {
   warm: { albedo: [.80, .66, .57], shadow: [1.06, .94, .88] },
 };
 const VARIANTS = [
+  { name: 'neutral-clay', body: 'neutral', look: 'clay', all: true },
+  { name: 'neutral-warm', body: 'neutral', look: 'warm', all: true },
   { name: 'female-clay', body: 'female', look: 'clay', all: true },
   { name: 'male-clay', body: 'male', look: 'clay', all: true },
-  { name: 'female-warm', body: 'female', look: 'warm', all: true },
 ];
 
 // Where each goal's view goes: zoom (1 = whole figure) and the point of the figure at the centre of the box, as a
@@ -31,7 +32,7 @@ const VIEWS = {
   'weight-loss': { z: 2.3, v: .405 },
   muscle: { z: 1.32, v: .4 },
   recovery: { z: 1.5, v: .42 },
-  libido: { z: 2.2, v: .5 },
+  libido: { z: 1.7, v: .46 },
   longevity: { z: 1, v: .5 },
 };
 // Pins: a point on the body per goal. World position, projected to the box by the page's own camera below.
@@ -160,7 +161,7 @@ async function write(b64, w, h, file, q, aq = 80) {
         sizes[`${v.name}/${k}.webp`] = await write(c, CLOSE[0], CLOSE[1], path.join(dir, `${k}.webp`), 78);
       }
       const g = await page.evaluate(([r, t, rim, wash, w, h, vw]) => window.renderGlow(r, t, rim, wash, w, h, vw),
-        [k, tint, view.rim ? .78 : 0, k === 'skin' ? .34 : (k === 'longevity' ? .62 : (k === 'libido' ? .5 : .6)), CLOSE[0] * SS, CLOSE[1] * SS, view.z > 1 ? view : null]);
+        [k, tint, view.rim ? .78 : 0, k === 'skin' ? .34 : (k === 'longevity' ? .62 : (k === 'libido' ? .36 : .6)), CLOSE[0] * SS, CLOSE[1] * SS, view.z > 1 ? view : null]);
       // A soft glow holds at a lower size; the skin's rim needs the full one.
       const [gw, gh] = view.rim ? CLOSE : [405, 810];
       sizes[`${v.name}/${k}-glow.webp`] = await write(g, gw, gh, path.join(dir, `${k}-glow.webp`), 40, 92);

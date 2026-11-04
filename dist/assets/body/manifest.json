@@ -24,8 +24,8 @@
    "v": 0.42
   },
   "libido": {
-   "z": 2.2,
-   "v": 0.5
+   "z": 1.7,
+   "v": 0.46
   },
   "longevity": {
    "z": 1,
@@ -34,6 +34,70 @@
  },
  "pins": {},
  "variants": {
+  "neutral-clay": {
+   "pins": {
+    "hair": [
+     0.5,
+     0.0457
+    ],
+    "skin": [
+     0.5539,
+     0.1003
+    ],
+    "muscle": [
+     0.715,
+     0.2837
+    ],
+    "longevity": [
+     0.5674,
+     0.2737
+    ],
+    "weight-loss": [
+     0.5,
+     0.3893
+    ],
+    "libido": [
+     0.5,
+     0.4952
+    ],
+    "recovery": [
+     0.6343,
+     0.6941
+    ]
+   }
+  },
+  "neutral-warm": {
+   "pins": {
+    "hair": [
+     0.5,
+     0.0457
+    ],
+    "skin": [
+     0.5539,
+     0.1003
+    ],
+    "muscle": [
+     0.715,
+     0.2837
+    ],
+    "longevity": [
+     0.5674,
+     0.2737
+    ],
+    "weight-loss": [
+     0.5,
+     0.3893
+    ],
+    "libido": [
+     0.5,
+     0.4952
+    ],
+    "recovery": [
+     0.6343,
+     0.6941
+    ]
+   }
+  },
   "female-clay": {
    "pins": {
     "hair": [
@@ -97,41 +161,39 @@
      0.6912
     ]
    }
-  },
-  "female-warm": {
-   "pins": {
-    "hair": [
-     0.5,
-     0.0457
-    ],
-    "skin": [
-     0.554,
-     0.1002
-    ],
-    "muscle": [
-     0.7078,
-     0.2861
-    ],
-    "longevity": [
-     0.5674,
-     0.2736
-    ],
-    "weight-loss": [
-     0.5,
-     0.3892
-    ],
-    "libido": [
-     0.5,
-     0.4952
-    ],
-    "recovery": [
-     0.6329,
-     0.6961
-    ]
-   }
   }
  },
  "sizes": {
+  "neutral-clay/full-1080.webp": 31624,
+  "neutral-clay/full-744.webp": 21172,
+  "neutral-clay/full-380.webp": 9908,
+  "neutral-clay/hair.webp": 12500,
+  "neutral-clay/hair-glow.webp": 7232,
+  "neutral-clay/skin-glow.webp": 60698,
+  "neutral-clay/weight-loss.webp": 19416,
+  "neutral-clay/weight-loss-glow.webp": 16938,
+  "neutral-clay/muscle.webp": 28620,
+  "neutral-clay/muscle-glow.webp": 24586,
+  "neutral-clay/recovery.webp": 29668,
+  "neutral-clay/recovery-glow.webp": 11434,
+  "neutral-clay/libido.webp": 30196,
+  "neutral-clay/libido-glow.webp": 9870,
+  "neutral-clay/longevity-glow.webp": 19058,
+  "neutral-warm/full-1080.webp": 35908,
+  "neutral-warm/full-744.webp": 24042,
+  "neutral-warm/full-380.webp": 11646,
+  "neutral-warm/hair.webp": 14624,
+  "neutral-warm/hair-glow.webp": 7232,
+  "neutral-warm/skin-glow.webp": 60698,
+  "neutral-warm/weight-loss.webp": 22524,
+  "neutral-warm/weight-loss-glow.webp": 16938,
+  "neutral-warm/muscle.webp": 32512,
+  "neutral-warm/muscle-glow.webp": 24586,
+  "neutral-warm/recovery.webp": 33866,
+  "neutral-warm/recovery-glow.webp": 11434,
+  "neutral-warm/libido.webp": 33886,
+  "neutral-warm/libido-glow.webp": 9870,
+  "neutral-warm/longevity-glow.webp": 19058,
   "female-clay/full-1080.webp": 31582,
   "female-clay/full-744.webp": 20942,
   "female-clay/full-380.webp": 9902,
@@ -144,8 +206,8 @@
   "female-clay/muscle-glow.webp": 24802,
   "female-clay/recovery.webp": 30154,
   "female-clay/recovery-glow.webp": 11580,
-  "female-clay/libido.webp": 24636,
-  "female-clay/libido-glow.webp": 14040,
+  "female-clay/libido.webp": 30270,
+  "female-clay/libido-glow.webp": 9732,
   "female-clay/longevity-glow.webp": 19058,
   "male-clay/full-1080.webp": 31622,
   "male-clay/full-744.webp": 21190,
@@ -159,23 +221,8 @@
   "male-clay/muscle-glow.webp": 25240,
   "male-clay/recovery.webp": 30494,
   "male-clay/recovery-glow.webp": 11408,
-  "male-clay/libido.webp": 23512,
-  "male-clay/libido-glow.webp": 14506,
-  "male-clay/longevity-glow.webp": 19394,
-  "female-warm/full-1080.webp": 36202,
-  "female-warm/full-744.webp": 23938,
-  "female-warm/full-380.webp": 11636,
-  "female-warm/hair.webp": 15196,
-  "female-warm/hair-glow.webp": 7178,
-  "female-warm/skin-glow.webp": 62002,
-  "female-warm/weight-loss.webp": 23108,
-  "female-warm/weight-loss-glow.webp": 16090,
-  "female-warm/muscle.webp": 32640,
-  "female-warm/muscle-glow.webp": 24802,
-  "female-warm/recovery.webp": 34212,
-  "female-warm/recovery-glow.webp": 11580,
-  "female-warm/libido.webp": 28114,
-  "female-warm/libido-glow.webp": 14040,
-  "female-warm/longevity-glow.webp": 19058
+  "male-clay/libido.webp": 28100,
+  "male-clay/libido-glow.webp": 9866,
+  "male-clay/longevity-glow.webp": 19394
  }
 }

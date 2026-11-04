@@ -174,6 +174,29 @@ function fillEyes(V, F, centres) {
   }
 }
 
+// The unisex chest: a depth blur seen from the front, so it does not depend on how dense the mesh is. Takes out the
+// breast and the nipple on each side and leaves the plane of the chest.
+function flattenChest(V, floorY, top) {
+  const H = top - floorY, front = [];
+  V.forEach((v, i) => { if (v[1] > floorY + H * .54 && v[1] < floorY + H * .9 && Math.abs(v[0]) < H * .105 && v[2] > 0) front.push(i); });
+  for (const side of [1, -1]) {
+    let tip = null;
+    front.forEach(i => { const v = V[i]; if (v[0] * side > H * .03 && v[0] * side < H * .09 && (!tip || v[2] > tip[2])) tip = v; });
+    const R = H * .085, K = H * .04;
+    const near = front.filter(i => Math.hypot(V[i][0] - tip[0], V[i][1] - tip[1]) < R);
+    const next = near.map(i => {
+      let sum = 0, wt = 0;
+      for (const j of front) {
+        const d = Math.hypot(V[j][0] - V[i][0], V[j][1] - V[i][1]);
+        if (d < K * 2) { const w = Math.exp(-(d * d) / (2 * K * K)); sum += w * V[j][2]; wt += w; }
+      }
+      const f = (1 - (Math.hypot(V[i][0] - tip[0], V[i][1] - tip[1]) / R) ** 2) ** 2;
+      return V[i][2] + f * (sum / wt - V[i][2]);
+    });
+    near.forEach((i, n) => { V[i][2] = next[n]; });
+  }
+}
+
 function normals(V, F) {
   const N = V.map(() => [0, 0, 0]);
   F.forEach(f => {
@@ -301,15 +324,19 @@ const armless = (p, J) => (Math.abs(p[0]) < Math.abs(J['upperarm01.L'].head[0]) 
   const skel = JSON.parse(await get('rigs/default.mhskel'));
   const weights = JSON.parse(await get('rigs/default_weights.mhw')).weights;
   const g = SEX;
-  // An even blend of the three reference populations: a clay figure should not read as one ancestry.
-  for (const race of ['african', 'asian', 'caucasian']) applyTarget(base, await get(`targets/macrodetails/${race}-${g}-young.target`), 1 / 3);
-  applyTarget(base, await get(`targets/macrodetails/universal-${g}-young-averagemuscle-averageweight.target`), .9);
-  applyTarget(base, await get(`targets/macrodetails/universal-${g}-young-averagemuscle-minweight.target`), .1);
-  applyTarget(base, await get(`targets/macrodetails/proportions/${g}-young-averagemuscle-averageweight-idealproportions.target`), .5);
+  // 'neutral' is the figure on Home: about half the female and half the male shape, so it reads as neither. No breast target.
+  const mix = g === 'neutral' ? [['female', .56], ['male', .44]] : [[g, 1]];
+  for (const [sex, k] of mix) {
+    // An even blend of the three reference populations: a clay figure should not read as one ancestry.
+    for (const race of ['african', 'asian', 'caucasian']) applyTarget(base, await get(`targets/macrodetails/${race}-${sex}-young.target`), k / 3);
+    applyTarget(base, await get(`targets/macrodetails/universal-${sex}-young-averagemuscle-averageweight.target`), k * .9);
+    applyTarget(base, await get(`targets/macrodetails/universal-${sex}-young-averagemuscle-minweight.target`), k * .1);
+    applyTarget(base, await get(`targets/macrodetails/proportions/${sex}-young-averagemuscle-averageweight-idealproportions.target`), k * .5);
+  }
   if (g === 'female') applyTarget(base, await get('targets/breast/female-young-averagemuscle-averageweight-mincup-averagefirmness.target'), .25);
 
   const eyeL = mean(base, [...eye['joint-l-eye']]), eyeR = mean(base, [...eye['joint-r-eye']]);
-  const down = g === 'female' ? .58 : .68;  // radians, arms towards the body
+  const down = g === 'female' ? .58 : (g === 'male' ? .68 : .64);  // radians, arms towards the body
   const ang = {
     'upperarm01.L': [0, 0, -down], 'upperarm01.R': [0, 0, down],
     'lowerarm01.L': [-.2, 0, 0], 'lowerarm01.R': [-.2, 0, 0],      // a slight bend at the elbow
@@ -331,12 +358,14 @@ const armless = (p, J) => (Math.abs(p[0]) < Math.abs(J['upperarm01.L'].head[0]) 
 
   const ys = V0.map(v => v[1]); const floorY = Math.min(...ys), top = Math.max(...ys);
   // Chest: iron out the nipples; pelvis: no detail at all (design book: non-sexualised).
+  const CHEST = g === 'neutral' ? { r: 0, iters: 0 } : { r: .55, iters: 12 };
   const spots = [
-    { at: [joints['breast.L'].tail[0], joints['breast.L'].tail[1], joints['breast.L'].tail[2]], r: .55, iters: 12 },
-    { at: [joints['breast.R'].tail[0], joints['breast.R'].tail[1], joints['breast.R'].tail[2]], r: .55, iters: 12 },
-    { at: [0, floorY + (top - floorY) * .49, Math.max(...V0.filter(v => Math.abs(v[0]) < .3 && Math.abs(v[1] - (floorY + (top - floorY) * .49)) < .6).map(v => v[2]))], r: 1.0, iters: g === 'male' ? 40 : 18 },
+    { at: [joints['breast.L'].tail[0], joints['breast.L'].tail[1], joints['breast.L'].tail[2]], r: CHEST.r, iters: CHEST.iters },
+    { at: [joints['breast.R'].tail[0], joints['breast.R'].tail[1], joints['breast.R'].tail[2]], r: CHEST.r, iters: CHEST.iters },
+    { at: [0, floorY + (top - floorY) * .49, Math.max(...V0.filter(v => Math.abs(v[0]) < .3 && Math.abs(v[1] - (floorY + (top - floorY) * .49)) < .6).map(v => v[2]))], r: 1.0, iters: g === 'female' ? 18 : 40 },
   ];
   smoothAround(V0, F0, spots);
+  if (g === 'neutral') flattenChest(V0, floorY, top);
 
   fillEyes(V0, F0, [eyeL, eyeR]);
   // A slightly narrower head than the population blend gives; the rest of the body is untouched.

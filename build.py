@@ -723,7 +723,7 @@ def plain_status(item, drop_price=False):
 # tools/render_body/. Only the images and manifest.json ship; assets/body/ holds one folder per look. Pins sit where the
 # render's own camera puts them; a goal's view (zoom z, centre v) comes from the manifest too.
 BODY = json.loads((ROOT / "assets" / "body" / "manifest.json").read_text(encoding="utf-8"))
-BODY_DEFAULT = "female-clay"
+BODY_DEFAULT = "neutral-clay"
 
 
 def figure_3d(variant=BODY_DEFAULT, chosen=0):
@@ -3242,20 +3242,20 @@ def compare_page():
 
 # The owner's choice of figure (task w4, round 1): not linked, noindex, out of the sitemap and llms.txt.
 def body_test_page():
-    looks = [("female-clay", "A. Clay, female"), ("female-warm", "B. Warmer skin, female"), ("male-clay", "C. Clay, male")]
+    looks = [("neutral-clay", "Unisex, clay"), ("neutral-warm", "Unisex, warmer skin"), ("female-clay", "Earlier: female"), ("male-clay", "Earlier: male")]
     cols = []
     for v, title in looks:
         chips = "".join(f'<button type="button" class="goal-item" data-goal="{g["slug"]}">{g["label"]}</button>' for g in ALL_GOALS)
         cols.append(f'<div class="bt-col"><h2>{title}</h2><div class="figure">{figure_3d(v, -1)}</div><div class="goal-list">{chips}</div></div>')
-    return (f'<section class="section"><div class="wrap"><h1>Body figure test</h1><p>Round 1. A is the one on Home. Click the figure or a goal; Esc, Full body or a click on the figure goes back.</p>'
+    return (f'<section class="section"><div class="wrap"><h1>Body figure test</h1><p>Round 2. Unisex clay is the one on Home. Click the figure or a goal; Esc, Full body or a click on the figure goes back.</p>'
             f'<div class="bt-grid">{"".join(cols)}</div></div></section>{FIG_JS}'
-            """<script>document.querySelectorAll('.bt-col').forEach(function(c){var f=pcFig(c.querySelector('.fig3d'),function(k){mark(k);f.go(k);});
+            """<script>document.addEventListener('DOMContentLoaded',function(){document.querySelectorAll('.bt-col').forEach(function(c){var f=pcFig(c.querySelector('.fig3d'),function(k){mark(k);f.go(k);});
 function mark(k){c.querySelectorAll('.goal-item').forEach(function(b){b.setAttribute('aria-pressed',b.getAttribute('data-goal')===k?'true':'false');});}
-c.querySelector('.goal-list').addEventListener('click',function(e){var b=e.target.closest('.goal-item');if(b){var k=b.getAttribute('data-goal');mark(k);f.go(k);}});});</script>""")
+c.querySelector('.goal-list').addEventListener('click',function(e){var b=e.target.closest('.goal-item');if(b){var k=b.getAttribute('data-goal');mark(k);f.go(k);}});});});</script>""")
 
 
 PAGES.append(("/_body-test/", "_body-test/index.html", "Body figure test | Peptide Chooser",
-              "A private test page for the body figure on Home: two skin looks and two bodies side by side, for the owner to choose. Not linked and not indexed.",
+              "A private test page for the body figure on Home: the unisex figure in two skin looks beside the earlier bodies. Not linked and not indexed.",
               body_test_page(), "", [("/_body-test/", "Body figure test")]))
 PAGES.append(("/search/", "search/index.html", "Search | Peptide Chooser",
               "Search Peptide Chooser for a peptide, a goal or a seller: FDA status, background checks and prices from our data, each with a link to its page.",
