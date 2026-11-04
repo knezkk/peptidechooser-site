@@ -520,7 +520,7 @@ a.legal-card:hover{border-color:var(--clinic)}
 .tbl-legal a.ref:not(:has(sup)){display:inline;min-width:0;min-height:0;padding:0;margin:0}
 /* The goal page's clinic table (tbl-compact): from 641px each row is one line, the care fee after the price (owner task 3 Nov 2026). */
 /* The substance page's clinic table (pep-sold) uses the same one-line rows (owner task 3 Nov 2026). */
-@media (min-width:641px){:is(.goal-sec,.pep-sold) .tbl-clinics td .sub{display:inline;margin-left:6px}:is(.goal-sec,.pep-sold) .tbl-clinics td{height:auto;padding:3.5px 12px}}
+@media (min-width:641px){:is(.goal-sec,.pep-sold) .tbl-clinics td .sub{display:inline;margin-left:6px}:is(.goal-sec,.pep-sold) .tbl-clinics td{height:auto;padding:4px 12px}}
 /* What to do next: three text links between hairlines, no card. */
 .next-list{list-style:none;margin:0;padding:0}
 .next-list li{padding:10px 0;border-top:1px solid var(--line)}
@@ -647,7 +647,7 @@ a.legal-card:hover{border-color:var(--clinic)}
 .btn-cta{justify-content:center;text-align:center}
 /* Clinic window (pages.md, Clinic window): the shop window's part with compact rows */
 .clinic-dlg{width:min(1180px,calc(100% - 32px))}
-.clinic-dlg .tbl td{padding:3.5px 10px;vertical-align:middle}
+.clinic-dlg .tbl td{padding:6px 10px;vertical-align:middle}
 .clinic-dlg .tbl th{padding:8px 10px}
 .clinic-dlg .tbl th:nth-child(2){width:auto}
 .clinic-dlg .tbl td.act .btn-wait+.paid{display:none}
@@ -657,16 +657,14 @@ a.legal-card:hover{border-color:var(--clinic)}
 @media (max-width:760px){.cell-pic a{display:inline-flex;align-items:center;min-height:var(--touch)}}
 @media (min-width:641px){.clinic-dlg .tbl td:first-child .name{white-space:nowrap}}
 /* The table button (pages.md, Buttons): in every table and window btn-action, btn-wait and btn-line are one part in another
-   colour. From 641px the row keeps 48px: the button is drawn at table-control with the caption under it, and its hit area
-   stays touch tall. From 900px its width is cta-width; below, the column's width. */
+   colour, touch tall with the caption under it, so a row with a button is about 60px. From 900px its width is cta-width;
+   below, the column's width. */
 .tbl td.act{text-align:left}
 .tbl td.act .pick-act{display:flex;flex-direction:column;align-items:stretch;gap:1px;width:100%;margin:0;padding:0;white-space:nowrap}
 .tbl td.act .btn{width:100%;padding:0 8px;font-size:14px;justify-content:center}
 .tbl td.act .paid{display:block;margin:0;line-height:13px;text-align:center}
 @media (max-width:640px){.tbl-cards td.act{margin-top:10px}}
-@media (min-width:641px){.tbl td.act,.tbl-compact td.act,.clinic-dlg .tbl td.act{padding-top:0;padding-bottom:0}
-.tbl td.act .btn{position:relative;min-height:var(--table-control)}
-.tbl td.act .btn::after{content:"";position:absolute;inset:-8.5px -1.5px}}
+@media (min-width:641px){.tbl td.act,.tbl-compact td.act,.clinic-dlg .tbl td.act{padding-top:1px;padding-bottom:1px}}
 @media (min-width:900px){.tbl td.act .pick-act,.tbl td.act>.btn{width:var(--cta-width)}}
 /* The clinic page's pair (pages.md, Seller, Top block): btn-ink and btn-action, the same size, side by side from 641px */
 .seller-pair{display:grid;grid-template-columns:minmax(0,1fr);gap:8px;align-items:start;width:100%}
