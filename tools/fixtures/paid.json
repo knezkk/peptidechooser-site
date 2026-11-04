@@ -11,10 +11,10 @@
     {"out_path": "/out/vitals-vault/", "seller_slug": "vitals-vault", "name": "Vitals Vault", "network": "FirstPromoter", "tracking_url": "https://vitalsvault.com?fpr=karlo-809795"}
   ],
   "copy_rules": [
-    {"seller": "shedrx", "phrase": "FDA", "replace_with": null, "note": "ShedRx affiliate rules: do not mention the FDA"},
-    {"seller": "shedrx", "phrase": "FDA approved", "replace_with": null, "note": "ShedRx affiliate rules: do not mention FDA approval"},
-    {"seller": "shedrx", "phrase": "Eli Lilly", "replace_with": null, "note": "ShedRx affiliate rules"},
-    {"seller": "shedrx", "phrase": "Novo Nordisk", "replace_with": null, "note": "ShedRx affiliate rules"},
-    {"seller": "shedrx", "phrase": "tirzepatide", "replace_with": "compounded GLP-1 options", "note": "ShedRx affiliate rules"}
+    {"seller_slug": "shedrx", "phrase": "FDA", "replace_with": null, "note": "ShedRx affiliate rules: do not mention the FDA"},
+    {"seller_slug": "shedrx", "phrase": "FDA approved", "replace_with": null, "note": "ShedRx affiliate rules: do not mention FDA approval"},
+    {"seller_slug": "shedrx", "phrase": "Eli Lilly", "replace_with": null, "note": "ShedRx affiliate rules"},
+    {"seller_slug": "shedrx", "phrase": "Novo Nordisk", "replace_with": null, "note": "ShedRx affiliate rules"},
+    {"seller_slug": "shedrx", "phrase": "tirzepatide", "replace_with": "compounded GLP-1 options", "note": "ShedRx affiliate rules"}
   ]
 }

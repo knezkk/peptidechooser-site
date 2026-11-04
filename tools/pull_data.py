@@ -91,7 +91,7 @@ def pull_paid():
     PAID.write_text(json.dumps({
         "networks": sorted(set(networks) | {r["network"] for r in redirects}),
         "redirects": redirects,
-        "copy_rules": rows("select seller, phrase, replace_with, note from site.seller_copy_rules order by seller, phrase"),
+        "copy_rules": rows("select seller_slug, phrase, replace_with, note from site.seller_copy_rules order by seller_slug, phrase"),
     }, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     print(f"pull_data: {len(redirects)} paid redirects")
 

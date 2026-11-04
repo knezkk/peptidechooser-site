@@ -16,6 +16,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import paid  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
+NO_LISTING_TEXTS = ("Any pharmacy, no prescription", "On prescription; no clinic prices yet",
+                    "Sold in creams and serums; no prices checked", "No listings yet")
 DIST = ROOT / "dist"
 SITE = "https://peptidechooser.com"
 
@@ -327,6 +329,12 @@ def paid_rule_errs(name, html, rule):
     return errs
 
 
+def page_texts():
+    """(name, HTML) of every page and seller window in the build."""
+    texts = [(str(f.relative_to(DIST)), f.read_text(encoding="utf-8")) for f in sorted(DIST.rglob("*.html"))]
+    return texts + [(f"windows/{f.name}", json.loads(f.read_text(encoding="utf-8"))["html"]) for f in sorted((DIST / "windows").glob("*.json"))]
+
+
 def check_paid_plumbing():
     """Every green button's /out/ path has a redirect page; every redirect page holds its tracking address from the data
     and nothing else; /out/ stays out of search; no tracking address anywhere else (pages.md, Paid link redirect page)."""
@@ -370,18 +378,11 @@ def check_paid_plumbing():
     site = (Path(os.environ["SITE_JSON"]) if os.environ.get("SITE_JSON") else ROOT / "data" / "site.json").read_text(encoding="utf-8")
     if any(u in site for u in urls):
         errs.append("site.json: holds a tracking address")
-    rule = paid_rule()
-    texts = [(str(f.relative_to(DIST)), f.read_text(encoding="utf-8")) for f in sorted(DIST.rglob("*.html"))]
-    texts += [(f"windows/{f.name}", json.loads(f.read_text(encoding="utf-8"))["html"]) for f in sorted((DIST / "windows").glob("*.json"))]
-    out_seller = {r["out_path"]: r["seller_slug"] for r in data["redirects"]} | rule[2]
-    rules = collections.defaultdict(list)
-    for r in data.get("copy_rules") or []:
-        rules[r["seller"]].append(r["phrase"])
+    texts = page_texts()
     for name, html in texts:
         for href in sorted(set(GREEN_HREF.findall(html))):
             if paid.out_dir(href) not in have:
                 errs.append(f"{name}: green button to {href}, which has no redirect page")
-        errs += copy_rule_errs(name, html, rules, out_seller)
     return errs
 
 
@@ -412,30 +413,41 @@ def paid_containers(html):
     return out
 
 
-def phrase_hits(phrases, html):
+def phrase_hits(rules, html):
+    """Text around each rule phrase, whole words, any case; a phrase already in the brand's own form (Ozempic(R)) is no hit."""
     text = unescape(re.sub(r"<(script|style)\b.*?</\1>", " ", html, flags=re.S))
     text = re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", text))
     hits = []
-    for phrase in phrases:
-        for m in re.finditer(rf"\b{re.escape(phrase)}\b", text, re.I):
-            hits.append((phrase, text[max(0, m.start() - 45):m.end() + 45].strip()))
+    for r in rules:
+        for m in re.finditer(rf"\b{re.escape(r['phrase'])}\b", text, re.I):
+            if not (r.get("replace_with") and text[m.start():].startswith(r["replace_with"])):
+                hits.append(text[max(0, m.start() - 45):m.end() + 45].strip())
     return hits
 
 
-def copy_rule_errs(name, html, rules, out_seller):
-    """A seller's own wording rules (site.seller_copy_rules; ShedRx first) next to its paid button: the table row, list item
-    or card around the button, and the main part of the seller's own page when it carries one. Whole words, any case."""
-    errs = set()
-    for href, box in paid_containers(html):
-        seller = out_seller.get(href)
-        for phrase, around in phrase_hits(rules.get(seller, []), box):
-            errs.add(f"{name}: '{phrase}' next to {seller}'s paid button: ...{around}...")
-    page = re.fullmatch(r"sellers/([^/]+)/index\.html", name)
-    if page and rules.get(page.group(1)) and any(out_seller.get(h) == page.group(1) for h in GREEN_HREF.findall(html)):
-        main = re.search(r'<main id="main">(.*)</main>', html, re.S)
-        for phrase, around in phrase_hits(rules[page.group(1)], main.group(1) if main else html):
-            errs.add(f"{name}: '{phrase}' on {page.group(1)}'s page, which has a paid button: ...{around}...")
-    return sorted(errs)
+def wording_report():
+    """A brand's wording rules are advisory (pages.md, Paid link redirect page; owner decision 4 Nov 2026): the table row,
+    list item or card around its green button, and the main part of its own page when that page has one. Lines to print;
+    never a failure."""
+    data = paid.load()
+    rules = collections.defaultdict(list)
+    for r in data.get("copy_rules") or []:
+        rules[r["seller_slug"]].append(r)
+    src = Path(os.environ["SITE_JSON"]) if os.environ.get("SITE_JSON") else ROOT / "data" / "site.json"
+    profiles = json.loads(src.read_text(encoding="utf-8")).get("seller_profiles") or []
+    brand = {r["seller_slug"]: re.sub(r"\s*\(.*\)$", "", r.get("seller_name") or "") for r in profiles}
+    out_seller = {r["out_path"]: r["seller_slug"] for r in data["redirects"]} | paid_rule()[2]
+    lines = set()
+    for name, html in page_texts():
+        found = [(out_seller.get(href), box) for href, box in paid_containers(html)]
+        page = re.fullmatch(r"sellers/([^/]+)/index\.html", name)
+        if page and any(out_seller.get(h) == page.group(1) for h in GREEN_HREF.findall(html)):
+            main = re.search(r'<main id="main">(.*)</main>', html, re.S)
+            found.append((page.group(1), main.group(1) if main else html))
+        for seller, box in found:
+            for around in phrase_hits(rules.get(seller, []), box):
+                lines.add(f"Wording differs from {brand.get(seller) or seller}'s rules: {name}: {around}")
+    return sorted(lines)
 
 
 def check_parts(P):
@@ -541,12 +553,48 @@ def check_parts(P):
     for f in sorted((DIST / "windows").glob("*.json")) if (DIST / "windows").exists() else []:
         win = json.loads(f.read_text(encoding="utf-8"))["html"]
         errs += window_errs(f"windows/{f.name}", win) + paid_rule_errs(f"windows/{f.name}", win, rule)
+        for li in re.findall(r'<li class="opt">.*?</li>', win, re.S):
+            if 'class="btn ' not in li.split("</details>")[-1] and not any(t in li for t in NO_LISTING_TEXTS):
+                errs.append(f"windows/{f.name}: an option row with neither a button nor its no-listing text")
+        if re.search(r'class="thumb thumb-none" aria-hidden', win):
+            errs.append(f"windows/{f.name}: a row whose form has no picture; add it to the mapping")
+        if "clinic-dlg" in win and win.count('<td data-l="Plan">') != win.count('class="thumb '):
+            errs.append(f"windows/{f.name}: a plan row without a picture")
     for name, p in P.items():
         html = (DIST / name).read_text(encoding="utf-8")
         # Home's "Prices at N shops" buttons point at a window file that exists
         for src in re.findall(r'data-src="/(windows/[^"]+)"', html):
             if not (DIST / src).exists():
                 errs.append(f"{name}: window file {src} missing")
+        # The clinic window (pages.md, Pictures and the clinic window): the label's count is the clinics in its window, its price is
+        # a price in the window, and a clinic window never lists a shop's row
+        for src, price, n in re.findall(r'data-src="/(windows/clinics-[^"]+)">Buy from \$([\d,.]+)/mo · (\d+) (?:clinic|seller)s?</a>', html):
+            if not (DIST / src).exists():
+                continue
+            win = json.loads((DIST / src).read_text(encoding="utf-8"))["html"]
+            who = set(re.findall(r'<tr><td><span class="cell-pic"><span class="tile[^>]*>[^<]*</span>(?:<a class="name" href="/sellers/([^"/]+)/"|<span class="name">([^<]+))', win))
+            if len(who) != int(n):
+                errs.append(f"{name}: {src} lists {len(who)} clinics, its button says {n}")
+            if f'<span class="num">${price}</span>' not in win:
+                errs.append(f"{name}: {src} has no plan at ${price}, the price on its button")
+            if "data-seller=" in win:
+                errs.append(f"{name}: {src} mixes clinics and shops")
+        # Every option row and plan row has a picture (pages.md, Pictures and the clinic window), except a plan whose data names no form
+        for li in re.findall(r'<li class="opt">.*?</summary>', html, re.S):
+            if 'class="thumb ' not in li:
+                errs.append(f"{name}: an option row without a picture")
+        # Every option row has a button or its no-listing text (pages.md, Home, Option rows; owner, 4 Nov 2026)
+        for li in re.findall(r'<li class="opt">.*?</li>', html, re.S):
+            if 'class="btn ' not in li.split("</details>")[-1] and not any(t in li for t in NO_LISTING_TEXTS):
+                errs.append(f"{name}: an option row with neither a button nor its no-listing text")
+        for tb in re.findall(r'<table class="[^"]*tbl-(?:clinics|window)[^"]*".*?</table>', html, re.S):
+            for tr in re.findall(r'<tr[ >].*?</tr>', tb, re.S):
+                if "<td" in tr and 'class="thumb ' not in tr and "tbl-plans" not in tb and "<td data-l=\"Plan\">" not in tr:
+                    errs.append(f"{name}: a plan row without a picture")
+        if re.search(r'class="thumb thumb-none" aria-hidden', html):
+            errs.append(f"{name}: a row whose form has no picture; add it to the mapping")
+        for m in re.finditer(r'class="btn [^"]*sellers-open"[^>]*data-dlg="clinics-[^"]+"[^>]*>(?!Buy from)', html):
+            errs.append(f"{name}: a clinic window's button without the Buy label")
     # The letters page (pages.md, Letters): every row has a date, a company, a subject and its fda.gov letter; the only
     # links leaving the site go to fda.gov, so no seller domain is linked anywhere on the page.
     if "fda-warning-letters/index.html" in P:
@@ -616,14 +664,14 @@ def check_parts(P):
             # and every seller page in the build has its row, none hidden; the script and the filter's options name
             # only sellers and substances that are in the build's rows.
             built = {n.split("/")[1] for n in P if n.startswith("sellers/") and n != "sellers/index.html"}
-            trs = re.findall(r"<tr( [^>]*)?><td><a class=\"name\" href=\"/sellers/([^\"/]+)/\"", html)
+            trs = re.findall(r"<tr( [^>]*)?><td>(?:<span class=\"cell-pic\"><span class=\"tile[^>]*>[^<]*</span>)?<a class=\"name\" href=\"/sellers/([^\"/]+)/\"", html)
             if {s for _, s in trs} != built:
                 errs.append(f"{name}: the tables do not list every seller page in the build")
             # two tabs, clinics first (owner task w2, 3 Nov 2026): each seller in exactly one table, the clinics table
             # first in the HTML, the lede's counts and the tab labels equal to the rows, no old jargon chip label
             def tbl_rows(tid):
                 m = re.search(rf'<table[^>]*id="{tid}".*?<tbody>(.*?)</tbody>', html, re.S)
-                return re.findall(r'<tr[^>]*><td><a class="name" href="/sellers/([^"/]+)/"', m.group(1)) if m else []
+                return re.findall(r'<tr[^>]*><td>(?:<span class="cell-pic"><span class="tile[^>]*>[^<]*</span>)?<a class="name" href="/sellers/([^"/]+)/"', m.group(1)) if m else []
             cl, sh = tbl_rows("clinics-table"), tbl_rows("sellers-table")
             if len(cl + sh) != len(set(cl + sh)):
                 errs.append(f"{name}: a seller has a row in both tables or twice in one")
@@ -699,7 +747,7 @@ def check_parts(P):
     pairs = [n for n in P if re.fullmatch(r"compare/[a-z0-9-]+-vs-[a-z0-9-]+/index.html", n)]
     for name in pairs:
         html = (DIST / name).read_text(encoding="utf-8")
-        heads = re.findall(r'<th scope="col"><a class="name" href="(/(?:peptides|sellers)/[^"/]+/)"', html)
+        heads = re.findall(r'<th scope="col">(?:<span class="tile[^>]*>[^<]*</span>)?<a class="name" href="(/(?:peptides|sellers)/[^"/]+/)"', html)
         if len(heads) != 2 or any(f'href="{h}"' not in html.split('id="compare-two"', 1)[-1].split("cmp-link")[0].split("</table>")[-1] for h in heads):
             errs.append(f"{name}: does not link both sides to their pages")
         if all(h.startswith("/peptides/") for h in heads) and len(re.findall(r'rel="nofollow">(?:FDA source|Source)</a>', html)) < 2:
@@ -920,7 +968,7 @@ def check_parts(P):
         if not m:
             errs.append(f"{name}: no header nav")
             continue
-        for href in re.findall(r'href="([^"]*)"', m.group(1)):
+        for href in re.findall(r'<a\s[^>]*?href="([^"]*)"', m.group(1)):  # links only: a drawing's <use href> is no link
             path, _, frag = href.partition("#")
             if href.startswith(("#", "/#")) or not path.startswith("/"):
                 errs.append(f"{name}: nav link {href} is an anchor, not a page")
@@ -1115,4 +1163,6 @@ if __name__ == "__main__":
         for e in errs:
             print("  -", e)
         failed += len(errs)
+    for line in wording_report():
+        print(" ", line)
     sys.exit(1 if failed else 0)

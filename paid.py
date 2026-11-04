@@ -56,7 +56,7 @@ def write_out_pages(dist, names):
     """One page per redirect row. `names` maps a seller slug to the name our pages use; a row's own `name` covers a brand
     we have no profile for."""
     for r in load()["redirects"]:
-        name = names.get(r["seller_slug"]) or r.get("name") or r["seller_slug"]
+        name = names.get(r["seller_slug"]) or r.get("name") or r["seller_slug"].replace("-", " ").title()
         target = dist / out_dir(r["out_path"]) / "index.html"
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_text(out_page(name, r["tracking_url"], r["network"]), encoding="utf-8")
