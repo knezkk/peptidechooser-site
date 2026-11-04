@@ -7,6 +7,7 @@
   "goals": [
     {
       "slug": "hair",
+      "clinic_table": {"substances": ["finasteride", "minoxidil"]},
       "guide": "peptides-for-hair-loss-what-works",
       "name": "Hair growth",
       "live": true,
@@ -313,6 +314,7 @@
     },
     {
       "slug": "muscle",
+      "clinic_table": {"substances": ["sermorelin"]},
       "guide": "best-peptides-for-muscle-growth",
       "approved_instead_guide": "best-peptides-for-muscle-growth",
       "name": "Muscle and hormones",
@@ -423,6 +425,7 @@
     },
     {
       "slug": "libido",
+      "clinic_table": {"substances": ["bremelanotide", "sildenafil", "tadalafil", "testosterone", "enclomiphene"]},
       "guide": "peptides-for-libido-what-is-approved",
       "name": "Sexual health",
       "label": "Sex drive",
@@ -478,6 +481,7 @@
     },
     {
       "slug": "longevity",
+      "clinic_table": {"substances": ["nad-plus", "sermorelin"]},
       "guide": "longevity-peptides-epitalon-mots-c-nad",
       "approved_instead_guide": "longevity-peptides-epitalon-mots-c-nad",
       "name": "Longevity and energy",

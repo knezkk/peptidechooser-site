@@ -902,6 +902,12 @@ def check_parts(P):
             ok = f"u.{slug}" in offered if kind == "peptides" else any(v.startswith(f"p.{slug}.") for v in offered)
             if tool and not ok:
                 errs.append(f"{name}: the tool's pickers do not offer {slug}")
+    # Not available in (pages.md, Category): a clinic with state limits shows them on its profile, from the data file
+    states = {k: v for k, v in json.loads((ROOT / "data" / "clinic_states.json").read_text(encoding="utf-8")).items() if not k.startswith("_")}
+    for slug, v in states.items():
+        page = DIST / "sellers" / slug / "index.html"
+        if page.exists() and f'Not available in: {", ".join(v["not_in"])}' not in page.read_text(encoding="utf-8"):
+            errs.append(f"sellers/{slug}/index.html: no Not available in line")
     # /sources/ (pages.md, Sources): every group shown has at least one source
     src = DIST / "sources" / "index.html"
     if src.exists():

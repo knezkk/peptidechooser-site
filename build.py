@@ -783,7 +783,18 @@ SHOPS = {k: r for k, r in PROFILES.items() if (r.get("product_count") or 0) > 0}
 CLINIC_PROFILES = {k: r for k, r in PROFILES.items() if k not in SHOPS}
 
 
-def clinic_button(seller_slug, label, small="Our clinic page", plan=None, paid_ok=True):
+# States a clinic does not serve (pages.md, Category and Seller; owner task 4 Nov 2026): data/clinic_states.json, keyed by
+# seller slug, until the database has a column. Never typed into a page.
+CLINIC_STATES = {k: v for k, v in json.loads((ROOT / "data" / "clinic_states.json").read_text(encoding="utf-8")).items() if not k.startswith("_")}
+
+
+def not_in_line(slug, tag="span"):
+    """"Not available in: AL, AK, ..." as one small line, or "" for a clinic that serves every state."""
+    states = (CLINIC_STATES.get(slug) or {}).get("not_in")
+    return f'<{tag} class="not-in">Not available in: {", ".join(states)}</{tag}>' if states else ""
+
+
+def clinic_button(seller_slug, label, small="Our clinic page", plan=None, paid_ok=True, states=False):
     """A clinic's one action (Home v2, 3 Nov 2026), on clinic_row_act's rule (owner answer Q1 a and decision C8, 3 Nov
     2026): btn-action "Visit <Name> ..." through /out/<seller>/ with "Paid link" under it only when the data carries the
     clinic's paid link (`paid_url` on the plan row, else on its profile; none yet; site.paid_links applies the paid link
@@ -796,9 +807,9 @@ def clinic_button(seller_slug, label, small="Our clinic page", plan=None, paid_o
     if paid_ok and paid:
         tail = label.split(" · ", 1)[1] if " · " in label else ""
         return (f'<span class="pick-act"><a class="btn btn-action btn-sm" href="{paid_href(seller_slug, paid)}" rel="sponsored">'
-                f'Visit {seller_base(r["seller_name"])}{" · " + tail if tail else ""}</a><span class="paid">Paid link</span></span>')
+                f'Visit {seller_base(r["seller_name"])}{" · " + tail if tail else ""}</a><span class="paid">Paid link</span>{not_in_line(seller_slug) if states else ""}</span>')
     return (f'<span class="pick-act"><a class="btn btn-wait btn-sm" href="/sellers/{seller_slug}/">{label}</a>'
-            f'<span class="paid">{small}</span></span>')
+            f'<span class="paid">{small}</span>{not_in_line(seller_slug) if states else ""}</span>')
 
 
 def clinic_link(seller_slug, name, inline=False):
@@ -1160,7 +1171,7 @@ def opt_action(g, p, rp, lazy):
     if rp:
         name = seller_base(rp["seller_name"])
         small = "Pharmacy, no prescription" if needs_rx(p) is False else "Opens our clinic page"
-        btn = clinic_button(rp["seller_slug"], f'See plans at {name} · {usd(rp["price_monthly"])}/mo', small, rp)
+        btn = clinic_button(rp["seller_slug"], f'See plans at {name} · {usd(rp["price_monthly"])}/mo', small, rp, states=True)
         if btn:
             return btn
     if has_window(p) and window_kind(p) == "cosmetic":
@@ -1927,7 +1938,7 @@ def clinic_section(g, rows):
         care = care_note(r)
         # on phones the first CLINICS_FIRST rows show until "Show all N" (owner answer Q2 a, 2 Nov 2026; bundle.css, Clinic table)
         more = ' class="more"' if i >= CLINICS_FIRST else ""
-        trs.append(f'<tr{more}><td>{clinic_link(r["seller_slug"], seller_base(r["seller_name"]))}</td><td data-l="Plan">{explain_brand(r["plan_name"], named)}</td>'
+        trs.append(f'<tr{more}><td>{clinic_link(r["seller_slug"], seller_base(r["seller_name"]))}{not_in_line(r["seller_slug"])}</td><td data-l="Plan">{explain_brand(r["plan_name"], named)}</td>'
                    f'<td>{plan_chip(g, r)}</td>'
                    f'<td data-l="Per month"><span class="num">{usd(r["price_monthly"])}</span>{plan_letter(r)}{f"<span class=sub>{care}</span>" if care else ""}</td>'
                    # every row: the letter chip by the price, no FDA letter column, "See plans" to our clinic page (owner answers
@@ -1946,6 +1957,14 @@ def clinic_section(g, rows):
     {COMPARE_LINK}
   </div>
 </section>"""
+
+
+def table_plans(g):
+    """The plans a goal's clinic table lists: its `clinic_plans`, else the plans of its `clinic_table` substances (hair,
+    libido, longevity, muscle; owner task 4 Nov 2026: a clinic shows on the goal its plans belong to, from data, no brand named)."""
+    subs = (g.get("clinic_table") or {}).get("substances") or []
+    return clinic_plans(g) or sorted((r for r in PLANS if r["substance_slug"] in subs and r.get("price_monthly") is not None),
+                                     key=lambda r: (float(r["price_monthly"]), r["seller_name"], r["plan_name"]))
 
 
 def plan_form(r):
@@ -1994,7 +2013,7 @@ def goal_clinic_section(g, rows):
                    f'<td><span class="name">{explain_brand(r["plan_name"], named)}</span></td>'
                    f'<td data-l="What it is">{plan_chip(g, r)}</td>'
                    f'<td data-l="Per month"><span class="num">{usd(r["price_monthly"])}</span>{plan_letter(r)}{f"<span class=sub>{care}</span>" if care else ""}</td>'
-                   f'<td data-l="Clinic">{clinic_link(r["seller_slug"], seller_base(r["seller_name"]), True)}</td>'
+                   f'<td data-l="Clinic">{clinic_link(r["seller_slug"], seller_base(r["seller_name"]), True)}{not_in_line(r["seller_slug"])}</td>'
                    f'<td class="act">{clinic_row_act(r)}</td></tr>')
     seg = lambda grp, opts: (f'<div class="seg" role="group" aria-label="{grp[1]}">'
                              + "".join(f'<button type="button" class="seg-b" data-g="{grp[0]}" data-v="{v}" aria-pressed="{"true" if not v else "false"}">{t}</button>'
@@ -2053,7 +2072,7 @@ def decide_cards(g):
         name = seller_base(rp["seller_name"])
         cards.append(decide_card("Best approved", p["name"], status_chip(p) + alt_chip(p),
                                  f'<strong>From {usd(rp["price_monthly"])}/mo at {plural(n, "clinic")}</strong>{plan_src(g, rp)}{plan_letter(rp)}',
-                                 clinic_button(rp["seller_slug"], f'See plans at {name} · {usd(rp["price_monthly"])}/mo', plan=rp)))
+                                 clinic_button(rp["seller_slug"], f'See plans at {name} · {usd(rp["price_monthly"])}/mo', plan=rp, states=True)))
     # Cheapest: the lowest monthly price among the goal's plans, labelled with its kind
     plans = goal_plans(g)
     if plans and not (best and plans[0] is best[1]):
@@ -2064,7 +2083,7 @@ def decide_cards(g):
         cards.append(decide_card("Cheapest", clean(c["plan_name"]), chip,
                                  f'<strong>From {usd(c["price_monthly"])}/mo at {name}</strong>{plan_src(g, c)}{plan_letter(c)}',
                                  clinic_button(c["seller_slug"], f'See plans at {name} · {usd(c["price_monthly"])}/mo', plan=c,
-                                               paid_ok=k != "compounded")))
+                                               paid_ok=k != "compounded", states=True)))
     # No prescription: the over-the-counter or cosmetic option; a goal without one, its research-use option
     otc = next((p for p in g["peptides"] if approved_row(p) and needs_rx(p) is False), None)
     cos = next((p for p in g["peptides"] if is_cosmetic(p)), None)
@@ -2075,7 +2094,7 @@ def decide_cards(g):
             cards.append(decide_card("No prescription", otc["name"], status_chip(otc) + alt_chip(otc),
                                      f'<strong>From {usd(rp["price_monthly"])}/mo</strong>{plan_src(g, rp)}{plan_letter(rp)}',
                                      clinic_button(rp["seller_slug"], f'See plans at {name} · {usd(rp["price_monthly"])}/mo',
-                                                   "Pharmacy, no prescription", rp)))
+                                                   "Pharmacy, no prescription", rp, states=True)))
     elif cos:
         if has_window(cos) and window_kind(cos) == "cosmetic":
             low, n = window_low(cos)
@@ -2135,7 +2154,7 @@ def category_body(g):
     </div></details>
   </div>
 </section>{LEGAL_ACC_JS}""" if legal else (f'<section class="section goal-sec"><div class="wrap"><p>{moved}</p></div></section>' if moved else "")
-    plans = clinic_plans(g)
+    plans = table_plans(g)
     cards = decide_cards(g)
     own = {f'src-{s["n"]}' for s in g.get("sources", [])}
     srcs += page_sources(opt_html + legal_html + cards, own)
@@ -2681,7 +2700,7 @@ def seller_page(r):
         <h1>{seller_base(seller_name(r))} review</h1>
         <p class="seller-kind"><span class="chip chip-neutral">{kind_words(r)[1]}</span></p>
         {author_line(checked) if checked else ""}
-        <p class="small seller-meta">{meta}</p>
+        <p class="small seller-meta">{meta}</p>{not_in_line(r["seller_slug"], "p")}
       </div>
       <div class="seller-score"><p class="check-n"><span class="num-xl">{score_of(r)}</span> <span class="num-unit">of {out_of(r)} checks</span></p>{seller_action(r)}</div>
     </div>
@@ -2919,7 +2938,7 @@ def clinics_directory(clinics):
         plans = clinic_plan_rows(r)
         low = min((float(p["price_monthly"]) for p in plans), default=None)
         trs.append(f'<tr data-c="{met_checks(r)}" data-s="{r["score"]}" data-subs="{" ".join(clinic_subs(r))}" data-low="{low if low is not None else ""}">'
-                   f'<td><a class="name" href="/sellers/{r["seller_slug"]}/">{seller_name(r)}</a></td>'
+                   f'<td><a class="name" href="/sellers/{r["seller_slug"]}/">{seller_name(r)}</a>{not_in_line(r["seller_slug"])}</td>'
                    f'<td data-l="What it prescribes">{escape(subs_words(sorted(clinic_subs(r), key=lambda x: sub_label(x).lower())))}</td>'
                    f'<td class="num" data-l="From">{usd(low) + "/mo" if low is not None else "unknown"}</td>'
                    f'<td data-l="Checks">{check_bar(r)}</td><td data-l="FDA letters">{home.where_letters(me, r)}</td>'
