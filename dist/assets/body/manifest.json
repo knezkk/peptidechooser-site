@@ -41,8 +41,8 @@
      0.0457
     ],
     "skin": [
-     0.5539,
-     0.1003
+     0.5751,
+     0.1244
     ],
     "muscle": [
      0.715,
@@ -63,102 +63,6 @@
     "recovery": [
      0.6343,
      0.6941
-    ]
-   }
-  },
-  "neutral-warm": {
-   "pins": {
-    "hair": [
-     0.5,
-     0.0457
-    ],
-    "skin": [
-     0.5539,
-     0.1003
-    ],
-    "muscle": [
-     0.715,
-     0.2837
-    ],
-    "longevity": [
-     0.5674,
-     0.2737
-    ],
-    "weight-loss": [
-     0.5,
-     0.3893
-    ],
-    "libido": [
-     0.5,
-     0.4952
-    ],
-    "recovery": [
-     0.6343,
-     0.6941
-    ]
-   }
-  },
-  "female-clay": {
-   "pins": {
-    "hair": [
-     0.5,
-     0.0457
-    ],
-    "skin": [
-     0.554,
-     0.1002
-    ],
-    "muscle": [
-     0.7078,
-     0.2861
-    ],
-    "longevity": [
-     0.5674,
-     0.2736
-    ],
-    "weight-loss": [
-     0.5,
-     0.3892
-    ],
-    "libido": [
-     0.5,
-     0.4952
-    ],
-    "recovery": [
-     0.6329,
-     0.6961
-    ]
-   }
-  },
-  "male-clay": {
-   "pins": {
-    "hair": [
-     0.5,
-     0.0457
-    ],
-    "skin": [
-     0.5539,
-     0.1005
-    ],
-    "muscle": [
-     0.7276,
-     0.28
-    ],
-    "longevity": [
-     0.5674,
-     0.2738
-    ],
-    "weight-loss": [
-     0.5,
-     0.3893
-    ],
-    "libido": [
-     0.5,
-     0.4952
-    ],
-    "recovery": [
-     0.6358,
-     0.6912
     ]
    }
   }
@@ -178,51 +82,6 @@
   "neutral-clay/recovery-glow.webp": 11434,
   "neutral-clay/libido.webp": 30196,
   "neutral-clay/libido-glow.webp": 9870,
-  "neutral-clay/longevity-glow.webp": 19058,
-  "neutral-warm/full-1080.webp": 35908,
-  "neutral-warm/full-744.webp": 24042,
-  "neutral-warm/full-380.webp": 11646,
-  "neutral-warm/hair.webp": 14624,
-  "neutral-warm/hair-glow.webp": 7232,
-  "neutral-warm/skin-glow.webp": 60698,
-  "neutral-warm/weight-loss.webp": 22524,
-  "neutral-warm/weight-loss-glow.webp": 16938,
-  "neutral-warm/muscle.webp": 32512,
-  "neutral-warm/muscle-glow.webp": 24586,
-  "neutral-warm/recovery.webp": 33866,
-  "neutral-warm/recovery-glow.webp": 11434,
-  "neutral-warm/libido.webp": 33886,
-  "neutral-warm/libido-glow.webp": 9870,
-  "neutral-warm/longevity-glow.webp": 19058,
-  "female-clay/full-1080.webp": 31582,
-  "female-clay/full-744.webp": 20942,
-  "female-clay/full-380.webp": 9902,
-  "female-clay/hair.webp": 13020,
-  "female-clay/hair-glow.webp": 7178,
-  "female-clay/skin-glow.webp": 62002,
-  "female-clay/weight-loss.webp": 19946,
-  "female-clay/weight-loss-glow.webp": 16090,
-  "female-clay/muscle.webp": 28536,
-  "female-clay/muscle-glow.webp": 24802,
-  "female-clay/recovery.webp": 30154,
-  "female-clay/recovery-glow.webp": 11580,
-  "female-clay/libido.webp": 30270,
-  "female-clay/libido-glow.webp": 9732,
-  "female-clay/longevity-glow.webp": 19058,
-  "male-clay/full-1080.webp": 31622,
-  "male-clay/full-744.webp": 21190,
-  "male-clay/full-380.webp": 10032,
-  "male-clay/hair.webp": 12164,
-  "male-clay/hair-glow.webp": 7220,
-  "male-clay/skin-glow.webp": 64138,
-  "male-clay/weight-loss.webp": 18720,
-  "male-clay/weight-loss-glow.webp": 16322,
-  "male-clay/muscle.webp": 29012,
-  "male-clay/muscle-glow.webp": 25240,
-  "male-clay/recovery.webp": 30494,
-  "male-clay/recovery-glow.webp": 11408,
-  "male-clay/libido.webp": 28100,
-  "male-clay/libido-glow.webp": 9866,
-  "male-clay/longevity-glow.webp": 19394
+  "neutral-clay/longevity-glow.webp": 19058
  }
 }

@@ -9,6 +9,10 @@ var stage=box.querySelector('.fig3d-stage'),label=box.querySelector('.fig3d-labe
 var base=box.getAttribute('data-base'),views=JSON.parse(box.getAttribute('data-views')),pins=[].slice.call(box.querySelectorAll('.pin'));
 var view=box.querySelector('.fig3d-view'),cur=null,layers={},tween=null,token=0;
 var zoomS=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--motion-zoom'))/1000||0.7;
+// From 900px a pin is a control of its own. Below that seven do not fit: they are markers, and the whole figure and the goal rows are the targets.
+var wide=window.matchMedia('(min-width: 900px)');
+function roles(){pins.forEach(function(p){if(wide.matches){p.setAttribute('role','button');p.tabIndex=0;p.removeAttribute('aria-hidden');}else{p.removeAttribute('role');p.removeAttribute('tabindex');p.setAttribute('aria-hidden','true');}});}
+roles();if(wide.addEventListener)wide.addEventListener('change',roles);
 function rect(k){var z=views[k].z,h=1/z;return {z:z,x:(1-h)/2,y:Math.min(1-h,Math.max(0,views[k].v-h/2))};}
 function ensure(k){if(layers[k])return layers[k];var r=rect(k),out=[];
 function add(name){var i=new Image();i.alt='';i.className='fig3d-layer';i.style.left=r.x*100+'%';i.style.top=r.y*100+'%';i.style.width=100/r.z+'%';i.style.height=100/r.z+'%';i.src=base+name;stage.insertBefore(i,pins[0]);out.push(i);}

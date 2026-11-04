@@ -151,7 +151,6 @@ body:has(.sellers-dlg[open]){overflow:hidden}
 .tbl-clinics .num{font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
 .tbl-clinics .sub{display:block;font-size:var(--small-size);line-height:1.4;color:var(--ink-2)}
 .tbl-clinics .no-letter{color:var(--ink-2)}
-.tbl-clinics td.act{text-align:right}
 @media (max-width:640px){
 .tbl-cards thead{display:none}
 .tbl-wrap:has(.tbl-cards){border:0;background:none;overflow:visible}
@@ -161,7 +160,6 @@ body:has(.sellers-dlg[open]){overflow:hidden}
 .tbl-cards td,.tbl-cards tr:last-child td{padding:0;border:0}
 .tbl-cards td+td{margin-top:6px}
 .tbl-cards td[data-l]::before{content:attr(data-l) ": ";color:var(--ink-2);font-size:var(--small-size)}
-.tbl-clinics td.act{text-align:left;margin-top:10px}
 .tbl-clinics .sub{display:inline;margin-left:6px}
 }
 /* On phones, with JavaScript, the first 10 plans show, then btn-line "Show all N" (owner answer Q2 a, 2 Nov 2026); from 641px every row shows and the button is not drawn. */
@@ -421,10 +419,8 @@ a.year-chip{display:inline-flex;align-items:center;text-decoration:none;min-widt
 .where-n{margin:0 0 10px;color:var(--ink-2)}
 .tbl-where .sub{display:block;font-size:var(--small-size);line-height:1.4;color:var(--ink-2)}
 .tbl-where .num{font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
-.tbl-where td.act{text-align:right;white-space:nowrap}
-.tbl-where td.act .paid{display:block;margin-top:4px}
 .where-note{margin:12px 0 0;color:var(--ink-2)}
-@media (max-width:640px){.tbl-where td.act{text-align:left;margin-top:10px}.tbl-where td.act .paid{display:inline;margin:0 0 0 10px}
+@media (max-width:640px){
 .tbl-where td[data-l]{display:inline-block;margin:6px 14px 0 0}.tbl-where td[data-l="Type"]{display:block}
 .seg{width:100%}.seg-b{flex:1;padding:0 8px}.where-f,.where-q .input{width:100%}.legal-row .btn{width:auto}}
 /* Goal cards ("Compare by goal"): seven white cards in one row (two columns on phones): the goal name, the option
@@ -463,15 +459,13 @@ a.legal-card:hover{border-color:var(--clinic)}
 @media (min-width:760px){.letter-cards{grid-template-columns:repeat(3,minmax(0,1fr))}}
 /* Creator card ("Who explains this well"): initials in a circle (ink, or clinic on every second card), no photos (rule
    7); the name links the channel (rel nofollow), "Platform · N subscribers", one line of stance. */
-.creator-cards{list-style:none;margin:0;padding:0;display:grid;gap:10px}
-.creator-card{display:flex;gap:14px;padding:14px 16px;background:var(--white);border:1px solid var(--line);border-radius:var(--radius-panel)}
-.creator-card .initials{flex:none;display:flex;align-items:center;justify-content:center;width:44px;height:44px;border-radius:50%;background:var(--ink);color:var(--white);font-weight:700;font-size:15px}
-.creator-card .initials-clinic{background:var(--clinic)}
-.creator-card .name{font-weight:700}
-.creator-card .small{display:block;color:var(--ink-2)}
-.creator-card p{margin:6px 0 0;font-size:var(--small-size);line-height:var(--small-lh)}
-@media (min-width:760px){.creator-cards{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media (min-width:1180px){.creator-cards{grid-template-columns:repeat(4,minmax(0,1fr))}}
+/* Creators as one strip (owner answer Q3 b, 4 Nov 2026): one line per creator */
+.creator-strip{list-style:none;margin:0;padding:0;border-top:1px solid var(--line)}
+.creator-strip li{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 12px;padding:8px 0;border-bottom:1px solid var(--line);align-items:baseline;font-size:var(--small-size)}
+.creator-strip .name{font-weight:700}
+.creator-strip p{grid-column:1/-1;margin:0;line-height:var(--small-lh)}
+@media (min-width:760px){.creator-strip li{grid-template-columns:220px 110px minmax(0,1fr);gap:16px}.creator-strip p{grid-column:auto}}
+@media (max-width:640px){.creator-strip .name{display:inline-flex;align-items:center;min-height:var(--touch)}}
 
 /* Phones (owner task 3 Nov 2026, the 390px walkthrough, finding 10): no text under 13px on a phone. Chips, the score
    marks and the Checked stamp are 13px under 640px (12px and 11px from 641px, unchanged). */
@@ -524,11 +518,9 @@ a.legal-card:hover{border-color:var(--clinic)}
 .legal-acc-in>p{max-width:72ch}
 /* "FDA source" in the legal table is a text link, not a footnote number: no footnote tap area pulling it into the word before. */
 .tbl-legal a.ref:not(:has(sup)){display:inline;min-width:0;min-height:0;padding:0;margin:0}
-/* The goal page's clinic table (tbl-compact): from 641px each row is one line, the button's small line beside it and the
-   care fee after the price, so a row is the 44px button plus 8px (owner task 3 Nov 2026). */
+/* The goal page's clinic table (tbl-compact): from 641px each row is one line, the care fee after the price (owner task 3 Nov 2026). */
 /* The substance page's clinic table (pep-sold) uses the same one-line rows (owner task 3 Nov 2026). */
-@media (min-width:641px){:is(.goal-sec,.pep-sold) .tbl-clinics .pick-act{flex-direction:row;align-items:center;gap:8px;padding:0;white-space:nowrap}
-:is(.goal-sec,.pep-sold) .tbl-clinics td .sub{display:inline;margin-left:6px}:is(.goal-sec,.pep-sold) .tbl-clinics td{height:auto;padding:4px 12px}}
+@media (min-width:641px){:is(.goal-sec,.pep-sold) .tbl-clinics td .sub{display:inline;margin-left:6px}:is(.goal-sec,.pep-sold) .tbl-clinics td{height:auto;padding:4px 12px}}
 /* What to do next: three text links between hairlines, no card. */
 .next-list{list-style:none;margin:0;padding:0}
 .next-list li{padding:10px 0;border-top:1px solid var(--line)}
@@ -624,3 +616,61 @@ a.legal-card:hover{border-color:var(--clinic)}
 .cmp-list [role="option"]{padding:10px 12px;border-radius:var(--radius-control);cursor:pointer;font-size:var(--ui-size)}
 .cmp-list [role="option"]:hover,.cmp-list [aria-selected="true"]{background:var(--neutral-tint)}
 .cmp-group{padding:10px 12px 4px;font-size:12px;font-weight:600;color:var(--ink-2)}
+
+/* Seller tile (pages.md, Seller tile; owner package 4 Nov 2026, part C): one part, all sizes. Square, radius 22% of the size;
+   a monogram at 35% of the size until the data carries an approved logo; a research-use shop is always grey. */
+.tile{--tile:40px;display:inline-flex;align-items:center;justify-content:center;flex:none;box-sizing:border-box;width:var(--tile);height:var(--tile);border-radius:22%;overflow:hidden;font:800 calc(var(--tile)*.35)/1 var(--font-text);color:var(--white)}
+.tile-24{--tile:24px}.tile-28{--tile:28px}.tile-40{--tile:40px}.tile-72{--tile:72px}
+.tile-logo{background:var(--white);border:1px solid var(--line);padding:12%}
+.tile-logo img{width:100%;height:100%;object-fit:contain}
+.tile-shop{background:var(--paper-2);color:var(--ink-2);border:1px solid var(--line)}
+.tile-c1{background:var(--tile-1)}.tile-c2{background:var(--tile-2)}.tile-c3{background:var(--tile-3)}.tile-c4{background:var(--tile-4)}.tile-c5{background:var(--tile-5)}
+.tile-c6{background:var(--tile-6)}.tile-c7{background:var(--tile-7)}.tile-c8{background:var(--tile-8)}.tile-c9{background:var(--tile-9)}.tile-c10{background:var(--tile-10)}
+@media (max-width:640px){.tbl-cards .tile-40{--tile:36px}}
+.cell-pic{display:flex;align-items:center;gap:10px;min-width:0}
+.cell-pic>:last-child{min-width:0}
+/* Product drawing (design/README.md, Pictures): one sprite, assets/art.svg; the tile's colour says what kind of thing it is. */
+.thumb{--thumb:40px;display:inline-flex;align-items:center;justify-content:center;flex:none;width:var(--thumb);height:var(--thumb);border-radius:var(--radius-art-s);background:var(--art-tile)}
+.thumb svg{width:72%;height:72%}
+.thumb-vial-compounded{background:var(--art-compounded)}
+.thumb-vial-research{background:var(--art-research)}
+.thumb-none{background:none}
+@media (max-width:640px){.thumb{--thumb:48px;border-radius:var(--radius-art)}}
+/* Goal drawing: clinic blue on clinic-tint */
+.goal-art{flex:none;fill:none;stroke:var(--g,var(--clinic));stroke-width:2.4;stroke-linecap:round}
+.goal-c-hair{--g:var(--goal-hair);--gt:var(--goal-hair-tint)}.goal-c-skin{--g:var(--goal-skin);--gt:var(--goal-skin-tint)}.goal-c-weight-loss{--g:var(--goal-weight-loss);--gt:var(--goal-weight-loss-tint)}.goal-c-muscle{--g:var(--goal-muscle);--gt:var(--goal-muscle-tint)}.goal-c-recovery{--g:var(--goal-recovery);--gt:var(--goal-recovery-tint)}.goal-c-libido{--g:var(--goal-libido);--gt:var(--goal-libido-tint)}.goal-c-longevity{--g:var(--goal-longevity);--gt:var(--goal-longevity-tint)}
+.goal-pic{display:flex;align-items:center;justify-content:center;height:84px;margin-bottom:10px;border-radius:var(--radius-art-s);background:var(--gt)}
+.goal-panel{display:none}
+@media (min-width:900px){.goal-panel{display:flex;align-items:center;justify-content:center;height:220px;border-radius:var(--radius-art-l);background:var(--gt)}}
+@media (max-width:640px){.goal-pic{height:60px}.goal-pic .goal-art{width:34px;height:34px}}
+/* The one option-row button (pages.md, Home, Option rows): the same width, height, border and font on every row, label centred */
+.btn-cta{justify-content:center;text-align:center}
+/* Clinic window (pages.md, Clinic window): the shop window's part with compact rows */
+.clinic-dlg{width:min(1180px,calc(100% - 32px))}
+.clinic-dlg .tbl td{padding:6px 10px;vertical-align:middle}
+.clinic-dlg .tbl th{padding:8px 10px}
+.clinic-dlg .tbl th:nth-child(2){width:auto}
+.clinic-dlg .tbl .chip{white-space:normal}
+@media (min-width:641px){.clinic-dlg .tbl td[data-l="Per month"] .chip{display:block;width:fit-content;margin-top:4px}}
+@media (max-width:760px){.cell-pic a{display:inline-flex;align-items:center;min-height:var(--touch)}}
+@media (min-width:641px){.clinic-dlg .tbl td:first-child .name{white-space:nowrap}}
+/* The table button (pages.md, Buttons): in every table and window btn-action, btn-wait and btn-line are one part in another
+   colour, touch tall, nothing under it. The green one carries "Paid link" inside it as a second line. From 641px every row
+   with this button has 12px above and below it, so a row looks the same with either button and its cells are centred on
+   the button. From 900px its width is cta-width; below, the column's width. */
+.tbl td.act{text-align:left}
+.tbl td.act .pick-act{display:flex;flex-direction:column;align-items:stretch;gap:4px;width:100%;margin:0;padding:0;white-space:nowrap}
+.tbl td.act .btn{width:100%;padding:0 8px;font-size:14px;justify-content:center}
+.tbl td.act .btn-action{flex-direction:column;gap:0;line-height:16px}
+.tbl td.act .btn-action .paid{display:block;font-size:var(--fine-size);line-height:14px;color:var(--white);opacity:.85;text-align:center}
+@media (max-width:640px){.tbl-cards td.act{margin-top:10px}}
+@media (min-width:641px){.tbl tr:has(>td.act)>td{height:auto;padding-top:12px;padding-bottom:12px;vertical-align:middle}
+.tbl td.act .btn-action .paid{font-size:12px}}
+@media (min-width:900px){.tbl td.act .pick-act,.tbl td.act>.btn{width:var(--cta-width)}}
+/* The clinic page's pair (pages.md, Seller, Top block): btn-ink and btn-action, the same size, side by side from 641px */
+.seller-pair{display:grid;grid-template-columns:minmax(0,1fr);gap:8px;align-items:start;width:100%}
+.seller-pair .btn{width:100%;padding:0 8px}
+.seller-pair .pick-act{display:flex;flex-direction:column;align-items:stretch;gap:4px;margin:0;padding:0}
+.seller-pair .paid{text-align:center}
+@media (min-width:641px){.seller-pair{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (min-width:900px){.seller-pair{grid-template-columns:repeat(2,var(--cta-width));width:auto}}

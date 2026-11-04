@@ -19,9 +19,6 @@ const LOOKS = {
 };
 const VARIANTS = [
   { name: 'neutral-clay', body: 'neutral', look: 'clay', all: true },
-  { name: 'neutral-warm', body: 'neutral', look: 'warm', all: true },
-  { name: 'female-clay', body: 'female', look: 'clay', all: true },
-  { name: 'male-clay', body: 'male', look: 'clay', all: true },
 ];
 
 // Where each goal's view goes: zoom (1 = whole figure) and the point of the figure at the centre of the box, as a
@@ -40,7 +37,7 @@ const pinsFor = (m) => {
   const H = m.top - m.floorY, y = f => m.floorY + H * f, J = m.joints;
   return {
     hair: [0, m.top - H * .028, m.cz],
-    skin: [H * .028, m.top - H * .09, m.cz + 1],
+    skin: [H * .039, m.top - H * .115, m.cz + 1],
     muscle: [J['upperarm01.L'].head[0] * .5 + J['lowerarm01.L'].head[0] * .5, J['upperarm01.L'].head[1] * .5 + J['lowerarm01.L'].head[1] * .5, m.cz],
     longevity: [H * .035, y(.73), m.cz + 1],
     'weight-loss': [0, y(.61), m.cz + 1],
