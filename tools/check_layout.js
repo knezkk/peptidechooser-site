@@ -58,10 +58,19 @@ function pages(dir, base = '') {
             if (which.length < 3) which.push(`${el.tagName.toLowerCase()}.${(el.className || '').toString().split(' ').join('.')} "${(el.textContent || '').trim().slice(0, 40)}"`);
           }
         }
-        return { sw, iw, outside, which };
+        // when the page scrolls sideways, name the element that reaches furthest past the edge (outside a table frame)
+        let widest = '';
+        if (sw > iw) {
+          let best = 0;
+          for (const el of document.body.querySelectorAll('*')) {
+            const b = el.getBoundingClientRect();
+            if (b.right > best && b.right > iw + 1 && !el.closest('.tbl-wrap')) { best = b.right; widest = `${el.tagName.toLowerCase()}.${(el.className || '').toString().split(' ').join('.')} "${(el.textContent || '').trim().slice(0, 40)}" (${Math.round(b.right)}px)`; }
+          }
+        }
+        return { sw, iw, outside, which, widest };
       });
       n++;
-      if (r.sw > r.iw) problems.push(`${w}px ${p}: page scrolls sideways (${r.sw} > ${r.iw})`);
+      if (r.sw > r.iw) problems.push(`${w}px ${p}: page scrolls sideways (${r.sw} > ${r.iw})${r.widest ? ': ' + r.widest : ''}`);
       if (r.outside) problems.push(`${w}px ${p}: ${r.outside} element(s) past the right edge: ${r.which.join(', ')}`);
     }
     await page.close();
