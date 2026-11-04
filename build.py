@@ -116,7 +116,7 @@ else if(e.key==='ArrowUp'){e.preventDefault();if(p===0)b.focus();else l[p-1].foc
 document.addEventListener('click',function(e){if(cur()>=0&&!e.target.closest('.nav-cat,.nav-toggle'))set(-1);});
 document.addEventListener('focusin',function(e){if(wide.matches&&cur()>=0&&!e.target.closest('.nav-cat'))set(-1);});
 // registered before the Menu's own Escape, so the first Escape closes only the open category
-document.addEventListener('keydown',function(e){var i=cur();if(e.key==='Escape'&&i>=0){e.stopImmediatePropagation();set(-1);btns[i].focus();}});
+document.addEventListener('keydown',function(e){var i=cur();if(e.key==='Escape'&&i>=0&&wide.matches){e.stopImmediatePropagation();set(-1);btns[i].focus();}});
 wide.addEventListener('change',function(){set(-1);});
 var tg=document.querySelector('.nav-toggle');if(tg)tg.addEventListener('click',function(){if(tg.getAttribute('aria-expanded')!=='true'&&cur()<0)set(0);});})();
 (function(){var b=document.querySelector('.nav-toggle'),n=document.getElementById('site-nav');if(!b||!n)return;
@@ -125,6 +125,11 @@ function set(o){n.classList.toggle('open',o);b.setAttribute('aria-expanded',o?'t
 // would skip them (design/site-polish, 2 Nov 2026)
 b.addEventListener('click',function(){var o=!n.classList.contains('open');set(o);if(o){var f=[].filter.call(n.querySelectorAll('a,button,input'),function(x){return x.offsetParent;})[0];if(f)f.focus();}});
 n.addEventListener('click',function(e){if(e.target.closest('a'))set(false);});
+// phones (owner task 3 Nov 2026, the 390px walkthrough): "Search" beside "Menu" opens the menu with the search field
+// focused, and a tap anywhere outside the open menu closes it
+var st=document.querySelector('.search-toggle'),q=document.getElementById('hs-q');
+if(st&&q)st.addEventListener('click',function(){if(!n.classList.contains('open'))b.click();q.focus();});
+document.addEventListener('click',function(e){if(n.classList.contains('open')&&!e.target.closest('#site-nav,.nav-toggle,.search-toggle,.head-search,.head-cta'))set(false);});
 document.addEventListener('keydown',function(e){if(e.key==='Escape'&&n.classList.contains('open')){set(false);b.focus();}});})();
 """
 # one cached file for every page instead of 4 KB inline on each (Home stays under its 60 KB check with the card menu)
@@ -403,6 +408,7 @@ def page(path, title, description, body, schema="", crumb=None):
     <nav class="nav" id="site-nav" aria-label="Main">{nav_cats(path)}</nav>
     {SEARCH_FORM}
     {head_cta()}
+    <button type="button" class="btn btn-line btn-sm search-toggle" aria-controls="site-nav">Search</button>
     <button type="button" class="btn btn-line btn-sm nav-toggle" aria-expanded="false" aria-controls="site-nav">Menu</button>
   </div>
 </header>
@@ -893,12 +899,14 @@ def seller_table(slug, kind=None):
         name_html = (f'<a class="name" href="/sellers/{r["seller_slug"]}/">{seller}</a>' if r["seller_slug"] in PROFILES
                      else f'<span class="name">{seller}</span>')
         trs.append(f'<tr data-seller="{r["seller_slug"]}" data-form="{escape(r.get("form") or "")}"><td>{name_html}</td><td data-l="Product">{name}<span class="sub">{size}</span></td>'
-                   f'<td data-l="Price"><span class="num">{price}</span></td><td data-l="Per mg"><span class="num">{ppm}</span></td>'
+                   f'<td data-l="Price"><span class="num">{price}</span></td>'
+                   + ("" if kind == "cosmetic" else f'<td data-l="Per mg"><span class="num">{ppm}</span></td>') +
                    f'<td class="checks">{score_line(r)}{check_chips(r)}</td></tr>')
         seen = r.get("price_observed_at") or r.get("last_seen")
         src.append(f'<li>{seller}, {name}{", " + nice_date(seen) if seen else ""}: {r["product_url"]}</li>')
+    per_mg_th = "" if kind == "cosmetic" else '<th scope="col">Per mg</th>'  # a cream has no price per mg
     table = (f'<div class="tbl-wrap"><table class="tbl"><thead><tr><th scope="col">Seller</th><th scope="col">Product</th>'
-             f'<th scope="col">Price</th><th scope="col">Per mg</th><th scope="col">Background check</th></tr></thead>'
+             f'<th scope="col">Price</th>{per_mg_th}<th scope="col">Background check</th></tr></thead>'
              f'<tbody>{"".join(trs)}</tbody></table></div>')
     return table, src, newest, scored
 
@@ -952,7 +960,7 @@ def seller_window(p):
   <div class="dlg-hd"><h2 id="{key}-h">{title}</h2><form method="dialog"><button class="btn btn-line btn-sm" type="submit">Close</button></form></div>
   <p class="dlg-lede">{window_who(p)}, with our checks.{checked}</p>
   {"".join(parts)}
-  <p class="dlg-foot">Price per mg is price divided by the stated amount; blends have no per-mg price.</p>
+  {"" if kind == "cosmetic" else '<p class="dlg-foot">Price per mg is price divided by the stated amount; blends have no per-mg price.</p>'}
   {f'<p class="dlg-foot dlg-score">Checks are facts we hold about the seller, not a safety or quality grade. Checked {nice_date(scored)}.</p>' if scored else ""}
   <ol class="dlg-src">{"".join(src)}</ol>
 </div></dialog>"""
@@ -1052,6 +1060,13 @@ def alt_chip(p):
     return '<span class="chip chip-neutral">Not a peptide</span>' if p.get("not_peptide") else ""
 
 
+def cosmetic_word(p):
+    """"serum" when every listing in a cosmetic window is a serum, else "product" (owner task 3 Nov 2026, the 390px walkthrough:
+    "Compare 8 serums" opened creams and lotions)."""
+    rows = [r for s in subs_of(p) for r in seller_rows(s, "cosmetic")]
+    return "serum" if rows and all("serum" in clean(r.get("product_name") or "").lower() for r in rows) else "product"
+
+
 def window_low(p):
     """(lowest price, shops) in an option's window: the lowest price per mg inside the /compare/ band for research-use
     listings, the lowest price for cosmetic ones; (None, n) without a price."""
@@ -1107,8 +1122,7 @@ def opt_action(g, p, rp, lazy):
             return btn
     if has_window(p) and window_kind(p) == "cosmetic":
         n = window_low(p)[1]
-        what = "serums" if "serum" in (p["name"] + p.get("does", "")).lower() else "products"
-        return f'<span class="pick-act">{sellers_button(p, lazy, f"Compare {plural(n, what[:-1])}", "btn-wait")}</span>'
+        return f'<span class="pick-act">{sellers_button(p, lazy, f"Compare {plural(n, cosmetic_word(p))}", "btn-wait")}</span>'
     if has_window(p):
         return f'<span class="pick-act">{sellers_button(p, lazy)}<span class="paid">Our checks, no shop links</span></span>'
     if is_cosmetic(p):
@@ -1429,12 +1443,21 @@ def letters_feed():
             f'<language>en-us</language><lastBuildDate>{built}</lastBuildDate>{"".join(items)}</channel></rss>\n')
 
 
+def jump_row(links):
+    """"Jump to" on a long page (pages.md, Every page, Jump row; owner task 3 Nov 2026, the 390px walkthrough): a row of
+    links to the page's own sections, under the H1, on phones only (from 641px it is not drawn)."""
+    if not links:
+        return ""
+    return ('<nav class="jump" aria-label="On this page"><span>Jump to</span>'
+            + "".join(f'<a href="{h}">{escape(t)}</a>' for h, t in links) + "</nav>")
+
+
 LETTERS_PAGE = f"""
 <section class="section letters-hd">
   <div class="wrap">
     <h1>FDA warning letters to peptide sellers and online clinics</h1>
     <p class="letters-what">A warning letter is about how a company sold or advertised a product. It does not withdraw any approval and is not a safety finding about an approved medicine.</p>
-    <p class="lede">A warning letter is the FDA's formal notice that it found what it believes are significant violations of the law; the company is asked to reply within 15 business days. It is public record. <a href="{FDA_ABOUT_LETTERS}" rel="nofollow">What the FDA says about warning letters</a></p>
+    {jump_row([("#letters-list", "The letters"), ("#sub-h", "Get new letters by email")] if BUTTONDOWN else [("#letters-list", "The letters")])}
     {author_line(DATA["pulled_at"][:10]) if DATA.get("pulled_at") else ""}
     <p class="letters-stamp"><span class="small">{len(LETTERS_ALL)} letters since {nice_date(DATA["letters_all_oldest"]) if DATA.get("letters_all_oldest") else ""}, newest first. Each links to the letter on fda.gov.</span></p>
     {SUBSCRIBE_BOX}
@@ -1454,6 +1477,7 @@ LETTERS_PAGE = f"""
     </table></div>
     {f'<p class="letters-more" hidden><button type="button" class="btn btn-line" id="letters-all">Show 25 more</button></p>' if len(LETTERS_ALL) > LETTERS_FIRST else ""}
     <p class="small" style="margin-top:16px">Company names are as the FDA lists them. "In our database" names the seller we matched the letter to.</p>
+    <p class="letters-formal">A warning letter is the FDA's formal notice that it found what it believes are significant violations of the law; the company is asked to reply within 15 business days. It is public record. <a href="{FDA_ABOUT_LETTERS}" rel="nofollow">What the FDA says about warning letters</a></p>
   </div>
 </section>{goals_strip("Compare peptides by goal")}
 {LETTERS_PAGE_JS}
@@ -2005,7 +2029,7 @@ def decide_cards(g):
     elif cos:
         if has_window(cos) and window_kind(cos) == "cosmetic":
             low, n = window_low(cos)
-            what = "serum" if "serum" in cos["name"].lower() else "product"
+            what = cosmetic_word(cos)
             if low is not None:
                 cards.append(decide_card("No prescription", cos["name"], status_chip(cos),
                                          f'<strong>From {money(low)} a {"bottle" if what == "serum" else "product"}</strong>, {plural(n, "shop")}',
@@ -2683,17 +2707,25 @@ def sellers_filter(shops, clinics):
         f'<button type="button" class="year-chip" data-check="{k}" data-nc="{sum(bool(r.get(f)) for r in clinics)}" data-ns="{sum(bool(r.get(f)) for r in shops)}" aria-pressed="false">'
         f'{t} <span class="chip-n">{sum(bool(r.get(f)) for r in shops)}</span></button>'
         for k, f, t in SELLER_CHECKS)
+    # phones (owner task 3 Nov 2026, the 390px walkthrough): the filters fold behind one "Filter" button, the count beside it
     return f"""<div class="letters-filter sellers-filter" hidden>
+      <div class="filter-bar"><button type="button" class="btn btn-line btn-sm filter-toggle" aria-expanded="false" aria-controls="sellers-fbody">Filter</button></div>
+      <div class="filter-body" id="sellers-fbody">
       <div class="legal-filter"><label for="sellers-q">Filter by name</label><input class="input" id="sellers-q" type="text" autocomplete="off"><button type="button" class="btn btn-line btn-sm" id="sellers-clear">Clear</button></div>
       <div class="legal-filter sub-filter"><label for="sellers-sub">Substance</label><select class="input" id="sellers-sub"><option value="">Any substance</option>{opts}</select>
       <label for="sellers-min">Minimum checks</label><select class="input" id="sellers-min">{mins}</select>
       <label for="sellers-sort" class="sort-shops">Sort</label><select class="input sort-shops" id="sellers-sort">{sorts}</select>
       <label for="clinics-sort" class="sort-clinics">Sort</label><select class="input sort-clinics" id="clinics-sort"><option value="checks">Most checks</option><option value="low">Lowest monthly price</option></select></div>
       <div class="year-chips" role="group" aria-labelledby="sellers-checks"><span id="sellers-checks">Checks met</span>{chips}</div>
+      </div>
       <p class="small" id="sellers-n" aria-live="polite"></p>
     </div>"""
 
 
+FILTER_FOLD_JS = """<script>
+(function(){document.querySelectorAll('.filter-toggle').forEach(function(b){var p=document.getElementById(b.getAttribute('aria-controls'));if(!p)return;
+b.addEventListener('click',function(){var o=b.getAttribute('aria-expanded')!=='true';b.setAttribute('aria-expanded',o?'true':'false');p.classList.toggle('open',o);});});})();
+</script>"""
 SELLERS_INDEX_JS = """<script>
 // The sellers index (pages.md, Sellers; owner task w2, 3 Nov 2026): two tabs, clinics first, one filter block for both; the
 // state in the hash (type, q, substance, min, check, sort, csort). Reads only the rows' data- attributes.
@@ -2819,6 +2851,7 @@ def sellers_index():
   </div>
 </section>
 {SELLERS_INDEX_JS}
+{FILTER_FOLD_JS}
 """
 
 
@@ -4666,10 +4699,12 @@ def sources_body():
         if items:
             sec.append(f'<section class="src-group" id="{gid}" aria-labelledby="{gid}-h"><h2 id="{gid}-h">{head}</h2>'
                        f'<ul class="src-list">{"".join(items)}</ul></section>')
+    jumps = [(f"#{m.group(1)}", m.group(2)) for m in re.finditer(r'<section class="src-group" id="([^"]+)"[^>]*><h2 id="[^"]+">([^<]+)</h2>', "".join(sec))]
     return f"""
 <section class="page sources-page"><div class="wrap prose">
 <h1>Sources</h1>
 <p class="lede">Where every number on this site comes from: each source, what we take from it and when we last checked it.</p>
+{jump_row(jumps)}
 {"".join(sec)}
 </div></section>
 """

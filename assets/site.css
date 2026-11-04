@@ -149,6 +149,7 @@ p { margin: 0 0 1em; }
 .letters-hd h1 { max-width: 24ch; margin-bottom: 16px; }
 .letters-hd .lede { max-width: 62ch; margin: 0 0 16px; }
 .letters-hd .lede a { color: var(--clinic); }
+.letters-formal { margin: 12px 0 0; max-width: 62ch; font-size: var(--small-size); line-height: var(--small-lh); color: var(--ink-2); }
 .letters-stamp { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin: 0; }
 .letters-stamp .small { color: var(--ink-2); }
 .letters-hd + .band-2 { margin-top: 48px; }
@@ -260,6 +261,8 @@ p { margin: 0 0 1em; }
 .seller-id .meta { margin: 0; }
 .seller-meta { margin: 2px 0 0; color: var(--ink-2); }
 .seller-score { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 24px; }
+/* under 900px the Background check card sits right under it with the same number: show it once, the card's (owner task 3 Nov 2026, the 390px walkthrough) */
+@media (max-width: 899px) { .seller-score .check-n { display: none; } }
 .seller-answer { margin: 16px 0 0; max-width: 58ch; text-wrap: pretty; }
 .seller-body { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-6); margin-top: var(--space-6); }
 .seller-side { display: contents; }
@@ -495,12 +498,25 @@ body > .crumbs { width: -moz-available; width: -webkit-fill-available; width: st
 }
 /* phones (760px): only the logo and "Menu" on the first row; the search field is the first row of the open Menu */
 @media (max-width: 760px) {
-  .nav-toggle { margin-left: auto; }
+  .search-toggle { order: 2; margin-left: auto; }
+  .site-head > .wrap { column-gap: 8px; }
+  .search-toggle, .nav-toggle { padding: 0 12px; }
+  /* tap targets at 44px on phones (owner task 3 Nov 2026, the 390px walkthrough, finding 8); the text keeps its size */
+  .site-head .brand, .site-foot .brand { min-height: 44px; }
+  .skip { min-height: 44px; box-sizing: border-box; display: inline-flex; align-items: center; }
+  .crumbs { padding-top: 4px; }
+  .crumbs a { display: inline-flex; align-items: center; min-height: 44px; }
+  .foot-col .foot-links a, .site-foot .foot-links a { min-height: 44px; }
+  .fh-compare .step-legal { min-height: 44px; justify-content: center; }
+  .nav-toggle { order: 3; }
+  html:not(.nav-js) .nav-toggle { margin-left: auto; }
   .head-search { order: 4; flex: 1 1 100%; max-width: none; margin: 6px 0 4px; }
   .nav-js .nav:not(.open) ~ .head-search { display: none; }
 }
+@media (max-width: 374px) { .nav-js .search-toggle { display: none; } .nav-toggle { margin-left: auto; } } /* the logo and two buttons do not fit; the field stays in the menu */
 @media (max-width: 640px) {
   .wrap { padding: 0 16px; }
+  .stamp { font-size: 13px; } /* no text under 13px on a phone (finding 10) */
   h1 { font-size: 32px; }
   h2 { font-size: 22px; }
   .hero { padding: 32px 0 40px; }
