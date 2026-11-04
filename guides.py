@@ -1574,10 +1574,10 @@ def g_clinic_shop(b, f, N):
 <p>A clinic's medicines come from a pharmacy on a prescription. A brand medicine is FDA approved: its maker sent trial data and the FDA checked it.{N('fda-approval')} A compounded copy is not FDA approved, and the FDA does not check its safety, effectiveness or quality before it is sold.{N('fda-compounding')}</p>
 <p>A research-use shop's vials are not approved for use in people. Many of the peptides they sell are on the FDA's list of substances that may be risky to compound, or were withdrawn from its review.{N('fda-bulk-risks')} Our guide <a href="/learn/are-peptides-legal-in-the-us/">Are peptides legal in the US?</a> explains the four kinds.</p>
 
-<h2>What do our five checks mean for each?</h2>
-<p>We check both kinds the same way: Lab reports, No FDA letter, Company found, Legal pages and Fresh prices.{N('own-how-we-rate')}</p>
+<h2>What do our checks mean for each?</h2>
+<p>We check a shop on five facts and an online clinic on four: lab reports apply only to shops.{N('own-how-we-rate')}</p>
 <ul>
-<li><strong>Lab reports</strong> are a shop check. In our data no online clinic has a lab report, so a clinic misses this check; that says nothing about the pharmacy behind it.</li>
+<li><strong>Lab reports</strong> are a shop check. Online clinics publish none, so a clinic is not scored on it; that says nothing about the pharmacy behind it.</li>
 <li><strong>No FDA letter</strong>, <strong>Company found</strong> and <strong>Legal pages</strong> mean the same for both.{N('own-how-we-rate')}</li>
 <li><strong>Fresh prices</strong> means our own crawl saw a current price on the seller's site in the last 30 days.{N('own-how-we-rate')}</li>
 </ul>
@@ -2124,7 +2124,7 @@ def g_by_numbers(b, f, N):
 <p>A clinic with a letter is still listed, and our <a href="/weight-loss/">weight loss page</a> shows the date of its newest one.</p>""" if clinics else "<p>We show the clinic numbers once they are in our database.</p>") + f"""
 
 <h2>Where can you see each seller?</h2>
-<p>Our <a href="/sellers/">sellers list</a> shows every shop and clinic with its score, and each seller's page shows its five checks with their dates. The seller windows on our goal pages, such as the <a href="/recovery/">recovery page</a>, show the shops for one peptide, and every substance has its own page under <a href="/peptides/">Peptides A to Z</a>.</p>
+<p>Our <a href="/sellers/">sellers list</a> shows every shop and clinic with its score, and each shop's page shows its five checks and each clinic's its four, with their dates. The seller windows on our goal pages, such as the <a href="/recovery/">recovery page</a>, show the shops for one peptide, and every substance has its own page under <a href="/peptides/">Peptides A to Z</a>.</p>
 <p>Paid links do not change a check, and nobody can buy a higher score.{N('own-how-we-rate')}</p>"""
     nxt = (("/sellers/", "See all sellers"), ("/how-we-rate/", "How we rate"))
     return short, body, nxt

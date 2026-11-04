@@ -819,6 +819,12 @@ def check_parts(P):
         hrefs = re.findall(r'href="(/[^"#?]*)', nxt.group(1)) if nxt else []
         if not any((DIST / h.strip("/") / "index.html").exists() or h == "/" for h in hrefs):
             errs.append(f"{name}: 'What to do next' links no built page")
+        # a shop is checked on five facts, a clinic on four (owner decision, 4 Nov 2026): no guide sentence gives "five
+        # checks" to every seller
+        plain = re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", re.sub(r"<sup>.*?</sup>", "", html[html.find("<main"):html.find("</main>")], flags=re.S)))
+        for sent in re.split(r"(?<=[.?!])\s", plain):
+            if re.search(r"\bfive (?:yes or no )?checks\b", sent, re.I) and re.search(r"\b(?:every|each|all|any) (?:peptide )?seller(?:s|'s)?\b", sent, re.I):
+                errs.append(f"{name}: 'five checks' said about every seller: {sent[:100]!r}")
         t = P[name].title.strip()
         if t in titles:
             errs.append(f"{name}: guide title {t!r} also on {titles[t]}")
