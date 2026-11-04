@@ -8,8 +8,12 @@ import json
 import os
 import re
 import sys
+from html import escape, unescape
 from html.parser import HTMLParser
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+import paid  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
 NO_LISTING_TEXTS = ("Any pharmacy, no prescription", "On prescription; no clinic prices yet",
@@ -325,8 +329,129 @@ def paid_rule_errs(name, html, rule):
     return errs
 
 
-def check_parts(P):
+def page_texts():
+    """(name, HTML) of every page and seller window in the build."""
+    texts = [(str(f.relative_to(DIST)), f.read_text(encoding="utf-8")) for f in sorted(DIST.rglob("*.html"))]
+    return texts + [(f"windows/{f.name}", json.loads(f.read_text(encoding="utf-8"))["html"]) for f in sorted((DIST / "windows").glob("*.json"))]
+
+
+def check_paid_plumbing():
+    """Every green button's /out/ path has a redirect page; every redirect page holds its tracking address from the data
+    and nothing else; /out/ stays out of search; no tracking address anywhere else (pages.md, Paid link redirect page)."""
     errs = []
+    data = paid.load()
+    want = {paid.out_dir(r["out_path"]): r for r in data["redirects"]}
+    if len(want) != len(data["redirects"]):
+        errs.append("paid data: two redirects share one /out/ path")
+    have = {str(f.parent.relative_to(DIST)) for f in (DIST / "out").rglob("index.html")} if (DIST / "out").exists() else set()
+    for d in sorted(have - set(want)):
+        errs.append(f"{d}: a redirect page with no tracking address in the data")
+    for d, r in sorted(want.items()):
+        if not re.fullmatch(r"out/[a-z0-9-]+", d):
+            errs.append(f"paid data: bad /out/ path {r['out_path']}")
+        if not (r.get("tracking_url") or "").startswith("https://"):
+            errs.append(f"{d}: no https tracking address in the data")
+            continue
+        f = DIST / d / "index.html"
+        if not f.exists():
+            errs.append(f"{d}: no redirect page")
+            continue
+        html = f.read_text(encoding="utf-8")
+        url = escape(r["tracking_url"], quote=True)
+        for need, what in ((f'<meta http-equiv="refresh" content="0;url={url}">', "meta refresh"), ("location.replace(", "location.replace"),
+                           ('<meta name="robots" content="noindex,nofollow">', "noindex,nofollow"),
+                           (f'<a href="{url}" rel="sponsored nofollow">Continue to ', "visible Continue link")):
+            if need not in html:
+                errs.append(f"{d}: no {what}")
+        if re.search(r"gtag|googletagmanager|fonts\.g|<link\b|<img\b", html):
+            errs.append(f"{d}: analytics, fonts or other files on a redirect page")
+    robots = (DIST / "robots.txt").read_text(encoding="utf-8")
+    if "Disallow: /out/" not in robots:
+        errs.append("robots.txt: no Disallow: /out/")
+    if "/out/" in (DIST / "sitemap.xml").read_text(encoding="utf-8"):
+        errs.append("sitemap.xml: /out/ in the sitemap")
+    urls = [r["tracking_url"] for r in data["redirects"] if r.get("tracking_url")]
+    for f in sorted(p for p in DIST.rglob("*") if p.suffix in (".html", ".json", ".xml", ".txt") and "out" not in p.relative_to(DIST).parts[:1]):
+        text = f.read_text(encoding="utf-8")
+        if any(u in text or escape(u, quote=True) in text for u in urls) or re.search(r"track\.revoffers\.com/aff_c|awin1\.com/cread|anrdoezrs\.net/click-", text):
+            errs.append(f"{f.relative_to(DIST)}: a tracking address outside /out/")
+    site = (Path(os.environ["SITE_JSON"]) if os.environ.get("SITE_JSON") else ROOT / "data" / "site.json").read_text(encoding="utf-8")
+    if any(u in site for u in urls):
+        errs.append("site.json: holds a tracking address")
+    texts = page_texts()
+    for name, html in texts:
+        for href in sorted(set(GREEN_HREF.findall(html))):
+            if paid.out_dir(href) not in have:
+                errs.append(f"{name}: green button to {href}, which has no redirect page")
+    return errs
+
+
+GREEN_HREF = re.compile(r'class="btn btn-action[^"]*" href="(/out/[^"]*)"')
+VOID_TAGS = {"area", "br", "col", "embed", "hr", "img", "input", "link", "meta", "source", "track", "wbr"}
+
+
+def paid_containers(html):
+    """(out path, the HTML of the table row, list item or card around that green button) for each green button."""
+    out, stack = [], []
+    for m in re.finditer(r'<(/?)([a-zA-Z][\w-]*)([^<>]*?)(/?)>', html):
+        close, tag, attrs, selfclose = m.group(1), m.group(2).lower(), m.group(3), m.group(4)
+        if tag in VOID_TAGS or selfclose:
+            continue
+        if not close:
+            stack.append([tag, m.start(), None])
+            green = re.search(r'class="btn btn-action[^"]*" href="(/out/[^"]*)"', attrs)
+            if green:
+                box = next((e for e in reversed(stack) if e[0] in ("tr", "li", "article")), None)
+                if box:
+                    box[2] = (box[2] or []) + [green.group(1)]
+            continue
+        while stack:
+            top = stack.pop()
+            if top[0] == tag:
+                out += [(href, html[top[1]:m.end()]) for href in top[2] or []]
+                break
+    return out
+
+
+def phrase_hits(rules, html):
+    """Text around each rule phrase, whole words, any case; a phrase already in the brand's own form (Ozempic(R)) is no hit."""
+    text = unescape(re.sub(r"<(script|style)\b.*?</\1>", " ", html, flags=re.S))
+    text = re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", text))
+    hits = []
+    for r in rules:
+        for m in re.finditer(rf"\b{re.escape(r['phrase'])}\b", text, re.I):
+            if not (r.get("replace_with") and text[m.start():].startswith(r["replace_with"])):
+                hits.append(text[max(0, m.start() - 45):m.end() + 45].strip())
+    return hits
+
+
+def wording_report():
+    """A brand's wording rules are advisory (pages.md, Paid link redirect page; owner decision 4 Nov 2026): the table row,
+    list item or card around its green button, and the main part of its own page when that page has one. Lines to print;
+    never a failure."""
+    data = paid.load()
+    rules = collections.defaultdict(list)
+    for r in data.get("copy_rules") or []:
+        rules[r["seller_slug"]].append(r)
+    src = Path(os.environ["SITE_JSON"]) if os.environ.get("SITE_JSON") else ROOT / "data" / "site.json"
+    profiles = json.loads(src.read_text(encoding="utf-8")).get("seller_profiles") or []
+    brand = {r["seller_slug"]: re.sub(r"\s*\(.*\)$", "", r.get("seller_name") or "") for r in profiles}
+    out_seller = {r["out_path"]: r["seller_slug"] for r in data["redirects"]} | paid_rule()[2]
+    lines = set()
+    for name, html in page_texts():
+        found = [(out_seller.get(href), box) for href, box in paid_containers(html)]
+        page = re.fullmatch(r"sellers/([^/]+)/index\.html", name)
+        if page and any(out_seller.get(h) == page.group(1) for h in GREEN_HREF.findall(html)):
+            main = re.search(r'<main id="main">(.*)</main>', html, re.S)
+            found.append((page.group(1), main.group(1) if main else html))
+        for seller, box in found:
+            for around in phrase_hits(rules.get(seller, []), box):
+                lines.add(f"Wording differs from {brand.get(seller) or seller}'s rules: {name}: {around}")
+    return sorted(lines)
+
+
+def check_parts(P):
+    errs = check_paid_plumbing()
     rule = paid_rule()
     css = (ROOT / "assets" / "site.css").read_text()
     for m in re.finditer(r"#[0-9a-fA-F]{3,8}\b", css):
@@ -342,19 +467,19 @@ def check_parts(P):
             cls = m.group(1).split()
             if "btn" in cls and not any(c in cls for c in ("btn-ink", "btn-action", "btn-line", "btn-mark", "btn-wait")):
                 errs.append(f"{name}: button without a design-book kind ({cls})")
-        # The paid button: an <a> to /out/ with rel=sponsored and "Paid link" right under it. Before a paid link exists
+        # The paid button: an <a> to /out/ with rel=sponsored and "Paid link" inside it (a table) or right under it. Before a paid link exists
         # there is no green button at all, and no page says "No paid link yet" (Home v2, 3 Nov 2026).
         if "No paid link yet" in html:
             errs.append(f"{name}: says 'No paid link yet'")
-        for m in re.finditer(r'<(\w+)([^>]*class="btn btn-action[^"]*"[^>]*)>[^<]*</\1>(<span class="paid">([^<]*)</span>)?', html):
-            tag, attrs, under = m.group(1), m.group(2), m.group(4)
+        for m in re.finditer(r'<(\w+)([^>]*class="btn btn-action[^"]*"[^>]*)>[^<]*(?:<span class="paid">([^<]*)</span>)?</\1>(?:<span class="paid">([^<]*)</span>)?', html):
+            tag, attrs, under = m.group(1), m.group(2), m.group(3) or m.group(4)
             if 'aria-disabled="true"' in attrs:
                 errs.append(f"{name}: a disabled green button (use btn-wait to our own page until a paid link exists)")
             else:
                 if tag != "a" or 'href="/out/' not in attrs or "sponsored" not in attrs:
                     errs.append(f"{name}: green button not an /out/ link with rel=sponsored")
                 if under != "Paid link":
-                    errs.append(f"{name}: green button without 'Paid link' under it")
+                    errs.append(f"{name}: green button without 'Paid link' in or under it")
         errs += window_errs(name, html)
         errs += paid_rule_errs(name, html, rule)
     # A clinic page closes its legit list with the clinic sentence, never the shops' "we never link to the shop" (owner
@@ -918,6 +1043,8 @@ def check_parts(P):
             errs.append(f"learn/index.html: guide {t!r} listed twice")
     for f in sorted(DIST.rglob("*.html")):
         html = f.read_text(encoding="utf-8")
+        if f.relative_to(DIST).parts[0] == "out":
+            continue  # paid redirects leave the site: check_paid_plumbing holds them to their own, stricter list
         if 'http-equiv="refresh"' in html:
             m = re.search(r'url=(/[^"]*)"', html)
             if 'content="noindex"' not in html or 'rel="canonical"' not in html or not m or not (DIST / m.group(1).strip("/") / "index.html").exists():
@@ -1036,4 +1163,6 @@ if __name__ == "__main__":
         for e in errs:
             print("  -", e)
         failed += len(errs)
+    for line in wording_report():
+        print(" ", line)
     sys.exit(1 if failed else 0)

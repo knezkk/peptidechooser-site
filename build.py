@@ -11,11 +11,13 @@ import re
 from html import escape, unescape
 from urllib.parse import urlparse
 import shutil
+import subprocess
 from datetime import date
 
 import guides
 import parts
 import home
+import paid
 
 ROOT = Path(__file__).parent
 DIST = ROOT / "dist"
@@ -38,6 +40,20 @@ def nice_date(iso):
 
 
 CHECKED = nice_date(DATA["checked"])
+
+
+def text_changed(*ranges):
+    """The date of the last commit that changed these lines (owner answer Q2 b, 4 Nov 2026): "Last updated" on /privacy/ and
+    /disclosure/, never typed. Each range is (first line regex, last line regex, file). A shallow clone would give the wrong
+    date, so the build stops; lines with no commit yet are today's."""
+    def git(*args):
+        return subprocess.run(["git", *args], cwd=ROOT, capture_output=True, text=True)
+    if git("rev-parse", "--is-shallow-repository").stdout.strip() == "true":
+        sys.exit("build.py: a shallow clone has no text dates; check out with fetch-depth 0")
+    dates = [git("log", "-1", "-s", "--format=%cs", "-L", f"/{a}/,/{b}/:{f}").stdout.strip()[:10] for a, b, f in ranges]
+    return nice_date(max(d or date.today().isoformat() for d in dates))
+
+
 GA4_ID = DATA.get("ga4_id", "")
 
 # Google Analytics 4 with Consent Mode v2. Everything starts denied; the cookie notice (design book,
@@ -813,7 +829,7 @@ SHOPS = {k: r for k, r in PROFILES.items() if (r.get("product_count") or 0) > 0}
 CLINIC_PROFILES = {k: r for k, r in PROFILES.items() if k not in SHOPS}
 
 
-def clinic_button(seller_slug, label, small="Our clinic page", plan=None, paid_ok=True):
+def clinic_button(seller_slug, label, small="Our clinic page", plan=None, paid_ok=True, in_table=False):
     """A clinic's one action (Home v2, 3 Nov 2026), on clinic_row_act's rule (owner answer Q1 a and decision C8, 3 Nov
     2026): btn-action "Visit <Name> ..." through /out/<seller>/ with "Paid link" under it only when the data carries the
     clinic's paid link (`paid_url` on the plan row, else on its profile; none yet; site.paid_links applies the paid link
@@ -826,9 +842,10 @@ def clinic_button(seller_slug, label, small="Our clinic page", plan=None, paid_o
     if paid_ok and paid:
         tail = label.split(" · ", 1)[1] if " · " in label else ""
         return (f'<span class="pick-act"><a class="btn btn-action btn-sm" href="{paid_href(seller_slug, paid)}" rel="sponsored">'
-                f'Visit {seller_base(r["seller_name"])}{" · " + tail if tail else ""}</a><span class="paid">Paid link</span></span>')
+                f'Visit {seller_base(r["seller_name"])}{" · " + tail if tail else ""}'
+                + ('<span class="paid">Paid link</span></a></span>' if in_table else '</a><span class="paid">Paid link</span></span>'))
     return (f'<span class="pick-act"><a class="btn btn-wait btn-sm" href="/sellers/{seller_slug}/">{label}</a>'
-            f'<span class="paid">{small}</span></span>')
+            f'{"" if in_table else f"""<span class="paid">{small}</span>"""}</span>')
 
 
 def clinic_link(seller_slug, name, inline=False):
@@ -1854,15 +1871,17 @@ CONTACT = f"""
 </div></section>
 """
 
+DISCLOSURE_UPDATED = text_changed(("^DISCLOSURE = f", '^"""$', "build.py"), ("^NETWORKS = ", "^}", "paid.py"))
+PRIVACY_UPDATED = text_changed(("^PRIVACY_NEWSLETTER = ", '^"""$', "build.py"))
 DISCLOSURE = f"""
 <section class="page"><div class="wrap prose">
 <h1>Affiliate and medical disclosure</h1>
-<p class="small meta">Last updated {CHECKED}</p>
+<p class="small meta">Last updated {DISCLOSURE_UPDATED}</p>
 <h2>Paid links</h2>
 <p>Peptide Chooser is supported by affiliate commissions. Some links on this site go to sellers or services that pay us a commission if you make a purchase or sign up. This costs you nothing extra.</p>
 <p>Paid links are labeled where they appear. Commissions do not affect our ratings, rankings or which products we include. Sellers without an affiliate program are rated and listed on the same terms.</p>
 <p>A paid link may lead to a seller that has an FDA warning letter; the letter is shown next to the price and on the seller's page.</p>
-<p>We may take part in affiliate programs run by individual brands and by affiliate networks. We will list the networks we work with on this page as those relationships start.</p>
+{paid.networks_block()}
 <h2>Not medical advice</h2>
 <p>Everything on this site is general information for education. It is not medical advice, diagnosis or treatment, and it does not replace a consultation with a licensed clinician.</p>
 <p>Some products discussed on this site are not approved by the U.S. Food and Drug Administration for the uses described. Where that is the case, we say so. Do not start, stop or combine any treatment without speaking to a clinician.</p>
@@ -1882,7 +1901,7 @@ PRIVACY_NEWSLETTER = ('<li><strong>Email alerts, only if you sign up.</strong> I
 PRIVACY = f"""
 <section class="page"><div class="wrap prose">
 <h1>Privacy policy</h1>
-<p class="small meta">Last updated {CHECKED}</p>
+<p class="small meta">Last updated {PRIVACY_UPDATED}</p>
 <p>This policy explains what information Peptide Chooser ("we") collects when you visit peptidechooser.com and how we use it.</p>
 <h2>Information we collect</h2>
 <ul>
@@ -1893,7 +1912,7 @@ PRIVACY = f"""
 <h2>Cookies</h2>
 <p>The site sets one small value in your browser to remember your cookie choice. Google Analytics sets its own cookies (named _ga and similar) only after you accept. You can change your mind by clearing the site's data in your browser; the notice will then appear again.</p>
 <h2>Paid links</h2>
-<p>When you click a paid link, you leave our site. The seller or affiliate network may set cookies to record that you came from us. Their own privacy policies apply to that data.</p>
+<p>When you click a paid link, you leave our site. The seller or affiliate network may set cookies to record that you came from us. Their own privacy policies apply to that data. The address of a paid link also carries the path of our page you clicked from, never anything about you.</p>
 <h2>How long we keep information</h2>
 <p>We keep email correspondence for as long as needed to answer you and to keep a record of corrections, and no longer than 24 months unless the law requires otherwise.</p>
 <h2>Your rights</h2>
@@ -2016,12 +2035,11 @@ def clinic_row_act(r):
     owner decision 4 Nov 2026); otherwise btn-wait "See plans" to our clinic page."""
     name, paid = seller_base(r["seller_name"]), r.get("paid_url") or PROFILES.get(r["seller_slug"], {}).get("paid_url")
     if paid:
-        return (f'<span class="pick-act"><a class="btn btn-action btn-sm" href="{paid_href(r["seller_slug"], paid)}" rel="sponsored">Visit {name}</a>'
-                '<span class="paid">Paid link</span></span>')
+        return (f'<span class="pick-act"><a class="btn btn-action btn-sm" href="{paid_href(r["seller_slug"], paid)}" rel="sponsored">Visit {name}'
+                '<span class="paid">Paid link</span></a></span>')
     if r["seller_slug"] not in PROFILES:
         return ""
-    return (f'<span class="pick-act"><a class="btn btn-wait btn-sm" href="/sellers/{r["seller_slug"]}/">See plans</a>'
-            '<span class="paid">Our clinic page</span></span>')
+    return (f'<span class="pick-act"><a class="btn btn-wait btn-sm" href="/sellers/{r["seller_slug"]}/">See plans</a></span>')
 
 
 def clinic_section(g, rows):
@@ -2047,7 +2065,7 @@ def clinic_section(g, rows):
   <div class="wrap">
     <div class="sec-hd"><div><h2>Online clinic prices</h2><p>{len(rows)} plans at the online clinics we track, cheapest first.</p></div></div>
     <div class="tbl-wrap"><table class="tbl tbl-cards tbl-clinics">
-      <thead><tr><th scope="col">Clinic</th><th scope="col">Plan</th><th scope="col">What it is</th><th scope="col">Per month</th><th scope="col"><span class="vh">Our clinic page</span></th></tr></thead>
+      <thead><tr><th scope="col">Clinic</th><th scope="col">Plan</th><th scope="col">What it is</th><th scope="col">Per month</th><th scope="col"><span class="vh">Action</span></th></tr></thead>
       <tbody>{"".join(trs)}</tbody>
     </table></div>
     {f'<p class="clinics-more" hidden><button type="button" class="btn btn-line" id="clinics-all">Show all {len(rows)}</button></p>{CLINICS_JS}' if len(rows) > CLINICS_FIRST else ""}
@@ -2118,7 +2136,7 @@ def goal_clinic_section(g, rows):
     {filt}
     <p class="small clinic-n" id="clinic-n" aria-live="polite">{len(rows)} of {len(rows)} plans</p>
     <div class="tbl-wrap"><table class="tbl tbl-compact tbl-cards tbl-clinics">
-      <thead><tr><th scope="col">Plan</th><th scope="col">What it is</th><th scope="col">Per month</th><th scope="col">Clinic</th><th scope="col"><span class="vh">Our clinic page</span></th></tr></thead>
+      <thead><tr><th scope="col">Plan</th><th scope="col">What it is</th><th scope="col">Per month</th><th scope="col">Clinic</th><th scope="col"><span class="vh">Action</span></th></tr></thead>
       <tbody>{"".join(trs)}</tbody>
     </table></div>
     {f'<p class="clinics-more" hidden><button type="button" class="btn btn-line" id="clinics-all">Show all {len(rows)}</button></p>{CLINICS_JS}' if len(rows) > CLINICS_FIRST else ""}
@@ -2780,12 +2798,17 @@ def legit_section(r):
 
 def seller_action(r):
     """The page's one action on the H1's row (owner task 3 Nov 2026): a clinic compares with another clinic, a shop with
-    another shop, on /compare/ (built whenever seller pages are). A paid link (Visit <Name>) joins when the data carries
-    one; none does yet."""
+    another shop, on /compare/ (built whenever seller pages are). A clinic with a paid link in the data also gets "Visit <Name>"
+    with "Paid link" under it, the same size beside it: the one pair of actions (pages.md, Seller, Top block; owner answer
+    Q1 b, 4 Nov 2026)."""
     if r["seller_slug"] in CLINIC_PROFILES:
         plans = clinic_plan_rows(r)
-        return (f'<a class="btn btn-ink" href="/compare/?a=p.{r["seller_slug"]}.{plans[0]["plan_slug"]}">Compare with another clinic</a>'
-                if plans else "")
+        compare = (f'<a class="btn btn-ink" href="/compare/?a=p.{r["seller_slug"]}.{plans[0]["plan_slug"]}">Compare with another clinic</a>'
+                   if plans else "")
+        if not r.get("paid_url"):
+            return compare
+        return (f'<div class="seller-pair">{compare}<span class="pick-act"><a class="btn btn-action" href="{paid_href(r["seller_slug"], r["paid_url"])}" rel="sponsored">'
+                f'Visit {seller_base(seller_name(r))}</a><span class="paid">Paid link</span></span></div>')
     return f'<a class="btn btn-ink" href="/compare/?a=s.{r["seller_slug"]}">Compare with another shop</a>'
 
 
@@ -3050,7 +3073,7 @@ def clinics_directory(clinics):
                    f'<td data-l="What it prescribes">{escape(subs_words(sorted(clinic_subs(r), key=lambda x: sub_label(x).lower())))}</td>'
                    f'<td class="num" data-l="From">{usd(low) + "/mo" if low is not None else "unknown"}</td>'
                    f'<td data-l="Checks">{check_bar(r)}</td><td data-l="FDA letters">{home.where_letters(me, r)}</td>'
-                   f'<td class="act">{clinic_button(r["seller_slug"], "See plans")}</td></tr>')
+                   f'<td class="act">{clinic_button(r["seller_slug"], "See plans", in_table=True)}</td></tr>')
     return f"""
     <section class="sellers-sec" id="clinics" aria-labelledby="clinics-h">
       <h2 id="clinics-h" class="h-sources">Online clinics</h2>
@@ -4671,6 +4694,7 @@ def main():
         "background_color": COLOR["white"], "theme_color": COLOR["white"],
         "icons": [{"src": "/assets/apple-touch-icon.png", "sizes": "180x180", "type": "image/png"},
                   {"src": "/assets/icon-512.png", "sizes": "512x512", "type": "image/png"}]}, indent=2) + "\n")
+    paid.write_out_pages(DIST, {slug: seller_base(r["seller_name"]) for slug, r in PROFILES.items()})
     (DIST / "CNAME").write_text("peptidechooser.com\n")
     (DIST / ".nojekyll").write_text("")
     (DIST / "robots.txt").write_text(f"User-agent: *\nAllow: /\nDisallow: /out/\nSitemap: {SITE}/sitemap.xml\n")
