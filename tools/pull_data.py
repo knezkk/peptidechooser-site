@@ -54,6 +54,24 @@ def rows(sql):
     return [{k: plain(v) for k, v in r.items()} for r in fetch(sql)]
 
 
+def optional_columns(view, *cols):
+    """Columns the data side is still adding (peptide-data task 12): ", a, b" for those the view has, so a pull never breaks
+    while they are missing."""
+    have = {r["column_name"] for r in rows(
+        f"select column_name from information_schema.columns where table_schema = 'site' and table_name = '{view}'")}
+    return "".join(f", {c}" for c in cols if c in have)
+
+
+def add_paid_links(d):
+    """A seller's `paid_url` is the /out/ path from site.paid_links, which applies the paid link rule (pages.md, Buttons)
+    and never gives the tracking address. A cosmetic link belongs to one product, not to the seller's buttons."""
+    paid = {r["seller_slug"]: r["out_path"] for r in rows(
+        "select seller_slug, out_path from site.paid_links where allowed_on <> 'cosmetic' order by active_from")}
+    for r in d["seller_profiles"]:
+        if r["seller_slug"] in paid:
+            r["paid_url"] = paid[r["seller_slug"]]
+
+
 def substances(d):
     """The substances the site shows: every option's `substance` or `substances` and every legal row's `substances`."""
     out = {p["substance"] for g in d["goals"] for p in g.get("peptides", []) if p.get("substance")}
@@ -107,7 +125,9 @@ def letters_all_rows():
     seller in the database, newest first, from site.fda_letters_all."""
     return rows(
         "select letter_date, letter_url, company_name, letter_subject, issuing_office, letter_reference, seller_slug, "
-        "seller_name, seller_kind, match_kind, peptide_related from site.fda_letters_all "
+        "seller_name, seller_kind, match_kind, peptide_related"
+        + optional_columns("fda_letters_all", "closed_on", "closeout_url") +
+        " from site.fda_letters_all "
         "where peptide_related or seller_slug is not null order by letter_date desc nulls last, company_name")
 
 
@@ -201,11 +221,14 @@ def main():
         # the newest legal-pages crawl (peptide-data spec 0015 decision 28): found, absent, blocked, failed or null
         "legal_checked_on, legal_check_outcome "
         "from site.seller_profile order by seller_slug")
+    add_paid_links(d)
     d["seller_substances"] = top_substances(rows(
         "select seller_slug, substance_slug, listing_count, price_per_mg_min, price_per_mg_max, has_coa, "
         "newest_price_observed_at from site.seller_substances"))
     d["seller_letters"] = rows(
-        "select seller_slug, letter_date, letter_url, letter_subject, issuing_office, match_kind from site.seller_letters "
+        "select seller_slug, letter_date, letter_url, letter_subject, issuing_office, match_kind"
+        + optional_columns("seller_letters", "closed_on", "closeout_url") +
+        " from site.seller_letters "
         "order by seller_slug, letter_date desc")
     # which substances each FDA warning letter names, with a short first-mention quote (owner task 2 Nov 2026)
     d["letter_substances"] = rows(

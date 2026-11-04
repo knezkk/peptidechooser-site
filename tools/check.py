@@ -286,8 +286,46 @@ def window_errs(name, html):
 COSMETIC_FORMS = ("cream", "serum", "lotion", "gel", "topical")
 
 
+def paid_rule():
+    """What the paid link rule needs (pages.md, Buttons; owner decision 4 Nov 2026): research-use shops, sellers with an
+    Adulterated letter and no close-out, and the seller behind each /out/ path."""
+    src = Path(os.environ["SITE_JSON"]) if os.environ.get("SITE_JSON") else ROOT / "data" / "site.json"
+    d = json.loads(src.read_text(encoding="utf-8"))
+    profiles = d.get("seller_profiles") or []
+    letters = [r for r in (d.get("seller_letters") or []) + (d.get("letters_all") or []) if r.get("seller_slug")]
+    closed = {r["letter_url"] for r in letters if r.get("closed_on")}
+    return ({r["seller_slug"] for r in profiles if r.get("seller_kind") == "S1_RUO"},
+            {r["seller_slug"] for r in letters if re.search(r"adulterat", r.get("letter_subject") or "", re.I) and r["letter_url"] not in closed},
+            {r["paid_url"]: r["seller_slug"] for r in profiles + (d.get("plans") or []) if r.get("paid_url")})
+
+
+CLOSED_CHIP = r'<a class="chip chip-ok chip-link" href="https://www\.fda\.gov/[^"]+" rel="nofollow">Closed by FDA \d{1,2} [A-Z][a-z]{2} \d{4}</a>'
+
+
+def paid_rule_errs(name, html, rule):
+    """A btn-action never on a research-use shop's row or page, never on a seller with an Adulterated letter and no
+    close-out; "Closed by FDA" never without a date and a link."""
+    ruo, adulterated, out_paths = rule
+    errs = []
+    seller = re.fullmatch(r"sellers/([^/]+)/index\.html", name)
+    if seller and seller.group(1) in ruo and 'class="btn btn-action' in html:
+        errs.append(f"{name}: a green button on a research-use shop's page")
+    found = {out_paths.get(h) or h.split("/")[2] for h in re.findall(r'class="btn btn-action[^"]*" href="(/out/[^"/]+/)"', html)}
+    for row in re.findall(r"<tr\b.*?</tr>", html, re.S):
+        if 'class="btn btn-action' in row:
+            found |= set(re.findall(r'href="/sellers/([^"/#]+)/', row)) | set(re.findall(r'data-seller="([^"]+)"', row))
+    for slug in sorted(found & ruo):
+        errs.append(f"{name}: a green button for the research-use shop {slug}")
+    for slug in sorted(found & adulterated):
+        errs.append(f"{name}: a green button for {slug}, whose Adulterated letter has no close-out")
+    if html.count("Closed by FDA") != len(re.findall(CLOSED_CHIP, html)):
+        errs.append(f"{name}: 'Closed by FDA' without a date and a link to fda.gov")
+    return errs
+
+
 def check_parts(P):
     errs = []
+    rule = paid_rule()
     css = (ROOT / "assets" / "site.css").read_text()
     for m in re.finditer(r"#[0-9a-fA-F]{3,8}\b", css):
         errs.append(f"site.css: hard-coded colour {m.group(0)}")
@@ -316,6 +354,7 @@ def check_parts(P):
                 if under != "Paid link":
                     errs.append(f"{name}: green button without 'Paid link' under it")
         errs += window_errs(name, html)
+        errs += paid_rule_errs(name, html, rule)
     # A clinic page closes its legit list with the clinic sentence, never the shops' "we never link to the shop" (owner
     # UX audit, 3 Nov 2026).
     for slug in clinic_slugs():
@@ -385,7 +424,8 @@ def check_parts(P):
                 errs.append(f"{name}: the first shop shown has {first.group(1)} of 5 checks, the table's best has {best}")
     # Home's windows load on demand from dist/windows/<key>.json (owner UX audit, 3 Nov 2026): the same rules apply.
     for f in sorted((DIST / "windows").glob("*.json")) if (DIST / "windows").exists() else []:
-        errs += window_errs(f"windows/{f.name}", json.loads(f.read_text(encoding="utf-8"))["html"])
+        win = json.loads(f.read_text(encoding="utf-8"))["html"]
+        errs += window_errs(f"windows/{f.name}", win) + paid_rule_errs(f"windows/{f.name}", win, rule)
     for name, p in P.items():
         html = (DIST / name).read_text(encoding="utf-8")
         # Home's "Prices at N shops" buttons point at a window file that exists
@@ -910,6 +950,9 @@ def check_data(P):
             errs.append(f"letters {r.get('seller_slug')}: no fda.gov source")
         if not r.get("letter_date") or not r.get("seller_name") or not r.get("letter_subject"):
             errs.append(f"letters {r.get('seller_slug')}: no date, seller name or subject")
+    for r in (d.get("letters_all") or []) + (d.get("seller_letters") or []):
+        if r.get("closed_on") and not (r.get("closeout_url") or "").startswith("https://www.fda.gov/"):
+            errs.append(f"letter {r.get('letter_url')}: closed_on without its close-out letter on fda.gov")
     for r in d.get("letters_all") or []:
         if not (r.get("letter_url") or "").startswith("https://www.fda.gov/"):
             errs.append(f"letters_all {r.get('company_name')}: no fda.gov source")
