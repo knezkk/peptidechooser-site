@@ -7,7 +7,12 @@
   "goals": [
     {
       "slug": "hair",
-      "clinic_table": {"substances": ["finasteride", "minoxidil"]},
+      "clinic_table": {
+        "substances": [
+          "finasteride",
+          "minoxidil"
+        ]
+      },
       "guide": "peptides-for-hair-loss-what-works",
       "name": "Hair growth",
       "live": true,
@@ -140,6 +145,19 @@
           },
           "substance": "minoxidil",
           "proven_alternative": true
+        },
+        {
+          "name": "Compounded minoxidil spray",
+          "plain": "A pharmacy-made minoxidil spray sold by an online clinic, not checked by the FDA batch by batch.",
+          "status": "Not FDA approved; pharmacy-made",
+          "chip": "warn",
+          "does": "A pharmacy-made minoxidil spray sold by an online clinic. Not checked by the FDA batch by batch.",
+          "how": "Prescription through the clinic.",
+          "status_plain": "Not FDA approved; pharmacy-made.",
+          "plan_kind": "compounded",
+          "plan_substances": [
+            "minoxidil"
+          ]
         },
         {
           "name": "GHK-Cu copper peptide serum",
@@ -310,11 +328,24 @@
       ],
       "short": "Weight loss",
       "panel_title": "Weight loss",
-      "for": "For losing weight with medical help: the two approved weekly shots, what they cost, and the copies sold online."
+      "for": "For losing weight with medical help: the two approved weekly shots, what they cost, and the copies sold online.",
+      "tools": [
+        {
+          "seller_slug": "signos",
+          "name": "Signos",
+          "line": "An over-the-counter app and glucose sensor for adults not on insulin; FDA cleared as a device, not approved as a weight-loss medicine.",
+          "source": "FDA 510(k) K250106, Signos Glucose Monitoring System, read 4 Nov 2026",
+          "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfPMN/pmn.cfm?ID=K250106"
+        }
+      ]
     },
     {
       "slug": "muscle",
-      "clinic_table": {"substances": ["sermorelin"]},
+      "clinic_table": {
+        "substances": [
+          "sermorelin"
+        ]
+      },
       "guide": "best-peptides-for-muscle-growth",
       "approved_instead_guide": "best-peptides-for-muscle-growth",
       "name": "Muscle and hormones",
@@ -343,7 +374,10 @@
           "substance": "tesamorelin",
           "top_pick": false,
           "top_pick_why": "Approved only for HIV-related belly fat, not for muscle (owner, 31 Oct 2026).",
-          "no_link": "Approved for HIV belly fat, not muscle"
+          "no_link": "Approved for HIV belly fat, not muscle",
+          "drawing": "vial-brand",
+          "drawing_source": "https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=3d783378-b02d-4f19-99dd-0fc91a042224",
+          "drawing_checked_at": "2026-11-04"
         },
         {
           "name": "Sermorelin",
@@ -425,7 +459,15 @@
     },
     {
       "slug": "libido",
-      "clinic_table": {"substances": ["bremelanotide", "sildenafil", "tadalafil", "testosterone", "enclomiphene"]},
+      "clinic_table": {
+        "substances": [
+          "bremelanotide",
+          "sildenafil",
+          "tadalafil",
+          "testosterone",
+          "enclomiphene"
+        ]
+      },
       "guide": "peptides-for-libido-what-is-approved",
       "name": "Sexual health",
       "label": "Sex drive",
@@ -433,14 +475,14 @@
       "title": "PT-141 and peptides for sex drive compared | Peptide Chooser",
       "h1": "Peptides for sex drive, compared with the approved option.",
       "description": "Bremelanotide (Vyleesi) is FDA approved for low sexual desire in women. The same molecule is sold as PT-141 without approval. What that means, and the prices.",
-      "short_answer": "One peptide is FDA approved here: bremelanotide, sold as Vyleesi, for low sexual desire in premenopausal women, on prescription. The PT-141 sold by research-use shops is the same molecule without the approval, the dose control or the checks. Melanotan II, a tanning peptide also sold for libido, is approved nowhere.",
+      "short_answer": "One peptide is FDA approved for low desire: bremelanotide, sold as Vyleesi, for premenopausal women, on prescription. For erections, sildenafil and tadalafil are FDA-approved pills; testosterone is FDA approved only for men with low testosterone from a medical condition; none of the three is a peptide. The PT-141 sold by research-use shops is the same molecule as Vyleesi without the approval, the dose control or the checks. Melanotan II, a tanning peptide also sold for libido, is approved nowhere.",
       "legal_section": true,
       "map": {
         "x": 50,
         "y": 51
       },
       "main_query": "pt 141",
-      "intro": "One peptide is FDA approved, for low sexual desire in premenopausal women, and needs a prescription. The same molecule sold as PT-141 by online shops is not an approved product.",
+      "intro": "One peptide is FDA approved for low desire, in premenopausal women, and needs a prescription. Sildenafil and tadalafil are FDA-approved pills for erections. The same molecule as that peptide, sold as PT-141 by online shops, is not an approved product.",
       "peptides": [
         {
           "name": "Bremelanotide (Vyleesi)",
@@ -451,6 +493,61 @@
           "how": "Prescription.",
           "status_plain": "FDA approved.",
           "substance": "bremelanotide"
+        },
+        {
+          "name": "Sildenafil (Viagra)",
+          "plain": "A pill taken before sex, FDA approved for erectile dysfunction.",
+          "status": "FDA approved",
+          "chip": "ok",
+          "does": "A pill taken about an hour before sex. It helps erections and works only with sexual stimulation.",
+          "how": "Prescription, from an online clinic or your doctor.",
+          "status_plain": "FDA approved for erectile dysfunction.",
+          "substance": "sildenafil",
+          "src": [
+            8
+          ]
+        },
+        {
+          "name": "Tadalafil (Cialis)",
+          "plain": "A pill taken before sex or once a day, FDA approved for erectile dysfunction.",
+          "status": "FDA approved",
+          "chip": "ok",
+          "does": "A pill taken before sex, or at a lower dose once a day. It helps erections and works only with sexual stimulation.",
+          "how": "Prescription, from an online clinic or your doctor.",
+          "status_plain": "FDA approved for erectile dysfunction.",
+          "substance": "tadalafil",
+          "src": [
+            9
+          ]
+        },
+        {
+          "name": "Testosterone (TRT)",
+          "plain": "A gel or shot that replaces a hormone, FDA approved only for men with low testosterone from a medical condition.",
+          "status": "FDA approved",
+          "chip": "ok",
+          "does": "Replaces a hormone the body makes too little of. Not FDA approved for low testosterone without an associated medical condition.",
+          "how": "Prescription, after blood tests.",
+          "status_plain": "FDA approved only for low testosterone with an associated medical condition.",
+          "substance": "testosterone",
+          "src": [
+            10
+          ]
+        },
+        {
+          "name": "Enclomiphene",
+          "plain": "A pill sold by online clinics as a compounded drug, not FDA approved for any use.",
+          "status": "Not FDA approved; pharmacy-made",
+          "chip": "warn",
+          "does": "A pill some clinics prescribe for low testosterone. It is not FDA approved for any use, so only pharmacies make it.",
+          "how": "Prescription through the clinic.",
+          "status_plain": "Not FDA approved; pharmacy-made.",
+          "plan_kind": "compounded",
+          "plan_substances": [
+            "enclomiphene"
+          ],
+          "src": [
+            11
+          ]
         },
         {
           "name": "PT-141 from online shops",
@@ -477,11 +574,16 @@
       ],
       "short": "Sexual health",
       "panel_title": "Sex drive and sexual health",
-      "for": "For low desire or arousal: one approved option for women, and what the online \"PT-141\" really is."
+      "for": "For low desire, erections or low testosterone: the approved medicines, and what the online \"PT-141\" really is."
     },
     {
       "slug": "longevity",
-      "clinic_table": {"substances": ["nad-plus", "sermorelin"]},
+      "clinic_table": {
+        "substances": [
+          "nad-plus",
+          "sermorelin"
+        ]
+      },
       "guide": "longevity-peptides-epitalon-mots-c-nad",
       "approved_instead_guide": "longevity-peptides-epitalon-mots-c-nad",
       "name": "Longevity and energy",
@@ -539,7 +641,23 @@
       ],
       "short": "Longevity and energy",
       "panel_title": "Energy, aging and longevity",
-      "for": "For \"anti-aging\" and more energy: what is sold, what the evidence says, and what is not even a peptide."
+      "for": "For \"anti-aging\" and more energy: what is sold, what the evidence says, and what is not even a peptide.",
+      "tools": [
+        {
+          "seller_slug": "vitals-vault",
+          "name": "Vitals Vault",
+          "line": "Blood test panels drawn at a Quest lab; it tests and does not prescribe.",
+          "source": "Vitals Vault, home page, read 4 Nov 2026",
+          "url": "https://vitalsvault.com"
+        },
+        {
+          "seller_slug": "jinfiniti",
+          "name": "Jinfiniti",
+          "needs": "sells_lab_tests",
+          "line": "Lab tests. Discount code PEPTIDECHOOSER15; we earn when it is used.",
+          "source": "Jinfiniti program terms, read 4 Nov 2026"
+        }
+      ]
     }
   ],
   "legal": {
@@ -667,6 +785,50 @@
         "substances": [
           "sermorelin"
         ]
+      },
+      {
+        "peptide": "Sildenafil (Viagra)",
+        "status": "FDA approved",
+        "chip": "ok",
+        "note": "erectile dysfunction, prescription",
+        "src": 8,
+        "substances": [
+          "sildenafil"
+        ],
+        "no_page": true
+      },
+      {
+        "peptide": "Tadalafil (Cialis)",
+        "status": "FDA approved",
+        "chip": "ok",
+        "note": "erectile dysfunction, prescription",
+        "src": 9,
+        "substances": [
+          "tadalafil"
+        ],
+        "no_page": true
+      },
+      {
+        "peptide": "Testosterone",
+        "status": "FDA approved",
+        "chip": "ok",
+        "note": "only for men with low testosterone from an associated medical condition, prescription",
+        "src": 10,
+        "substances": [
+          "testosterone"
+        ],
+        "no_page": true
+      },
+      {
+        "peptide": "Enclomiphene",
+        "status": "Not approved",
+        "chip": "warn",
+        "note": "not FDA approved for any use; sold as a compounded drug on prescription",
+        "src": 11,
+        "substances": [
+          "enclomiphene"
+        ],
+        "no_page": true
       }
     ],
     "sources": [
@@ -704,6 +866,26 @@
         "n": 7,
         "text": "Drugs@FDA database (no approved product for retatrutide, PT-141 shop versions, Melanotan II, CJC-1295, ipamorelin or sermorelin on 30 Oct 2026)",
         "url": "https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm"
+      },
+      {
+        "n": 8,
+        "text": "FDA label, Viagra (sildenafil citrate) tablets, read 4 Nov 2026",
+        "url": "https://www.accessdata.fda.gov/drugsatfda_docs/label/2011/020895s036lbl.pdf"
+      },
+      {
+        "n": 9,
+        "text": "FDA label, Cialis (tadalafil) tablets, read 4 Nov 2026",
+        "url": "https://www.accessdata.fda.gov/drugsatfda_docs/label/2018/021368s030lbl.pdf"
+      },
+      {
+        "n": 10,
+        "text": "FDA, Testosterone Information, content current as of 23 Jun 2026, read 4 Nov 2026",
+        "url": "https://www.fda.gov/drugs/postmarket-drug-safety-information-patients-and-providers/testosterone-information"
+      },
+      {
+        "n": 11,
+        "text": "Operation Supplement Safety (US Department of Defense), Clomiphene and Enclomiphene, content current as of 12 Jan 2026, read 4 Nov 2026",
+        "url": "https://www.opss.org/article/clomiphene-and-enclomiphene-drugs-not-dietary-supplements"
       }
     ]
   },
@@ -745,25 +927,73 @@
     "cards_checked": "2026-10-25",
     "cards_source": "Social Blade, vidIQ and SponsorRadar, read for our creator review",
     "cards": [
-      {"name": "Chris Williamson", "group": "A", "platform": "YouTube", "subscribers": 4470000, "url": "https://www.youtube.com/@chriswillx",
-       "stance": "Cautious yes on peptides; warns about grey-market quality."},
-      {"name": "Thomas DeLauer", "group": "A", "platform": "YouTube", "subscribers": 4040000, "url": "https://www.youtube.com/@thomasdelauerofficial",
-       "stance": "Positive. Sells own-brand supplements, no peptide seller."},
-      {"name": "Mike Mutzel", "group": "A", "platform": "YouTube", "subscribers": 755000, "url": "https://www.youtube.com/@highintensityhealth",
-       "stance": "Positive; not a doctor. General sponsors, no peptide seller."},
-      {"name": "Dr. Dean Jones, DC", "group": "A", "platform": "YouTube", "subscribers": 340000, "url": "https://www.youtube.com/@drjonesdc",
-       "stance": "Cautious on research-use peptides, positive on prescribed GLP-1. Runs a virtual clinic."},
-      {"name": "Dr. Thomas O'Connor", "group": "A", "platform": "YouTube", "subscribers": 274000, "url": "https://youtube.com/@theanabolicdoc",
-       "stance": "Doctor. Cautious and evidence-based."},
-      {"name": "Quinn Stillson, MD", "group": "A", "platform": "YouTube", "subscribers": 61700, "url": "https://www.youtube.com/@quinnstillsonmd",
-       "stance": "Doctor. Evidence-based explainers, no peptide seller."},
-      {"name": "Dr. William Seeds", "group": "A", "platform": "YouTube", "subscribers": 6730, "url": "https://www.youtube.com/@ssrpinstitute",
-       "stance": "Orthopedic surgeon. Positive; teaches paid courses."}
+      {
+        "name": "Chris Williamson",
+        "group": "A",
+        "platform": "YouTube",
+        "subscribers": 4470000,
+        "url": "https://www.youtube.com/@chriswillx",
+        "stance": "Cautious yes on peptides; warns about grey-market quality."
+      },
+      {
+        "name": "Thomas DeLauer",
+        "group": "A",
+        "platform": "YouTube",
+        "subscribers": 4040000,
+        "url": "https://www.youtube.com/@thomasdelauerofficial",
+        "stance": "Positive. Sells own-brand supplements, no peptide seller."
+      },
+      {
+        "name": "Mike Mutzel",
+        "group": "A",
+        "platform": "YouTube",
+        "subscribers": 755000,
+        "url": "https://www.youtube.com/@highintensityhealth",
+        "stance": "Positive; not a doctor. General sponsors, no peptide seller."
+      },
+      {
+        "name": "Dr. Dean Jones, DC",
+        "group": "A",
+        "platform": "YouTube",
+        "subscribers": 340000,
+        "url": "https://www.youtube.com/@drjonesdc",
+        "stance": "Cautious on research-use peptides, positive on prescribed GLP-1. Runs a virtual clinic."
+      },
+      {
+        "name": "Dr. Thomas O'Connor",
+        "group": "A",
+        "platform": "YouTube",
+        "subscribers": 274000,
+        "url": "https://youtube.com/@theanabolicdoc",
+        "stance": "Doctor. Cautious and evidence-based."
+      },
+      {
+        "name": "Quinn Stillson, MD",
+        "group": "A",
+        "platform": "YouTube",
+        "subscribers": 61700,
+        "url": "https://www.youtube.com/@quinnstillsonmd",
+        "stance": "Doctor. Evidence-based explainers, no peptide seller."
+      },
+      {
+        "name": "Dr. William Seeds",
+        "group": "A",
+        "platform": "YouTube",
+        "subscribers": 6730,
+        "url": "https://www.youtube.com/@ssrpinstitute",
+        "stance": "Orthopedic surgeon. Positive; teaches paid courses."
+      }
     ]
   },
   "home_checked": {
     "note": "Home, Is it legal today?, Most checked this month: a fixed list until we have page views (owner task 3 Nov 2026).",
-    "slugs": ["bpc-157", "semaglutide", "ghk-cu", "tb-500", "tirzepatide"]
+    "slugs": [
+      "bpc-157",
+      "semaglutide",
+      "ghk-cu",
+      "tb-500",
+      "tirzepatide"
+    ]
   },
   "glossary": [
     {

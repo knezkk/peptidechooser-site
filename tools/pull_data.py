@@ -62,9 +62,16 @@ def optional_columns(view, *cols):
     return "".join(f", {c}" for c in cols if c in have)
 
 
+def has_view(view):
+    """A view the data side is still adding: a pull never breaks while it is missing."""
+    return bool(rows(f"select 1 from information_schema.views where table_schema = 'site' and table_name = '{view}'"))
+
+
 def add_paid_links(d):
     """A seller's `paid_url` is the /out/ path from site.paid_links, which applies the paid link rule (pages.md, Buttons)
     and never gives the tracking address. A cosmetic link belongs to one product, not to the seller's buttons."""
+    if not has_view("paid_links"):
+        return
     paid = {r["seller_slug"]: r["out_path"] for r in rows(
         "select seller_slug, out_path from site.paid_links where allowed_on <> 'cosmetic' order by active_from")}
     for r in d["seller_profiles"]:
@@ -219,9 +226,11 @@ def main():
         "privacy_checked_on, refund_seen, refund_checked_on, first_seen, price_updated_at, score, score_lab_testing, "
         "score_no_fda_letter, score_registered_company, score_legal_pages, score_fresh_prices, score_checked_on, "
         # the newest legal-pages crawl (peptide-data spec 0015 decision 28): found, absent, blocked, failed or null
-        "legal_checked_on, legal_check_outcome "
+        f"legal_checked_on, legal_check_outcome{optional_columns('seller_profile', 'sells_lab_tests')} "
         "from site.seller_profile order by seller_slug")
     add_paid_links(d)
+    # excluded states per clinic (pages.md, Clinic rows); while the view is missing build.py reads data/clinic_states.json
+    d["seller_states"] = rows("select * from site.seller_states order by seller_slug") if has_view("seller_states") else []
     d["seller_substances"] = top_substances(rows(
         "select seller_slug, substance_slug, listing_count, price_per_mg_min, price_per_mg_max, has_coa, "
         "newest_price_observed_at from site.seller_substances"))

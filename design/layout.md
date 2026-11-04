@@ -16,7 +16,7 @@ Nothing on any page may leave its margins or push the page sideways, at any scre
 2. Text breaks: `overflow-wrap: anywhere` on headings, table cells and chips, so long words, URLs and product names wrap.
 3. Images, SVG and video: `max-width: 100%`, `height: auto`. No fixed pixel widths on content blocks; only the container has a max width.
 4. Tables never shrink below readable: the ranking table lives inside `.tbl-wrap`, which scrolls sideways inside itself. The page never scrolls sideways.
-5. Buttons: label at most 24 characters. Full width under 640px (except `btn-sm` in tables). A button row wraps onto a new line rather than overflow.
+5. Buttons: label at most 24 characters (the option row's "Buy from $X/mo · N clinics" is the one exception; it fits `cta-width`). Full width under 640px (except `btn-sm` in tables). A button row wraps onto a new line rather than overflow.
 6. Header nav never scrolls sideways (owner task 3 Nov 2026): from 1180px it is one row, logo, the five categories, the search field and "Find a seller", and the header row is 68px tall; an open category is a floating card under its item (positioned, so nothing moves; at least 24px inside the container's right edge, never past its left edge; the same pixel width at 1440, 1920 and 2560px, never wider than the container; owner task 3 Nov 2026); under 1180px the categories sit behind the "Menu" button as an accordion (the search field stays on the first row from 760px, inside the Menu below) and, with JavaScript off, show open under the logo (pages.md, Every page, Header). No breakpoint beyond the list above: the header uses 1180px and 760px. The wordmark never shrinks below the 16px mark.
 7. Headings use the phone sizes from `tokens.json` under 640px (`display-1` 32px, 28px in the Home hero; `display-2` 26px; `display-3` 22px; `number-xl` 48px).
 8. No element is positioned outside the container (no negative margins, no absolute elements past the edges). Sticky only for the article sidebar and the seller page's right column (the Background check card and Similar sellers; owner task 3 Nov 2026), from 900px up.
@@ -35,12 +35,14 @@ Body text runs at most 80 characters a line (owner task w2, 3 Nov 2026): `max-wi
   - a link inside a line of text;
   - a footnote number (24 by 24px, WCAG 2.5.8; its tap areas may touch the next number's);
   - an FDA letter chip link in a line of text (at least 24px).
-- No text under 13px on a phone: chips, the seller score marks and the Checked stamp are 13px under 640px. Footnote numbers and visually hidden text are the exceptions.
+- No text under 13px on a phone: chips, the seller score marks and the Checked stamp are 13px under 640px. Footnote numbers and visually hidden text are the exceptions, and so is a seller tile's monogram, which is a picture hidden from screen readers (owner package 4 Nov 2026).
 - No two controls overlap.
 - `tools/check_layout.js` checks all of it on every page at 390px, as a returning visitor (the cookie bar answered).
 - The header on phones holds the logo, "Search" and "Menu" in one row from 375px. Under 375px "Search" is not drawn; the field stays in the menu.
 
 ## Vertical spacing
+
+**Home, landing v3 (owner package 4 Nov 2026; ODOBRENO DIZAJN - Karlo - 4. 11. 2026):** between Home's sections `space-7` (48px) at every width from 641px, `space-6` (32px) on phones; no footer margin after the last section. This replaces the larger values below for those sections. Section intros run at the 80-character measure in `ui-size`. The seller table (`tbl-where`) has rows of 48px from 641px, the button's small line beside it. The body figure draws one path three times with `<use>`, so Home stays under its limit. On phones the first screen no longer holds every option: each option now has a full-width button (owner package, A2).
 
 Only spacing tokens. Between landing sections `space-9` (56px on phones). Home first screen 28px top, 32px bottom (12px and 24px on phones), 16px between the H1 and the flow (12px on phones); the grey band after it 32px top, 56px bottom (24px and 40px on phones), 48px above the How we rate strip; category hero 56px. Goal page (owner task 3 Nov 2026, UX audit 11.2 and 12): the first screen 24px top and `space-7` (48px) bottom, the decision cards `space-5` (24px) under the intro and `space-4` (16px) apart; every section after it `space-7` (48px) top and bottom, the grey bands the same; the H2 + lede + divider pattern only where the lede says something (else the H2 alone, 16px above its content); `tbl-compact` rows 40px. Targets at 1440 by 900: /weight-loss/ under 5 screens with the clinic table starting within the second, /hair/ under 3. Seller page (owner task 3 Nov 2026): top block 24px top and 32px bottom, sections `space-7` (48px) apart with a hairline between (owner answer 3 Nov 2026: 48px, no 40px token), the two columns `space-6` apart. H2 in articles: `space-8` above. Inside panels `space-5`. Nothing else.
 
