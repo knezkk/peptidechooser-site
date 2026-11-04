@@ -49,7 +49,8 @@ jobs:
       # the book's Lighthouse rule (layout.md): Home, /weight-loss/ and one seller page at 90 or more on all four categories
       - name: check-lighthouse
         run: |
-          npm i --no-save lighthouse@12.8.2 chrome-launcher@1 >/dev/null
+          # all three together: npm i --no-save removes what an earlier --no-save installed (Playwright, from check-layout)
+          npm i --no-save playwright@1.49.1 lighthouse@12.8.2 chrome-launcher@1 >/dev/null
           node tools/check_lighthouse.js
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
