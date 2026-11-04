@@ -66,6 +66,17 @@ def substances(d):
 COSMETIC_FORMS = ("cream", "serum", "lotion", "gel", "topical")
 
 
+def cosmetic_forms_line(all_rows, subs):
+    """The deploy log's cosmetic listings per form (owner answer Q2 a, 4 Nov 2026): the total per form, then each substance's
+    split, for the substances the site shows."""
+    rows = [r for r in all_rows if r.get("form") in COSMETIC_FORMS and r["substance_slug"] in subs]
+    if not rows:
+        return "pull_data: cosmetic listings per form: none"
+    count = lambda items: ", ".join(f"{f} {sum(r['form'] == f for r in items)}" for f in COSMETIC_FORMS if any(r["form"] == f for r in items))
+    per_sub = "; ".join(f"{x}: {count([r for r in rows if r['substance_slug'] == x])}" for x in sorted({r["substance_slug"] for r in rows}))
+    return f"pull_data: cosmetic listings per form: {count(rows)} ({per_sub})"
+
+
 def keep_products(all_rows, subs, n=10):
     """site.json stays small: per substance, each seller's cheapest listing, then the n cheapest of those by price per mg
     (listings with a price per mg first, then blends and listings without one, by price), so the seller window
@@ -213,6 +224,7 @@ def main():
             cos[r["substance_slug"]] = cos.get(r["substance_slug"], 0) + 1
     print(f"pull_data: cosmetic listings ({', '.join(COSMETIC_FORMS)}): "
           + (", ".join(f"{k} {v}" for k, v in sorted(cos.items())) or "none"))
+    print(cosmetic_forms_line(products, substances(d)))
     return 0
 
 

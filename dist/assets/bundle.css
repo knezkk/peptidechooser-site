@@ -31,7 +31,9 @@ sup a,a.ref{display:inline-block;min-width:24px;min-height:24px;padding:4px 4px;
 .paid{font:400 var(--fine-size) var(--font-text);color:var(--ink-2)}
 
 /* Chips */
-.chip{display:inline-block;padding:3px 8px;border-radius:var(--radius-chip);font:700 12px var(--font-text);line-height:1.3}
+/* Chip: at least 24px tall, the tap minimum (owner task w2, 3 Nov 2026; WCAG 2.5.8), the same 12px text: 4px above and
+   below a 16px line. The small check marks (11px) keep their size with 3px and their 1px border. */
+.chip{display:inline-block;box-sizing:border-box;min-height:24px;padding:4px 8px;border-radius:var(--radius-chip);font:700 12px/16px var(--font-text)}
 .chip-ok{background:var(--action-tint);color:var(--action-text)}
 .chip-warn{background:var(--warn-tint);color:var(--warn-text)}
 .chip-info{background:var(--info-tint);color:var(--info-text)}
@@ -114,7 +116,7 @@ body:has(.sellers-dlg[open]){overflow:hidden}
 .sellers-dlg .score{display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px;margin-bottom:8px}
 .sellers-dlg .score-n{font-size:var(--small-size);font-weight:600;color:var(--ink);white-space:nowrap}
 .sellers-dlg .score-marks{display:flex;flex-wrap:wrap;gap:4px}
-:is(.sellers-dlg .score-marks,.check-list,.check-chips) .chip{font-weight:600;font-size:11px;padding:1px 5px;border:1px solid transparent;white-space:nowrap}
+:is(.sellers-dlg .score-marks,.check-list,.check-chips) .chip{font-weight:600;font-size:11px;padding:3px 5px;border:1px solid transparent;white-space:nowrap}
 :is(.sellers-dlg .score-marks,.check-list,.check-chips) .mark-no{border:1px dashed var(--ink-muted)}
 @media (min-width:641px){.sellers-dlg .score-marks{flex-wrap:nowrap}.sellers-dlg .tbl th:nth-child(2){width:20%}}
 .dlg-foot+.dlg-score{margin-top:4px}
@@ -351,7 +353,7 @@ a.year-chip{display:inline-flex;align-items:center;text-decoration:none;min-widt
 .cmp .score{display:flex;flex-direction:column;gap:6px}
 .cmp .score-n{font-weight:600}
 .cmp .score-marks{display:flex;flex-wrap:wrap;gap:4px}
-.cmp .score-marks .chip{font-weight:600;font-size:11px;padding:1px 5px;border:1px solid transparent;white-space:nowrap}
+.cmp .score-marks .chip{font-weight:600;font-size:11px;padding:3px 5px;border:1px solid transparent;white-space:nowrap}
 .cmp .score-marks .mark-no{border:1px dashed var(--ink-muted)}
 .cmp-link{margin:24px 0 0}
 /* "Compared with" (pages.md, Compare pairs): one line of links on a /peptides/ page and a clinic page */
@@ -548,7 +550,7 @@ a.legal-card:hover{border-color:var(--clinic)}
    per guide); each source a row between hairlines: its name (600, the link), what we take from it and "Checked <date>"
    in small ink-2 lines under it. No buttons. */
 .prose .src-list{list-style:none;margin:12px 0 0;padding:0}
-.prose .src-list li{margin:0;padding:12px 0;border-top:1px solid var(--line)}
+.prose .src-list li{margin:0;padding:12px 0;border-top:1px solid var(--line);max-width:58ch}
 .src-list li:last-child{border-bottom:1px solid var(--line)}
 .src-name{display:block;font-weight:600;overflow-wrap:anywhere}
 .src-take,.src-date{display:block;margin-top:2px;font-size:var(--small-size);line-height:1.45;color:var(--ink-2)}
@@ -586,7 +588,7 @@ a.legal-card:hover{border-color:var(--clinic)}
    squares beside "4 of 5" in the sellers tables: met filled with chip-ok's text colour, not met chip-neutral with
    the dashed ink-muted border; each spoken through its hidden label. */
 .check-bar{display:inline-flex;gap:3px;margin-left:8px;vertical-align:-1px}
-.check-bar .chip{width:10px;height:10px;padding:0;border-radius:2px;box-sizing:border-box}
+.check-bar .chip{width:10px;height:10px;min-height:0;padding:0;border-radius:2px;box-sizing:border-box}
 .check-bar .mark-yes{background:var(--action-text)}
 .check-bar .mark-no{border:1px dashed var(--ink-muted)}
 /* Where to get it (pages.md, Peptide; owner task 3 Nov 2026): the substance page's first block, a panel-line with three
