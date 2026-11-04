@@ -58,13 +58,13 @@ function pages(dir, base = '') {
             if (which.length < 3) which.push(`${el.tagName.toLowerCase()}.${(el.className || '').toString().split(' ').join('.')} "${(el.textContent || '').trim().slice(0, 40)}"`);
           }
         }
-        // when the page scrolls sideways, name the element that reaches furthest past the edge (outside a table frame)
+        // when the page scrolls sideways, name the element that reaches furthest past the edge (table frames included)
         let widest = '';
         if (sw > iw) {
           let best = 0;
           for (const el of document.body.querySelectorAll('*')) {
             const b = el.getBoundingClientRect();
-            if (b.right > best && b.right > iw + 1 && !el.closest('.tbl-wrap')) { best = b.right; widest = `${el.tagName.toLowerCase()}.${(el.className || '').toString().split(' ').join('.')} "${(el.textContent || '').trim().slice(0, 40)}" (${Math.round(b.right)}px)`; }
+            if (b.right > best && b.right > iw + 1 && !el.closest('.nav')) { best = b.right; widest = `${el.tagName.toLowerCase()}.${(el.className || '').toString().split(' ').join('.')} "${(el.textContent || '').trim().slice(0, 40)}" (${Math.round(b.right)}px)`; }
           }
         }
         return { sw, iw, outside, which, widest };
