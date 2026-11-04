@@ -141,6 +141,19 @@
           "proven_alternative": true
         },
         {
+          "name": "Compounded minoxidil spray",
+          "plain": "A pharmacy-made minoxidil spray sold by an online clinic, not checked by the FDA batch by batch.",
+          "status": "Not FDA approved; pharmacy-made",
+          "chip": "warn",
+          "does": "A pharmacy-made minoxidil spray sold by an online clinic. Not checked by the FDA batch by batch.",
+          "how": "Prescription through the clinic.",
+          "status_plain": "Not FDA approved; pharmacy-made.",
+          "plan_kind": "compounded",
+          "plan_substances": [
+            "minoxidil"
+          ]
+        },
+        {
           "name": "GHK-Cu copper peptide serum",
           "plain": "A cosmetic serum for the scalp, backed by lab studies only.",
           "status": "Cosmetic, no approval needed",

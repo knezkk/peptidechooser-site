@@ -569,12 +569,21 @@ def plan_fits(p, r):
             and not re.search(r"\boral\b", r.get("plan_name") or "", re.I))
 
 
+def compounded_subs(g, p):
+    """The substances of a compounded row: its own `plan_substances` (the hair goal's minoxidil spray), else the goal's approved ones."""
+    return set(p.get("plan_substances") or []) or {x["substance"] for x in g["peptides"] if x.get("substance") and x["status"].startswith("FDA approved")}
+
+
 def row_plan(g, p):
     """The plan behind an option row's "Online clinics from" line on a goal with clinic plans: an FDA-approved row, the
     cheapest brand plan (branded or oral_branded) of its substance; the compounded row (`plan_kind`), the cheapest
     compounded plan of the goal's approved substances. On a goal without clinic plans, an FDA-approved row with a
     substance gets its substance's cheapest plan that is not compounded (Home v2, 3 Nov 2026: minoxidil at Keeps).
     None for other rows."""
+    if p.get("plan_kind") == "compounded" and not g.get("clinic_plans"):
+        found = [r for r in PLANS if r["substance_slug"] in compounded_subs(g, p) and r.get("price_monthly") is not None
+                 and r.get("product_kind") == "compounded"]
+        return min(found, key=lambda r: (float(r["price_monthly"]), r["seller_name"])) if found else None
     if not g.get("clinic_plans"):
         if not (p.get("substance") and p["status"].startswith("FDA approved")):
             return None
@@ -585,7 +594,7 @@ def row_plan(g, p):
         return plan if best and plan and best["seller_slug"] == plan["seller_slug"] and best["plan_slug"] == plan["plan_slug"] else best
     rows = clinic_plans(g)
     if p.get("plan_kind") == "compounded":
-        subs = {x["substance"] for x in g["peptides"] if x.get("substance") and x["status"].startswith("FDA approved")}
+        subs = compounded_subs(g, p)
         found = [r for r in rows if r.get("product_kind") == "compounded" and r["substance_slug"] in subs]
     elif p.get("substance") and p["status"].startswith("FDA approved"):
         found = [r for r in rows if r["substance_slug"] == p["substance"] and r.get("product_kind") in BRANDED
@@ -1053,7 +1062,7 @@ def how_line(p):
 
 # A row whose data has no listing says so where the button would be, by its kind (owner, 4 Nov 2026), never an empty space.
 NO_LISTING_TEXTS = {"otc": "Any pharmacy, no prescription", "rx": "On prescription; no clinic prices yet",
-                    "cosmetic": "Sold in creams and serums; prices come later", "research": "No listings yet"}
+                    "cosmetic": "Sold in creams and serums; no prices checked", "research": "No listings yet"}
 
 
 def no_listing_text(p):
@@ -1065,7 +1074,7 @@ def no_listing_text(p):
 
 
 # The substance page's line for a cosmetic with no listing (unchanged by the option rows' rule).
-COSMETIC_LATER = "Sold as a cosmetic; prices come later."
+COSMETIC_LATER = "Sold as a cosmetic; no prices checked."
 
 
 # One window per distinct set of substances (two rows for the same substance share it).
@@ -1080,7 +1089,7 @@ def option_plans(g, p):
     cosmetic row has none: its window lists shops, and a window never mixes the two."""
     priced = [r for r in PLANS if r.get("price_monthly") is not None]
     if p.get("plan_kind") == "compounded":
-        subs = {x["substance"] for x in g["peptides"] if x.get("substance") and x["status"].startswith("FDA approved")}
+        subs = compounded_subs(g, p)
         return [r for r in priced if r["substance_slug"] in subs and r.get("product_kind") == "compounded"]
     if not (p.get("substance") and approved_row(p)):
         return []
@@ -1234,8 +1243,7 @@ def window_low(p):
 def plan_clinics(g, p, rp):
     """How many clinics have a plan like the row's: the same substances, compounded or not as the row's plan."""
     comp = rp.get("product_kind") == "compounded"
-    subs = ({x["substance"] for x in g["peptides"] if x.get("substance") and x["status"].startswith("FDA approved")}
-            if p.get("plan_kind") == "compounded" else {rp["substance_slug"]})
+    subs = compounded_subs(g, p) if p.get("plan_kind") == "compounded" else {rp["substance_slug"]}
     return len({r["seller_slug"] for r in PLANS if r["substance_slug"] in subs and r.get("price_monthly") is not None
                 and (r.get("product_kind") == "compounded") == comp})
 
@@ -2176,6 +2184,18 @@ def decide_cards(g):
             cards.append(decide_card("No prescription", otc["name"], status_chip(otc) + alt_chip(otc),
                                      f'<strong>From {usd(rp["price_monthly"])}/mo</strong>{plan_src(g, rp)}{plan_letter(rp)}',
                                      clinic_open(g, otc, rp), option_picture(otc, rp)))
+        else:
+            # no plan that fits a medicine sold without a prescription: its checked price and the row's own text, never a clinic's plan
+            pad = opt_price(otc, g["slug"])
+            if pad:
+                price = re.search(r"from (\$[\d.,]+/mo)", pad).group(1)
+                cards.append(decide_card("No prescription", otc["name"], status_chip(otc) + alt_chip(otc),
+                                         f'<strong>From {price}</strong>{re.search(r"<sup>.*</sup>", pad).group(0)}',
+                                         # the card's one button (tools/check.py) goes to our own page on the medicine, or the goal's guide
+                                         f'<span class="pick-act"><a class="btn btn-wait btn-sm" href="{f"/peptides/{otc['substance']}/" if otc.get("substance") in PEPTIDE_SLUGS else "/learn/"}">'
+                                         f'{"FDA status and sources" if otc.get("substance") in PEPTIDE_SLUGS else "Read the guides"}</a>'
+                                         f'<span class="paid">{no_listing_text(otc)}</span></span>',
+                                         option_picture(otc, None)))
     elif cos:
         if has_window(cos) and window_kind(cos) == "cosmetic":
             low, n = window_low(cos)
@@ -3782,7 +3802,7 @@ def pep_where(slug):
     """"Where to get it", the substance page's first block (pages.md, Peptide; owner task 3 Nov 2026): an approved medicine's
     three cheapest clinic plans (brand first, then compounded), each with btn-wait "See plans", and the compare pair with the
     most plans; a research-use peptide's three best-checked shops with btn-line "Our review"; a cosmetic's serums and creams;
-    a cosmetic with none says "Sold as a cosmetic; prices come later." Returns (html, the seller shown first or None)."""
+    a cosmetic with none says "Sold as a cosmetic; no prices checked." Returns (html, the seller shown first or None)."""
     s = pep_status(slug)
     grp = pep_group(s)
     lines, first, foot = [], None, ""
