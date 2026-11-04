@@ -16,7 +16,7 @@
 
 ## Peptides (1 page)
 
-- [Peptides A to Z: FDA status and prices | Peptide Chooser](https://peptidechooser.com/peptides/): Every peptide and approved alternative we track, 12 in all, grouped FDA approved, not approved and cosmetic, with its source and the lowest price we show.
+- [Peptides A to Z: FDA status and prices | Peptide Chooser](https://peptidechooser.com/peptides/): Every peptide and approved alternative we track, 13 in all, grouped FDA approved, not approved and cosmetic, with its source and the lowest price we show.
 
 ## Guides (27 pages)
 

@@ -1258,8 +1258,7 @@ def hand_legal(slug):
 
 
 PEPTIDE_SLUGS = sorted({r["substance_slug"] for r in LEGAL_DB or [] if db_status(r["substance_slug"])}
-                       | {s for r in LEGAL["rows"] for s in r.get("substances") or []
-                          if not db_status(s) and hand_legal(s) and not r.get("no_page")})  # no_page: a legal row only (sermorelin)
+                       | {s for r in LEGAL["rows"] for s in r.get("substances") or [] if not db_status(s) and hand_legal(s)})
 
 
 def legal_name(slugs, name):
