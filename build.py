@@ -829,7 +829,7 @@ SHOPS = {k: r for k, r in PROFILES.items() if (r.get("product_count") or 0) > 0}
 CLINIC_PROFILES = {k: r for k, r in PROFILES.items() if k not in SHOPS}
 
 
-def clinic_button(seller_slug, label, small="Our clinic page", plan=None, paid_ok=True):
+def clinic_button(seller_slug, label, small="Our clinic page", plan=None, paid_ok=True, in_table=False):
     """A clinic's one action (Home v2, 3 Nov 2026), on clinic_row_act's rule (owner answer Q1 a and decision C8, 3 Nov
     2026): btn-action "Visit <Name> ..." through /out/<seller>/ with "Paid link" under it only when the data carries the
     clinic's paid link (`paid_url` on the plan row, else on its profile; none yet; site.paid_links applies the paid link
@@ -842,9 +842,10 @@ def clinic_button(seller_slug, label, small="Our clinic page", plan=None, paid_o
     if paid_ok and paid:
         tail = label.split(" · ", 1)[1] if " · " in label else ""
         return (f'<span class="pick-act"><a class="btn btn-action btn-sm" href="{paid_href(seller_slug, paid)}" rel="sponsored">'
-                f'Visit {seller_base(r["seller_name"])}{" · " + tail if tail else ""}</a><span class="paid">Paid link</span></span>')
+                f'Visit {seller_base(r["seller_name"])}{" · " + tail if tail else ""}'
+                + ('<span class="paid">Paid link</span></a></span>' if in_table else '</a><span class="paid">Paid link</span></span>'))
     return (f'<span class="pick-act"><a class="btn btn-wait btn-sm" href="/sellers/{seller_slug}/">{label}</a>'
-            f'<span class="paid">{small}</span></span>')
+            f'{"" if in_table else f"""<span class="paid">{small}</span>"""}</span>')
 
 
 def clinic_link(seller_slug, name, inline=False):
@@ -2034,12 +2035,11 @@ def clinic_row_act(r):
     owner decision 4 Nov 2026); otherwise btn-wait "See plans" to our clinic page."""
     name, paid = seller_base(r["seller_name"]), r.get("paid_url") or PROFILES.get(r["seller_slug"], {}).get("paid_url")
     if paid:
-        return (f'<span class="pick-act"><a class="btn btn-action btn-sm" href="{paid_href(r["seller_slug"], paid)}" rel="sponsored">Visit {name}</a>'
-                '<span class="paid">Paid link</span></span>')
+        return (f'<span class="pick-act"><a class="btn btn-action btn-sm" href="{paid_href(r["seller_slug"], paid)}" rel="sponsored">Visit {name}'
+                '<span class="paid">Paid link</span></a></span>')
     if r["seller_slug"] not in PROFILES:
         return ""
-    return (f'<span class="pick-act"><a class="btn btn-wait btn-sm" href="/sellers/{r["seller_slug"]}/">See plans</a>'
-            '<span class="paid">Our clinic page</span></span>')
+    return (f'<span class="pick-act"><a class="btn btn-wait btn-sm" href="/sellers/{r["seller_slug"]}/">See plans</a></span>')
 
 
 def clinic_section(g, rows):
@@ -2065,7 +2065,7 @@ def clinic_section(g, rows):
   <div class="wrap">
     <div class="sec-hd"><div><h2>Online clinic prices</h2><p>{len(rows)} plans at the online clinics we track, cheapest first.</p></div></div>
     <div class="tbl-wrap"><table class="tbl tbl-cards tbl-clinics">
-      <thead><tr><th scope="col">Clinic</th><th scope="col">Plan</th><th scope="col">What it is</th><th scope="col">Per month</th><th scope="col"><span class="vh">Our clinic page</span></th></tr></thead>
+      <thead><tr><th scope="col">Clinic</th><th scope="col">Plan</th><th scope="col">What it is</th><th scope="col">Per month</th><th scope="col"><span class="vh">Action</span></th></tr></thead>
       <tbody>{"".join(trs)}</tbody>
     </table></div>
     {f'<p class="clinics-more" hidden><button type="button" class="btn btn-line" id="clinics-all">Show all {len(rows)}</button></p>{CLINICS_JS}' if len(rows) > CLINICS_FIRST else ""}
@@ -2136,7 +2136,7 @@ def goal_clinic_section(g, rows):
     {filt}
     <p class="small clinic-n" id="clinic-n" aria-live="polite">{len(rows)} of {len(rows)} plans</p>
     <div class="tbl-wrap"><table class="tbl tbl-compact tbl-cards tbl-clinics">
-      <thead><tr><th scope="col">Plan</th><th scope="col">What it is</th><th scope="col">Per month</th><th scope="col">Clinic</th><th scope="col"><span class="vh">Our clinic page</span></th></tr></thead>
+      <thead><tr><th scope="col">Plan</th><th scope="col">What it is</th><th scope="col">Per month</th><th scope="col">Clinic</th><th scope="col"><span class="vh">Action</span></th></tr></thead>
       <tbody>{"".join(trs)}</tbody>
     </table></div>
     {f'<p class="clinics-more" hidden><button type="button" class="btn btn-line" id="clinics-all">Show all {len(rows)}</button></p>{CLINICS_JS}' if len(rows) > CLINICS_FIRST else ""}
@@ -3073,7 +3073,7 @@ def clinics_directory(clinics):
                    f'<td data-l="What it prescribes">{escape(subs_words(sorted(clinic_subs(r), key=lambda x: sub_label(x).lower())))}</td>'
                    f'<td class="num" data-l="From">{usd(low) + "/mo" if low is not None else "unknown"}</td>'
                    f'<td data-l="Checks">{check_bar(r)}</td><td data-l="FDA letters">{home.where_letters(me, r)}</td>'
-                   f'<td class="act">{clinic_button(r["seller_slug"], "See plans")}</td></tr>')
+                   f'<td class="act">{clinic_button(r["seller_slug"], "See plans", in_table=True)}</td></tr>')
     return f"""
     <section class="sellers-sec" id="clinics" aria-labelledby="clinics-h">
       <h2 id="clinics-h" class="h-sources">Online clinics</h2>

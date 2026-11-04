@@ -650,21 +650,22 @@ a.legal-card:hover{border-color:var(--clinic)}
 .clinic-dlg .tbl td{padding:6px 10px;vertical-align:middle}
 .clinic-dlg .tbl th{padding:8px 10px}
 .clinic-dlg .tbl th:nth-child(2){width:auto}
-.clinic-dlg .tbl td.act .btn-wait+.paid{display:none}
-@media (min-width:641px){.clinic-dlg .tbl td.act .btn-wait+.paid{display:block;visibility:hidden}}
 .clinic-dlg .tbl .chip{white-space:normal}
 @media (min-width:641px){.clinic-dlg .tbl td[data-l="Per month"] .chip{display:block;width:fit-content;margin-top:4px}}
 @media (max-width:760px){.cell-pic a{display:inline-flex;align-items:center;min-height:var(--touch)}}
 @media (min-width:641px){.clinic-dlg .tbl td:first-child .name{white-space:nowrap}}
 /* The table button (pages.md, Buttons): in every table and window btn-action, btn-wait and btn-line are one part in another
-   colour, touch tall with the caption under it, so a row with a button is about 60px. From 900px its width is cta-width;
-   below, the column's width. */
+   colour, touch tall, nothing under it. The green one carries "Paid link" inside it as a second line. From 641px every row
+   with this button has 12px above and below it, so a row looks the same with either button and its cells are centred on
+   the button. From 900px its width is cta-width; below, the column's width. */
 .tbl td.act{text-align:left}
-.tbl td.act .pick-act{display:flex;flex-direction:column;align-items:stretch;gap:1px;width:100%;margin:0;padding:0;white-space:nowrap}
+.tbl td.act .pick-act{display:flex;flex-direction:column;align-items:stretch;gap:4px;width:100%;margin:0;padding:0;white-space:nowrap}
 .tbl td.act .btn{width:100%;padding:0 8px;font-size:14px;justify-content:center}
-.tbl td.act .paid{display:block;margin:0;line-height:13px;text-align:center}
+.tbl td.act .btn-action{flex-direction:column;gap:0;line-height:16px}
+.tbl td.act .btn-action .paid{display:block;font-size:var(--fine-size);line-height:14px;color:var(--white);opacity:.85;text-align:center}
 @media (max-width:640px){.tbl-cards td.act{margin-top:10px}}
-@media (min-width:641px){.tbl td.act,.tbl-compact td.act,.clinic-dlg .tbl td.act{padding-top:1px;padding-bottom:1px}}
+@media (min-width:641px){.tbl tr:has(>td.act)>td{height:auto;padding-top:12px;padding-bottom:12px;vertical-align:middle}
+.tbl td.act .btn-action .paid{font-size:12px}}
 @media (min-width:900px){.tbl td.act .pick-act,.tbl td.act>.btn{width:var(--cta-width)}}
 /* The clinic page's pair (pages.md, Seller, Top block): btn-ink and btn-action, the same size, side by side from 641px */
 .seller-pair{display:grid;grid-template-columns:minmax(0,1fr);gap:8px;align-items:start;width:100%}

@@ -467,19 +467,19 @@ def check_parts(P):
             cls = m.group(1).split()
             if "btn" in cls and not any(c in cls for c in ("btn-ink", "btn-action", "btn-line", "btn-mark", "btn-wait")):
                 errs.append(f"{name}: button without a design-book kind ({cls})")
-        # The paid button: an <a> to /out/ with rel=sponsored and "Paid link" right under it. Before a paid link exists
+        # The paid button: an <a> to /out/ with rel=sponsored and "Paid link" inside it (a table) or right under it. Before a paid link exists
         # there is no green button at all, and no page says "No paid link yet" (Home v2, 3 Nov 2026).
         if "No paid link yet" in html:
             errs.append(f"{name}: says 'No paid link yet'")
-        for m in re.finditer(r'<(\w+)([^>]*class="btn btn-action[^"]*"[^>]*)>[^<]*</\1>(<span class="paid">([^<]*)</span>)?', html):
-            tag, attrs, under = m.group(1), m.group(2), m.group(4)
+        for m in re.finditer(r'<(\w+)([^>]*class="btn btn-action[^"]*"[^>]*)>[^<]*(?:<span class="paid">([^<]*)</span>)?</\1>(?:<span class="paid">([^<]*)</span>)?', html):
+            tag, attrs, under = m.group(1), m.group(2), m.group(3) or m.group(4)
             if 'aria-disabled="true"' in attrs:
                 errs.append(f"{name}: a disabled green button (use btn-wait to our own page until a paid link exists)")
             else:
                 if tag != "a" or 'href="/out/' not in attrs or "sponsored" not in attrs:
                     errs.append(f"{name}: green button not an /out/ link with rel=sponsored")
                 if under != "Paid link":
-                    errs.append(f"{name}: green button without 'Paid link' under it")
+                    errs.append(f"{name}: green button without 'Paid link' in or under it")
         errs += window_errs(name, html)
         errs += paid_rule_errs(name, html, rule)
     # A clinic page closes its legit list with the clinic sentence, never the shops' "we never link to the shop" (owner

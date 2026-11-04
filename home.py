@@ -87,9 +87,8 @@ def where_action(b, r):
     none yet) gets btn-action "Visit <Name>" through /out/; a clinic without, btn-wait "See plans" to our clinic page;
     a shop, btn-line "Our review" to our page on it. Never a link to a seller's own site."""
     if seller_kind(b, r) == "clinic":
-        return b.clinic_button(r["seller_slug"], "See plans")
-    return (f'<span class="pick-act"><a class="btn btn-line btn-sm" href="/sellers/{r["seller_slug"]}/">Our review</a>'
-            f'<span class="paid">5 checks, no shop link</span></span>')
+        return b.clinic_button(r["seller_slug"], "See plans", in_table=True)
+    return (f'<span class="pick-act"><a class="btn btn-line btn-sm" href="/sellers/{r["seller_slug"]}/">Our review</a></span>')
 
 
 def where_row(b, r):
