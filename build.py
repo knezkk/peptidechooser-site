@@ -213,6 +213,8 @@ def tokens_css():
     out = [f"/* Generated from design/tokens.json ({TOKENS['name']}). Do not edit. */", ":root {"]
     for t in TOKENS["color"]["tokens"]:
         out.append(f"  --{t['name']}: {t['value']};")
+        if t.get("tint"):
+            out.append(f"  --{t['name']}-tint: {t['tint']};")
     for fam, stack in TOKENS["type"]["families"].items():
         out.append(f"  --font-{fam}: {stack};")
     for g in TOKENS["type"]["groups"]:
@@ -236,7 +238,7 @@ def goal_href(g):
 def goals_strip(heading, skip=None):
     """The goals strip (pages.md, Category and Letters; owner task 2 Nov 2026): a heading and one row of btn-line links to
     the goal pages, each labelled with the goal's `label`; a goal page leaves itself out (`skip`)."""
-    links = "".join(f'<a class="btn btn-line btn-sm btn-goal" href="/{g["slug"]}/">{parts.goal_art(g["slug"], 18, True)}{g["label"]}</a>'
+    links = "".join(f'<a class="btn btn-line btn-sm" href="/{g["slug"]}/">{g["label"]}</a>'
                     for g in ALL_GOALS if g.get("page") and g["slug"] != skip)
     return f"""
 <section class="section goals-strip" id="other-goals">
@@ -763,11 +765,11 @@ def figure_svg():
                     f'<circle class="pin-dot" cx="{px}" cy="{py}" r="4.5"/></g>')
     # The neck's top edge sits inside the head; the mask keeps it from drawing a line across the chin.
     return (f'<svg class="fig" viewBox="0 0 240 480" role="group" aria-label="Choose a goal on the body">'
-            f'<defs><clipPath id="body-clip"><path d="{BODY_D}"/>{HEAD}/></clipPath>'
+            f'<defs><path id="fig-b" pathLength="1" d="{BODY_D}"/><clipPath id="body-clip"><use href="#fig-b"/>{HEAD}/></clipPath>'
             f'<mask id="no-head"><rect x="-10" y="-10" width="260" height="500" fill="#fff"/>{HEAD} fill="#000"/></mask></defs>'
-            f'<g class="body"><path d="{BODY_D}"/>{HEAD}/></g>'
+            f'<g class="body"><use href="#fig-b"/>{HEAD}/></g>'
             f'<g clip-path="url(#body-clip)">{"".join(regions)}</g>'
-            f'<g class="contour"><path pathLength="1" mask="url(#no-head)" d="{BODY_D}"/>{HEAD} pathLength="1"/></g>'
+            f'<g class="contour"><use href="#fig-b" mask="url(#no-head)"/>{HEAD} pathLength="1"/></g>'
             f'{"".join(pins)}</svg>')
 
 
@@ -1072,16 +1074,17 @@ def clinic_open(g, p, rp=None, low=None):
     n = len({r["seller_slug"] for r in rows})
     key = clinic_key(g, p)
     href = f'/{g["slug"]}/#clinics' if g.get("clinic_plans") and g.get("page") else f'/sellers/{plan["seller_slug"]}/'
-    small = "Pharmacy, no prescription" if otc else f'Clinics with plans, prices checked {nice_date(max(r["last_seen"] for r in rows))}'
+    small = '<span class="paid">Pharmacy, no prescription</span>' if otc else ""
     return (f'<span class="pick-act"><a class="btn btn-wait btn-sm btn-cta sellers-open" href="{href}" data-dlg="{key}" data-src="/windows/{key}.json">'
-            f'Buy from {usd(plan["price_monthly"])}/mo · {plural(n, noun)}</a><span class="paid">{small}</span></span>')
+            f'Buy from {usd(plan["price_monthly"])}/mo · {plural(n, noun)}</a>{small}</span>')
 
 
 def clinic_window(g, p):
     """One option's clinic window (pages.md, Clinic window): the shop window's part with every clinic that has a plan for the
     option, brand plans first, then compounded, each cheapest first. The clinic's name opens our page on it; its one action is
     btn-wait "See plans" until the data carries its paid link (clinic_row_act), and only then btn-action "Visit <Name>"."""
-    rows = sorted(option_plans(g, p), key=clinic_order)
+    # what is not compounded first (brand, generic and other), so the first row is the button's price; each cheapest first
+    rows = sorted(option_plans(g, p), key=lambda r: (r.get("product_kind") == "compounded", clinic_order(r)))
     key, named, trs = clinic_key(g, p), set(), []
     otc = needs_rx(p) is False
     for r in rows:
@@ -1089,8 +1092,8 @@ def clinic_window(g, p):
         prof = PROFILES.get(r["seller_slug"], {})
         base = seller_base(r["seller_name"])
         checks = f'{score_of(prof) or 0} of {out_of(prof)}' if prof else "not checked"
-        trs.append(f'<tr><td><span class="cell-pic">{parts.tile(r["seller_slug"], base, 28, seller=prof)}{clinic_link(r["seller_slug"], base)}</span></td>'
-                   f'<td data-l="Plan"><span class="cell-pic">{parts.thumb(parts.plan_drawing(r))}<span>{explain_brand(r["plan_name"], named)}</span></span></td>'
+        trs.append(f'<tr><td>{clinic_link(r["seller_slug"], base)}</td>'
+                   f'<td data-l="Plan"><span class="cell-pic">{parts.plan_picture(r)}<span>{explain_brand(r["plan_name"], named)}</span></span></td>'
                    f'<td data-l="What it is">{plan_chip(g, r)}</td>'
                    f'<td data-l="Form">{plan_form_word(r)}</td>'
                    f'<td data-l="Per month"><span class="num">{usd(r["price_monthly"])}</span>{plan_letter(r)}{seller_closed_chip(r["seller_slug"])}</td>'
@@ -1107,28 +1110,19 @@ def clinic_window(g, p):
 </div></dialog>"""
 
 
-def option_drawing(p, rp):
-    """A row's product drawing (design/README.md, Pictures): the compounded row, a cosmetic, a research-use row, else the form of
-    the row's plan, else a form word in the option's own name and lines; anything else has none."""
+def option_picture(p, rp):
+    """A row's drawing (pages.md, Pictures and the clinic window): the compounded row, a cosmetic and a research-use row their
+    own; an approved option, the form its own lines name (a row says what it is), else the form of the row's plan."""
     if p.get("plan_kind") == "compounded":
-        return "vial-compounded"
+        return parts.thumb("vial-compounded")
     if is_cosmetic(p):
-        return "serum-dropper"
+        return parts.thumb("serum-dropper")
     if not approved_row(p):
-        return "vial-research"
-    return (parts.plan_drawing(rp) if rp else "") or parts.form_drawing(" ".join((p["name"], p.get("plain", ""), p.get("how", ""))))
-
-
-def clinic_stack(g, p):
-    """The small row of tiles under an option's line (up to five; the button says how many in all)."""
-    seen = {}
-    for r in sorted(option_plans(g, p), key=lambda r: (r.get("product_kind") == "compounded", float(r["price_monthly"]))):
-        seen.setdefault(r["seller_slug"], r)
-    if not seen:
-        return ""
-    tiles = "".join(parts.tile(k, seller_base(r["seller_name"]), 22, seller=PROFILES.get(k), quiet=True) for k, r in list(seen.items())[:5])
-    more = f'<span class="stack-more">+{len(seen) - 5}</span>' if len(seen) > 5 else ""
-    return f'<span class="opt-stack" aria-hidden="true">{tiles}{more}</span>'
+        return parts.thumb("vial-research")
+    if p.get("drawing"):  # the form its own lines do not name (data/site.json, with its source)
+        return parts.thumb(p["drawing"])
+    key = parts.form_drawing(" ".join((p["name"], p.get("plain", ""), p.get("how", ""))))
+    return parts.thumb(key) if key else parts.plan_picture(rp) if rp else parts.thumb("")
 
 
 def sellers_button(p, lazy=False, label=None, kind="btn-line"):
@@ -1301,8 +1295,8 @@ def option_rows(g, lazy=False):
         if lazy:
             how, status = unsaid(how), (unsaid(status) if NO_LINK_SAID.search(status) else status)
         letter = plan_letter(rp).strip() if rp else ""
-        rows.append(f'<li class="opt"><details class="opt-more"><summary class="opt-sum">{parts.thumb(option_drawing(p, rp))}<span class="opt-m" aria-hidden="true"></span><span class="name">{p["name"]}</span>'
-                    f'<span class="opt-chips">{status_chip(p)}{alt_chip(p)}{letter}</span>{opt_line(g, p, rp, pad)}{clinic_stack(g, p)}</summary>'
+        rows.append(f'<li class="opt"><details class="opt-more"><summary class="opt-sum">{option_picture(p, rp)}<span class="opt-m" aria-hidden="true"></span><span class="name">{p["name"]}</span>'
+                    f'<span class="opt-chips">{status_chip(p)}{alt_chip(p)}{letter}</span>{opt_line(g, p, rp, pad)}</summary>'
                     f'<div class="opt-body"><p class="opt-does">{p["does"]}{refs(p, slug, price=not pad)}</p>'
                     f'<p class="opt-status">{status}</p><p class="opt-how">{how}{cost}</p>{"" if lazy else opt_facts(g, p)}</div></details>{opt_action(g, p, rp, lazy)}</li>')
     return rows
@@ -2080,10 +2074,10 @@ def goal_clinic_section(g, rows):
         kind = "brand" if k in ("brand", "generic") else "compounded" if k == "compounded" else "other"
         more = ' class="more"' if i >= CLINICS_FIRST else ""
         trs.append(f'<tr{more} data-k="{kind}" data-f="{plan_form(r)}" data-l="{1 if (r.get("fda_letter_count") or 0) else 0}">'
-                   f'<td><span class="cell-pic">{parts.thumb(parts.plan_drawing(r))}<span class="name">{explain_brand(r["plan_name"], named)}</span></span></td>'
+                   f'<td><span class="cell-pic">{parts.plan_picture(r)}<span class="name">{explain_brand(r["plan_name"], named)}</span></span></td>'
                    f'<td data-l="What it is">{plan_chip(g, r)}</td>'
                    f'<td data-l="Per month"><span class="num">{usd(r["price_monthly"])}</span>{plan_letter(r)}{f"<span class=sub>{care}</span>" if care else ""}</td>'
-                   f'<td data-l="Clinic"><span class="cell-pic">{parts.tile(r["seller_slug"], seller_base(r["seller_name"]), 28, seller=PROFILES.get(r["seller_slug"]))}{clinic_link(r["seller_slug"], seller_base(r["seller_name"]), True)}</span></td>'
+                   f'<td data-l="Clinic">{clinic_link(r["seller_slug"], seller_base(r["seller_name"]), True)}</td>'
                    f'<td class="act">{clinic_row_act(r)}</td></tr>')
     seg = lambda grp, opts: (f'<div class="seg" role="group" aria-label="{grp[1]}">'
                              + "".join(f'<button type="button" class="seg-b" data-g="{grp[0]}" data-v="{v}" aria-pressed="{"true" if not v else "false"}">{t}</button>'
@@ -2117,8 +2111,8 @@ def plan_src(g, r):
     return f'<sup><a class="ref" href="#{sid}" aria-label="Source {n}">{n}</a></sup>'
 
 
-def decide_card(key, name, chips, price, act, draw=""):
-    return (f'<li class="panel-line decide-card">{parts.thumb(draw) if draw else ""}<p class="decide-k">{key}</p><h2>{name}</h2>'
+def decide_card(key, name, chips, price, act, pic=""):
+    return (f'<li class="panel-line decide-card">{pic}<p class="decide-k">{key}</p><h2>{name}</h2>'
             f'{f"<span class=chips>{chips}</span>" if chips else ""}<p class="decide-price">{price}</p>{act}</li>')
 
 
@@ -2142,7 +2136,7 @@ def decide_cards(g):
         name = seller_base(rp["seller_name"])
         cards.append(decide_card("Best approved", p["name"], status_chip(p) + alt_chip(p),
                                  f'<strong>From {usd(rp["price_monthly"])}/mo at online clinics</strong>{plan_src(g, rp)}{plan_letter(rp)}',
-                                 clinic_open(g, p, rp), option_drawing(p, rp)))
+                                 clinic_open(g, p, rp), option_picture(p, rp)))
     # Cheapest: the lowest monthly price among the goal's plans, labelled with its kind
     plans = goal_plans(g)
     if plans and not (best and plans[0] is best[1]):
@@ -2153,7 +2147,7 @@ def decide_cards(g):
         cards.append(decide_card("Cheapest", clean(c["plan_name"]), chip,
                                  f'<strong>From {usd(c["price_monthly"])}/mo at {name}</strong>{plan_src(g, c)}{plan_letter(c)}',
                                  next((b for b in (clinic_open(g, x, None, c) for x in sorted(g["peptides"], key=lambda x: x.get("plan_kind") != "compounded") if any(r is c for r in option_plans(g, x))) if b), ""),
-                                 parts.plan_drawing(c)))
+                                 parts.plan_picture(c)))
     # No prescription: the over-the-counter or cosmetic option; a goal without one, its research-use option
     otc = next((p for p in g["peptides"] if approved_row(p) and needs_rx(p) is False), None)
     cos = next((p for p in g["peptides"] if is_cosmetic(p)), None)
@@ -2163,7 +2157,7 @@ def decide_cards(g):
             name = seller_base(rp["seller_name"])
             cards.append(decide_card("No prescription", otc["name"], status_chip(otc) + alt_chip(otc),
                                      f'<strong>From {usd(rp["price_monthly"])}/mo</strong>{plan_src(g, rp)}{plan_letter(rp)}',
-                                     clinic_open(g, otc, rp), option_drawing(otc, rp)))
+                                     clinic_open(g, otc, rp), option_picture(otc, rp)))
     elif cos:
         if has_window(cos) and window_kind(cos) == "cosmetic":
             low, n = window_low(cos)
@@ -2171,7 +2165,7 @@ def decide_cards(g):
             if low is not None:
                 cards.append(decide_card("No prescription", cos["name"], status_chip(cos),
                                          f'<strong>From {money(low)} a {"bottle" if what == "serum" else "product"}</strong>, {plural(n, "shop")}',
-                                         f'<span class="pick-act">{sellers_button(cos, False, f"Compare {plural(n, what)}", "btn-wait")}</span>', "serum-dropper"))
+                                         f'<span class="pick-act">{sellers_button(cos, False, f"Compare {plural(n, what)}", "btn-wait")}</span>', parts.thumb("serum-dropper")))
     else:
         ru = next((p for p in g["peptides"] if has_window(p) and window_kind(p) == "research"), None)
         if ru:
@@ -2179,7 +2173,7 @@ def decide_cards(g):
             if low is not None:
                 cards.append(decide_card("No prescription", ru["name"], status_chip(ru),
                                          f'Research-use only, not approved. <strong>From {per_mg(low)}/mg at {plural(n, "shop")}</strong>',
-                                         f'<span class="pick-act">{sellers_button(ru, False, kind="btn-wait")}<span class="paid">Our checks, no shop links</span></span>', "vial-research"))
+                                         f'<span class="pick-act">{sellers_button(ru, False, kind="btn-wait")}<span class="paid">Our checks, no shop links</span></span>', parts.thumb("vial-research")))
     return f'<ul class="decide">{"".join(cards)}</ul>' if cards else ""
 
 
@@ -2244,7 +2238,7 @@ def category_body(g):
     <h1>{g["h1"]}</h1>
     {author_line(GOAL_CHECKED)}{SOURCE_LINE}
     <p class="intro">{lead}</p>
-    </div><div class="goal-panel">{parts.goal_art(g["slug"], 120)}</div></div>
+    </div><div class="goal-panel goal-c-{g["slug"]}">{parts.goal_art(g["slug"], 120)}</div></div>
     {cards}
   </div>
 </section>
@@ -2685,7 +2679,7 @@ def clinic_plans_section(r):
         elsewhere = (f'<span class="cell-pic">{parts.tile(other["seller_slug"], seller_base(other["seller_name"]), 24, seller=PROFILES.get(other["seller_slug"]))}<span><span class="num">{usd(other["price_monthly"])}</span><span class="sub">{clinic_link(other["seller_slug"], seller_base(other["seller_name"]))}</span></span></span>'
                      if other else '<span class="sub">no other clinic</span>' if p["substance_slug"] else '<span class="sub">no medication named</span>')
         fee = p.get("membership_fee_monthly")
-        trs.append(f'<tr><td><span class="cell-pic">{parts.thumb(parts.plan_drawing(p))}<span class="name">{clean(p["plan_name"])}</span></span></td><td data-l="What it is">{plan_chip(plan_goal(p), p)}</td>'
+        trs.append(f'<tr><td><span class="cell-pic">{parts.plan_picture(p)}<span class="name">{clean(p["plan_name"])}</span></span></td><td data-l="What it is">{plan_chip(plan_goal(p), p)}</td>'
                    f'<td class="num" data-l="Per month">{usd(p["price_monthly"])}</td>'
                    f'<td data-l="Care fee">{"not known" if fee is None else "none" if float(fee) == 0 else usd(fee) + "/mo"}</td>'
                    f'<td data-l="Cheapest elsewhere">{elsewhere}</td></tr>')

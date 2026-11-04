@@ -167,19 +167,18 @@ p { margin: 0 0 1em; }
 /* Option rows line up like a table: the same columns in every row (owner, 31 Oct 2026). Name with its chip under it,
    then the price, then the action; a row without a price or an action keeps the empty column. */
 /* One row layout on every goal (pages.md, Home, Option rows): the drawing, then the control and the name, the badge line, the
-   line with its price and the clinics' tiles; the button in a column of one width, kept when a row has no button. */
+   line with its price; the button in a column of one width, kept when a row has no button. */
 .flow { --thumb-row: 56px; }
 .flow-solo { --thumb-row: 52px; }
 .flow .opt { display: grid; grid-template-columns: minmax(0, 1fr) var(--cta-width); gap: 4px 16px; align-items: center; padding: 8px 14px; }
 .flow .opt > .opt-more { grid-column: 1; }
-.opt-sum { display: grid; grid-template-columns: var(--thumb-row) 32px minmax(0, 1fr); grid-template-areas: "t m name" "t chip chip" "t plain plain" "t stack stack"; align-items: center; gap: 3px 8px; cursor: pointer; list-style: none; min-height: var(--touch); border-radius: var(--radius-control); }
+.opt-sum { display: grid; grid-template-columns: var(--thumb-row) 32px minmax(0, 1fr); grid-template-areas: "t m name" "t chip chip" "t plain plain"; align-items: center; gap: 3px 8px; cursor: pointer; list-style: none; min-height: var(--touch); border-radius: var(--radius-control); }
 .opt-sum > .thumb { grid-area: t; --thumb: var(--thumb-row); align-self: start; border-radius: var(--radius-art); }
 .opt-m { grid-area: m; display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: var(--radius-control); background: var(--neutral-tint); transition: background-color var(--motion-quick); }
 .opt-m::before { content: ""; width: 10px; height: 10px; margin-left: -4px; border-right: 2.5px solid var(--ink); border-bottom: 2.5px solid var(--ink); transform: rotate(-45deg); transition: transform var(--motion-quick); }
 .opt-sum:hover .opt-m { background: var(--line-strong); }
 .opt-more[open] .opt-m::before { margin-left: 0; margin-top: -4px; transform: rotate(45deg); }
 .opt-sum .name { grid-area: name; }
-.opt-sum .opt-stack { grid-area: stack; }
 .nb { white-space: nowrap; }
 .opt-sum .opt-chips { grid-area: chip; display: flex; flex-wrap: wrap; gap: 4px 6px; justify-self: start; }
 .opt-sum::-webkit-details-marker { display: none; }
@@ -651,4 +650,4 @@ body:has(.home-sec) .site-foot { margin-top: 0; }
 .seller-id-text { min-width: 0; flex: 1; }
 .seller-similar li { display: flex; align-items: center; gap: var(--space-2); }
 .cmp thead .tile { display: flex; margin-bottom: var(--space-2); }
-@media (min-width: 641px) { .tbl-clinics .cell-pic a { white-space: nowrap; } }
+@media (min-width: 641px) { .tbl-clinics td[data-l="Clinic"] a { white-space: nowrap; } }

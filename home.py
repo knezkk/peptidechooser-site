@@ -125,7 +125,7 @@ def where_section(b):
     html = f"""
 <section class="section home-sec" id="where">
   <div class="wrap">
-    <div class="sec-hd"><div><h2>Where to get it: {n} sellers, each with background checks</h2><p>Online clinics prescribe and ship FDA-approved or compounded medicines. Research-use shops sell vials labeled for lab use. Pick a substance and a type; every name opens our page on that seller.</p></div></div>
+    <div class="sec-hd"><div><h2>Where to get it: {n} sellers, each with background checks</h2><p>Online clinics prescribe and ship medicines; research-use shops sell vials labeled for lab use. Every name opens our page on that seller.</p></div></div>
     <form class="where-filter" hidden onsubmit="return false">
       <div class="where-f"><label for="where-sub">Substance</label><select class="input" id="where-sub"><option value="">Any</option>{opts}</select></div>
       <div class="seg" role="group" aria-label="Type">{seg}</div>
@@ -196,7 +196,7 @@ def goals_section(b):
         plans = b.clinic_plans(g)
         count = b.plural(len(plans), "clinic plan") if plans else b.plural(len(g["peptides"]), "option")
         price, src = goal_price(b, g)
-        inner = (f'<span class="goal-pic">{parts.goal_art(g["slug"], 48)}</span><span class="goal-name">{g["label"]}</span><span class="small">{count}</span>'
+        inner = (f'<span class="goal-pic goal-c-{g["slug"]}">{parts.goal_art(g["slug"], 48)}</span><span class="goal-name">{g["label"]}</span><span class="small">{count}</span>'
                  + (f'<span class="goal-price">{price}</span><span class="small">{src}</span>' if price else ""))
         cards.append(f'<li><a class="goal-card" href="/{g["slug"]}/">{inner}</a></li>' if g.get("page")
                      else f'<li><span class="goal-card">{inner}</span></li>')
@@ -340,18 +340,13 @@ def creators_section(b):
                    key=lambda x: -x["subscribers"])[:CREATORS_SHOWN]
     if not cards:
         return ""
-    lis = []
-    for i, x in enumerate(cards):
-        initials = "".join(w[0] for w in re.sub(r"^(Dr\.|Dr)\s+", "", x["name"]).replace(",", "").split()[:2]).upper()
-        lis.append(f'<li class="creator-card"><span class="initials{" initials-clinic" if i % 2 else ""}" aria-hidden="true">{initials}</span>'
-                   f'<div><a class="name" href="{escape(x["url"])}" rel="nofollow noopener">{x["name"]}</a>'
-                   f'<span class="small">{x["platform"]} · {subs_count(x["subscribers"])} subscribers</span>'
-                   f'<p>{x["stance"]}</p></div></li>')
+    lis = "".join(f'<li><a class="name" href="{escape(x["url"])}" rel="nofollow noopener">{x["name"]}</a>'
+                  f'<span class="small">{subs_count(x["subscribers"])}, {x["platform"]}</span><p>{x["stance"]}</p></li>' for x in cards)
     return f"""
 <section class="section home-sec" id="creators">
   <div class="wrap">
     <div class="sec-hd"><div><h2>Who explains this well</h2><p>{num_word(len(cards))} creators we read before we write. Numbers from their channels; we take no money from them and they take none from us.</p></div></div>
-    <ul class="creator-cards">{"".join(lis)}</ul>
+    <ul class="creator-strip">{lis}</ul>
     <p class="small" style="margin-top:16px">Subscribers as of {b.nice_date(c["cards_checked"])} ({c["cards_source"]}).</p>
   </div>
 </section>"""

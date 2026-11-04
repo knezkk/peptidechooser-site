@@ -9,8 +9,7 @@ from html import escape
 ART = "/assets/art.svg"
 # trailing words a monogram skips: Mochi Health -> "Mo", Strut Health -> "St"; Good Life Meds -> "GL"
 GENERIC = {"health", "clinic", "medical", "wellness", "telehealth", "inc", "llc", "co"}
-DRAWINGS = {"pill-bottle": (40, 46), "pen-brand": (46, 46), "foam-bottle": (30, 42), "serum-dropper": (34, 48),
-            "vial-compounded": (24, 40), "vial-research": (24, 40)}
+DRAWINGS = ("pill-bottle", "pen-brand", "foam-bottle", "serum-dropper", "cream-tube", "vial-compounded", "vial-research", "vial-brand")
 GOALS = ("hair", "skin", "weight-loss", "muscle", "recovery", "libido", "longevity")
 
 
@@ -44,13 +43,12 @@ def tile(slug, name, size, shop=False, seller=None, named=True, quiet=False):
     return f'<span class="tile tile-{size} {tone}"{speak}>{escape(monogram(name))}</span>'
 
 
-def thumb(key):
-    """A product drawing on its tile; "" keeps an empty tile's space, so rows line up."""
+def thumb(key, no_form=False):
+    """A product drawing on its tile. No drawing keeps the tile's space; tools/check.py fails it unless the data names no form
+    at all (`no_form`)."""
     if key not in DRAWINGS:
-        return '<span class="thumb thumb-none" aria-hidden="true"></span>'
-    w, h = DRAWINGS[key]
-    return (f'<span class="thumb thumb-{key}" aria-hidden="true"><svg width="{w}" height="{h}" viewBox="0 0 {w} {h}">'
-            f'<use href="{ART}#{key}"/></svg></span>')
+        return f'<span class="thumb thumb-none"{" data-noform" if no_form else ""} aria-hidden="true"></span>'
+    return f'<span class="thumb thumb-{key}" aria-hidden="true"><svg width="56" height="56" viewBox="0 0 56 56"><use href="{ART}#{key}"/></svg></span>'
 
 
 def form_drawing(text):
@@ -58,10 +56,16 @@ def form_drawing(text):
     t = (text or "").lower()
     if re.search(r"\b(pill|pills|tablet|tablets|capsule|capsules|oral)\b", t):
         return "pill-bottle"
-    if re.search(r"\b(pen|pens|kwikpen|autoinjector)\b", t):
+    if re.search(r"\b(pen|pens|kwikpen|autoinjector|shot|shots)\b", t):
         return "pen-brand"
-    if re.search(r"\b(foam|liquid|solution|topical)\b", t):
+    if re.search(r"\b(foam|liquid|solution|topical|spray)\b", t):
         return "foam-bottle"
+    if re.search(r"\b(cream|gel|lotion)\b", t):
+        return "cream-tube"
+    if re.search(r"\bserum\b", t):
+        return "serum-dropper"
+    if re.search(r"\b(vial|injection)\b", t):
+        return "vial-brand"
     return ""
 
 
@@ -73,10 +77,15 @@ def plan_drawing(r):
     return form_drawing((r.get("dosage_form") or "").replace("_", " ")) or form_drawing(r.get("plan_name"))
 
 
-def goal_art(slug, size, small=False):
-    """A goal's line drawing in clinic blue: the short form under 48px (fewer strokes, heavier line)."""
+def plan_picture(r):
+    """A plan's drawing; a plan whose data names no form at all keeps the space."""
+    key = plan_drawing(r)
+    return thumb(key, no_form=not key and not r.get("dosage_form"))
+
+
+def goal_art(slug, size):
+    """A goal's line drawing, in the goal's own colour (goal-<slug>, on the panel around it)."""
     if slug not in GOALS:
         return ""
-    sym = f"goal-{slug}{'-s' if small else ''}"
-    return (f'<svg class="goal-art{" goal-art-s" if small else ""}" width="{size}" height="{size}" viewBox="0 0 56 56" aria-hidden="true">'
-            f'<use href="{ART}#{sym}"/></svg>')
+    return (f'<svg class="goal-art" width="{size}" height="{size}" viewBox="0 0 56 56" aria-hidden="true">'
+            f'<use href="{ART}#goal-{slug}"/></svg>')

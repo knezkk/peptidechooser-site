@@ -426,6 +426,10 @@ def check_parts(P):
     for f in sorted((DIST / "windows").glob("*.json")) if (DIST / "windows").exists() else []:
         win = json.loads(f.read_text(encoding="utf-8"))["html"]
         errs += window_errs(f"windows/{f.name}", win) + paid_rule_errs(f"windows/{f.name}", win, rule)
+        if re.search(r'class="thumb thumb-none" aria-hidden', win):
+            errs.append(f"windows/{f.name}: a row whose form has no picture; add it to the mapping")
+        if "clinic-dlg" in win and win.count('<td data-l="Plan">') != win.count('class="thumb '):
+            errs.append(f"windows/{f.name}: a plan row without a picture")
     for name, p in P.items():
         html = (DIST / name).read_text(encoding="utf-8")
         # Home's "Prices at N shops" buttons point at a window file that exists
@@ -438,13 +442,23 @@ def check_parts(P):
             if not (DIST / src).exists():
                 continue
             win = json.loads((DIST / src).read_text(encoding="utf-8"))["html"]
-            who = set(re.findall(r'<tr><td><span class="cell-pic"><span class="tile[^>]*>[^<]*</span>(?:<a class="name" href="/sellers/([^"/]+)/"|<span class="name">([^<]+))', win))
+            who = set(re.findall(r'<tr><td>(?:<a class="name" href="/sellers/([^"/]+)/"|<span class="name">([^<]+))', win))
             if len(who) != int(n):
                 errs.append(f"{name}: {src} lists {len(who)} clinics, its button says {n}")
             if f'<span class="num">${price}</span>' not in win:
                 errs.append(f"{name}: {src} has no plan at ${price}, the price on its button")
             if "data-seller=" in win:
                 errs.append(f"{name}: {src} mixes clinics and shops")
+        # Every option row and plan row has a picture (pages.md, Pictures and the clinic window), except a plan whose data names no form
+        for li in re.findall(r'<li class="opt">.*?</summary>', html, re.S):
+            if 'class="thumb ' not in li:
+                errs.append(f"{name}: an option row without a picture")
+        for tb in re.findall(r'<table class="[^"]*tbl-(?:clinics|window)[^"]*".*?</table>', html, re.S):
+            for tr in re.findall(r'<tr[ >].*?</tr>', tb, re.S):
+                if "<td" in tr and 'class="thumb ' not in tr and "tbl-plans" not in tb and "<td data-l=\"Plan\">" not in tr:
+                    errs.append(f"{name}: a plan row without a picture")
+        if re.search(r'class="thumb thumb-none" aria-hidden', html):
+            errs.append(f"{name}: a row whose form has no picture; add it to the mapping")
         for m in re.finditer(r'class="btn [^"]*sellers-open"[^>]*data-dlg="clinics-[^"]+"[^>]*>(?!Buy from)', html):
             errs.append(f"{name}: a clinic window's button without the Buy label")
     # The letters page (pages.md, Letters): every row has a date, a company, a subject and its fda.gov letter; the only
