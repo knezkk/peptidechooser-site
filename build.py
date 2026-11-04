@@ -2188,12 +2188,14 @@ def decide_cards(g):
             # no plan that fits a medicine sold without a prescription: its checked price and the row's own text, never a clinic's plan
             pad = opt_price(otc, g["slug"])
             if pad:
+                on_page = otc.get("substance") in PEPTIDE_SLUGS
+                page = f'/peptides/{otc["substance"]}/' if on_page else "/learn/"
+                label = "FDA status and sources" if on_page else "Read the guides"
                 price = re.search(r"from (\$[\d.,]+/mo)", pad).group(1)
                 cards.append(decide_card("No prescription", otc["name"], status_chip(otc) + alt_chip(otc),
                                          f'<strong>From {price}</strong>{re.search(r"<sup>.*</sup>", pad).group(0)}',
                                          # the card's one button (tools/check.py) goes to our own page on the medicine, or the goal's guide
-                                         f'<span class="pick-act"><a class="btn btn-wait btn-sm" href="{f"/peptides/{otc['substance']}/" if otc.get("substance") in PEPTIDE_SLUGS else "/learn/"}">'
-                                         f'{"FDA status and sources" if otc.get("substance") in PEPTIDE_SLUGS else "Read the guides"}</a>'
+                                         f'<span class="pick-act"><a class="btn btn-wait btn-sm" href="{page}">{label}</a>'
                                          f'<span class="paid">{no_listing_text(otc)}</span></span>',
                                          option_picture(otc, None)))
     elif cos:
