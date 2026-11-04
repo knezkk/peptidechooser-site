@@ -799,7 +799,7 @@ def check_parts(P):
     # Guides and /learn/ (pages.md, Learn, Guide; owner task w2, 3 Nov 2026): the short answer opens with a sentence
     # under 160 characters; "What to do next" links at least one built page; no /learn/ group is empty; no guide title
     # twice. A redirect page (data/redirects.json) is noindex, carries its canonical and points at a built page.
-    titles = {}
+    titles, openings, six = {}, {}, {}
     for name in (n for n in P if re.fullmatch(r"learn/[^/]+/index\.html", n)):
         html = (DIST / name).read_text(encoding="utf-8")
         sa = re.search(r'<section class="short-answer".*?<p>(.*?)</p>', html, re.S)
@@ -807,6 +807,14 @@ def check_parts(P):
         first = re.split(r"(?<=[.?!])\s", text.strip(), 1)[0]
         if not first or len(first) >= 160:
             errs.append(f"{name}: the short answer's first sentence is {len(first)} characters (under 160)")
+        # each guide opens with its own sentence (owner task w2, 4 Nov 2026): no two share it, or its first six words
+        low = " ".join(first.lower().split())
+        words = " ".join(low.split()[:6])
+        if low in openings:
+            errs.append(f"{name}: same first sentence as {openings[low]} ({first!r})")
+        elif words in six:
+            errs.append(f"{name}: same first six words as {six[words]} ({words!r})")
+        openings[low], six[words] = name, name
         nxt = re.search(r"<h2>What to do next</h2>(.*?)(?:<section|</div></article>)", html, re.S)
         hrefs = re.findall(r'href="(/[^"#?]*)', nxt.group(1)) if nxt else []
         if not any((DIST / h.strip("/") / "index.html").exists() or h == "/" for h in hrefs):

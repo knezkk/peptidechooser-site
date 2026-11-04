@@ -374,6 +374,8 @@ def known_sources(b, f):
     for r in b.PLANS:
         k[f"plan-{r['seller_slug']}-{r['plan_slug']}"] = (f"{b.seller_base(r['seller_name'])}, {r['plan_name']}, {nice(r['last_seen'])}",
                                                           r["pricing_url"], "text")
+    if b.PEPTIDE_SLUGS:
+        k["db-peptides"] = (f"Peptide Chooser, Peptides A to Z: the FDA status of every substance we track, checked {nice(checked(b))}", "/peptides/", "own")
     # our own pages (the seller guide): How we rate, the sellers list and each seller's page
     k["own-how-we-rate"] = ("Peptide Chooser, How we rate peptide products and sellers", "/how-we-rate/", "own")
     if b.PROFILES:
@@ -455,7 +457,7 @@ def g_bpc(b, f, N):
 
 
 def g_safe(b, f, N):
-    short = (f"It depends on the kind. Approved peptide medicines have trial data the FDA reviewed; pharmacy-made and "
+    short = (f"Approved peptide medicines have trial data the FDA reviewed; pharmacy-made and "
              f"research-use peptides do not.{N('fda-approval')}{N('fda-compounding')} Cosmetic peptides are legal to sell "
              f"without approval and nobody has to show that they work.{N('legal-5')}")
     aes = (f"<p>For pharmacy-made semaglutide and tirzepatide, the FDA has counted 990 reports of side effects linked to "
@@ -562,11 +564,11 @@ def g_coa(b, f, N):
 
 def g_glp1(b, f, N):
     cs, bs, ct, bt = f["comp_sema"], f["brand_sema"], f["comp_tirz"], f["brand_tirz"]
-    price = (f" At the online clinics we track, compounded semaglutide starts at {b.usd(cs['price_monthly'])}/mo and brand "
-             f"semaglutide at {b.usd(bs['price_monthly'])}/mo.{N('plan-comp_sema')}{N('plan-brand_sema')}" if cs and bs else "")
-    # two sentences, so the first stays under 160 characters (owner task w2, 3 Nov 2026; the words unchanged)
+    # two sentences, so the first stays under 160 characters (owner task w2, 3 Nov 2026; the words unchanged); footnotes in reading order
     short = (f"Brand semaglutide (Wegovy) and tirzepatide (Zepbound) are FDA approved for weight management.{N('legal-1')}{N('legal-2')} "
-             f"Compounded copies are not, and the FDA does not check them before they are sold.{N('fda-compounding')}{price}")
+             f"Compounded copies are not, and the FDA does not check them before they are sold.{N('fda-compounding')}")
+    short += (f" At the online clinics we track, compounded semaglutide starts at {b.usd(cs['price_monthly'])}/mo and brand "
+              f"semaglutide at {b.usd(bs['price_monthly'])}/mo.{N('plan-comp_sema')}{N('plan-brand_sema')}" if cs and bs else "")
     rows = []
     for label, r, key in (("Compounded semaglutide", cs, "comp_sema"), ("Brand semaglutide (Wegovy)", bs, "brand_sema"),
                           ("Compounded tirzepatide", ct, "comp_tirz"), ("Brand tirzepatide (Zepbound)", bt, "brand_tirz")):
@@ -797,9 +799,10 @@ def g_ghk(b, f, N):
     serum_src = next((n for n in (serum or {}).get("sources", []) if "price" in next(
         (s["text"] for s in hair["sources"] if s["n"] == n), "")), None) if serum else None
     # the short answer's sources first, so its footnotes read 1, 2, 3, 4
-    short = (f"GHK-Cu is a small copper peptide that the body makes, sold in scalp serums and in research-use vials.{N('pm-pickart')} "
-             f"Serums are cosmetics: legal to sell without FDA approval, and nobody has to show that they grow hair.{N('legal-5')} "
-             f"The hair evidence is one lab study on follicles, done with a close relative, AHK-Cu.{N('pm-pyo')} ")
+    # the hair answer first (owner task w2, 4 Nov 2026)
+    short = (f"The hair evidence for GHK-Cu is one lab study on follicles, done with a close relative, AHK-Cu.{N('pm-pyo')} "
+             f"GHK-Cu is a small copper peptide that the body makes, sold in scalp serums and in research-use vials.{N('pm-pickart')} "
+             f"Serums are cosmetics: legal to sell without FDA approval, and nobody has to show that they grow hair.{N('legal-5')} ")
     status = status_words(b, "ghk-cu", N, plain=True)
     short += (f"Injectable GHK-Cu is {status}" if status else f"Injectable GHK-Cu is not approved for any use.{N('drugsfda-hair')}")
     price = ""
@@ -879,8 +882,9 @@ def g_inject(b, f, N):
     listed = f"{', '.join(names[:-1])} and {names[-1]}" if len(names) > 1 else "".join(names)
     plans = [r for r in f["hair_plans"] if r.get("product_kind") != "compounded"]
     cheapest = plans[0] if plans else None
-    short = (f"Research-use shops sell {listed} in vials for hair. None is FDA approved for any use, and we found no trial in "
-             f"people that shows any of them grows hair.{N('drugsfda-hair')} "
+    # the answer first (owner task w2, 4 Nov 2026)
+    short = (f"No injectable peptide sold for hair is FDA approved for any use, and we found no trial in people that shows any of "
+             f"them grows hair.{N('drugsfda-hair')} Research-use shops sell {listed} in vials for hair. "
              + (f"The approved option finasteride starts at {b.usd(cheapest['price_monthly'])} a month at the online clinics we track "
                 f"({b.seller_base(cheapest['seller_name'])}).{N(pkey(cheapest))}"
                 if cheapest and cheapest["substance_slug"] == "finasteride" else ""))
@@ -1150,7 +1154,11 @@ def g_legal(b, f, N):
     ruo = lambda: (f'The FDA warning letters on our <a href="{b.LETTERS_URL}">letters page</a> went to companies: {f["ruo_letters"]} of the '
            f'{f["letters"]} went to research-use peptide shops.{N("db-letters")}') if f["letters"] else ""
     ex = lambda label: f" In our database: {and_list(groups[label][:3])}." if groups.get(label) else ""
-    short = ("It depends on the kind. An FDA-approved peptide medicine is legal on a prescription.{0} A pharmacy may make some "
+    # the legal answer first, the status of every substance by kind (owner task w2, 4 Nov 2026)
+    kinds = Counter(b.pep_group(b.pep_status(x)) for x in b.PEPTIDE_SLUGS)
+    count = (f"Of the {sum(kinds.values())} substances we track, {kinds['approved']} are FDA approved, {kinds['cosmetic']} are cosmetics "
+             f"and {kinds['not']} are not approved for any use.{N('db-peptides')} " if kinds else "")
+    short = count + ("An FDA-approved peptide medicine is legal on a prescription.{0} A pharmacy may make some "
              "peptides for a patient under the FDA's compounding rules.{1} Cosmetic peptides are legal to sell without approval.{2} "
              "Research-use peptides are not approved for use in people.{3}").format(N('fda-approval'), N('fda-503a'), N('legal-5'),
                                                                                   N('drugsfda-hair'))
@@ -1955,7 +1963,6 @@ def g_oz_weg(b, f, N):
 
 def g_fin_minox(b, f, N):
     plans = f["hair_plans"]
-    fin_st, min_st = db_sentence(b, "finasteride", N), db_sentence(b, "minoxidil", N)
     low = plans[0] if plans else None
     short = ("Finasteride (a tablet, on a prescription) and minoxidil (on the scalp, without a prescription) are the two FDA-approved "
              f"medicines for male pattern hair loss.{N('medline-finasteride')}{N('medline-minoxidil')} In two one-year trials in "
@@ -1963,6 +1970,7 @@ def g_fin_minox(b, f, N):
              f"48-week trial in 393 men, 5% minoxidil beat 2% minoxidil and placebo on hair counts.{N('pm-olsen')} Neither is a peptide."
              + (f" At the online clinics we track, hair plans start at {b.usd(low['price_monthly'])} a month "
                 f"({b.seller_base(low['seller_name'])}, {low['plan_name']}).{N(pkey(low))}" if low else ""))
+    fin_st, min_st = db_sentence(b, "finasteride", N), db_sentence(b, "minoxidil", N)  # after the short answer: footnotes in reading order
     cmp = ('<a href="/compare/finasteride-vs-minoxidil/">finasteride and minoxidil side by side</a>'
            if any(p[0] == "/compare/finasteride-vs-minoxidil/" for p in b.PAGES) else "")
     body = f"""
@@ -2183,8 +2191,6 @@ def lead(b, f, N, slug):
     if slug == "compounded-semaglutide-price":
         x = low(f["sema_comp"])
         return f"Compounded semaglutide {x[0]}{x[1]}, checked {nice(x[2])}." if x else ""
-    if slug == "compounded-vs-brand-glp-1":
-        return two("Compounded semaglutide", low(f["sema_comp"]), "brand", low(f["sema_brand"]))
     if slug == "semaglutide-vs-tirzepatide-price":
         return two("Semaglutide", low(f["sema_all"]), "tirzepatide", low(f["tirz_all"]))
     if slug == "ozempic-vs-wegovy-price":
@@ -2199,7 +2205,7 @@ def lead(b, f, N, slug):
     if slug == "what-an-fda-warning-letter-means" and f["letters"] and f["letters_on"]:
         return (f"We track {f['letters']} FDA warning letters to peptide sellers, compounders and online clinics, "
                 f"checked {nice(f['letters_on'])}.{note('db-letters')}")
-    if TOPIC.get(slug) == "hair":
+    if slug == "peptides-for-hair-loss-what-works":  # the other hair guides open from their own subject (owner task w2, 4 Nov 2026)
         g = next(x for x in b.ALL_GOALS if x["slug"] == "hair")
         # the option the goal's checked price belongs to (its `price` names the goal)
         pick = next((p for p in g["peptides"] if p.get("price") == g["slug"]), None)
