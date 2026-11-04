@@ -1,0 +1,20 @@
+{
+  "_note": "Stand-in for data/paid.json until peptide-data task 13 adds site.paid_redirects and site.seller_copy_rules. Source: peptidi/02-affiliate/onboarding-2026-11-04.md, checked 4 Nov 2026. The Awin addresses use Awin's standard format and are not yet confirmed in Awin's Link Builder; CJ has no address until we have our CJ PID.",
+  "networks": ["Katalys", "Awin", "CJ", "FirstPromoter"],
+  "redirects": [
+    {"out_path": "/out/strut-health/", "seller_slug": "strut-health-strut-health-llc", "name": "Strut Health", "network": "Katalys", "tracking_url": "https://track.revoffers.com/aff_c?offer_id=384&aff_id=14186"},
+    {"out_path": "/out/direct-meds/", "seller_slug": "direct-meds", "name": "Direct Meds", "network": "Katalys", "tracking_url": "https://track.revoffers.com/aff_c?offer_id=1304&aff_id=14186"},
+    {"out_path": "/out/eden/", "seller_slug": "eden-eden-health-international-inc", "name": "Eden", "network": "Katalys", "tracking_url": "https://track.revoffers.com/aff_c?offer_id=1435&aff_id=14186"},
+    {"out_path": "/out/shedrx/", "seller_slug": "shedrx", "name": "ShedRx", "network": "Katalys", "tracking_url": "https://track.revoffers.com/aff_c?offer_id=1516&aff_id=14186"},
+    {"out_path": "/out/measured/", "seller_slug": "measured-better-health-labs-inc", "name": "Measured", "network": "Awin", "tracking_url": "https://www.awin1.com/cread.php?awinmid=126727&awinaffid=3143722"},
+    {"out_path": "/out/curex/", "seller_slug": "curex", "name": "Curex", "network": "Awin", "tracking_url": "https://www.awin1.com/cread.php?awinmid=121970&awinaffid=3143722"},
+    {"out_path": "/out/vitals-vault/", "seller_slug": "vitals-vault", "name": "Vitals Vault", "network": "FirstPromoter", "tracking_url": "https://vitalsvault.com?fpr=karlo-809795"}
+  ],
+  "copy_rules": [
+    {"seller_slug": "shedrx", "phrase": "FDA", "replace_with": null, "note": "ShedRx affiliate rules: do not mention the FDA"},
+    {"seller_slug": "shedrx", "phrase": "FDA approved", "replace_with": null, "note": "ShedRx affiliate rules: do not mention FDA approval"},
+    {"seller_slug": "shedrx", "phrase": "Eli Lilly", "replace_with": null, "note": "ShedRx affiliate rules"},
+    {"seller_slug": "shedrx", "phrase": "Novo Nordisk", "replace_with": null, "note": "ShedRx affiliate rules"},
+    {"seller_slug": "shedrx", "phrase": "tirzepatide", "replace_with": "compounded GLP-1 options", "note": "ShedRx affiliate rules"}
+  ]
+}

@@ -12,6 +12,8 @@ Reads the `site.*` views through the read-only role (peptide-data spec 0015) and
   - site.fda_letters_all -> "letters_all": every peptide-related letter or letter to a seller we know, for /fda-warning-letters/
   - site.sellers, site.seller_profile, site.products -> "guide_stats": the counts the guides in guides.py quote (shops we
                             check, those with a lab report in the last 12 months, shops that list BPC-157)
+  - site.paid_links      -> `paid_url` on seller_profiles; site.paid_redirects, site.seller_copy_rules -> data/paid.json
+    (pull_paid), never site.json
   - site.letter_substances -> "letter_substances": the substances each FDA warning letter names, for /peptides/, the
     compare pairs and the letters page's substance filter
   - site.seller_profile, site.seller_substances, site.seller_letters -> "seller_profiles", "seller_substances" (top 12 per
@@ -29,6 +31,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 DATA = ROOT / "data" / "site.json"
+PAID = ROOT / "data" / "paid.json"
 URL = os.environ.get("SITE_DATABASE_URL", "")
 
 
@@ -77,6 +80,27 @@ def add_paid_links(d):
     for r in d["seller_profiles"]:
         if r["seller_slug"] in paid:
             r["paid_url"] = paid[r["seller_slug"]]
+
+
+def pull_paid():
+    """site.paid_redirects and site.seller_copy_rules (peptide-data task 13) into data/paid.json, the only data file that
+    holds tracking addresses (paid.py). Until both views exist the file stays as it is and the build uses the fixture.
+    The approved networks: site.affiliate_networks when the view exists; else the fixture's list, plus any network in use."""
+    have = {r["table_name"] for r in rows("select table_name from information_schema.tables where table_schema = 'site'")}
+    if not {"paid_redirects", "seller_copy_rules"} <= have:
+        print("pull_data: site.paid_redirects or site.seller_copy_rules not there yet, the build uses the paid fixture")
+        return
+    redirects = rows("select out_path, seller_slug, network, tracking_url from site.paid_redirects order by out_path")
+    if "affiliate_networks" in have:
+        networks = [r["network"] for r in rows("select network from site.affiliate_networks order by network")]
+    else:
+        networks = json.loads((ROOT / "tools" / "fixtures" / "paid.json").read_text(encoding="utf-8"))["networks"]
+    PAID.write_text(json.dumps({
+        "networks": sorted(set(networks) | {r["network"] for r in redirects}),
+        "redirects": redirects,
+        "copy_rules": rows("select seller_slug, phrase, replace_with, note from site.seller_copy_rules order by seller_slug, phrase"),
+    }, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    print(f"pull_data: {len(redirects)} paid redirects")
 
 
 def substances(d):
@@ -231,6 +255,7 @@ def main():
     add_paid_links(d)
     # excluded states per clinic (pages.md, Clinic rows); while the view is missing build.py reads data/clinic_states.json
     d["seller_states"] = rows("select * from site.seller_states order by seller_slug") if has_view("seller_states") else []
+    pull_paid()
     d["seller_substances"] = top_substances(rows(
         "select seller_slug, substance_slug, listing_count, price_per_mg_min, price_per_mg_max, has_coa, "
         "newest_price_observed_at from site.seller_substances"))
