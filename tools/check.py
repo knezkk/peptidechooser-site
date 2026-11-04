@@ -432,6 +432,21 @@ def check_parts(P):
         for src in re.findall(r'data-src="/(windows/[^"]+)"', html):
             if not (DIST / src).exists():
                 errs.append(f"{name}: window file {src} missing")
+        # The clinic window (pages.md, Pictures and the clinic window): the label's count is the clinics in its window, its price is
+        # a price in the window, and a clinic window never lists a shop's row
+        for src, price, n in re.findall(r'data-src="/(windows/clinics-[^"]+)">Buy from \$([\d,.]+)/mo · (\d+) (?:clinic|seller)s?</a>', html):
+            if not (DIST / src).exists():
+                continue
+            win = json.loads((DIST / src).read_text(encoding="utf-8"))["html"]
+            who = set(re.findall(r'<tr><td><span class="cell-pic"><span class="tile[^>]*>[^<]*</span>(?:<a class="name" href="/sellers/([^"/]+)/"|<span class="name">([^<]+))', win))
+            if len(who) != int(n):
+                errs.append(f"{name}: {src} lists {len(who)} clinics, its button says {n}")
+            if f'<span class="num">${price}</span>' not in win:
+                errs.append(f"{name}: {src} has no plan at ${price}, the price on its button")
+            if "data-seller=" in win:
+                errs.append(f"{name}: {src} mixes clinics and shops")
+        for m in re.finditer(r'class="btn [^"]*sellers-open"[^>]*data-dlg="clinics-[^"]+"[^>]*>(?!Buy from)', html):
+            errs.append(f"{name}: a clinic window's button without the Buy label")
     # The letters page (pages.md, Letters): every row has a date, a company, a subject and its fda.gov letter; the only
     # links leaving the site go to fda.gov, so no seller domain is linked anywhere on the page.
     if "fda-warning-letters/index.html" in P:
@@ -501,14 +516,14 @@ def check_parts(P):
             # and every seller page in the build has its row, none hidden; the script and the filter's options name
             # only sellers and substances that are in the build's rows.
             built = {n.split("/")[1] for n in P if n.startswith("sellers/") and n != "sellers/index.html"}
-            trs = re.findall(r"<tr( [^>]*)?><td><a class=\"name\" href=\"/sellers/([^\"/]+)/\"", html)
+            trs = re.findall(r"<tr( [^>]*)?><td>(?:<span class=\"cell-pic\"><span class=\"tile[^>]*>[^<]*</span>)?<a class=\"name\" href=\"/sellers/([^\"/]+)/\"", html)
             if {s for _, s in trs} != built:
                 errs.append(f"{name}: the tables do not list every seller page in the build")
             # two tabs, clinics first (owner task w2, 3 Nov 2026): each seller in exactly one table, the clinics table
             # first in the HTML, the lede's counts and the tab labels equal to the rows, no old jargon chip label
             def tbl_rows(tid):
                 m = re.search(rf'<table[^>]*id="{tid}".*?<tbody>(.*?)</tbody>', html, re.S)
-                return re.findall(r'<tr[^>]*><td><a class="name" href="/sellers/([^"/]+)/"', m.group(1)) if m else []
+                return re.findall(r'<tr[^>]*><td>(?:<span class="cell-pic"><span class="tile[^>]*>[^<]*</span>)?<a class="name" href="/sellers/([^"/]+)/"', m.group(1)) if m else []
             cl, sh = tbl_rows("clinics-table"), tbl_rows("sellers-table")
             if len(cl + sh) != len(set(cl + sh)):
                 errs.append(f"{name}: a seller has a row in both tables or twice in one")
@@ -584,7 +599,7 @@ def check_parts(P):
     pairs = [n for n in P if re.fullmatch(r"compare/[a-z0-9-]+-vs-[a-z0-9-]+/index.html", n)]
     for name in pairs:
         html = (DIST / name).read_text(encoding="utf-8")
-        heads = re.findall(r'<th scope="col"><a class="name" href="(/(?:peptides|sellers)/[^"/]+/)"', html)
+        heads = re.findall(r'<th scope="col">(?:<span class="tile[^>]*>[^<]*</span>)?<a class="name" href="(/(?:peptides|sellers)/[^"/]+/)"', html)
         if len(heads) != 2 or any(f'href="{h}"' not in html.split('id="compare-two"', 1)[-1].split("cmp-link")[0].split("</table>")[-1] for h in heads):
             errs.append(f"{name}: does not link both sides to their pages")
         if all(h.startswith("/peptides/") for h in heads) and len(re.findall(r'rel="nofollow">(?:FDA source|Source)</a>', html)) < 2:
@@ -805,7 +820,7 @@ def check_parts(P):
         if not m:
             errs.append(f"{name}: no header nav")
             continue
-        for href in re.findall(r'href="([^"]*)"', m.group(1)):
+        for href in re.findall(r'<a\s[^>]*?href="([^"]*)"', m.group(1)):  # links only: a drawing's <use href> is no link
             path, _, frag = href.partition("#")
             if href.startswith(("#", "/#")) or not path.startswith("/"):
                 errs.append(f"{name}: nav link {href} is an anchor, not a page")
