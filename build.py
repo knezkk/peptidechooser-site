@@ -11,6 +11,7 @@ import re
 from html import escape, unescape
 from urllib.parse import urlparse
 import shutil
+import subprocess
 from datetime import date
 
 import guides
@@ -39,7 +40,20 @@ def nice_date(iso):
 
 
 CHECKED = nice_date(DATA["checked"])
-BUILD_DATE = nice_date(date.today().isoformat())  # "Last updated" on /privacy/ and /disclosure/ (owner answer Q3 a, 4 Nov 2026)
+
+
+def text_changed(*ranges):
+    """The date of the last commit that changed these lines (owner answer Q2 b, 4 Nov 2026): "Last updated" on /privacy/ and
+    /disclosure/, never typed. Each range is (first line regex, last line regex, file). A shallow clone would give the wrong
+    date, so the build stops; lines with no commit yet are today's."""
+    def git(*args):
+        return subprocess.run(["git", *args], cwd=ROOT, capture_output=True, text=True)
+    if git("rev-parse", "--is-shallow-repository").stdout.strip() == "true":
+        sys.exit("build.py: a shallow clone has no text dates; check out with fetch-depth 0")
+    dates = [git("log", "-1", "-s", "--format=%cs", "-L", f"/{a}/,/{b}/:{f}").stdout.strip()[:10] for a, b, f in ranges]
+    return nice_date(max(d or date.today().isoformat() for d in dates))
+
+
 GA4_ID = DATA.get("ga4_id", "")
 
 # Google Analytics 4 with Consent Mode v2. Everything starts denied; the cookie notice (design book,
@@ -1856,10 +1870,12 @@ CONTACT = f"""
 </div></section>
 """
 
+DISCLOSURE_UPDATED = text_changed(("^DISCLOSURE = f", '^"""$', "build.py"), ("^NETWORKS = ", "^}", "paid.py"))
+PRIVACY_UPDATED = text_changed(("^PRIVACY_NEWSLETTER = ", '^"""$', "build.py"))
 DISCLOSURE = f"""
 <section class="page"><div class="wrap prose">
 <h1>Affiliate and medical disclosure</h1>
-<p class="small meta">Last updated {BUILD_DATE}</p>
+<p class="small meta">Last updated {DISCLOSURE_UPDATED}</p>
 <h2>Paid links</h2>
 <p>Peptide Chooser is supported by affiliate commissions. Some links on this site go to sellers or services that pay us a commission if you make a purchase or sign up. This costs you nothing extra.</p>
 <p>Paid links are labeled where they appear. Commissions do not affect our ratings, rankings or which products we include. Sellers without an affiliate program are rated and listed on the same terms.</p>
@@ -1884,7 +1900,7 @@ PRIVACY_NEWSLETTER = ('<li><strong>Email alerts, only if you sign up.</strong> I
 PRIVACY = f"""
 <section class="page"><div class="wrap prose">
 <h1>Privacy policy</h1>
-<p class="small meta">Last updated {BUILD_DATE}</p>
+<p class="small meta">Last updated {PRIVACY_UPDATED}</p>
 <p>This policy explains what information Peptide Chooser ("we") collects when you visit peptidechooser.com and how we use it.</p>
 <h2>Information we collect</h2>
 <ul>
@@ -2782,15 +2798,17 @@ def legit_section(r):
 
 def seller_action(r):
     """The page's one action on the H1's row (owner task 3 Nov 2026): a clinic compares with another clinic, a shop with
-    another shop, on /compare/ (built whenever seller pages are). A clinic with a paid link in the data gets "Visit <Name>"
-    with "Paid link" under it instead (pages.md, Seller, Top block; owner answer Q2 a, 4 Nov 2026)."""
+    another shop, on /compare/ (built whenever seller pages are). A clinic with a paid link in the data also gets "Visit <Name>"
+    with "Paid link" under it, the same size beside it: the one pair of actions (pages.md, Seller, Top block; owner answer
+    Q1 b, 4 Nov 2026)."""
     if r["seller_slug"] in CLINIC_PROFILES:
-        if r.get("paid_url"):
-            return (f'<span class="pick-act"><a class="btn btn-action" href="{paid_href(r["seller_slug"], r["paid_url"])}" rel="sponsored">'
-                    f'Visit {seller_base(seller_name(r))}</a><span class="paid">Paid link</span></span>')
         plans = clinic_plan_rows(r)
-        return (f'<a class="btn btn-ink" href="/compare/?a=p.{r["seller_slug"]}.{plans[0]["plan_slug"]}">Compare with another clinic</a>'
-                if plans else "")
+        compare = (f'<a class="btn btn-ink" href="/compare/?a=p.{r["seller_slug"]}.{plans[0]["plan_slug"]}">Compare with another clinic</a>'
+                   if plans else "")
+        if not r.get("paid_url"):
+            return compare
+        return (f'<div class="seller-pair">{compare}<span class="pick-act"><a class="btn btn-action" href="{paid_href(r["seller_slug"], r["paid_url"])}" rel="sponsored">'
+                f'Visit {seller_base(seller_name(r))}</a><span class="paid">Paid link</span></span></div>')
     return f'<a class="btn btn-ink" href="/compare/?a=s.{r["seller_slug"]}">Compare with another shop</a>'
 
 
