@@ -719,55 +719,30 @@ def plain_status(item, drop_price=False):
         s = " ".join(part for part in s.replace(". ", ".\n").split("\n") if "$" not in part)
     return s
 
-# The body figure is our own drawing (design book: no stock art): a front view, eight heads tall, in a 240 x 480
-# box. The right half is listed and mirrored, then smoothed. Each goal shades its body area and has a pin.
-def body_path():
-    r = [(128, 52), (130, 74), (146, 80), (164, 88), (175, 100), (178, 118), (179, 150), (181, 182), (185, 214), (188, 244),
-         (192, 262), (191, 280), (185, 288), (179, 284), (176, 266), (172, 248), (167, 216), (162, 184), (158, 150), (154, 128),
-         (151, 150), (146, 192), (150, 224), (155, 250), (155, 284), (150, 322), (145, 348), (147, 378), (142, 416), (138, 446),
-         (146, 462), (142, 472), (126, 472), (124, 458), (125, 440), (124, 404), (126, 378), (125, 350), (126, 316), (122, 276)]
-    pts = r + [(120, 270)] + [(240 - x, y) for x, y in reversed(r)]
-    f = lambda v: ("%.1f" % v).rstrip("0").rstrip(".")
-    d = "M%s %s" % (f(pts[0][0]), f(pts[0][1]))
-    for i in range(len(pts)):
-        p0, p1, p2, p3 = pts[i - 1], pts[i], pts[(i + 1) % len(pts)], pts[(i + 2) % len(pts)]
-        c = (p1[0] + (p2[0] - p0[0]) / 6, p1[1] + (p2[1] - p0[1]) / 6, p2[0] - (p3[0] - p1[0]) / 6, p2[1] - (p3[1] - p1[1]) / 6, *p2)
-        d += " C%s %s %s %s %s %s" % tuple(map(f, c))
-    return d + "Z"
+# The body figure (design book, The body figure): our own offline render of the CC0 MakeHuman model, made by
+# tools/render_body/. Only the images and manifest.json ship; assets/body/ holds one folder per look. Pins sit where the
+# render's own camera puts them; a goal's view (zoom z, centre v) comes from the manifest too.
+BODY = json.loads((ROOT / "assets" / "body" / "manifest.json").read_text(encoding="utf-8"))
+BODY_DEFAULT = "female-clay"
 
 
-BODY_D = body_path()
-HEAD = '<ellipse cx="120" cy="34" rx="21" ry="27"'
-# Body area per goal: shaded ellipses (cx, cy, rx, ry), clipped to the body, and where its pin sits.
-REGIONS = {
-    "hair": ([(120, 14, 24, 12)], (120, 13)),
-    "skin": ([(120, 40, 17, 15)], (120, 42)),
-    "muscle": ([(168, 128, 13, 26), (72, 128, 13, 26)], (72, 126)),
-    "longevity": ([(131, 134, 13, 12)], (131, 134)),
-    "weight-loss": ([(120, 204, 28, 24)], (120, 204)),
-    "libido": ([(120, 258, 22, 12)], (120, 258)),
-    "recovery": ([(136, 352, 13, 14), (104, 352, 13, 14)], (136, 352)),
-}
-
-
-def figure_svg():
-    regions, pins = [], []
+def figure_3d(variant=BODY_DEFAULT, chosen=0):
+    base = f"/assets/body/{variant}/"
+    pins = BODY["variants"][variant]["pins"]
+    btns = []
     for i, g in enumerate(ALL_GOALS):
-        shapes, (px, py) = REGIONS[g["slug"]]
-        on = "true" if i == 0 else "false"
-        cls = " on" if i == 0 else ""
-        regions += [f'<ellipse class="region{cls}" data-goal="{g["slug"]}" cx="{cx}" cy="{cy}" rx="{rx}" ry="{ry}"/>' for cx, cy, rx, ry in shapes]
-        pins.append(f'<g class="pin{cls}" data-goal="{g["slug"]}" role="button" tabindex="0" aria-pressed="{on}" aria-label="{g["label"]}">'
-                    f'<circle class="pin-hit" cx="{px}" cy="{py}" r="24"/><circle class="pin-ring" cx="{px}" cy="{py}" r="9"/>'
-                    f'<circle class="pin-dot" cx="{px}" cy="{py}" r="4.5"/></g>')
-    # The neck's top edge sits inside the head; the mask keeps it from drawing a line across the chin.
-    return (f'<svg class="fig" viewBox="0 0 240 480" role="group" aria-label="Choose a goal on the body">'
-            f'<defs><clipPath id="body-clip"><path d="{BODY_D}"/>{HEAD}/></clipPath>'
-            f'<mask id="no-head"><rect x="-10" y="-10" width="260" height="500" fill="#fff"/>{HEAD} fill="#000"/></mask></defs>'
-            f'<g class="body"><path d="{BODY_D}"/>{HEAD}/></g>'
-            f'<g clip-path="url(#body-clip)">{"".join(regions)}</g>'
-            f'<g class="contour"><path pathLength="1" mask="url(#no-head)" d="{BODY_D}"/>{HEAD} pathLength="1"/></g>'
-            f'{"".join(pins)}</svg>')
+        u, v = pins[g["slug"]]
+        on = i == chosen
+        btns.append(f'<span class="pin{" on" if on else ""}" role="button" tabindex="0" data-goal="{g["slug"]}" aria-pressed="{"true" if on else "false"}" '
+                    f'aria-label="{g["label"]}" style="left:{u * 100:.2f}%;top:{v * 100:.2f}%"><span class="pin-ring"><span class="pin-dot"></span></span></span>')
+    views = json.dumps({k: {"z": x["z"], "v": x["v"]} for k, x in BODY["views"].items()}, separators=(",", ":"))
+    return (f"<div class=\"fig fig3d\" role=\"group\" aria-label=\"Choose a goal on the body\" data-base=\"{base}\" data-views='{views}'>"
+            f'<div class="fig3d-view"><div class="fig3d-stage"><img class="fig3d-full" src="{base}full-744.webp" '
+            f'srcset="{base}full-380.webp 190w, {base}full-744.webp 372w, {base}full-1080.webp 540w" '
+            f'sizes="(max-width: 899px) 95px, (min-width: 2200px) 270px, (min-width: 1600px) 240px, 186px" '
+            f'width="540" height="1080" alt="">{"".join(btns)}</div></div>'
+            f'<span class="fig3d-label" hidden></span>'
+            f'<button type="button" class="btn btn-line btn-sm fig3d-back" aria-label="Back to full body" hidden>Full body</button></div>')
 
 
 # Research-use sellers per substance (site.products and site.sellers, tools/pull_data.py keeps each seller's cheapest
@@ -1529,7 +1504,7 @@ LETTERS_PAGE = f"""
 </section>{goals_strip("Compare peptides by goal")}
 {LETTERS_PAGE_JS}
 """ if LETTERS_ALL else ""
-FIGURE = figure_svg()
+FIGURE = figure_3d()
 GOAL_CHIPS, STEP_COMPARE, GOAL_TITLES = rail()
 def chip_title(t):
     return f'<span class="chip chip-{t["chip"]}">{t["term"]}</span>' if t.get("chip") else t["term"]
@@ -1553,9 +1528,57 @@ var d=e.target.closest('.sellers-dlg');if(d&&e.target===d)d.close();});})();
 
 # The goal switch (design book, pages.md, Home, the three steps): chips and pins are one control. Steps 2 and 3
 # cross-fade (GSAP, motion-swap) only while motion is on; otherwise they swap at once. The stamp lands once.
+# The figure's zoom (design book, Motion): GSAP moves the whole stage, the sharp close-up and the highlight fade in when it
+# lands. They are the same camera, so nothing shifts. Close-ups load on first hover, focus or click. No GSAP or reduced
+# motion: it swaps straight to the close-up. No JavaScript: the full figure and the goal list.
+FIG_JS = """<script>
+window.pcFig=function(box,choose){
+var stage=box.querySelector('.fig3d-stage'),label=box.querySelector('.fig3d-label'),back=box.querySelector('.fig3d-back');
+var base=box.getAttribute('data-base'),views=JSON.parse(box.getAttribute('data-views')),pins=[].slice.call(box.querySelectorAll('.pin'));
+var view=box.querySelector('.fig3d-view'),cur=null,layers={},tween=null,token=0;
+var zoomS=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--motion-zoom'))/1000||0.7;
+function rect(k){var z=views[k].z,h=1/z;return {z:z,x:(1-h)/2,y:Math.min(1-h,Math.max(0,views[k].v-h/2))};}
+function ensure(k){if(layers[k])return layers[k];var r=rect(k),out=[];
+function add(name){var i=new Image();i.alt='';i.className='fig3d-layer';i.style.left=r.x*100+'%';i.style.top=r.y*100+'%';i.style.width=100/r.z+'%';i.style.height=100/r.z+'%';i.src=base+name;stage.insertBefore(i,pins[0]);out.push(i);}
+if(r.z>1)add(k+'.webp');add(k+'-glow.webp');layers[k]=out;return out;}
+function ready(l){return Promise.all(l.map(function(i){return i.decode?i.decode().catch(function(){}):0;}));}
+function move(r,animate,done){if(tween){tween.kill();tween=null;}
+var to={xPercent:-r.x*r.z*100,yPercent:-r.y*r.z*100,scale:r.z};
+if(animate){to.duration=zoomS;to.ease='power2.out';to.onUpdate=function(){stage.style.setProperty('--s',gsap.getProperty(stage,'scaleX'));};
+to.onComplete=function(){stage.style.setProperty('--s',r.z);done();};tween=gsap.to(stage,to);return;}
+if(window.gsap)gsap.set(stage,to);else stage.style.transform='translate('+to.xPercent+'%,'+to.yPercent+'%) scale('+r.z+')';
+stage.style.setProperty('--s',r.z);done();}
+function clear(){Object.keys(layers).forEach(function(k){layers[k].forEach(function(i){i.classList.remove('in');});});label.hidden=true;}
+function place(k){var p=box.querySelector('.pin[data-goal="'+k+'"]');label.textContent=p.getAttribute('aria-label');label.hidden=false;
+var b=box.getBoundingClientRect(),q=p.getBoundingClientRect(),x=q.left+q.width/2-b.left,y=q.top+q.height/2-b.top,w=label.offsetWidth,h=label.offsetHeight,g=14,lx,ly=y-h/2;
+if(x+g+w<=b.width-4)lx=x+g;else if(x-g-w>=4)lx=x-g-w;else{lx=Math.max(4,Math.min(b.width-w-4,x-w/2));ly=y+g;if(ly+h>back.offsetTop-4)ly=y-g-h;}
+label.style.left=lx+'px';label.style.top=Math.max(4,Math.min(b.height-h-4,ly))+'px';}
+function go(k){if(cur===k)return;var t=++token,list=ensure(k),anim=!!window.pcMotion;cur=k;clear();box.classList.add('zoomed');view.classList.toggle('near',rect(k).z>1);back.hidden=false;
+pins.forEach(function(p){var on=p.getAttribute('data-goal')===k;p.classList.toggle('on',on);p.setAttribute('aria-pressed',on?'true':'false');});
+var land=function(){ready(list).then(function(){if(t!==token)return;list.forEach(function(i){i.classList.add('in');});place(k);});};
+if(anim)move(rect(k),true,land);else ready(list).then(function(){if(t===token)move(rect(k),false,land);});}
+function out(refocus){if(!cur)return;var k=cur;token++;cur=null;clear();box.classList.remove('zoomed');view.classList.remove('near');back.hidden=true;
+move({z:1,x:0,y:0},!!window.pcMotion,function(){});
+if(refocus){var p=box.querySelector('.pin[data-goal="'+k+'"]');if(p)p.focus();}}
+box.addEventListener('click',function(e){
+if(e.target.closest('.fig3d-back')){out(true);return;}
+var p=e.target.closest('.pin');
+if(cur){if(!p)out(false);return;}
+var best=null,d=Infinity;pins.forEach(function(x){var q=x.getBoundingClientRect(),n=Math.hypot(e.clientX-q.left-q.width/2,e.clientY-q.top-q.height/2);if(n<d){d=n;best=x;}});
+if(best&&d<=Math.max(44,box.offsetHeight*0.2))choose(best.getAttribute('data-goal'));});
+function pre(e){var p=e.target.closest&&e.target.closest('.pin');if(p)ensure(p.getAttribute('data-goal'));}
+box.addEventListener('mouseover',pre);box.addEventListener('focusin',pre);
+box.addEventListener('keydown',function(e){if((e.key==='Enter'||e.key===' ')&&e.target.classList.contains('pin')){e.preventDefault();choose(e.target.getAttribute('data-goal'));}});
+document.addEventListener('keydown',function(e){if(e.key==='Escape'&&cur)out(box.contains(document.activeElement));});
+return {go:go,out:out,preload:ensure};};
+</script>"""
+
+
 MAP_JS = """<script>
 (function(){var root=document.getElementById('goals');if(!root)return;
 var chips=[].slice.call(root.querySelectorAll('.goal-item')),cur=chips[0].getAttribute('data-goal');
+var figBox=root.querySelector('.fig3d'),fig=figBox&&window.pcFig?pcFig(figBox,act):null;
+function act(k){pick(k);if(fig)fig.go(k);}
 var swapS=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--motion-swap'))/1000||0.2;
 root.addEventListener('animationend',function(e){if(e.target.classList.contains('stamp'))root.classList.add('landed');});
 function show(k){var p=root.querySelector('.step-panel[data-goal="'+k+'"][data-src]');
@@ -1566,22 +1589,21 @@ if(!window.pcMotion)return;var on=root.querySelectorAll('.step-panel[data-goal="
 gsap.fromTo(on,{opacity:0},{opacity:1,duration:swapS,ease:'power1.out'});
 gsap.fromTo(root.querySelectorAll('.step-panel[data-goal="'+k+'"] .opt'),{opacity:0,y:4},{opacity:1,y:0,duration:swapS,ease:'power1.out',stagger:0.04});}
 function pick(k){if(k===cur)return;cur=k;
-root.querySelectorAll('.goal-item,.pin,.region').forEach(function(x){var on=x.getAttribute('data-goal')===k;
+root.querySelectorAll('.goal-item,.pin').forEach(function(x){var on=x.getAttribute('data-goal')===k;
 if(x.hasAttribute('aria-pressed'))x.setAttribute('aria-pressed',on?'true':'false');x.classList.toggle('on',on);});
 var old=root.querySelectorAll('.step-panel:not([hidden])');
 if(window.pcMotion&&old.length){gsap.killTweensOf(old);gsap.to(old,{opacity:0,duration:swapS/2,ease:'power1.in',onComplete:function(){gsap.set(old,{opacity:1});if(cur===k)show(k);}});}else{show(k);}}
-function hover(k){root.querySelectorAll('.region,.pin').forEach(function(x){x.classList.toggle('hov',x.getAttribute('data-goal')===k);});}
-root.addEventListener('click',function(e){var b=e.target.closest('.goal-item,.pin');if(b)pick(b.getAttribute('data-goal'));});
+function hover(k){root.querySelectorAll('.pin').forEach(function(x){x.classList.toggle('hov',x.getAttribute('data-goal')===k);});if(k&&fig)fig.preload(k);}
+root.addEventListener('click',function(e){var b=e.target.closest('.goal-item');if(b)act(b.getAttribute('data-goal'));});
 root.addEventListener('mouseover',function(e){var b=e.target.closest('.goal-item,.pin');hover(b?b.getAttribute('data-goal'):null);});
 root.addEventListener('mouseleave',function(){hover(null);});
 root.addEventListener('keydown',function(e){var t=e.target;
-if(t.classList&&t.classList.contains('pin')&&(e.key==='Enter'||e.key===' ')){e.preventDefault();pick(t.getAttribute('data-goal'));return;}
 // Arrow keys move to the next or previous chip and choose it (Tab, Enter and Space work as on any button).
 var i=chips.indexOf(t);if(i<0)return;var d={ArrowRight:1,ArrowDown:1,ArrowLeft:-1,ArrowUp:-1}[e.key];if(!d)return;
-e.preventDefault();var n=chips[(i+d+chips.length)%chips.length];n.focus();pick(n.getAttribute('data-goal'));});
+e.preventDefault();var n=chips[(i+d+chips.length)%chips.length];n.focus();act(n.getAttribute('data-goal'));});
 // /#goals-<slug> (the header's goal menu) chooses that goal on load and when the hash changes.
 function fromHash(){var m=location.hash.match(/^#goals-([a-z0-9-]+)$/);
-if(m&&root.querySelector('.goal-item[data-goal="'+m[1]+'"]')){pick(m[1]);root.scrollIntoView();}}
+if(m&&root.querySelector('.goal-item[data-goal="'+m[1]+'"]')){act(m[1]);root.scrollIntoView();}}
 fromHash();window.addEventListener('hashchange',fromHash);})();
 </script>"""
 
@@ -1638,6 +1660,7 @@ HOME = f"""
 <!--home:creators-->
 
 <div class="wrap sellers-all"></div>
+{FIG_JS}
 {MAP_JS}
 {SELLERS_JS}
 """
@@ -2997,7 +3020,7 @@ if PROFILES:
 # Site search and "Compare any two" (pages.md, Every page, Header, Search; Search; Compare; owner task 2 Nov 2026).
 # /search-index.json holds one entry per page, substance with a database status and seller; the header field and /search/
 # filter it in the page. /compare/ puts two clinic plans or two sellers side by side from data embedded in the page.
-NOINDEX = {"/search/"}
+NOINDEX = {"/search/", "/_body-test/"}
 # a comparison before a guide of the same name (owner UX audit, 3 Nov 2026: "BPC-157 vs TB-500" listed twice alike)
 TYPE_ORDER = {"Goal": 0, "Peptide": 1, "Seller": 2, "Clinic": 3, "Comparison": 4, "Guide": 5, "Page": 6}
 
@@ -3217,6 +3240,23 @@ def compare_page():
 """
 
 
+# The owner's choice of figure (task w4, round 1): not linked, noindex, out of the sitemap and llms.txt.
+def body_test_page():
+    looks = [("female-clay", "A. Clay, female"), ("female-warm", "B. Warmer skin, female"), ("male-clay", "C. Clay, male")]
+    cols = []
+    for v, title in looks:
+        chips = "".join(f'<button type="button" class="goal-item" data-goal="{g["slug"]}">{g["label"]}</button>' for g in ALL_GOALS)
+        cols.append(f'<div class="bt-col"><h2>{title}</h2><div class="figure">{figure_3d(v, -1)}</div><div class="goal-list">{chips}</div></div>')
+    return (f'<section class="section"><div class="wrap"><h1>Body figure test</h1><p>Round 1. A is the one on Home. Click the figure or a goal; Esc, Full body or a click on the figure goes back.</p>'
+            f'<div class="bt-grid">{"".join(cols)}</div></div></section>{FIG_JS}'
+            """<script>document.querySelectorAll('.bt-col').forEach(function(c){var f=pcFig(c.querySelector('.fig3d'),function(k){mark(k);f.go(k);});
+function mark(k){c.querySelectorAll('.goal-item').forEach(function(b){b.setAttribute('aria-pressed',b.getAttribute('data-goal')===k?'true':'false');});}
+c.querySelector('.goal-list').addEventListener('click',function(e){var b=e.target.closest('.goal-item');if(b){var k=b.getAttribute('data-goal');mark(k);f.go(k);}});});</script>""")
+
+
+PAGES.append(("/_body-test/", "_body-test/index.html", "Body figure test | Peptide Chooser",
+              "A private test page for the body figure on Home: two skin looks and two bodies side by side, for the owner to choose. Not linked and not indexed.",
+              body_test_page(), "", [("/_body-test/", "Body figure test")]))
 PAGES.append(("/search/", "search/index.html", "Search | Peptide Chooser",
               "Search Peptide Chooser for a peptide, a goal or a seller: FDA status, background checks and prices from our data, each with a link to its page.",
               search_page(), "", [("/search/", "Search")]))
@@ -4515,6 +4555,7 @@ def main():
         shutil.copy(f, DIST / "assets" / "fonts" / f.name)
     for f in (ROOT / "assets" / "og").glob("*.png"):
         shutil.copy(f, DIST / "assets" / "og" / f.name)
+    shutil.copytree(ROOT / "assets" / "body", DIST / "assets" / "body")
     (DIST / "assets" / "tokens.css").write_text(tokens_css(), encoding="utf-8")
     shutil.copy(ROOT / "design" / "bundle.css", DIST / "assets" / "bundle.css")
     for path, out, title, desc, body, schema, crumb in PAGES:

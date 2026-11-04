@@ -96,6 +96,7 @@
   --motion-base: 280ms;
   --motion-reveal: 420ms;
   --motion-draw: 600ms;
+  --motion-zoom: 700ms;
   --motion-swap: 200ms;
   --motion-stagger: 50ms;
   --motion-rise: 12px;

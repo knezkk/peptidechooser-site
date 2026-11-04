@@ -23,7 +23,7 @@ Nothing on any page may leave its margins or push the page sideways, at any scre
 
 ## Touch
 
-Every control is at least 44px tall: nav items, the header button, in-table `btn-sm`, cookie buttons, goal rows. Body pins have a 48-unit hit circle; the goal list beside the figure is the full-size control for the same choice. **Exceptions** (owner task w2, 3 Nov 2026, phone finding 9): a footnote number (`sup a`) is at least 24px tall, the WCAG 2.5.8 minimum (it sits inside a line of text and a 44px target would push the lines apart); a link inside running text follows the text's line; a Chip is at least 24px tall (README, Chips). `tools/check_layout.js` checks the 44px rule at 390px on every page with these exceptions (w3's phone check, on by default since #75; the earlier `TAP=1` switch is gone).
+Every control is at least 44px tall: nav items, the header button, in-table `btn-sm`, cookie buttons, goal rows. Body pins are small so they never overlap, and a click anywhere on the figure chooses the nearest pin, so the whole figure is the target; the goal list beside the figure is the full-size control for the same choice. **Exceptions** (owner task w2, 3 Nov 2026, phone finding 9): a footnote number (`sup a`) is at least 24px tall, the WCAG 2.5.8 minimum (it sits inside a line of text and a 44px target would push the lines apart); a link inside running text follows the text's line; a Chip is at least 24px tall (README, Chips). `tools/check_layout.js` checks the 44px rule at 390px on every page with these exceptions (w3's phone check, on by default since #75; the earlier `TAP=1` switch is gone).
 
 ## Text
 
