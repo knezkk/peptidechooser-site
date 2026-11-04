@@ -96,7 +96,7 @@ def where_row(b, r):
     chip = ('<span class="chip chip-info">Online clinic</span>' if kind == "clinic" else
             f'<span class="chip chip-neutral">{b.kind_words(r)[1]}</span>')
     return ('<tr>'
-            f'<td><span class="cell-pic">{parts.tile(r["seller_slug"], b.seller_base(b.seller_name(r)), 40, shop=kind == "shop", seller=r)}<span><a class="name" href="/sellers/{r["seller_slug"]}/">{b.seller_name(r)}</a><span class="sub">{escape(where_line(b, r))}</span></span></span></td>'
+            f'<td><span class="cell-pic">{parts.tile(r["seller_slug"], b.seller_base(b.seller_name(r)), 40, shop=kind == "shop", seller=r)}<span><a class="name" href="/sellers/{r["seller_slug"]}/">{b.seller_name(r)}</a><span class="sub">{escape(where_line(b, r))}</span>{b.not_in_line(r["seller_slug"])}</span></span></td>'
             f'<td data-l="Type">{chip}</td>'
             f'<td class="num" data-l="Checks">{b.score_of(r) or 0} of {b.out_of(r)}</td>'
             f'<td class="num" data-l="From">{where_from(b, r)}</td>'

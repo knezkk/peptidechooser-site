@@ -1,0 +1,9 @@
+{
+  "_note": "States a clinic does not serve, keyed by seller slug: shown as 'Not available in: ...' on its rows and its profile (pages.md, Category and Seller). Until the database has a column. Slugs without a seller page yet are the expected ones; the data agent confirms them with task 13.",
+  "_source": "Each program's page on Katalys (behind its login), read by the owner's assistant for the onboarding list of 4 Nov 2026",
+  "_checked": "2026-11-04",
+  "winona": {"not_in": ["AL", "AK", "AR", "KS", "KY", "LA", "MS", "NM", "ND", "RI", "SD", "TN", "UT", "VT", "WV"], "source": "Katalys program 495"},
+  "mangorx": {"not_in": ["AL", "AK", "AR", "CA", "KY", "LA", "MI", "MS", "ND", "SC", "SD", "WY"], "source": "Katalys program 647"},
+  "strut-health-strut-health-llc": {"not_in": ["AK"], "source": "Katalys program 384"},
+  "direct-meds": {"not_in": ["AR"], "source": "Katalys program 1304"}
+}
