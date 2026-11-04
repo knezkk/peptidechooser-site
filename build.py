@@ -1051,8 +1051,19 @@ def how_line(p):
     return p["how"]
 
 
-# A row whose data has no listing at all says so where the button would be (owner, 4 Nov 2026), never an empty space.
-NO_LISTINGS = "No listings yet"
+# A row whose data has no listing says so where the button would be, by its kind (owner, 4 Nov 2026), never an empty space.
+NO_LISTING_TEXTS = {"otc": "Any pharmacy, no prescription", "rx": "On prescription; no clinic prices yet",
+                    "cosmetic": "Sold in creams and serums; prices come later", "research": "No listings yet"}
+
+
+def no_listing_text(p):
+    if is_cosmetic(p):
+        return NO_LISTING_TEXTS["cosmetic"]
+    if needs_rx(p) is False:
+        return NO_LISTING_TEXTS["otc"]
+    return NO_LISTING_TEXTS["rx"] if approved_row(p) or p.get("plan_kind") == "compounded" else NO_LISTING_TEXTS["research"]
+
+
 # The substance page's line for a cosmetic with no listing (unchanged by the option rows' rule).
 COSMETIC_LATER = "Sold as a cosmetic; prices come later."
 
@@ -1252,7 +1263,7 @@ def opt_line(g, p, rp, pad):
 def opt_action(g, p, rp, lazy):
     """The row's one button, one width on every row (pages.md, Home, Option rows): a row with clinic plans, "Buy from $X/mo · N
     clinics", opening the clinic window (clinic_open); a research-use row, "Prices at N shops" ("Our checks, no shop links"); a
-    cosmetic row, "Compare N products" (its window); a row with no listing at all, "No listings yet"."""
+    cosmetic row, "Compare N products" (its window); a row with no listing, its text by kind (no_listing_text)."""
     btn = clinic_open(g, p, rp)
     if btn:
         return btn
@@ -1261,7 +1272,7 @@ def opt_action(g, p, rp, lazy):
         return f'<span class="pick-act">{sellers_button(p, lazy, f"Compare {plural(n, cosmetic_word(p))}", "btn-wait")}</span>'
     if has_window(p):
         return f'<span class="pick-act">{sellers_button(p, lazy, kind="btn-wait")}<span class="paid">Our checks, no shop links</span></span>'
-    return f'<span class="pick-act"><span class="paid no-link">{NO_LISTINGS}</span></span>'
+    return f'<span class="pick-act"><span class="paid no-link">{no_listing_text(p)}</span></span>'
 
 
 # "We do not link to them" and its variants (pages.md, Home): said once on Home, in the label legend.
