@@ -116,7 +116,7 @@ function pages(dir, base = '') {
   }
   // Phones (layout.md, Touch; owner task 3 Nov 2026, the 390px walkthrough): at 390 by 844 every control is at least 44px
   // tall, except a link inside a line of text, a footnote number and a chip link in a line of text (both at least 24px,
-  // WCAG 2.5.8); no text under 13px except footnote numbers and visually hidden text; no two controls overlap.
+  // WCAG 2.5.8); no text under 13px except footnote numbers, visually hidden text and a seller tile's monogram; no two controls overlap.
   {
     const page = await browser.newPage({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
     // a returning visitor: the cookie bar (fixed over the page) is already answered
@@ -140,7 +140,7 @@ function pages(dir, base = '') {
         }
         const tiny = new Set();
         for (const e of document.body.querySelectorAll('*')) {
-          if (!seen(e) || e.closest('sup, a.ref')) continue;
+          if (!seen(e) || e.closest('sup, a.ref, .tile')) continue; // a tile's monogram is a picture, hidden from screen readers (layout.md, Touch)
           if (![...e.childNodes].some((c) => c.nodeType === 3 && c.textContent.trim())) continue;
           const fs = parseFloat(getComputedStyle(e).fontSize);
           if (fs < 13) tiny.add(`${name(e)} ${fs}px`);

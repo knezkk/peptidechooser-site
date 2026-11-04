@@ -166,31 +166,36 @@ p { margin: 0 0 1em; }
 .fh-compare .step-legal { margin-left: auto; }
 /* Option rows line up like a table: the same columns in every row (owner, 31 Oct 2026). Name with its chip under it,
    then the price, then the action; a row without a price or an action keeps the empty column. */
-.flow .opt { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 12px; align-items: center; padding: 10px 14px; }
-.opt-sum { display: grid; grid-template-columns: 12px minmax(0, 1fr); grid-template-areas: "m name" ". chip" ". plain"; align-items: center; gap: 4px 10px; cursor: pointer; list-style: none; min-height: var(--touch); }
-.opt-sum::before { grid-area: m; }
+/* One row layout on every goal (pages.md, Home, Option rows): the drawing, then the control and the name, the badge line, the
+   line with its price; the button in a column of one width, kept when a row has no button. */
+.flow { --thumb-row: 56px; }
+.flow-solo { --thumb-row: 52px; }
+.flow .opt { display: grid; grid-template-columns: minmax(0, 1fr) var(--cta-width); gap: 4px 16px; align-items: center; padding: 8px 14px; }
+.flow .opt > .opt-more { grid-column: 1; }
+.opt-sum { display: grid; grid-template-columns: var(--thumb-row) 32px minmax(0, 1fr); grid-template-areas: "t m name" "t chip chip" "t plain plain"; align-items: center; gap: 3px 8px; cursor: pointer; list-style: none; min-height: var(--touch); border-radius: var(--radius-control); }
+.opt-sum > .thumb { grid-area: t; --thumb: var(--thumb-row); align-self: start; border-radius: var(--radius-art); }
+.opt-m { grid-area: m; display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: var(--radius-control); background: var(--neutral-tint); transition: background-color var(--motion-quick); }
+.opt-m::before { content: ""; width: 10px; height: 10px; margin-left: -4px; border-right: 2.5px solid var(--ink); border-bottom: 2.5px solid var(--ink); transform: rotate(-45deg); transition: transform var(--motion-quick); }
+.opt-sum:hover .opt-m { background: var(--line-strong); }
+.opt-more[open] .opt-m::before { margin-left: 0; margin-top: -4px; transform: rotate(45deg); }
 .opt-sum .name { grid-area: name; }
+.nb { white-space: nowrap; }
 .opt-sum .opt-chips { grid-area: chip; display: flex; flex-wrap: wrap; gap: 4px 6px; justify-self: start; }
 .opt-sum::-webkit-details-marker { display: none; }
-.opt-sum::before { content: ""; width: 7px; height: 7px; border-right: 2px solid var(--ink-2); border-bottom: 2px solid var(--ink-2); transform: rotate(-45deg); transition: transform var(--motion-quick); flex: none; }
-.opt-more[open] .opt-sum::before { transform: rotate(45deg); }
 .opt-sum .name { font-weight: 700; }
 /* Home v2 (3 Nov 2026): the collapsed row says what the option is in one plain sentence, then its price in bold. */
 .opt-sum .opt-plain { grid-area: plain; font-size: var(--small-size); line-height: 1.45; color: var(--ink-2); }
 .opt-sum .opt-plain strong { color: var(--ink); }
 .opt-instead { margin: 10px 0 0; font-size: var(--small-size); color: var(--ink-2); }
 /* The price and its footnote stay on one line; the goal's online-clinic plan line goes under them (pages.md, Home). */
-.opt-body { padding: 4px 0 6px 17px; display: grid; gap: 4px; }
+.opt-body { padding: 4px 0 6px calc(var(--thumb-row) + 8px); display: grid; gap: 4px; }
 .opt-body p { margin: 0; font-size: var(--small-size); line-height: 1.45; }
-.flow .opt > .pick-act { padding-top: 0; align-items: flex-end; }
-/* every row button has at least one width, so the buttons line up one under the other (owner, 1 Nov 2026); "See plans at
-   <clinic> · $X/mo" grows to fit (Home v2, 3 Nov 2026) */
-.flow .opt > .pick-act .btn { min-width: 160px; }
-.flow .opt > .pick-act .paid { text-align: right; }
+.flow .opt > .pick-act { margin-top: 0; padding-top: 0; align-items: stretch; width: var(--cta-width); grid-column: 2; }
+.flow .opt > .pick-act .btn { width: 100%; padding: 0 8px; white-space: nowrap; }
+.flow .opt > .pick-act .paid { text-align: center; text-wrap: balance; }
 .flow-compare .goal-for { margin-bottom: 4px; font-size: var(--small-size); }
-/* The goal's intro (goals[].intro): one ink-2 line under the "for" sentence; the full text on hover (title) and when it
-   is clicked or focused on wide screens, always in full on phones. */
-.goal-intro { margin: 0 0 10px; max-width: 70ch; font-size: var(--small-size); line-height: 1.45; color: var(--ink-2); }
+/* The goal's intro (goals[].intro): always in full, the width of the step 2 panel (owner package 4 Nov 2026, A1). */
+.goal-intro { margin: 0 0 10px; max-width: none; font-size: var(--small-size); line-height: 1.45; color: var(--ink-2); }
 .flow-hd .goal-t { font-weight: 700; }
 .flow-compare .step-panel > .btn, .flow-compare .step-panel > p.small { margin-top: 12px; }
 
@@ -321,7 +326,7 @@ p { margin: 0 0 1em; }
 .pick-act { display: inline-flex; flex-direction: column; align-items: flex-start; gap: 4px; margin-top: auto; padding-top: 8px; }
 .tbl .pick-act { align-items: flex-end; padding-top: 0; white-space: nowrap; }
 /* the grey line where a row has no button: why there is none, at most two short lines */
-.pick-act .no-link { max-width: 160px; text-align: right; }
+.pick-act .no-link { text-align: center; }
 
 /* Tables */
 .tbl .act { text-align: right; }
@@ -419,10 +424,7 @@ body > .crumbs { width: -moz-available; width: -webkit-fill-available; width: st
   .creators { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (min-width: 900px) {
-  .flow .opt { grid-template-columns: minmax(0, 1fr) auto; }
-  .flow .opt > .pick-act { grid-column: 2; justify-self: end; }
-  .goal-intro { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: default; }
-  .goal-intro:focus { white-space: normal; overflow: visible; }
+  .flow .opt { min-height: 96px; }
   .hero-pair { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0 48px; align-items: start; }
   .hero-pair .what-is { margin: 0; }
   .hero-grid { grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: 48px; align-items: start; }
@@ -454,17 +456,15 @@ body > .crumbs { width: -moz-available; width: -webkit-fill-available; width: st
   .fh-compare .step-legal strong { font-size: 13px; }
   .fh-compare .step-legal { white-space: nowrap; flex: none; }
   .fh-compare h2 { min-width: 0; }
-  .flow .opt { grid-template-columns: minmax(0, 1fr); padding: 6px 10px; }
+  .flow { --thumb-row: 48px; }
+  .flow .opt { grid-template-columns: minmax(0, 1fr); padding: 8px 10px; }
+  .flow .opt > .opt-more { grid-column: auto; }
   /* the plan line takes its own row under the chip and the price, so it stays on one line */
   /* every row with an action ("Online clinic" with its line under it, or "Prices at N shops"): the action sits top
      right beside the name and the chip line starts under the arrow, so each row stays two lines and every hair
      option fits the first screen at 390 by 844 (owner, 1 Nov 2026) */
   /* Home v2 (owner's phone sketch, 3 Nov 2026): the row's button sits under its plain line, its small line beside it */
-  .flow .opt > .pick-act { flex-direction: row; flex-wrap: wrap; align-items: center; gap: 4px 10px; margin: 0; padding: 4px 0 6px 22px; }
-  .flow .opt > .pick-act .btn { min-width: 0; padding: 0 14px; }
-  .flow .opt > .pick-act .paid, .pick-act .no-link { text-align: left; max-width: none; }
-  /* a one-line name stands as tall as the button beside it, so the chip line always starts under the button */
-  .flow .opt:has(> .pick-act):not(:has(.btn-action)) .opt-sum .name { min-height: var(--touch); display: flex; align-items: center; }
+  .flow .opt > .pick-act { grid-column: auto; width: 100%; margin: 0; padding: 4px 0 6px; }
   .flow-compare .step-panel:not([hidden]) { display: flex; flex-direction: column; }
   .flow-compare .goal-for { order: 2; margin: 10px 0 0; }
   .flow-compare .goal-intro { order: 2; margin: 4px 0 0; }
@@ -472,9 +472,6 @@ body > .crumbs { width: -moz-available; width: -webkit-fill-available; width: st
   .flow-compare .step-panel > .btn, .flow-compare .step-panel > p.small:last-child { order: 4; }
 }
 /* small phones (480px breakpoint, layout.md): the chips wrap clear of the button and its line, never under it */
-@media (max-width: 480px) {
-  .flow .opt:has(> .pick-act .btn-action) .opt-chips { padding-right: 160px; }
-}
 @media (max-width: 760px) {
   .tbl { min-width: 720px; }
   .tbl-letters { min-width: 0; } /* date, seller and source fit a phone without scrolling inside the frame */
@@ -612,3 +609,45 @@ body > .crumbs { width: -moz-available; width: -webkit-fill-available; width: st
 .pep-sold, .pep-blocks, .pep-foot { padding-top: 32px; } /* the substance page's sections sit closer, so the page stays short */
 .pep-foot:last-of-type { padding-bottom: 32px; }
 .pep-right > * + * { margin-top: var(--space-5); } /* Facts, then the guides that name the substance */
+/* Home's vertical rhythm (layout.md, Vertical spacing; owner package 4 Nov 2026, A6): one token between sections, space-7 (48px), space-6
+   on phones; the section intros at the 80-character measure; the legal band's two columns the same height. */
+.home-sec.section { padding-top: var(--space-7); }
+.home-sec.section:last-of-type { padding-bottom: var(--space-7); }
+.home-sec.band-2 { padding: var(--space-7) 0; margin-top: var(--space-7); }
+.hero-more { padding-bottom: var(--space-6); }
+body:has(.home-sec) .site-foot { margin-top: 0; }
+.home-sec .sec-hd { padding-bottom: var(--space-3); margin-bottom: var(--space-4); }
+.home-sec .sec-hd > div { width: 100%; }
+.home-sec .sec-hd p { max-width: 58ch; font-size: var(--ui-size); line-height: 1.5; }
+.letter-card { padding: var(--space-3) var(--space-4); }
+#letters .sec-act, #learn .sec-act { margin-top: var(--space-3); }
+#legal .legal-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+#legal .legal-card { padding: var(--space-2) var(--space-3);  min-height: var(--touch); }
+#legal h3 { margin: 0 0 var(--space-2); }
+#legal .more-link { display: inline-block; margin-top: var(--space-2); }
+@media (max-width: 640px) {
+  .home-sec.section { padding-top: var(--space-6); }
+  .home-sec.section:last-of-type { padding-bottom: var(--space-6); }
+  .home-sec.band-2 { padding: var(--space-6) 0; margin-top: var(--space-6); }
+  #legal .legal-cards { grid-template-columns: minmax(0, 1fr); }
+}
+@media (min-width: 1600px) { .home-sec.section { padding-top: var(--space-7); } .home-sec.band-2 { padding: var(--space-7) 0; margin-top: var(--space-7); } }
+/* Compact seller table (owner package 4 Nov 2026, A5): rows of 44 to 48px from 641px, the button's small line beside it */
+@media (min-width: 641px) {
+  .tbl-where td { padding: 2px 12px; height: 48px; line-height: 1.3; }
+  .tbl-where .sub { line-height: 1.25; font-size: 13px; }
+  .tbl-where td.act .pick-act { flex-direction: row; align-items: center; gap: 8px; }
+  .tbl-where td.act .paid { display: inline; margin: 0; }
+}
+/* Goal page: the drawing beside the H1 from 900px */
+.goal-top { display: grid; gap: var(--space-6); }
+.goal-top > * { min-width: 0; }
+@media (min-width: 900px) { .goal-top { grid-template-columns: minmax(0, 1fr) 300px; align-items: start; } }
+.decide-card > .thumb { --thumb: 52px; align-self: flex-start; border-radius: var(--radius-art); }
+@media (max-width: 640px) { .decide-card > .thumb { --thumb: 48px; } }
+/* Seller page: the tile beside the H1; the tile under a /compare/ column's heading */
+.seller-id { display: flex; gap: var(--space-4); align-items: flex-start; }
+.seller-id-text { min-width: 0; flex: 1; }
+.seller-similar li { display: flex; align-items: center; gap: var(--space-2); }
+.cmp thead .tile { display: flex; margin-bottom: var(--space-2); }
+@media (min-width: 641px) { .tbl-clinics .cell-pic a { white-space: nowrap; } }

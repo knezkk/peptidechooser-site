@@ -141,6 +141,19 @@
           "proven_alternative": true
         },
         {
+          "name": "Compounded minoxidil spray",
+          "plain": "A pharmacy-made minoxidil spray sold by an online clinic, not checked by the FDA batch by batch.",
+          "status": "Not FDA approved; pharmacy-made",
+          "chip": "warn",
+          "does": "A pharmacy-made minoxidil spray sold by an online clinic. Not checked by the FDA batch by batch.",
+          "how": "Prescription through the clinic.",
+          "status_plain": "Not FDA approved; pharmacy-made.",
+          "plan_kind": "compounded",
+          "plan_substances": [
+            "minoxidil"
+          ]
+        },
+        {
           "name": "GHK-Cu copper peptide serum",
           "plain": "A cosmetic serum for the scalp, backed by lab studies only.",
           "status": "Cosmetic, no approval needed",
@@ -341,7 +354,10 @@
           "substance": "tesamorelin",
           "top_pick": false,
           "top_pick_why": "Approved only for HIV-related belly fat, not for muscle (owner, 31 Oct 2026).",
-          "no_link": "Approved for HIV belly fat, not muscle"
+          "no_link": "Approved for HIV belly fat, not muscle",
+          "drawing": "vial-brand",
+          "drawing_source": "https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=3d783378-b02d-4f19-99dd-0fc91a042224",
+          "drawing_checked_at": "2026-11-04"
         },
         {
           "name": "Sermorelin",
@@ -741,25 +757,73 @@
     "cards_checked": "2026-10-25",
     "cards_source": "Social Blade, vidIQ and SponsorRadar, read for our creator review",
     "cards": [
-      {"name": "Chris Williamson", "group": "A", "platform": "YouTube", "subscribers": 4470000, "url": "https://www.youtube.com/@chriswillx",
-       "stance": "Cautious yes on peptides; warns about grey-market quality."},
-      {"name": "Thomas DeLauer", "group": "A", "platform": "YouTube", "subscribers": 4040000, "url": "https://www.youtube.com/@thomasdelauerofficial",
-       "stance": "Positive. Sells own-brand supplements, no peptide seller."},
-      {"name": "Mike Mutzel", "group": "A", "platform": "YouTube", "subscribers": 755000, "url": "https://www.youtube.com/@highintensityhealth",
-       "stance": "Positive; not a doctor. General sponsors, no peptide seller."},
-      {"name": "Dr. Dean Jones, DC", "group": "A", "platform": "YouTube", "subscribers": 340000, "url": "https://www.youtube.com/@drjonesdc",
-       "stance": "Cautious on research-use peptides, positive on prescribed GLP-1. Runs a virtual clinic."},
-      {"name": "Dr. Thomas O'Connor", "group": "A", "platform": "YouTube", "subscribers": 274000, "url": "https://youtube.com/@theanabolicdoc",
-       "stance": "Doctor. Cautious and evidence-based."},
-      {"name": "Quinn Stillson, MD", "group": "A", "platform": "YouTube", "subscribers": 61700, "url": "https://www.youtube.com/@quinnstillsonmd",
-       "stance": "Doctor. Evidence-based explainers, no peptide seller."},
-      {"name": "Dr. William Seeds", "group": "A", "platform": "YouTube", "subscribers": 6730, "url": "https://www.youtube.com/@ssrpinstitute",
-       "stance": "Orthopedic surgeon. Positive; teaches paid courses."}
+      {
+        "name": "Chris Williamson",
+        "group": "A",
+        "platform": "YouTube",
+        "subscribers": 4470000,
+        "url": "https://www.youtube.com/@chriswillx",
+        "stance": "Cautious yes on peptides; warns about grey-market quality."
+      },
+      {
+        "name": "Thomas DeLauer",
+        "group": "A",
+        "platform": "YouTube",
+        "subscribers": 4040000,
+        "url": "https://www.youtube.com/@thomasdelauerofficial",
+        "stance": "Positive. Sells own-brand supplements, no peptide seller."
+      },
+      {
+        "name": "Mike Mutzel",
+        "group": "A",
+        "platform": "YouTube",
+        "subscribers": 755000,
+        "url": "https://www.youtube.com/@highintensityhealth",
+        "stance": "Positive; not a doctor. General sponsors, no peptide seller."
+      },
+      {
+        "name": "Dr. Dean Jones, DC",
+        "group": "A",
+        "platform": "YouTube",
+        "subscribers": 340000,
+        "url": "https://www.youtube.com/@drjonesdc",
+        "stance": "Cautious on research-use peptides, positive on prescribed GLP-1. Runs a virtual clinic."
+      },
+      {
+        "name": "Dr. Thomas O'Connor",
+        "group": "A",
+        "platform": "YouTube",
+        "subscribers": 274000,
+        "url": "https://youtube.com/@theanabolicdoc",
+        "stance": "Doctor. Cautious and evidence-based."
+      },
+      {
+        "name": "Quinn Stillson, MD",
+        "group": "A",
+        "platform": "YouTube",
+        "subscribers": 61700,
+        "url": "https://www.youtube.com/@quinnstillsonmd",
+        "stance": "Doctor. Evidence-based explainers, no peptide seller."
+      },
+      {
+        "name": "Dr. William Seeds",
+        "group": "A",
+        "platform": "YouTube",
+        "subscribers": 6730,
+        "url": "https://www.youtube.com/@ssrpinstitute",
+        "stance": "Orthopedic surgeon. Positive; teaches paid courses."
+      }
     ]
   },
   "home_checked": {
     "note": "Home, Is it legal today?, Most checked this month: a fixed list until we have page views (owner task 3 Nov 2026).",
-    "slugs": ["bpc-157", "semaglutide", "ghk-cu", "tb-500", "tirzepatide"]
+    "slugs": [
+      "bpc-157",
+      "semaglutide",
+      "ghk-cu",
+      "tb-500",
+      "tirzepatide"
+    ]
   },
   "glossary": [
     {
