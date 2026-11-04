@@ -15,6 +15,7 @@ from datetime import date
 
 import guides
 import home
+import paid
 
 ROOT = Path(__file__).parent
 DIST = ROOT / "dist"
@@ -1753,7 +1754,7 @@ DISCLOSURE = f"""
 <p>Peptide Chooser is supported by affiliate commissions. Some links on this site go to sellers or services that pay us a commission if you make a purchase or sign up. This costs you nothing extra.</p>
 <p>Paid links are labeled where they appear. Commissions do not affect our ratings, rankings or which products we include. Sellers without an affiliate program are rated and listed on the same terms.</p>
 <p>A paid link may lead to a seller that has an FDA warning letter; the letter is shown next to the price and on the seller's page.</p>
-<p>We may take part in affiliate programs run by individual brands and by affiliate networks. We will list the networks we work with on this page as those relationships start.</p>
+{paid.networks_block()}
 <h2>Not medical advice</h2>
 <p>Everything on this site is general information for education. It is not medical advice, diagnosis or treatment, and it does not replace a consultation with a licensed clinician.</p>
 <p>Some products discussed on this site are not approved by the U.S. Food and Drug Administration for the uses described. Where that is the case, we say so. Do not start, stop or combine any treatment without speaking to a clinician.</p>
@@ -4544,6 +4545,7 @@ def main():
         "background_color": COLOR["white"], "theme_color": COLOR["white"],
         "icons": [{"src": "/assets/apple-touch-icon.png", "sizes": "180x180", "type": "image/png"},
                   {"src": "/assets/icon-512.png", "sizes": "512x512", "type": "image/png"}]}, indent=2) + "\n")
+    paid.write_out_pages(DIST, {slug: seller_base(r["seller_name"]) for slug, r in PROFILES.items()})
     (DIST / "CNAME").write_text("peptidechooser.com\n")
     (DIST / ".nojekyll").write_text("")
     (DIST / "robots.txt").write_text(f"User-agent: *\nAllow: /\nDisallow: /out/\nSitemap: {SITE}/sitemap.xml\n")

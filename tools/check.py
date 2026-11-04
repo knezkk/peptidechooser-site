@@ -8,8 +8,12 @@ import json
 import os
 import re
 import sys
+from html import escape, unescape
 from html.parser import HTMLParser
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+import paid  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
 DIST = ROOT / "dist"
@@ -323,8 +327,119 @@ def paid_rule_errs(name, html, rule):
     return errs
 
 
-def check_parts(P):
+def check_paid_plumbing():
+    """Every green button's /out/ path has a redirect page; every redirect page holds its tracking address from the data
+    and nothing else; /out/ stays out of search; no tracking address anywhere else (pages.md, Paid link redirect page)."""
     errs = []
+    data = paid.load()
+    want = {paid.out_dir(r["out_path"]): r for r in data["redirects"]}
+    if len(want) != len(data["redirects"]):
+        errs.append("paid data: two redirects share one /out/ path")
+    have = {str(f.parent.relative_to(DIST)) for f in (DIST / "out").rglob("index.html")} if (DIST / "out").exists() else set()
+    for d in sorted(have - set(want)):
+        errs.append(f"{d}: a redirect page with no tracking address in the data")
+    for d, r in sorted(want.items()):
+        if not re.fullmatch(r"out/[a-z0-9-]+", d):
+            errs.append(f"paid data: bad /out/ path {r['out_path']}")
+        if not (r.get("tracking_url") or "").startswith("https://"):
+            errs.append(f"{d}: no https tracking address in the data")
+            continue
+        f = DIST / d / "index.html"
+        if not f.exists():
+            errs.append(f"{d}: no redirect page")
+            continue
+        html = f.read_text(encoding="utf-8")
+        url = escape(r["tracking_url"], quote=True)
+        for need, what in ((f'<meta http-equiv="refresh" content="0;url={url}">', "meta refresh"), ("location.replace(", "location.replace"),
+                           ('<meta name="robots" content="noindex,nofollow">', "noindex,nofollow"),
+                           (f'<a href="{url}" rel="sponsored nofollow">Continue to ', "visible Continue link")):
+            if need not in html:
+                errs.append(f"{d}: no {what}")
+        if re.search(r"gtag|googletagmanager|fonts\.g|<link\b|<img\b", html):
+            errs.append(f"{d}: analytics, fonts or other files on a redirect page")
+    robots = (DIST / "robots.txt").read_text(encoding="utf-8")
+    if "Disallow: /out/" not in robots:
+        errs.append("robots.txt: no Disallow: /out/")
+    if "/out/" in (DIST / "sitemap.xml").read_text(encoding="utf-8"):
+        errs.append("sitemap.xml: /out/ in the sitemap")
+    urls = [r["tracking_url"] for r in data["redirects"] if r.get("tracking_url")]
+    for f in sorted(p for p in DIST.rglob("*") if p.suffix in (".html", ".json", ".xml", ".txt") and "out" not in p.relative_to(DIST).parts[:1]):
+        text = f.read_text(encoding="utf-8")
+        if any(u in text or escape(u, quote=True) in text for u in urls) or re.search(r"track\.revoffers\.com/aff_c|awin1\.com/cread|anrdoezrs\.net/click-", text):
+            errs.append(f"{f.relative_to(DIST)}: a tracking address outside /out/")
+    site = (Path(os.environ["SITE_JSON"]) if os.environ.get("SITE_JSON") else ROOT / "data" / "site.json").read_text(encoding="utf-8")
+    if any(u in site for u in urls):
+        errs.append("site.json: holds a tracking address")
+    rule = paid_rule()
+    texts = [(str(f.relative_to(DIST)), f.read_text(encoding="utf-8")) for f in sorted(DIST.rglob("*.html"))]
+    texts += [(f"windows/{f.name}", json.loads(f.read_text(encoding="utf-8"))["html"]) for f in sorted((DIST / "windows").glob("*.json"))]
+    out_seller = {r["out_path"]: r["seller_slug"] for r in data["redirects"]} | rule[2]
+    rules = collections.defaultdict(list)
+    for r in data.get("copy_rules") or []:
+        rules[r["seller"]].append(r["phrase"])
+    for name, html in texts:
+        for href in sorted(set(GREEN_HREF.findall(html))):
+            if paid.out_dir(href) not in have:
+                errs.append(f"{name}: green button to {href}, which has no redirect page")
+        errs += copy_rule_errs(name, html, rules, out_seller)
+    return errs
+
+
+GREEN_HREF = re.compile(r'class="btn btn-action[^"]*" href="(/out/[^"]*)"')
+VOID_TAGS = {"area", "br", "col", "embed", "hr", "img", "input", "link", "meta", "source", "track", "wbr"}
+
+
+def paid_containers(html):
+    """(out path, the HTML of the table row, list item or card around that green button) for each green button."""
+    out, stack = [], []
+    for m in re.finditer(r'<(/?)([a-zA-Z][\w-]*)([^<>]*?)(/?)>', html):
+        close, tag, attrs, selfclose = m.group(1), m.group(2).lower(), m.group(3), m.group(4)
+        if tag in VOID_TAGS or selfclose:
+            continue
+        if not close:
+            stack.append([tag, m.start(), None])
+            green = re.search(r'class="btn btn-action[^"]*" href="(/out/[^"]*)"', attrs)
+            if green:
+                box = next((e for e in reversed(stack) if e[0] in ("tr", "li", "article")), None)
+                if box:
+                    box[2] = (box[2] or []) + [green.group(1)]
+            continue
+        while stack:
+            top = stack.pop()
+            if top[0] == tag:
+                out += [(href, html[top[1]:m.end()]) for href in top[2] or []]
+                break
+    return out
+
+
+def phrase_hits(phrases, html):
+    text = unescape(re.sub(r"<(script|style)\b.*?</\1>", " ", html, flags=re.S))
+    text = re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", text))
+    hits = []
+    for phrase in phrases:
+        for m in re.finditer(rf"\b{re.escape(phrase)}\b", text, re.I):
+            hits.append((phrase, text[max(0, m.start() - 45):m.end() + 45].strip()))
+    return hits
+
+
+def copy_rule_errs(name, html, rules, out_seller):
+    """A seller's own wording rules (site.seller_copy_rules; ShedRx first) next to its paid button: the table row, list item
+    or card around the button, and the main part of the seller's own page when it carries one. Whole words, any case."""
+    errs = set()
+    for href, box in paid_containers(html):
+        seller = out_seller.get(href)
+        for phrase, around in phrase_hits(rules.get(seller, []), box):
+            errs.add(f"{name}: '{phrase}' next to {seller}'s paid button: ...{around}...")
+    page = re.fullmatch(r"sellers/([^/]+)/index\.html", name)
+    if page and rules.get(page.group(1)) and any(out_seller.get(h) == page.group(1) for h in GREEN_HREF.findall(html)):
+        main = re.search(r'<main id="main">(.*)</main>', html, re.S)
+        for phrase, around in phrase_hits(rules[page.group(1)], main.group(1) if main else html):
+            errs.add(f"{name}: '{phrase}' on {page.group(1)}'s page, which has a paid button: ...{around}...")
+    return sorted(errs)
+
+
+def check_parts(P):
+    errs = check_paid_plumbing()
     rule = paid_rule()
     css = (ROOT / "assets" / "site.css").read_text()
     for m in re.finditer(r"#[0-9a-fA-F]{3,8}\b", css):
@@ -880,6 +995,8 @@ def check_parts(P):
             errs.append(f"learn/index.html: guide {t!r} listed twice")
     for f in sorted(DIST.rglob("*.html")):
         html = f.read_text(encoding="utf-8")
+        if f.relative_to(DIST).parts[0] == "out":
+            continue  # paid redirects leave the site: check_paid_plumbing holds them to their own, stricter list
         if 'http-equiv="refresh"' in html:
             m = re.search(r'url=(/[^"]*)"', html)
             if 'content="noindex"' not in html or 'rel="canonical"' not in html or not m or not (DIST / m.group(1).strip("/") / "index.html").exists():

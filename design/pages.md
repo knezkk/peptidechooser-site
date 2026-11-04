@@ -19,6 +19,12 @@ What goes on each page type, top to bottom, and which button sits where. A page 
 
 Everything else is a text link in `action` green. A partner without an affiliate program gets `btn-line` "Read review", never green. A "research use only" seller gets no button at all: one row with a `chip-neutral` "Not approved", no price, no link.
 
+## Paid link redirect page `/out/<slug>/` (owner task 4 Nov 2026; waits for ODOBRENO DIZAJN)
+
+Not a designed page: no header, styles, fonts or analytics, and nobody should see it for more than a moment. One page per row of `site.paid_redirects` (`paid.py`; the data in `data/paid.json`, until the view exists `tools/fixtures/paid.json`). `noindex,nofollow`, `Disallow: /out/`, not in the sitemap. `location.replace()` and a `meta refresh` to the tracking address, and one line "Continue to <Name>", a plain link with `rel="sponsored nofollow"`. Click source: the path of the page on our site that sent the click (from `document.referrer`, same site only, no query, cut at 50 characters), as Katalys `aff_sub`, Awin `clickref`, CJ `sid`; FirstPromoter takes none. A tracking address appears nowhere else: not on a page, not in `site.json`.
+
+**A seller's wording rules** (`site.seller_copy_rules`; ShedRx first): no rule phrase (whole words, any case) in the table row, list item or card around that seller's green button, nor in the main part of its own page when that page has one. `tools/check.py` fails the deploy.
+
 ## Every page
 
 1. **Notice bar** (`paper-2`, `small`, 6px above and below its text, at least 36px tall; owner task 3 Nov 2026): one sentence, "Independent. Every price checked and dated. Some links pay us." + "How we make money" (link to /disclosure/). The same text at every width; on phones it wraps to two lines.
