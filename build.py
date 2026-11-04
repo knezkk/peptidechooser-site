@@ -601,6 +601,29 @@ def letter_href(slug):
     return f"/sellers/{slug}/#fda-letters" if slug in PROFILES else LETTERS_URL
 
 
+# "Closed by FDA <date>" (pages.md, Letters; a chip state, owner task 4 Nov 2026): only when the data has `closed_on` and
+# the close-out letter on fda.gov (peptide-data task 12; both optional, nothing is drawn while they are missing).
+LETTER_ROWS = (DATA.get("seller_letters") or []) + (DATA.get("letters_all") or [])
+CLOSED = {r["letter_url"]: r for r in LETTER_ROWS if r.get("closed_on") and (r.get("closeout_url") or "").startswith("https://www.fda.gov/")}
+
+
+def closed_chip(letter_url):
+    r = CLOSED.get(letter_url)
+    return (f' <a class="chip chip-ok chip-link" href="{escape(r["closeout_url"])}" rel="nofollow">Closed by FDA {nice_date(r["closed_on"][:10])}</a>'
+            if r else "")
+
+
+def seller_closed_chip(slug):
+    """The seller window's chip: the newest letter's close-out, only when every letter the seller has is closed."""
+    rows = sorted((r for r in DATA.get("seller_letters") or [] if r["seller_slug"] == slug), key=lambda r: r["letter_date"])
+    return closed_chip(rows[-1]["letter_url"]) if rows and all(r["letter_url"] in CLOSED for r in rows) else ""
+
+
+def paid_href(seller_slug, paid):
+    """`paid_url` holds the /out/ path from site.paid_links; never a seller's own address."""
+    return paid if paid.startswith("/out/") else f"/out/{seller_slug}/"
+
+
 def plan_letter(r):
     """The clinic's FDA letter chip beside a clinic price (owner decision 2 Nov 2026, enforced after the owner UX audit,
     3 Nov 2026: Strut Health's $25/mo showed no letter): every place a plan price appears, or "" without a letter."""
@@ -763,15 +786,16 @@ CLINIC_PROFILES = {k: r for k, r in PROFILES.items() if k not in SHOPS}
 def clinic_button(seller_slug, label, small="Our clinic page", plan=None, paid_ok=True):
     """A clinic's one action (Home v2, 3 Nov 2026), on clinic_row_act's rule (owner answer Q1 a and decision C8, 3 Nov
     2026): btn-action "Visit <Name> ..." through /out/<seller>/ with "Paid link" under it only when the data carries the
-    clinic's paid link (`paid_url` on the plan row, else on its profile; none yet) and the clinic has no FDA letter; else
+    clinic's paid link (`paid_url` on the plan row, else on its profile; none yet; site.paid_links applies the paid link
+    rule, pages.md, Buttons, and an FDA letter alone does not block it, owner decision 4 Nov 2026); else
     btn-wait `label` to our page on the clinic with `small` under it; "" when we have no page on the clinic."""
     r = PROFILES.get(seller_slug)
     if not r:
         return ""
     paid = (plan or {}).get("paid_url") or r.get("paid_url")
-    if paid_ok and paid and not (r.get("fda_letter_count") or (plan or {}).get("fda_letter_count") or 0):
+    if paid_ok and paid:
         tail = label.split(" · ", 1)[1] if " · " in label else ""
-        return (f'<span class="pick-act"><a class="btn btn-action btn-sm" href="/out/{seller_slug}/" rel="sponsored">'
+        return (f'<span class="pick-act"><a class="btn btn-action btn-sm" href="{paid_href(seller_slug, paid)}" rel="sponsored">'
                 f'Visit {seller_base(r["seller_name"])}{" · " + tail if tail else ""}</a><span class="paid">Paid link</span></span>')
     return (f'<span class="pick-act"><a class="btn btn-wait btn-sm" href="/sellers/{seller_slug}/">{label}</a>'
             f'<span class="paid">{small}</span></span>')
@@ -920,7 +944,7 @@ def seller_table(slug, kind=None):
         trs.append(f'<tr data-seller="{r["seller_slug"]}" data-form="{escape(r.get("form") or "")}"><td>{name_html}</td><td data-l="Product">{name}<span class="sub">{size}</span></td>'
                    f'<td data-l="Price"><span class="num">{price}</span></td>'
                    + ("" if kind == "cosmetic" else f'<td data-l="Per mg"><span class="num">{ppm}</span></td>') +
-                   f'<td class="checks">{score_line(r)}{check_chips(r)}</td></tr>')
+                   f'<td class="checks">{score_line(r)}{check_chips(r)}{seller_closed_chip(r["seller_slug"])}</td></tr>')
         seen = r.get("price_observed_at") or r.get("last_seen")
         src.append(f'<li>{seller}, {name}{", " + nice_date(seen) if seen else ""}: {r["product_url"]}</li>')
     per_mg_th = "" if kind == "cosmetic" else '<th scope="col">Per mg</th>'  # a cream has no price per mg
@@ -1384,12 +1408,12 @@ def letters_all_rows():
         seller = f'<span class="co-seller">In our database: {escape(clean(r["seller_name"]))}</span>' if r.get("seller_slug") and r.get("seller_name") else ""
         subj = escape(clean(r["letter_subject"]))
         out.append(
-            f'<tr{more if i >= LETTERS_FIRST else ""} data-year="{r["letter_date"][:4]}" data-subs="{" ".join(SUBS_OF_LETTER.get(r["letter_url"], []))}"><td class="num">{nice_date(r["letter_date"])}</td>'
+            f'<tr{more if i >= LETTERS_FIRST else ""}{" data-closed" if r["letter_url"] in CLOSED else ""} data-year="{r["letter_date"][:4]}" data-subs="{" ".join(SUBS_OF_LETTER.get(r["letter_url"], []))}"><td class="num">{nice_date(r["letter_date"])}</td>'
             # the subject once, in its own column (owner UX audit A27, 3 Nov 2026: it was repeated in the company cell for
             # phones, and the Office column, always CDER, went); phones stack the row as a card
             f'<td data-l="Company"><span class="name">{escape(clean(r["company_name"]))}</span>{MAKER_CHIP if is_maker(r["company_name"]) else ""}{seller}</td>'
             f'<td class="subj" data-l="Subject">{subj.replace("/", "/<wbr>")}</td>'
-            f'<td><a href="{escape(r["letter_url"])}" rel="nofollow">FDA letter</a></td></tr>')
+            f'<td><a href="{escape(r["letter_url"])}" rel="nofollow">FDA letter</a>{closed_chip(r["letter_url"])}</td></tr>')
     return "".join(out)
 
 
@@ -1404,19 +1428,23 @@ SUB_SELECT = ('<div class="legal-filter sub-filter"><label for="letters-sub">Sub
 YEAR_CHIPS = "".join(
     f'<button type="button" class="year-chip" data-year="{y}" aria-pressed="false">{y} <span>{sum(r["letter_date"][:4] == y for r in LETTERS_ALL)}<span class="vh"> letters</span></span></button>'
     for y in LETTERS_YEARS)
+# The "Closed" chip (pages.md, Letters): only when at least one letter on the page has its close-out letter.
+N_CLOSED = sum(r["letter_url"] in CLOSED for r in LETTERS_ALL)
+CLOSED_CHIP = (f'<div class="year-chips" role="group" aria-labelledby="letters-status"><span id="letters-status">Status</span><button type="button" class="year-chip" id="letters-closed" aria-pressed="false">Closed <span>{N_CLOSED}<span class="vh"> letters</span></span></button></div>'
+               if N_CLOSED else "")
 LETTERS_PAGE_JS = """<script>
 (function(){var tb=document.getElementById('letters-table');if(!tb)return;var f=document.querySelector('.letters-filter'),q=document.getElementById('letters-q'),
 c=document.getElementById('letters-clear'),m=document.querySelector('.letters-more'),all=document.getElementById('letters-all'),n=document.getElementById('letters-n'),
-chips=[].slice.call(document.querySelectorAll('.year-chip')),rows=[].slice.call(tb.tBodies[0].rows),lim=25,sb=document.getElementById('letters-sub');
+chips=[].slice.call(document.querySelectorAll('.year-chip[data-year]')),cl=document.getElementById('letters-closed'),rows=[].slice.call(tb.tBodies[0].rows),lim=25,sb=document.getElementById('letters-sub');
 var P=new URLSearchParams(location.search);if(sb&&P.get('sub')&&sb.querySelector('option[value="'+P.get('sub')+'"]'))sb.value=P.get('sub');if(P.get('q'))q.value=P.get('q');
-function draw(){var s=q.value.trim().toLowerCase(),u=sb?sb.value:'',ys=chips.filter(function(x){return x.getAttribute('aria-pressed')==='true';}).map(function(x){return x.getAttribute('data-year');}),k=0;
+function draw(){var s=q.value.trim().toLowerCase(),u=sb?sb.value:'',ys=chips.filter(function(x){return x.getAttribute('aria-pressed')==='true';}).map(function(x){return x.getAttribute('data-year');}),z=!!cl&&cl.getAttribute('aria-pressed')==='true',k=0;
 rows.forEach(function(r,i){var hit=(!s||r.cells[1].textContent.toLowerCase().indexOf(s)>=0)&&(!ys.length||ys.indexOf(r.getAttribute('data-year'))>=0)
-&&(!u||(' '+r.getAttribute('data-subs')+' ').indexOf(' '+u+' ')>=0);
-r.hidden=!hit||(!s&&!u&&!ys.length&&i>=lim);if(hit)k++;});
-if(m)m.hidden=lim>=rows.length||!!s||!!u||ys.length>0;n.textContent=(s||u||ys.length)?k+' of '+rows.length+' letters match.':'';}
+&&(!u||(' '+r.getAttribute('data-subs')+' ').indexOf(' '+u+' ')>=0)&&(!z||r.hasAttribute('data-closed'));
+r.hidden=!hit||(!s&&!u&&!z&&!ys.length&&i>=lim);if(hit)k++;});
+if(m)m.hidden=lim>=rows.length||!!s||!!u||z||ys.length>0;n.textContent=(s||u||z||ys.length)?k+' of '+rows.length+' letters match.':'';}
 f.hidden=false;if(m)m.hidden=false;q.addEventListener('input',draw);if(sb)sb.addEventListener('change',draw);
-chips.forEach(function(x){x.addEventListener('click',function(){x.setAttribute('aria-pressed',x.getAttribute('aria-pressed')==='true'?'false':'true');draw();});});
-c.addEventListener('click',function(){q.value='';if(sb)sb.value='';chips.forEach(function(x){x.setAttribute('aria-pressed','false');});draw();q.focus();});
+(cl?chips.concat(cl):chips).forEach(function(x){x.addEventListener('click',function(){x.setAttribute('aria-pressed',x.getAttribute('aria-pressed')==='true'?'false':'true');draw();});});
+c.addEventListener('click',function(){q.value='';if(sb)sb.value='';(cl?chips.concat(cl):chips).forEach(function(x){x.setAttribute('aria-pressed','false');});draw();q.focus();});
 if(all)all.addEventListener('click',function(){lim+=25;draw();});draw();})();
 </script>"""
 # Get new letters (pages.md, Letters, owner 2 Nov 2026): one white card under the explanation line with the RSS feed and a
@@ -1474,7 +1502,7 @@ LETTERS_PAGE = f"""
 <section class="section letters-hd">
   <div class="wrap">
     <h1>FDA warning letters to peptide sellers and online clinics</h1>
-    <p class="letters-what">A warning letter is about how a company sold or advertised a product. It does not withdraw any approval and is not a safety finding about an approved medicine.</p>
+    <p class="letters-what">A warning letter is about how a company sold or advertised a product. It does not withdraw any approval and is not a safety finding about an approved medicine. When the FDA verifies the corrections it publishes a close-out letter; we show it next to the letter when one exists.</p>
     {jump_row([("#letters-list", "The letters"), ("#sub-h", "Get new letters by email")] if BUTTONDOWN else [("#letters-list", "The letters")])}
     {author_line(DATA["pulled_at"][:10]) if DATA.get("pulled_at") else ""}
     <p class="letters-stamp"><span class="small">{len(LETTERS_ALL)} letters since {nice_date(DATA["letters_all_oldest"]) if DATA.get("letters_all_oldest") else ""}, newest first. Each links to the letter on fda.gov.</span></p>
@@ -1487,6 +1515,7 @@ LETTERS_PAGE = f"""
       <div class="legal-filter"><label for="letters-q">Filter by company</label><input class="input" id="letters-q" type="text" autocomplete="off"><button type="button" class="btn btn-line btn-sm" id="letters-clear">Clear</button></div>
       {SUB_SELECT}
       <div class="year-chips" role="group" aria-labelledby="letters-years"><span id="letters-years">Year</span>{YEAR_CHIPS}</div>
+      {CLOSED_CHIP}
       <p class="small" id="letters-n" aria-live="polite"></p>
     </div>
     <div class="tbl-wrap"><table class="tbl tbl-letters tbl-letters-all tbl-cards" id="letters-table"><caption class="vh">FDA warning letters, newest first</caption>
@@ -1678,6 +1707,7 @@ HOW = f"""
 <p>Met when the seller has published at least one lab report (a certificate of analysis) dated in the last 12 months, for any of its products. We read the reports on the seller's own pages. A miss means we found no report from the last 12 months; it does not mean a product failed a test. A lab report shows what one batch contained on the day it was tested, not that a product is safe or that it works.</p>
 <h3>No FDA letter</h3>
 <p>Met when the FDA's public list of warning letters holds no letter matched to the seller by its web address or street address. A letter that only shares a company name is not counted, because names repeat. A miss means the FDA sent the seller at least one warning letter; the seller page links each one.{f' We keep every letter to peptide sellers, compounders and online clinics, {N_LETTERS} so far, on our <a href="/fda-warning-letters/">FDA warning letters</a> page.' if LETTERS_ALL and N_LETTERS else ""}</p>
+<p>A warning letter is the FDA's notice of violations it believes it found. The company responds, and when the FDA has verified the corrections a close-out letter follows. A letter does not withdraw any approval. We show a seller's letter next to its price and every letter on its page, and a letter alone does not stop a paid link. We still refuse a paid link in two cases: a research-use shop, always, and a seller whose letter is about adulterated drug products while the FDA has published no close-out letter. <a href="{FDA_ABOUT_LETTERS}" rel="nofollow">What the FDA says about warning letters</a></p>
 <h3>Company found</h3>
 <p>Met when we find the business behind the shop in a state business registry, matched with high confidence. A miss means we did not find it. We do not search every state's registry yet, so a real company can still show as not found. When an FDA letter names the company, the seller page says so, but that alone does not meet this check.</p>
 <h3>Legal pages</h3>
@@ -1722,6 +1752,7 @@ DISCLOSURE = f"""
 <h2>Paid links</h2>
 <p>Peptide Chooser is supported by affiliate commissions. Some links on this site go to sellers or services that pay us a commission if you make a purchase or sign up. This costs you nothing extra.</p>
 <p>Paid links are labeled where they appear. Commissions do not affect our ratings, rankings or which products we include. Sellers without an affiliate program are rated and listed on the same terms.</p>
+<p>A paid link may lead to a seller that has an FDA warning letter; the letter is shown next to the price and on the seller's page.</p>
 <p>We may take part in affiliate programs run by individual brands and by affiliate networks. We will list the networks we work with on this page as those relationships start.</p>
 <h2>Not medical advice</h2>
 <p>Everything on this site is general information for education. It is not medical advice, diagnosis or treatment, and it does not replace a consultation with a licensed clinician.</p>
@@ -1871,12 +1902,12 @@ def explain_brand(plan_name, seen):
 
 
 def clinic_row_act(r):
-    """A clinic plan's button, every kind (owner answer Q1 a, 3 Nov 2026; for compounded plans owner decision C8, 3 Nov 2026: compounded GLP-1 is linked only through clinics without an
-    FDA letter, labelled compounded): btn-action "Visit <Name>" with "Paid link" only when the data carries the clinic's paid
-    link and the clinic has no FDA letter; otherwise btn-wait "See plans" to our clinic page."""
-    name, paid = seller_base(r["seller_name"]), r.get("paid_url")
-    if paid and not (r.get("fda_letter_count") or 0):
-        return (f'<span class="pick-act"><a class="btn btn-action btn-sm" href="/out/{r["seller_slug"]}/" rel="sponsored">Visit {name}</a>'
+    """A clinic plan's button, every kind (owner answer Q1 a, 3 Nov 2026; for compounded plans owner decision C8, 3 Nov 2026, labelled compounded): btn-action "Visit <Name>" with "Paid link"
+    only when the data carries the clinic's paid link, on the plan row or its profile (the paid link rule, pages.md, Buttons;
+    owner decision 4 Nov 2026); otherwise btn-wait "See plans" to our clinic page."""
+    name, paid = seller_base(r["seller_name"]), r.get("paid_url") or PROFILES.get(r["seller_slug"], {}).get("paid_url")
+    if paid:
+        return (f'<span class="pick-act"><a class="btn btn-action btn-sm" href="{paid_href(r["seller_slug"], paid)}" rel="sponsored">Visit {name}</a>'
                 '<span class="paid">Paid link</span></span>')
     if r["seller_slug"] not in PROFILES:
         return ""
@@ -2429,7 +2460,7 @@ def seller_letters_section(r):
     if not rows:
         return ""
     trs = "".join(f'<tr><td class="num">{nice_date(x["letter_date"])}</td><td>{escape(clean(x["letter_subject"]))}</td>'
-                  f'<td><a href="{escape(x["letter_url"])}" rel="nofollow">FDA letter</a></td></tr>' for x in rows)
+                  f'<td><a href="{escape(x["letter_url"])}" rel="nofollow">FDA letter</a>{closed_chip(x["letter_url"])}</td></tr>' for x in rows)
     more = '<p class="small seller-note"><a href="/fda-warning-letters/">Every FDA warning letter to peptide sellers</a></p>' if LETTERS_ALL else ""
     # id="fda-letters": the letter chips in the tables link here (owner task 3 Nov 2026)
     return f"""

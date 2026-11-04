@@ -479,6 +479,7 @@ body > .crumbs { width: -moz-available; width: -webkit-fill-available; width: st
   .tbl { min-width: 720px; }
   .tbl-letters { min-width: 0; } /* date, seller and source fit a phone without scrolling inside the frame */
   .tbl-letters td:last-child { white-space: nowrap; }
+  .tbl-letters td .chip-ok { display: block; width: fit-content; margin-top: 4px; white-space: normal; } /* Closed by FDA under the letter link, so the row stays in its frame */
   .tbl-letters th, .tbl-letters td { padding: 12px 10px; }
   /* phones: the subject moves under the seller's name, so the four columns fit without scrolling inside the frame */
   .tbl-letters:not(.tbl-letters-all) .subj { display: none; } /* the letters page keeps its subject column; under 641px its rows are cards */
