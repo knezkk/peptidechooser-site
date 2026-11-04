@@ -551,6 +551,24 @@ def other_use(g, r):
                  if r.get("product_kind") in BRANDED and r["plan_name"].split()[0] == brand), "")
 
 
+def needs_rx(p):
+    """True when the option's "how" line says it takes a prescription, False when it says none is needed (over the
+    counter, or "no prescription"), None when it says neither (owner UX audit, 3 Nov 2026)."""
+    how = p.get("how", "").lower()
+    if "no prescription" in how or "over the counter" in how:
+        return False
+    return True if how.startswith("prescription") else None
+
+
+def plan_fits(p, r):
+    """A plan fits a medicine sold without a prescription only when it is one too: never a compounded plan or a pill (owner
+    answer Q5 a, 4 Nov 2026: Keeps' Oral Minoxidil stood on the Minoxidil row, "a liquid or foam, no prescription")."""
+    if needs_rx(p) is not False:
+        return True
+    return (r.get("product_kind") != "compounded" and (r.get("dosage_form") or "") not in ("tablet", "capsule")
+            and not re.search(r"\boral\b", r.get("plan_name") or "", re.I))
+
+
 def row_plan(g, p):
     """The plan behind an option row's "Online clinics from" line on a goal with clinic plans: an FDA-approved row, the
     cheapest brand plan (branded or oral_branded) of its substance; the compounded row (`plan_kind`), the cheapest
@@ -561,7 +579,7 @@ def row_plan(g, p):
         if not (p.get("substance") and p["status"].startswith("FDA approved")):
             return None
         found = [r for r in PLANS if r["substance_slug"] == p["substance"] and r.get("price_monthly") is not None
-                 and r.get("product_kind") != "compounded"]
+                 and r.get("product_kind") != "compounded" and plan_fits(p, r)]
         best = min(found, key=lambda r: (float(r["price_monthly"]), r["seller_name"])) if found else None
         plan = GOAL_PLANS.get(g["slug"])
         return plan if best and plan and best["seller_slug"] == plan["seller_slug"] and best["plan_slug"] == plan["plan_slug"] else best
@@ -1033,7 +1051,9 @@ def how_line(p):
     return p["how"]
 
 
-# A cosmetic option with no cosmetic listing gets no window and says why where the button would be.
+# A row whose data has no listing at all says so where the button would be (owner, 4 Nov 2026), never an empty space.
+NO_LISTINGS = "No listings yet"
+# The substance page's line for a cosmetic with no listing (unchanged by the option rows' rule).
 COSMETIC_LATER = "Sold as a cosmetic; prices come later."
 
 
@@ -1053,7 +1073,7 @@ def option_plans(g, p):
         return [r for r in priced if r["substance_slug"] in subs and r.get("product_kind") == "compounded"]
     if not (p.get("substance") and approved_row(p)):
         return []
-    return [r for r in priced if r["substance_slug"] == p["substance"] and not other_use(g, r)]
+    return [r for r in priced if r["substance_slug"] == p["substance"] and not other_use(g, r) and plan_fits(p, r)]
 
 
 def clinic_key(g, p):
@@ -1092,7 +1112,7 @@ def clinic_window(g, p):
         prof = PROFILES.get(r["seller_slug"], {})
         base = seller_base(r["seller_name"])
         checks = f'{score_of(prof) or 0} of {out_of(prof)}' if prof else "not checked"
-        trs.append(f'<tr><td>{clinic_link(r["seller_slug"], base)}</td>'
+        trs.append(f'<tr><td><span class="cell-pic">{parts.tile(r["seller_slug"], base, 28, seller=prof)}{clinic_link(r["seller_slug"], base)}</span></td>'
                    f'<td data-l="Plan"><span class="cell-pic">{parts.plan_picture(r)}<span>{explain_brand(r["plan_name"], named)}</span></span></td>'
                    f'<td data-l="What it is">{plan_chip(g, r)}</td>'
                    f'<td data-l="Form">{plan_form_word(r)}</td>'
@@ -1168,15 +1188,6 @@ def price_sentence(p, pad):
     return f" {said}{sup}"
 
 
-def needs_rx(p):
-    """True when the option's "how" line says it takes a prescription, False when it says none is needed (over the
-    counter, or "no prescription"), None when it says neither (owner UX audit, 3 Nov 2026)."""
-    how = p.get("how", "").lower()
-    if "no prescription" in how or "over the counter" in how:
-        return False
-    return True if how.startswith("prescription") else None
-
-
 RX_LINE = {True: " Needs a prescription.", False: " No prescription needed.", None: ""}
 
 
@@ -1241,7 +1252,7 @@ def opt_line(g, p, rp, pad):
 def opt_action(g, p, rp, lazy):
     """The row's one button, one width on every row (pages.md, Home, Option rows): a row with clinic plans, "Buy from $X/mo · N
     clinics", opening the clinic window (clinic_open); a research-use row, "Prices at N shops" ("Our checks, no shop links"); a
-    cosmetic row, "Compare N serums" (its window), or "Sold as a cosmetic; prices come later." without listings."""
+    cosmetic row, "Compare N products" (its window); a row with no listing at all, "No listings yet"."""
     btn = clinic_open(g, p, rp)
     if btn:
         return btn
@@ -1250,11 +1261,7 @@ def opt_action(g, p, rp, lazy):
         return f'<span class="pick-act">{sellers_button(p, lazy, f"Compare {plural(n, cosmetic_word(p))}", "btn-wait")}</span>'
     if has_window(p):
         return f'<span class="pick-act">{sellers_button(p, lazy, kind="btn-wait")}<span class="paid">Our checks, no shop links</span></span>'
-    if is_cosmetic(p):
-        return f'<span class="pick-act"><span class="paid no-link">{COSMETIC_LATER}</span></span>'
-    if p.get("no_link") and not NO_LINK_SAID.search(p["no_link"]):
-        return f'<span class="pick-act"><span class="paid no-link">{p["no_link"]}</span></span>'
-    return ""
+    return f'<span class="pick-act"><span class="paid no-link">{NO_LISTINGS}</span></span>'
 
 
 # "We do not link to them" and its variants (pages.md, Home): said once on Home, in the label legend.
@@ -2077,7 +2084,7 @@ def goal_clinic_section(g, rows):
                    f'<td><span class="cell-pic">{parts.plan_picture(r)}<span class="name">{explain_brand(r["plan_name"], named)}</span></span></td>'
                    f'<td data-l="What it is">{plan_chip(g, r)}</td>'
                    f'<td data-l="Per month"><span class="num">{usd(r["price_monthly"])}</span>{plan_letter(r)}{f"<span class=sub>{care}</span>" if care else ""}</td>'
-                   f'<td data-l="Clinic">{clinic_link(r["seller_slug"], seller_base(r["seller_name"]), True)}</td>'
+                   f'<td data-l="Clinic"><span class="cell-pic">{parts.tile(r["seller_slug"], seller_base(r["seller_name"]), 28, seller=PROFILES.get(r["seller_slug"]))}{clinic_link(r["seller_slug"], seller_base(r["seller_name"]), True)}</span></td>'
                    f'<td class="act">{clinic_row_act(r)}</td></tr>')
     seg = lambda grp, opts: (f'<div class="seg" role="group" aria-label="{grp[1]}">'
                              + "".join(f'<button type="button" class="seg-b" data-g="{grp[0]}" data-v="{v}" aria-pressed="{"true" if not v else "false"}">{t}</button>'

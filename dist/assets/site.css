@@ -650,4 +650,4 @@ body:has(.home-sec) .site-foot { margin-top: 0; }
 .seller-id-text { min-width: 0; flex: 1; }
 .seller-similar li { display: flex; align-items: center; gap: var(--space-2); }
 .cmp thead .tile { display: flex; margin-bottom: var(--space-2); }
-@media (min-width: 641px) { .tbl-clinics td[data-l="Clinic"] a { white-space: nowrap; } }
+@media (min-width: 641px) { .tbl-clinics .cell-pic a { white-space: nowrap; } }

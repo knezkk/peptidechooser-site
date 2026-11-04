@@ -426,6 +426,9 @@ def check_parts(P):
     for f in sorted((DIST / "windows").glob("*.json")) if (DIST / "windows").exists() else []:
         win = json.loads(f.read_text(encoding="utf-8"))["html"]
         errs += window_errs(f"windows/{f.name}", win) + paid_rule_errs(f"windows/{f.name}", win, rule)
+        for li in re.findall(r'<li class="opt">.*?</li>', win, re.S):
+            if 'class="btn ' not in li.split("</details>")[-1] and "No listings yet" not in li:
+                errs.append(f"windows/{f.name}: an option row with neither a button nor \"No listings yet\"")
         if re.search(r'class="thumb thumb-none" aria-hidden', win):
             errs.append(f"windows/{f.name}: a row whose form has no picture; add it to the mapping")
         if "clinic-dlg" in win and win.count('<td data-l="Plan">') != win.count('class="thumb '):
@@ -442,7 +445,7 @@ def check_parts(P):
             if not (DIST / src).exists():
                 continue
             win = json.loads((DIST / src).read_text(encoding="utf-8"))["html"]
-            who = set(re.findall(r'<tr><td>(?:<a class="name" href="/sellers/([^"/]+)/"|<span class="name">([^<]+))', win))
+            who = set(re.findall(r'<tr><td><span class="cell-pic"><span class="tile[^>]*>[^<]*</span>(?:<a class="name" href="/sellers/([^"/]+)/"|<span class="name">([^<]+))', win))
             if len(who) != int(n):
                 errs.append(f"{name}: {src} lists {len(who)} clinics, its button says {n}")
             if f'<span class="num">${price}</span>' not in win:
@@ -453,6 +456,10 @@ def check_parts(P):
         for li in re.findall(r'<li class="opt">.*?</summary>', html, re.S):
             if 'class="thumb ' not in li:
                 errs.append(f"{name}: an option row without a picture")
+        # Every option row has a button or says "No listings yet" (pages.md, Home, Option rows; owner, 4 Nov 2026)
+        for li in re.findall(r'<li class="opt">.*?</li>', html, re.S):
+            if 'class="btn ' not in li.split("</details>")[-1] and "No listings yet" not in li:
+                errs.append(f"{name}: an option row with neither a button nor \"No listings yet\"")
         for tb in re.findall(r'<table class="[^"]*tbl-(?:clinics|window)[^"]*".*?</table>', html, re.S):
             for tr in re.findall(r'<tr[ >].*?</tr>', tb, re.S):
                 if "<td" in tr and 'class="thumb ' not in tr and "tbl-plans" not in tb and "<td data-l=\"Plan\">" not in tr:
