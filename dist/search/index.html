@@ -53,6 +53,7 @@ try{if(localStorage.getItem('pc-consent')==='yes')pcLoadGA();}catch(e){}
 <nav class="crumbs wrap" aria-label="Breadcrumb"><a href="/">Home</a><span aria-hidden="true">/</span><span aria-current="page">Search</span></nav>
 <main id="main">
 
+<script>if(/[?&]q=./.test(location.search))document.documentElement.classList.add('has-q');</script>
 <section class="section letters-hd search-pg">
   <div class="wrap">
     <h1>Search</h1>
