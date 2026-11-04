@@ -51,6 +51,6 @@ Run headless Chrome (Playwright) at 320, 390, 768, 1024, 1440, 1920 and 2560px w
 - `document.documentElement.scrollWidth` must equal the window width (no sideways scroll).
 - No element's right edge past the container's padding, except inside `.tbl-wrap`.
 - Screenshots at 390, 1440 and 2560 are looked at, and sent to Karlo with any new page or any design change.
-- Lighthouse on mobile: 90+ on Performance, Accessibility, Best Practices and SEO.
+- Lighthouse on mobile: 90+ on Performance, Accessibility, Best Practices and SEO. `tools/check_lighthouse.js` runs it in the deploy on Home, /weight-loss/ and one seller page (one run per page; a page under 90 gets two more and the median counts); a page under 90 fails the deploy. /search/ is `noindex` on purpose, so its SEO score stays at 69: the known exception (owner task 4 Nov 2026).
 
 A page that fails any check does not ship.
