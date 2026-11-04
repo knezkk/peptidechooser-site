@@ -57,6 +57,7 @@ p { margin: 0 0 1em; }
 /* Goal page v2 (layout.md, Vertical spacing, Goal page; owner task 3 Nov 2026): the first screen decides; every section
    after it 48px apart; the grey clinic band the same. */
 .hero.goal-first { padding: 24px 0 48px; }
+.has-q #sp-form { min-height: 100vh; } /* /search/?q=...: the results' height reserved, so the goals strip does not jump (Lighthouse CLS) */
 .goal-first h1 { max-width: 30ch; margin-bottom: 12px; }
 .goal-first .intro { max-width: 58ch; font-size: var(--ui-size); line-height: 1.55; margin: 12px 0 0; }
 .goal-sec { padding: 48px 0 0; }

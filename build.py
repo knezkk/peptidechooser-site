@@ -3020,7 +3020,10 @@ draw();});
 
 
 def search_page():
+    # with a query the results take the first screen: its height is reserved before the first paint, so the goals strip
+    # under the form does not jump when they arrive (Lighthouse, CLS 0.388, 4 Nov 2026; pages.md, Search)
     return f"""
+<script>if(/[?&]q=./.test(location.search))document.documentElement.classList.add('has-q');</script>
 <section class="section letters-hd search-pg">
   <div class="wrap">
     <h1>Search</h1>
