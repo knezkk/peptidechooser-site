@@ -823,10 +823,38 @@ PRODUCTS = DATA.get("products") or []
 SELLERS = {r["seller_slug"]: r for r in DATA.get("sellers") or []}
 # Seller pages (pages.md, Seller): one per seller in site.seller_profile, through tools/pull_data.py
 PROFILES = {r["seller_slug"]: r for r in DATA.get("seller_profiles") or []}
+# A tool (pages.md, Category, Tools) does not prescribe: no seller page, not counted as a clinic. A shop stays a shop.
+TOOL_PROFILES = {t["seller_slug"]: PROFILES.pop(t["seller_slug"]) for g in DATA.get("goals") or [] for t in g.get("tools") or []
+                 if not (PROFILES.get(t["seller_slug"]) or {"product_count": 1}).get("product_count")}
 # Shops and clinics (peptide-data decision 26; pages.md, Rules that apply to every page): a shop lists products
 # (product_count > 0), a clinic only plans (product_count 0). Every list of shops takes SHOPS; a clinic is never in one.
 SHOPS = {k: r for k, r in PROFILES.items() if (r.get("product_count") or 0) > 0}
 CLINIC_PROFILES = {k: r for k, r in PROFILES.items() if k not in SHOPS}
+# A real logo (pages.md, Seller tile): the entry in data/seller_logos.json and the brand's file in assets/logos/, both, never a shop.
+for _slug, _logo in json.loads((ROOT / "data" / "seller_logos.json").read_text(encoding="utf-8")).items():
+    _file = next((f for f in (ROOT / "assets" / "logos" / f"{_slug}.{e}" for e in ("svg", "png")) if f.exists()), None)
+    if _file and _slug in CLINIC_PROFILES:
+        CLINIC_PROFILES[_slug].update(_logo, logo_path=f"/assets/logos/{_file.name}")
+
+
+# States a clinic does not serve (pages.md, Category and Seller; owner task 4 Nov 2026): data/clinic_states.json, keyed by
+# seller slug, until the database has a column. Never typed into a page.
+# site.seller_states (a row per seller, or per seller and state) replaces the file once the database has it.
+def clinic_states():
+    view = {}
+    for r in DATA.get("seller_states") or []:
+        raw = r.get("excluded_states") or r.get("not_in") or r.get("state_code") or r.get("state") or []
+        view.setdefault(r["seller_slug"], {"not_in": []})["not_in"] += re.findall(r"[A-Z]{2}", raw) if isinstance(raw, str) else list(raw)
+    return view or {k: v for k, v in json.loads((ROOT / "data" / "clinic_states.json").read_text(encoding="utf-8")).items() if not k.startswith("_")}
+
+
+CLINIC_STATES = clinic_states()
+
+
+def not_in_line(slug, tag="span"):
+    """"Not available in: AL, AK, ..." as one small line, or "" for a clinic that serves every state."""
+    states = (CLINIC_STATES.get(slug) or {}).get("not_in")
+    return f'<{tag} class="not-in">Not available in: {", ".join(states)}</{tag}>' if states else ""
 
 
 def clinic_button(seller_slug, label, small="Our clinic page", plan=None, paid_ok=True, in_table=False):
@@ -1130,7 +1158,7 @@ def clinic_open(g, p, rp=None, low=None):
     noun = "seller" if otc else "clinic"
     n = len({r["seller_slug"] for r in rows})
     key = clinic_key(g, p)
-    href = f'/{g["slug"]}/#clinics' if g.get("clinic_plans") and g.get("page") else f'/sellers/{plan["seller_slug"]}/'
+    href = f'/{g["slug"]}/#clinics' if (g.get("clinic_plans") or g.get("clinic_table")) and g.get("page") else f'/sellers/{plan["seller_slug"]}/'
     small = '<span class="paid">Pharmacy, no prescription</span>' if otc else ""
     return (f'<span class="pick-act"><a class="btn btn-wait btn-sm btn-cta sellers-open" href="{href}" data-dlg="{key}" data-src="/windows/{key}.json">'
             f'Buy from {usd(plan["price_monthly"])}/mo · {plural(n, noun)}</a>{small}</span>')
@@ -1149,7 +1177,7 @@ def clinic_window(g, p):
         prof = PROFILES.get(r["seller_slug"], {})
         base = seller_base(r["seller_name"])
         checks = f'{score_of(prof) or 0} of {out_of(prof)}' if prof else "not checked"
-        trs.append(f'<tr><td><span class="cell-pic">{parts.tile(r["seller_slug"], base, 28, seller=prof)}{clinic_link(r["seller_slug"], base)}</span></td>'
+        trs.append(f'<tr><td><span class="cell-pic">{parts.tile(r["seller_slug"], base, 28, seller=prof)}{clinic_link(r["seller_slug"], base)}</span>{not_in_line(r["seller_slug"])}</td>'
                    f'<td data-l="Plan"><span class="cell-pic">{parts.plan_picture(r)}<span>{explain_brand(r["plan_name"], named)}</span></span></td>'
                    f'<td data-l="What it is">{plan_chip(g, r)}</td>'
                    f'<td data-l="Form">{plan_form_word(r)}</td>'
@@ -1401,14 +1429,14 @@ def renumber_sources():
 
 
 # Peptide pages (pages.md, Peptide; owner task 2 Nov 2026): one page per substance with a status, from the database or
-# from its own hand-written "Is it legal today?" row. Defined here because the legal tables link each name to its page.
+# from its own hand-written "Is it legal today?" row; `no_page` for a medicine that is not a peptide (sildenafil). Defined here because the legal tables link each name to its page.
 def hand_legal(slug):
     """The hand-written legal row that carries the substance and a status (not a db_only row), or None."""
     return next((r for r in LEGAL["rows"] if slug in (r.get("substances") or []) and r.get("status") and not r.get("db_only")), None)
 
 
 PEPTIDE_SLUGS = sorted({r["substance_slug"] for r in LEGAL_DB or [] if db_status(r["substance_slug"])}
-                       | {s for r in LEGAL["rows"] for s in r.get("substances") or [] if not db_status(s) and hand_legal(s)})
+                       | {s for r in LEGAL["rows"] for s in r.get("substances") or [] if not db_status(s) and hand_legal(s) and not r.get("no_page")})
 
 
 def legal_name(slugs, name):
@@ -2054,7 +2082,7 @@ def clinic_section(g, rows):
         care = care_note(r)
         # on phones the first CLINICS_FIRST rows show until "Show all N" (owner answer Q2 a, 2 Nov 2026; bundle.css, Clinic table)
         more = ' class="more"' if i >= CLINICS_FIRST else ""
-        trs.append(f'<tr{more}><td>{clinic_link(r["seller_slug"], seller_base(r["seller_name"]))}</td><td data-l="Plan">{explain_brand(r["plan_name"], named)}</td>'
+        trs.append(f'<tr{more}><td>{clinic_link(r["seller_slug"], seller_base(r["seller_name"]))}{not_in_line(r["seller_slug"])}</td><td data-l="Plan">{explain_brand(r["plan_name"], named)}</td>'
                    f'<td>{plan_chip(g, r)}</td>'
                    f'<td data-l="Per month"><span class="num">{usd(r["price_monthly"])}</span>{plan_letter(r)}{f"<span class=sub>{care}</span>" if care else ""}</td>'
                    # every row: the letter chip by the price, no FDA letter column, "See plans" to our clinic page (owner answers
@@ -2073,6 +2101,42 @@ def clinic_section(g, rows):
     {COMPARE_LINK}
   </div>
 </section>"""
+
+
+def table_plans(g):
+    """The plans a goal's clinic table lists: its `clinic_plans`, else the plans of its `clinic_table` substances (hair,
+    libido, longevity, muscle; owner task 4 Nov 2026: a clinic shows on the goal its plans belong to, from data, no brand named)."""
+    subs = (g.get("clinic_table") or {}).get("substances") or []
+    return clinic_plans(g) or sorted((r for r in PLANS if r["substance_slug"] in subs and r.get("price_monthly") is not None),
+                                     key=lambda r: (float(r["price_monthly"]), r["seller_name"], r["plan_name"]))
+
+
+def tools_block(g, first_n):
+    """The goal's "Tools" block (pages.md, Category; owner answer Q4 a, 4 Nov 2026): what helps but does not prescribe. Name, one
+    sentence, btn-action only when the data carries the seller's paid link; a row with `needs` shows nothing until the seller's
+    data sets that flag, and a research-use shop never shows. Returns the block and its source entries, numbered from first_n."""
+    items, srcs = [], []
+    for t in g.get("tools") or []:
+        slug, prof = t["seller_slug"], TOOL_PROFILES.get(t["seller_slug"]) or {}
+        if slug in SHOPS or (t.get("needs") and prof.get(t["needs"]) is not True):
+            continue
+        n = first_n + len(srcs)
+        url = t.get("url")
+        where = f': <a href="{url}" rel="nofollow">{url}</a>' if url and "fda.gov" in url else f": {url}" if url else ""
+        srcs.append(f'<li value="{n}" id="src-tool-{slug}">{t["source"]}{where}</li>')
+        name = f'<strong>{t["name"]}</strong>'
+        paid = prof.get("paid_url")
+        act = (f'<span class="pick-act"><a class="btn btn-action btn-sm" href="{paid_href(slug, paid)}" rel="sponsored">Visit {t["name"]}</a>'
+               f'<span class="paid">Paid link</span></span>') if paid else ""
+        items.append(f'<li class="tool-row"><p>{name}: {t["line"]} <a class="ref" href="#src-tool-{slug}" aria-label="Source {n}"><sup>{n}</sup></a></p>{act}</li>')
+    if not items:
+        return "", ""
+    return (f'''<section class="section goal-sec" id="tools">
+  <div class="wrap">
+    <h2>Tools</h2>
+    <ul class="tool-list">{"".join(items)}</ul>
+  </div>
+</section>''', "".join(srcs))
 
 
 def plan_form(r):
@@ -2121,7 +2185,7 @@ def goal_clinic_section(g, rows):
                    f'<td><span class="cell-pic">{parts.plan_picture(r)}<span class="name">{explain_brand(r["plan_name"], named)}</span></span></td>'
                    f'<td data-l="What it is">{plan_chip(g, r)}</td>'
                    f'<td data-l="Per month"><span class="num">{usd(r["price_monthly"])}</span>{plan_letter(r)}{f"<span class=sub>{care}</span>" if care else ""}</td>'
-                   f'<td data-l="Clinic"><span class="cell-pic">{parts.tile(r["seller_slug"], seller_base(r["seller_name"]), 28, seller=PROFILES.get(r["seller_slug"]))}{clinic_link(r["seller_slug"], seller_base(r["seller_name"]), True)}</span></td>'
+                   f'<td data-l="Clinic"><span class="cell-pic">{parts.tile(r["seller_slug"], seller_base(r["seller_name"]), 28, seller=PROFILES.get(r["seller_slug"]))}{clinic_link(r["seller_slug"], seller_base(r["seller_name"]), True)}</span>{not_in_line(r["seller_slug"])}</td>'
                    f'<td class="act">{clinic_row_act(r)}</td></tr>')
     seg = lambda grp, opts: (f'<div class="seg" role="group" aria-label="{grp[1]}">'
                              + "".join(f'<button type="button" class="seg-b" data-g="{grp[0]}" data-v="{v}" aria-pressed="{"true" if not v else "false"}">{t}</button>'
@@ -2188,10 +2252,11 @@ def decide_cards(g):
         k = plan_kind(c)
         chip = ('<span class="chip chip-warn">Compounded, not FDA approved</span>' if k == "compounded" else
                 '<span class="chip chip-ok">Brand</span>' if k in ("brand", "generic") else plan_chip(g, c))
-        cards.append(decide_card("Cheapest", clean(c["plan_name"]), chip,
-                                 f'<strong>From {usd(c["price_monthly"])}/mo at {name}</strong>{plan_src(g, c)}{plan_letter(c)}',
-                                 next((b for b in (clinic_open(g, x, None, c) for x in sorted(g["peptides"], key=lambda x: x.get("plan_kind") != "compounded") if any(r is c for r in option_plans(g, x))) if b), ""),
-                                 parts.plan_picture(c)))
+        opens = next((b for b in (clinic_open(g, x, None, c) for x in sorted(g["peptides"], key=lambda x: x.get("plan_kind") != "compounded") if any(r is c for r in option_plans(g, x))) if b), "")
+        if opens:  # a plan no option row opens (compounded sermorelin on /muscle/) stays in the clinic table, without a card
+            cards.append(decide_card("Cheapest", clean(c["plan_name"]), chip,
+                                     f'<strong>From {usd(c["price_monthly"])}/mo at {name}</strong>{plan_src(g, c)}{plan_letter(c)}',
+                                     opens, parts.plan_picture(c)))
     # No prescription: the over-the-counter or cosmetic option; a goal without one, its research-use option
     otc = next((p for p in g["peptides"] if approved_row(p) and needs_rx(p) is False), None)
     cos = next((p for p in g["peptides"] if is_cosmetic(p)), None)
@@ -2275,13 +2340,15 @@ def category_body(g):
     </div></details>
   </div>
 </section>{LEGAL_ACC_JS}""" if legal else (f'<section class="section goal-sec"><div class="wrap"><p>{moved}</p></div></section>' if moved else "")
-    plans = clinic_plans(g)
+    plans = table_plans(g)
     cards = decide_cards(g)
     own = {f'src-{s["n"]}' for s in g.get("sources", [])}
     srcs += page_sources(opt_html + legal_html + cards, own)
     if plans or goal_plans(g):
         # no link to any clinic site on a page with clinic plans: the plan sources show their address as plain text
         srcs = re.sub(r'(<li value="\d+" id="src-plan-[^"]+">.*?)<a href="([^"]+)" rel="nofollow">\2</a>', r"\1\2", srcs)
+    tools_html, tool_srcs = tools_block(g, max([int(x) for x in re.findall(r'<li value="(\d+)"', srcs)] + [len(re.findall(r"<li", srcs))]) + 1)
+    srcs += tool_srcs
     sources_html = f"""<section class="section" id="sources">
   <div class="wrap">
     <h2 class="h-sources">Sources</h2>
@@ -2307,7 +2374,7 @@ def category_body(g):
       <div class="flow-compare"><div class="step-panel"><p class="goal-for">{g["for"]}</p><ul class="opts">{opt_html}</ul>{instead}</div></div>
     </div>
   </div>
-</section>{goal_clinic_section(g, plans)}{legal_html}
+</section>{goal_clinic_section(g, plans)}{tools_html}{legal_html}
 <!--next:{g["slug"]}-->
 {sources_html}
 <div class="wrap sellers-all">{windows}</div>
@@ -2825,12 +2892,12 @@ def seller_page(r):
   <div class="wrap">
     <div class="seller-head">
       <div class="seller-id">
-        {parts.tile(r["seller_slug"], seller_base(seller_name(r)), 72, shop=not clinic, seller=r)}
+        {f'<img class="h1-logo" src="{r["logo_path"]}" alt="" height="28">' if clinic and r.get("logo_path") else parts.tile(r["seller_slug"], seller_base(seller_name(r)), 72, shop=not clinic, seller=r)}
         <div class="seller-id-text">
         <h1>{seller_base(seller_name(r))} review</h1>
         <p class="seller-kind"><span class="chip chip-neutral">{kind_words(r)[1]}</span></p>
         {author_line(checked) if checked else ""}
-        <p class="small seller-meta">{meta}</p>
+        <p class="small seller-meta">{meta}</p>{not_in_line(r["seller_slug"], "p")}
         </div>
       </div>
       <div class="seller-score"><p class="check-n"><span class="num-xl">{score_of(r)}</span> <span class="num-unit">of {out_of(r)} checks</span></p>{seller_action(r)}</div>
@@ -3069,7 +3136,7 @@ def clinics_directory(clinics):
         plans = clinic_plan_rows(r)
         low = min((float(p["price_monthly"]) for p in plans), default=None)
         trs.append(f'<tr data-c="{met_checks(r)}" data-s="{r["score"]}" data-subs="{" ".join(clinic_subs(r))}" data-low="{low if low is not None else ""}">'
-                   f'<td><span class="cell-pic">{parts.tile(r["seller_slug"], seller_base(seller_name(r)), 40, seller=r)}<a class="name" href="/sellers/{r["seller_slug"]}/">{seller_name(r)}</a></span></td>'
+                   f'<td><span class="cell-pic">{parts.tile(r["seller_slug"], seller_base(seller_name(r)), 40, seller=r)}<a class="name" href="/sellers/{r["seller_slug"]}/">{seller_name(r)}</a></span>{not_in_line(r["seller_slug"])}</td>'
                    f'<td data-l="What it prescribes">{escape(subs_words(sorted(clinic_subs(r), key=lambda x: sub_label(x).lower())))}</td>'
                    f'<td class="num" data-l="From">{usd(low) + "/mo" if low is not None else "unknown"}</td>'
                    f'<td data-l="Checks">{check_bar(r)}</td><td data-l="FDA letters">{home.where_letters(me, r)}</td>'
@@ -4663,6 +4730,8 @@ def main():
     (DIST / "assets" / "fonts").mkdir()
     for f in (ROOT / "assets" / "fonts").iterdir():
         shutil.copy(f, DIST / "assets" / "fonts" / f.name)
+    if (ROOT / "assets" / "logos").exists():
+        shutil.copytree(ROOT / "assets" / "logos", DIST / "assets" / "logos")
     for f in (ROOT / "assets" / "og").glob("*.png"):
         shutil.copy(f, DIST / "assets" / "og" / f.name)
     (DIST / "assets" / "tokens.css").write_text(tokens_css(), encoding="utf-8")

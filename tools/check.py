@@ -572,7 +572,7 @@ def check_parts(P):
             if not (DIST / src).exists():
                 continue
             win = json.loads((DIST / src).read_text(encoding="utf-8"))["html"]
-            who = set(re.findall(r'<tr><td><span class="cell-pic"><span class="tile[^>]*>[^<]*</span>(?:<a class="name" href="/sellers/([^"/]+)/"|<span class="name">([^<]+))', win))
+            who = set(re.findall(r'<tr><td><span class="cell-pic"><span class="tile[^>]*>(?:<img [^>]*>|[^<]*)</span>(?:<a class="name" href="/sellers/([^"/]+)/"|<span class="name">([^<]+))', win))
             if len(who) != int(n):
                 errs.append(f"{name}: {src} lists {len(who)} clinics, its button says {n}")
             if f'<span class="num">${price}</span>' not in win:
@@ -664,14 +664,14 @@ def check_parts(P):
             # and every seller page in the build has its row, none hidden; the script and the filter's options name
             # only sellers and substances that are in the build's rows.
             built = {n.split("/")[1] for n in P if n.startswith("sellers/") and n != "sellers/index.html"}
-            trs = re.findall(r"<tr( [^>]*)?><td>(?:<span class=\"cell-pic\"><span class=\"tile[^>]*>[^<]*</span>)?<a class=\"name\" href=\"/sellers/([^\"/]+)/\"", html)
+            trs = re.findall(r"<tr( [^>]*)?><td>(?:<span class=\"cell-pic\"><span class=\"tile[^>]*>(?:<img [^>]*>|[^<]*)</span>)?<a class=\"name\" href=\"/sellers/([^\"/]+)/\"", html)
             if {s for _, s in trs} != built:
                 errs.append(f"{name}: the tables do not list every seller page in the build")
             # two tabs, clinics first (owner task w2, 3 Nov 2026): each seller in exactly one table, the clinics table
             # first in the HTML, the lede's counts and the tab labels equal to the rows, no old jargon chip label
             def tbl_rows(tid):
                 m = re.search(rf'<table[^>]*id="{tid}".*?<tbody>(.*?)</tbody>', html, re.S)
-                return re.findall(r'<tr[^>]*><td>(?:<span class="cell-pic"><span class="tile[^>]*>[^<]*</span>)?<a class="name" href="/sellers/([^"/]+)/"', m.group(1)) if m else []
+                return re.findall(r'<tr[^>]*><td>(?:<span class="cell-pic"><span class="tile[^>]*>(?:<img [^>]*>|[^<]*)</span>)?<a class="name" href="/sellers/([^"/]+)/"', m.group(1)) if m else []
             cl, sh = tbl_rows("clinics-table"), tbl_rows("sellers-table")
             if len(cl + sh) != len(set(cl + sh)):
                 errs.append(f"{name}: a seller has a row in both tables or twice in one")
@@ -747,7 +747,7 @@ def check_parts(P):
     pairs = [n for n in P if re.fullmatch(r"compare/[a-z0-9-]+-vs-[a-z0-9-]+/index.html", n)]
     for name in pairs:
         html = (DIST / name).read_text(encoding="utf-8")
-        heads = re.findall(r'<th scope="col">(?:<span class="tile[^>]*>[^<]*</span>)?<a class="name" href="(/(?:peptides|sellers)/[^"/]+/)"', html)
+        heads = re.findall(r'<th scope="col">(?:<span class="tile[^>]*>(?:<img [^>]*>|[^<]*)</span>)?<a class="name" href="(/(?:peptides|sellers)/[^"/]+/)"', html)
         if len(heads) != 2 or any(f'href="{h}"' not in html.split('id="compare-two"', 1)[-1].split("cmp-link")[0].split("</table>")[-1] for h in heads):
             errs.append(f"{name}: does not link both sides to their pages")
         if all(h.startswith("/peptides/") for h in heads) and len(re.findall(r'rel="nofollow">(?:FDA source|Source)</a>', html)) < 2:
@@ -1067,6 +1067,29 @@ def check_parts(P):
             ok = f"u.{slug}" in offered if kind == "peptides" else any(v.startswith(f"p.{slug}.") for v in offered)
             if tool and not ok:
                 errs.append(f"{name}: the tool's pickers do not offer {slug}")
+    # Not available in (pages.md, Category): a clinic with state limits shows them on its profile, from the data file
+    site = json.loads((Path(os.environ["SITE_JSON"]) if os.environ.get("SITE_JSON") else ROOT / "data" / "site.json").read_text(encoding="utf-8"))
+    states = {k: v for k, v in json.loads((ROOT / "data" / "clinic_states.json").read_text(encoding="utf-8")).items() if not k.startswith("_")}
+    for slug in sorted({r["seller_slug"] for r in site.get("seller_states") or []} or states):
+        page = DIST / "sellers" / slug / "index.html"
+        if page.exists() and 'class="not-in"' not in page.read_text(encoding="utf-8"):
+            errs.append(f"sellers/{slug}/index.html: no Not available in line")
+    # A real logo (pages.md, Seller tile): a file in assets/logos/ needs its entry with a source, and shows beside the clinic's H1
+    logos = json.loads((ROOT / "data" / "seller_logos.json").read_text(encoding="utf-8"))
+    for f in sorted((ROOT / "assets" / "logos").glob("*")) if (ROOT / "assets" / "logos").exists() else []:
+        e = logos.get(f.stem) or {}
+        if not (e.get("logo_source") and e.get("logo_checked_at")):
+            errs.append(f"assets/logos/{f.name}: no source and date in data/seller_logos.json")
+        if not (DIST / "assets" / "logos" / f.name).exists():
+            errs.append(f"assets/logos/{f.name}: not in the build")
+    # Tools block (pages.md, Category): a coupon row stays hidden until its seller's data sets the flag; never a research-use shop
+    for g in site.get("goals") or []:
+        page = DIST / g["slug"] / "index.html"
+        for t in g.get("tools") or []:
+            prof = next((p for p in site.get("seller_profiles") or [] if p["seller_slug"] == t["seller_slug"]), {})
+            shows = page.exists() and f'id="src-tool-{t["seller_slug"]}"' in page.read_text(encoding="utf-8")
+            if shows and ((t.get("needs") and prof.get(t["needs"]) is not True) or (prof.get("product_count") or 0) > 0):
+                errs.append(f'{g["slug"]}/index.html: {t["name"]} shows in Tools without its flag, or is a research-use shop')
     # /sources/ (pages.md, Sources): every group shown has at least one source
     src = DIST / "sources" / "index.html"
     if src.exists():

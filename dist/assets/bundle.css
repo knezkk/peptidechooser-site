@@ -521,6 +521,16 @@ a.legal-card:hover{border-color:var(--clinic)}
 /* The goal page's clinic table (tbl-compact): from 641px each row is one line, the care fee after the price (owner task 3 Nov 2026). */
 /* The substance page's clinic table (pep-sold) uses the same one-line rows (owner task 3 Nov 2026). */
 @media (min-width:641px){:is(.goal-sec,.pep-sold) .tbl-clinics td .sub{display:inline;margin-left:6px}:is(.goal-sec,.pep-sold) .tbl-clinics td{height:auto;padding:4px 12px}}
+/* Not available in (pages.md, Category and Seller; owner task 4 Nov 2026): one small line on a clinic's rows and its profile. */
+.not-in{display:block;margin-top:2px;font-size:var(--small-size);font-weight:400;line-height:1.4;color:var(--ink-2)}
+p.not-in{margin:4px 0 0}
+/* Tools (pages.md, Category): what helps but does not prescribe. Hairlines, no card. */
+.tool-list{list-style:none;margin:12px 0 0;padding:0;border-top:1px solid var(--line)}
+.tool-row{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px 24px;padding:12px 0;border-bottom:1px solid var(--line)}
+.tool-row p{flex:1 1 320px;margin:0}
+/* A real logo beside a clinic's H1 (pages.md, Seller tile): 28px tall, its width its own, no frame. */
+.h1-logo{display:block;flex:none;height:28px;width:auto;max-width:140px;margin-top:8px}
+@media (max-width:639px){.seller-id:has(>.h1-logo){flex-direction:column;gap:8px}.h1-logo{margin-top:0}}
 /* What to do next: three text links between hairlines, no card. */
 .next-list{list-style:none;margin:0;padding:0}
 .next-list li{padding:10px 0;border-top:1px solid var(--line)}
