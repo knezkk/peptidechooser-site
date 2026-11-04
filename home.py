@@ -98,7 +98,7 @@ def where_row(b, r):
     return ('<tr>'
             f'<td><a class="name" href="/sellers/{r["seller_slug"]}/">{b.seller_name(r)}</a><span class="sub">{escape(where_line(b, r))}</span></td>'
             f'<td data-l="Type">{chip}</td>'
-            f'<td class="num" data-l="Checks">{r.get("score") or 0} of {len(b.SCORE_CHECKS)}</td>'
+            f'<td class="num" data-l="Checks">{b.score_of(r) or 0} of {b.out_of(r)}</td>'
             f'<td class="num" data-l="From">{where_from(b, r)}</td>'
             f'<td data-l="FDA letters">{where_letters(b, r)}</td>'
             f'<td class="act">{where_action(b, r)}</td></tr>')
@@ -124,7 +124,7 @@ def where_section(b):
     html = f"""
 <section class="section home-sec" id="where">
   <div class="wrap">
-    <div class="sec-hd"><div><h2>Where to get it: {n} sellers, each with {num_word(len(b.SCORE_CHECKS)).lower()} background checks</h2><p>Online clinics prescribe and ship FDA-approved or compounded medicines. Research-use shops sell vials labeled for lab use. Pick a substance and a type; every name opens our page on that seller.</p></div></div>
+    <div class="sec-hd"><div><h2>Where to get it: {n} sellers, each with background checks</h2><p>Online clinics prescribe and ship FDA-approved or compounded medicines. Research-use shops sell vials labeled for lab use. Pick a substance and a type; every name opens our page on that seller.</p></div></div>
     <form class="where-filter" hidden onsubmit="return false">
       <div class="where-f"><label for="where-sub">Substance</label><select class="input" id="where-sub"><option value="">Any</option>{opts}</select></div>
       <div class="seg" role="group" aria-label="Type">{seg}</div>
@@ -136,7 +136,7 @@ def where_section(b):
       <thead><tr><th scope="col">Seller</th><th scope="col">Type</th><th scope="col">Checks</th><th scope="col">From</th><th scope="col">FDA letters</th><th scope="col"><span class="vh">Action</span></th></tr></thead>
       <tbody>{body}</tbody>
     </table></div>
-    <p class="small where-note">Checks are facts we hold (lab reports, FDA letters, registered company, legal pages, fresh prices), not a safety grade. <a href="/how-we-rate/">How we rate</a></p>
+    <p class="small where-note">Clinics are checked on four facts (FDA letters, registered company, legal pages, fresh prices), shops on those and lab reports, five. Facts we hold, not a safety grade. <a href="/how-we-rate/">How we rate</a></p>
     <p class="sec-act"><a class="btn btn-ink" id="where-all" href="/sellers/">See all {n} sellers</a></p>
   </div>
 </section>
@@ -228,7 +228,7 @@ def learn_rate_section(b):
       <p class="sec-act"><a class="btn btn-line" href="/learn/">All {len(guides.GUIDES)} guides</a></p>
     </div>
     <div class="rate-card" aria-labelledby="rate-h"><h2 id="rate-h">How we rate</h2>
-      <p>Every seller gets the same five checks, in this order. They are facts we hold about the seller, not a safety grade.</p>
+      <p>Every shop gets these five checks, in this order; an online clinic gets the last four, because clinics publish no lab reports. They are facts we hold about the seller, not a safety grade.</p>
       <ol class="rate-list">{rate}</ol>
       <a class="more-link" href="/how-we-rate/">Read the full method →</a>
     </div>

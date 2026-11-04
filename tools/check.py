@@ -436,17 +436,19 @@ def check_parts(P):
             # the seller page in one screen (owner task 3 Nov 2026): the five marks once, in the card, with no date in
             # its rows; the five facts once, in the legit list; H1 "<Name> review" opening the unchanged title; the
             # letters section at #fda-letters
+            # (a clinic: four, owner decision C9, 3 Nov 2026)
+            want = 4 if 'class="check-nolab"' in html else 5
             card = re.search(r'<div class="board check-card".*?<ul class="check-chips">(.*?)</ul>', html, re.S)
-            if not card or len(re.findall(r'class="chip chip-(?:ok|neutral) mark-(?:yes|no)"', card.group(1))) != 5:
-                errs.append(f"{name}: Background check card without its five marks")
+            if not card or len(re.findall(r'class="chip chip-(?:ok|neutral) mark-(?:yes|no)"', card.group(1))) != want:
+                errs.append(f"{name}: Background check card without its {want} marks")
             elif re.search(r"\d{1,2} [A-Z][a-z]{2} \d{4}", re.sub(r"<[^>]+>", " ", card.group(1))):
                 errs.append(f"{name}: a date in the Background check card's check rows")
-            if len(re.findall(r'class="chip chip-(?:ok|neutral) mark-(?:yes|no)"', main.group(1) if main else "")) != 5:
+            if len(re.findall(r'class="chip chip-(?:ok|neutral) mark-(?:yes|no)"', main.group(1) if main else "")) != want:
                 errs.append(f"{name}: the check marks appear outside the card")
             legit = re.search(r'<ul class="check-list legit-list">(.*?)</ul>', html, re.S)
-            if not legit or len(re.findall(r'<span class="check-key">', legit.group(1))) != 5 \
-                    or len(re.findall(r'class="check-line"', html)) != 5:
-                errs.append(f"{name}: the five facts not once, in the legit list")
+            if not legit or len(re.findall(r'<span class="check-key">', legit.group(1))) != want \
+                    or len(re.findall(r'class="check-line"', html)) != want:
+                errs.append(f"{name}: the {want} facts not once, in the legit list")
             h1 = [t.strip() for tag, t in P[name].h if tag == "h1"]
             if not h1 or not h1[0].endswith(" review") or not P[name].title.strip().startswith(h1[0][:-7]):
                 errs.append(f"{name}: H1 not '<Name> review' or the title does not start with the name ({h1})")
@@ -710,6 +712,35 @@ def check_parts(P):
         h1 = re.search(r"<h1[^>]*>(.*?)</h1>", html, re.S)
         if not h1 or re.sub(r"<[^>]+>", "", h1.group(1)).strip() != g["h1"]:
             errs.append(f"{name}: H1 is not the goal's h1 in data/site.json")
+    # Clinics are scored out of 4, shops out of 5 (owner decision C9, 3 Nov 2026; pages.md, Seller): no clinic page or row
+    # says "of 5", no shop page or row "of 4", no compare pair of two clinics or /sellers/ row mixes them, and /how-we-rate/
+    # carries the rule sentence.
+    for name in P:
+        if not re.fullmatch(r"sellers/[^/]+/index\.html", name):
+            continue
+        html = (DIST / name).read_text(encoding="utf-8")
+        t = re.sub(r"<script.*?</script>|<[^>]+>", " ", html, flags=re.S)
+        wrong = "of 5" if 'class="check-nolab"' in html else "of 4"
+        # a similar-seller line names a seller of the same kind, so one wrong count on the page is enough
+        if re.search(rf"\b\d {wrong}\b", t):
+            errs.append(f"{name}: says '{wrong}'")
+    if "sellers/index.html" in P:
+        h = (DIST / "sellers/index.html").read_text(encoding="utf-8")
+        for tid, wrong in (("clinics-table", "of 5"), ("sellers-table", "of 4")):
+            tb = re.search(rf'<table[^>]*id="{tid}".*?</table>', h, re.S)
+            if tb and re.search(rf">\d {wrong}<", tb.group(0)):
+                errs.append(f"sellers/index.html: #{tid} says '{wrong}'")
+    if "how-we-rate/index.html" in P:
+        if "a clinic is checked on four facts, not five" not in (DIST / "how-we-rate/index.html").read_text(encoding="utf-8"):
+            errs.append("how-we-rate/index.html: without the rule sentence (a clinic is checked on four facts, not five)")
+    for name in P:
+        if re.fullmatch(r"compare/[^/]+-vs-[^/]+/index\.html", name) and "our five checks" in (DIST / name).read_text(encoding="utf-8"):
+            errs.append(f"{name}: says 'our five checks' (a clinic pair: four)")
+    if (DIST / "search-index.json").exists():
+        for e in json.loads((DIST / "search-index.json").read_text(encoding="utf-8")):
+            wrong = {"Clinic": "of 5", "Seller": "of 4"}.get(e["type"])
+            if wrong and re.search(rf"\b\d {wrong}\b", e.get("line", "")):
+                errs.append(f"search-index.json: {e['name']} says '{wrong}'")
     # The letters feed (pages.md, Letters): it parses as XML and every item links to the letter on fda.gov.
     feed = DIST / "fda-warning-letters" / "feed.xml"
     if feed.exists():
