@@ -19,7 +19,7 @@ import guides  # noqa: E402
 import paid  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
-NO_LISTING_TEXTS = ("Any pharmacy, no prescription", "On prescription; no clinic prices yet",
+NO_LISTING_TEXTS = ("Any pharmacy, no prescription", "at any pharmacy, no prescription", "On prescription; no clinic prices yet",
                     "Sold in creams and serums; no prices checked", "No listings yet")
 DIST = ROOT / "dist"
 SITE = "https://peptidechooser.com"
