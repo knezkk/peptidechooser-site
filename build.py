@@ -184,6 +184,19 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape'&&n.classList
 # the page view's (window.pcGA, set only after "Accept"): without consent an event is dropped, never queued. One listener per
 # kind on `document`, so windows loaded on demand are covered; capture, so it runs before a click moves or removes anything.
 # Parameters come from data-ev-* attributes the build writes (slugs and numbers), never from what a visitor typed.
+# The state filter (pages/windows.md, State filter; owner task 5 Nov 2026): the choice stays in this browser, never in the URL.
+STATE_SCRIPT = r"""(function(){var K='pc_state',S={AL:'Alabama',AK:'Alaska',AZ:'Arizona',AR:'Arkansas',CA:'California',CO:'Colorado',CT:'Connecticut',DE:'Delaware',DC:'District of Columbia',FL:'Florida',GA:'Georgia',HI:'Hawaii',ID:'Idaho',IL:'Illinois',IN:'Indiana',IA:'Iowa',KS:'Kansas',KY:'Kentucky',LA:'Louisiana',ME:'Maine',MD:'Maryland',MA:'Massachusetts',MI:'Michigan',MN:'Minnesota',MS:'Mississippi',MO:'Missouri',MT:'Montana',NE:'Nebraska',NV:'Nevada',NH:'New Hampshire',NJ:'New Jersey',NM:'New Mexico',NY:'New York',NC:'North Carolina',ND:'North Dakota',OH:'Ohio',OK:'Oklahoma',OR:'Oregon',PA:'Pennsylvania',RI:'Rhode Island',SC:'South Carolina',SD:'South Dakota',TN:'Tennessee',TX:'Texas',UT:'Utah',VT:'Vermont',VA:'Virginia',WA:'Washington',WV:'West Virginia',WI:'Wisconsin',WY:'Wyoming'},cur='';
+try{cur=localStorage.getItem(K)||'';}catch(x){}if(!S[cur])cur='';
+function one(s){if(s.options.length<2)Object.keys(S).sort(function(a,b){return S[a].localeCompare(S[b]);}).forEach(function(k){var o=document.createElement('option');o.value=k;o.textContent=k+' '+S[k];s.appendChild(o);});
+s.value=cur||'all';s.closest('.state-filter').hidden=false;var id=s.getAttribute('data-state-for'),r=id?document.getElementById(id):s.closest('[data-state-root]');if(!r)return;
+var all={},ok={};[].forEach.call(r.querySelectorAll('tr[data-clinic]'),function(t){var c=t.getAttribute('data-clinic'),out=cur&&(' '+(t.getAttribute('data-no')||'')+' ').indexOf(' '+cur+' ')>=0;
+all[c]=1;if(out)t.setAttribute('data-state-out','');else{t.removeAttribute('data-state-out');ok[c]=1;}});
+var n=r.querySelector('.state-n');if(n){n.hidden=!cur;n.textContent=cur?Object.keys(ok).length+' of '+Object.keys(all).length+' '+s.getAttribute('data-noun')+' ship to '+S[cur]:'';}}
+function paint(){[].forEach.call(document.querySelectorAll('select[data-state]'),one);}
+window.pcState=paint;
+document.addEventListener('change',function(e){var s=e.target;if(!s.matches||!s.matches('select[data-state]'))return;cur=s.value==='all'?'':s.value;try{if(cur)localStorage.setItem(K,cur);else localStorage.removeItem(K);}catch(x){}paint();document.dispatchEvent(new Event('pc-state'));});
+paint();if(cur)document.dispatchEvent(new Event('pc-state'));})();
+"""
 EVENTS_SCRIPT = r"""
 (function(){var path=location.pathname,pt=document.body&&document.body.getAttribute('data-pt')||'other',bits=path.split('/'),base={page_type:pt,page_path:path};
 if(pt==='seller')base.seller=bits[2];if(pt==='peptide')base.substance=bits[2];if(pt==='goal')base.goal=bits[1];
@@ -895,6 +908,28 @@ def clinic_states():
 CLINIC_STATES = clinic_states()
 
 
+def strip_tags(t):
+    return re.sub(r"<[^>]+>", "", t or "")
+
+
+def state_attrs(slug):
+    """A clinic's row for the state filter (pages/windows.md, State filter): its slug and the states it does not serve. No
+    exclusion data means it serves every state."""
+    states = (CLINIC_STATES.get(slug) or {}).get("not_in") or []
+    return f' data-clinic="{slug}"' + (f' data-no="{" ".join(states)}"' if states else "")
+
+
+def state_filter(noun="clinics", target=""):
+    """"Your state": one control in a filter row. nav.js fills the select, keeps the choice in this browser and hides the rows of
+    clinics that do not serve it. Hidden without JavaScript, where every row shows."""
+    to = f' data-state-for="{target}"' if target else ""
+    return (f'<label class="state-filter" hidden><span>Your state</span><select class="input" data-state data-noun="{noun}"{to} data-filter="state">'
+            '<option value="all">All states</option></select></label>')
+
+
+STATE_N = '<p class="small state-n" aria-live="polite" hidden></p>'
+
+
 def not_in_line(slug, tag="span"):
     """"Not available in: AL, AK, ..." as one small line, or "" for a clinic that serves every state."""
     states = (CLINIC_STATES.get(slug) or {}).get("not_in")
@@ -1225,7 +1260,7 @@ def clinic_window(g, p):
         prof = PROFILES.get(r["seller_slug"], {})
         base = seller_base(r["seller_name"])
         checks = f'{score_of(prof) or 0} of {out_of(prof)}' if prof else "not checked"
-        trs.append(f'<tr><td><span class="cell-pic">{parts.tile(r["seller_slug"], base, 28, seller=prof)}{clinic_link(r["seller_slug"], base)}</span>{not_in_line(r["seller_slug"])}</td>'
+        trs.append(f'<tr{state_attrs(r["seller_slug"])}><td><span class="cell-pic">{parts.tile(r["seller_slug"], base, 28, seller=prof)}{clinic_link(r["seller_slug"], base)}</span>{not_in_line(r["seller_slug"])}</td>'
                    f'<td data-l="Plan"><span class="cell-pic">{parts.plan_picture(r)}<span>{explain_brand(r["plan_name"], named)}</span></span></td>'
                    f'<td data-l="What it is">{plan_chip(g, r)}</td>'
                    f'<td data-l="Form">{plan_form_word(r)}</td>'
@@ -1235,9 +1270,10 @@ def clinic_window(g, p):
                    f'<td class="act">{clinic_row_act(r)}</td></tr>')
     newest = max(r["last_seen"] for r in rows)
     who = "Sellers" if otc else "Clinics"
-    return f"""<dialog class="sellers-dlg clinic-dlg" id="{key}" aria-labelledby="{key}-h"><div class="dlg-in">
+    return f"""<dialog class="sellers-dlg clinic-dlg" id="{key}" aria-labelledby="{key}-h"><div class="dlg-in" data-state-root>
   <div class="dlg-hd"><h2 id="{key}-h">{p["name"]}</h2><form method="dialog"><button class="btn btn-line btn-sm" type="submit">Close</button></form></div>
   <p class="dlg-lede">{who} with plans, prices checked {nice_date(newest)}.</p>
+  {state_filter(who.lower())}{STATE_N}
   <div class="tbl-wrap"><table class="tbl tbl-cards tbl-compact tbl-window"><thead><tr><th scope="col">{who[:-1]}</th><th scope="col">Plan</th><th scope="col">What it is</th><th scope="col">Form</th><th scope="col">Per month</th><th scope="col">Care fee</th><th scope="col">Checks</th><th scope="col"><span class="vh">Our page</span></th></tr></thead><tbody>{"".join(trs)}</tbody></table></div>
   <p class="dlg-foot">Prices are the clinics' published monthly prices on {nice_date(newest)}. A clinic with an FDA warning letter is still listed; the letter is public record.</p>
 </div></dialog>"""
@@ -1752,7 +1788,7 @@ document.addEventListener('click',function(e){var b=e.target.closest('.sellers-o
 if(d){e.preventDefault();d.showModal();return;}var src=b.getAttribute('data-src');if(!src)return;e.preventDefault();
 fetch(src).then(function(r){return r.json();}).then(function(j){document.querySelector('.sellers-all').insertAdjacentHTML('beforeend',j.html);
 var n=document.getElementById(b.getAttribute('data-dlg'));n.querySelectorAll('tbody > tr').forEach(function(t){t.style.opacity='1';});
-n.showModal();}).catch(function(){location.href=b.href;});return;}
+if(window.pcState)pcState();n.showModal();}).catch(function(){location.href=b.href;});return;}
 var d=e.target.closest('.sellers-dlg');if(d&&e.target===d)d.close();});})();
 </script>"""
 
@@ -2207,16 +2243,18 @@ def clinic_section(g, rows):
         care = care_note(r)
         # on phones the first CLINICS_FIRST rows show until "Show all N" (owner answer Q2 a, 2 Nov 2026; bundle.css, Clinic table)
         more = ' class="more"' if i >= CLINICS_FIRST else ""
-        trs.append(f'<tr{more}><td>{clinic_link(r["seller_slug"], seller_base(r["seller_name"]))}{not_in_line(r["seller_slug"])}</td><td data-l="Plan">{explain_brand(r["plan_name"], named)}</td>'
+        plan = explain_brand(r["plan_name"], named)
+        trs.append(f'<tr{more}{state_attrs(r["seller_slug"])}><td>{clinic_link(r["seller_slug"], seller_base(r["seller_name"]))}</td><td data-l="Plan"><span class="plan-cut" title="{escape(strip_tags(plan))}">{plan}</span></td>'
                    f'<td>{plan_chip(g, r)}</td>'
                    f'<td data-l="Per month"><span class="num">{usd(r["price_monthly"])}</span>{plan_letter(r)}{f"<span class=sub>{care}</span>" if care else ""}</td>'
                    # every row: the letter chip by the price, no FDA letter column, "See plans" to our clinic page (owner answers
                    # Q1 a and Q2 b, 3 Nov 2026)
                    f'<td class="act">{clinic_row_act(r)}</td></tr>')
     return f"""
-<section class="band-2" id="clinics">
+<section class="band-2" id="clinics" data-state-root>
   <div class="wrap">
     <div class="sec-hd"><div><h2>Online clinic prices</h2><p>{len(rows)} plans at the online clinics we track, cheapest first.</p></div></div>
+    <div class="clinic-filter">{state_filter()}</div>{STATE_N}
     <div class="tbl-wrap"><table class="tbl tbl-cards tbl-clinics">
       <thead><tr><th scope="col">Clinic</th><th scope="col">Plan</th><th scope="col">What it is</th><th scope="col">Per month</th><th scope="col"><span class="vh">Action</span></th></tr></thead>
       <tbody>{"".join(trs)}</tbody>
@@ -2281,11 +2319,12 @@ CLINIC_FILTER_JS = """<script>
 rows=[].slice.call(tb.rows),n=document.getElementById('clinic-n'),no=f.querySelector('.year-chip');
 function val(g){var on=f.querySelector('[data-g="'+g+'"][aria-pressed="true"]');return on?on.getAttribute('data-v'):'';}
 function draw(){var k=val('kind'),fm=val('form'),nl=no.getAttribute('aria-pressed')==='true',i=0;s.classList.remove('clip');
-rows.forEach(function(r){var ok=(!k||r.getAttribute('data-k')===k)&&(!fm||r.getAttribute('data-f')===fm)&&(!nl||r.getAttribute('data-l')==='0');
+rows.forEach(function(r){var ok=(!k||r.getAttribute('data-k')===k)&&(!fm||r.getAttribute('data-f')===fm)&&(!nl||r.getAttribute('data-l')==='0')&&!r.hasAttribute('data-state-out');
 r.hidden=!ok;r.style.opacity=1;if(ok)i++;});n.textContent=i+' of '+rows.length+' plans';var m=s.querySelector('.clinics-more');if(m)m.hidden=true;}
 f.hidden=false;f.addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;
 if(b.classList.contains('year-chip')){b.setAttribute('aria-pressed',b.getAttribute('aria-pressed')==='true'?'false':'true');}
-else{f.querySelectorAll('[data-g="'+b.getAttribute('data-g')+'"]').forEach(function(x){x.setAttribute('aria-pressed',x===b?'true':'false');});}draw();});})();
+else{f.querySelectorAll('[data-g="'+b.getAttribute('data-g')+'"]').forEach(function(x){x.setAttribute('aria-pressed',x===b?'true':'false');});}draw();});
+document.addEventListener('pc-state',draw);})();
 </script>"""
 
 
@@ -2304,24 +2343,26 @@ def goal_clinic_section(g, rows):
         k = plan_kind(r)
         kind = "brand" if k in ("brand", "generic") else "compounded" if k == "compounded" else "other"
         more = ' class="more"' if i >= CLINICS_FIRST else ""
-        trs.append(f'<tr{more} data-k="{kind}" data-f="{plan_form(r)}" data-l="{1 if (r.get("fda_letter_count") or 0) else 0}">'
-                   f'<td><span class="cell-pic">{parts.plan_picture(r)}<span class="name">{explain_brand(r["plan_name"], named)}</span></span></td>'
+        plan = explain_brand(r["plan_name"], named)
+        trs.append(f'<tr{more}{state_attrs(r["seller_slug"])} data-k="{kind}" data-f="{plan_form(r)}" data-l="{1 if (r.get("fda_letter_count") or 0) else 0}">'
+                   f'<td><span class="cell-pic">{parts.plan_picture(r)}<span class="name plan-cut" title="{escape(strip_tags(plan))}">{plan}</span></span></td>'
                    f'<td data-l="What it is">{plan_chip(g, r)}</td>'
                    f'<td data-l="Per month"><span class="num">{usd(r["price_monthly"])}</span>{plan_letter(r)}{f"<span class=sub>{care}</span>" if care else ""}</td>'
-                   f'<td data-l="Clinic"><span class="cell-pic">{parts.tile(r["seller_slug"], seller_base(r["seller_name"]), 28, seller=PROFILES.get(r["seller_slug"]))}{clinic_link(r["seller_slug"], seller_base(r["seller_name"]), True)}</span>{not_in_line(r["seller_slug"])}</td>'
+                   f'<td data-l="Clinic"><span class="cell-pic">{parts.tile(r["seller_slug"], seller_base(r["seller_name"]), 28, seller=PROFILES.get(r["seller_slug"]))}{clinic_link(r["seller_slug"], seller_base(r["seller_name"]), True)}</span></td>'
                    f'<td class="act">{clinic_row_act(r)}</td></tr>')
     seg = lambda grp, opts: (f'<div class="seg" role="group" aria-label="{grp[1]}">'
                              + "".join(f'<button type="button" class="seg-b" data-g="{grp[0]}" data-v="{v}" data-filter="{grp[0]}" data-value="{v or "all"}" aria-pressed="{"true" if not v else "false"}">{t}</button>'
                                        for v, t in opts) + "</div>")
     filt = (f'<div class="clinic-filter" hidden>{seg(("kind", "Kind of plan"), (("brand", "Brand"), ("compounded", "Compounded"), ("", "All")))}'
             f'{seg(("form", "Form"), (("pill", "Pill"), ("shot", "Shot"), ("", "All")))}'
-            '<button type="button" class="year-chip" data-filter="fda_letter" data-value="none" aria-pressed="false">No FDA letter</button></div>')
+            '<button type="button" class="year-chip" data-filter="fda_letter" data-value="none" aria-pressed="false">No FDA letter</button>'
+            f'{state_filter()}</div>')
     return f"""
-<section class="band-2 goal-sec" id="clinics">
+<section class="band-2 goal-sec" id="clinics" data-state-root>
   <div class="wrap">
     <h2 class="goal-h2">Online clinic prices</h2>
     {filt}
-    <p class="small clinic-n" id="clinic-n" aria-live="polite">{len(rows)} of {len(rows)} plans</p>
+    {STATE_N}<p class="small clinic-n" id="clinic-n" aria-live="polite">{len(rows)} of {len(rows)} plans</p>
     <div class="tbl-wrap"><table class="tbl tbl-compact tbl-cards tbl-clinics">
       <thead><tr><th scope="col">Plan</th><th scope="col">What it is</th><th scope="col">Per month</th><th scope="col">Clinic</th><th scope="col"><span class="vh">Action</span></th></tr></thead>
       <tbody>{"".join(trs)}</tbody>
@@ -3108,6 +3149,7 @@ def sellers_filter(shops, clinics):
       <div class="legal-filter sub-filter"><label for="sellers-sub">Substance</label><select class="input" id="sellers-sub" data-filter="substance"><option value="">Any substance</option>{opts}</select>
       <label for="sellers-min">Minimum checks</label><select class="input" id="sellers-min" data-filter="min_checks">{mins}</select>
       <label for="sellers-sort" class="sort-shops">Sort</label><select class="input sort-shops" id="sellers-sort" data-filter="sort">{sorts}</select>
+      <span class="sort-clinics">{state_filter("clinics", "clinics")}</span>
       <label for="clinics-sort" class="sort-clinics">Sort</label><select class="input sort-clinics" id="clinics-sort" data-filter="sort"><option value="checks">Most checks</option><option value="low">Lowest monthly price</option></select></div>
       <div class="year-chips" role="group" aria-labelledby="sellers-checks"><span id="sellers-checks">Checks met</span>{chips}</div>
       </div>
@@ -3139,7 +3181,7 @@ since:function(a,b){return a.getAttribute('data-t').localeCompare(b.getAttribute
 low:function(a,b){var x=num(a,'low'),y=num(b,'low');return x===null?(y===null?a._i-b._i:1):y===null?-1:x-y||a._i-b._i;}};
 function opt(el,v){return!!el&&!!el.querySelector('option[value="'+v+'"]');}
 function on(){return chips.filter(function(x){return x.getAttribute('aria-pressed')==='true'&&!x.hidden;}).map(function(x){return x.getAttribute('data-check');});}
-function hit(r,s,u,k,cks){return(!s||r.cells[0].textContent.toLowerCase().indexOf(s)>=0)&&(!u||has(r,'subs',u))&&num(r,'s')>=k
+function hit(r,s,u,k,cks){return!r.hasAttribute('data-state-out')&&(!s||r.cells[0].textContent.toLowerCase().indexOf(s)>=0)&&(!u||has(r,'subs',u))&&num(r,'s')>=k
 &&cks.every(function(x){return has(r,'c',x);});}
 function save(){var h=[],cks=on();if(type==='shops'&&ct)h.push('type=shops');if(q.value.trim())h.push('q='+encodeURIComponent(q.value.trim()));if(sb.value)h.push('substance='+sb.value);
 if(mn.value!=='0')h.push('min='+mn.value);if(cks.length)h.push('check='+cks.join(','));if(so&&so.value!=='checks')h.push('sort='+so.value);
@@ -3172,6 +3214,7 @@ chips.forEach(function(x){x.addEventListener('click',function(){x.setAttribute('
 segs.forEach(function(b){b.addEventListener('click',function(){type=b.getAttribute('data-type');ch();});});
 c.addEventListener('click',function(){q.value='';sb.value='';mn.value='0';chips.forEach(function(x){x.setAttribute('aria-pressed','false');});ch();q.focus();});
 window.addEventListener('hashchange',function(){load();draw();});
+document.addEventListener('pc-state',draw);
 if(all)all.addEventListener('click',function(){open=true;draw();});draw();})();
 </script>""".replace("FIRST_N", str(SELLERS_FIRST))
 
@@ -3258,15 +3301,15 @@ def clinics_directory(clinics):
     for r in clinics:
         plans = clinic_plan_rows(r)
         low = min((float(p["price_monthly"]) for p in plans), default=None)
-        trs.append(f'<tr data-c="{met_checks(r)}" data-s="{r["score"]}" data-subs="{" ".join(clinic_subs(r))}" data-low="{low if low is not None else ""}">'
-                   f'<td><span class="cell-pic">{parts.tile(r["seller_slug"], seller_base(seller_name(r)), 40, seller=r)}<a class="name" href="/sellers/{r["seller_slug"]}/">{seller_name(r)}</a></span>{not_in_line(r["seller_slug"])}</td>'
+        trs.append(f'<tr{state_attrs(r["seller_slug"])} data-c="{met_checks(r)}" data-s="{r["score"]}" data-subs="{" ".join(clinic_subs(r))}" data-low="{low if low is not None else ""}">'
+                   f'<td><span class="cell-pic">{parts.tile(r["seller_slug"], seller_base(seller_name(r)), 40, seller=r)}<a class="name" href="/sellers/{r["seller_slug"]}/">{seller_name(r)}</a></span></td>'
                    f'<td data-l="What it prescribes">{escape(subs_words(sorted(clinic_subs(r), key=lambda x: sub_label(x).lower())))}</td>'
                    f'<td class="num" data-l="From">{usd(low) + "/mo" if low is not None else "unknown"}</td>'
                    f'<td data-l="Checks">{check_bar(r)}</td><td data-l="FDA letters">{home.where_letters(me, r)}</td>'
                    f'<td class="act">{clinic_button(r["seller_slug"], "See plans", in_table=True)}</td></tr>')
     return f"""
     <section class="sellers-sec" id="clinics" aria-labelledby="clinics-h">
-      <h2 id="clinics-h" class="h-sources">Online clinics</h2>
+      <h2 id="clinics-h" class="h-sources">Online clinics</h2>{STATE_N}
       <div class="tbl-wrap"><table class="tbl tbl-cards tbl-sellers tbl-where" id="clinics-table"><caption class="vh">Online clinics, most checks first</caption>
         <thead><tr><th scope="col">Clinic</th><th scope="col">What it prescribes</th><th scope="col">From</th><th scope="col">Checks</th><th scope="col">FDA letters</th>{ACT_TH}</tr></thead>
         <tbody>{"".join(trs)}</tbody>
@@ -4891,7 +4934,7 @@ def main():
     (DIST / "windows").mkdir(exist_ok=True)
     for k, html in GOAL_PANELS.items():
         (DIST / "windows" / f"goal-{k}.json").write_text(json.dumps({"html": html}), encoding="utf-8")
-    (DIST / "assets" / "nav.js").write_text(NAV_SCRIPT + EVENTS_SCRIPT, encoding="utf-8")
+    (DIST / "assets" / "nav.js").write_text(NAV_SCRIPT + STATE_SCRIPT + EVENTS_SCRIPT, encoding="utf-8")
     if home.JS:
         (DIST / "assets" / "home.js").write_text(home.JS, encoding="utf-8")
     if home.ROWS:

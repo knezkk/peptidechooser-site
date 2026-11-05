@@ -113,7 +113,7 @@ document.addEventListener('click',function(e){var b=e.target.closest('.sellers-o
 if(d){e.preventDefault();d.showModal();return;}var src=b.getAttribute('data-src');if(!src)return;e.preventDefault();
 fetch(src).then(function(r){return r.json();}).then(function(j){document.querySelector('.sellers-all').insertAdjacentHTML('beforeend',j.html);
 var n=document.getElementById(b.getAttribute('data-dlg'));n.querySelectorAll('tbody > tr').forEach(function(t){t.style.opacity='1';});
-n.showModal();}).catch(function(){location.href=b.href;});return;}
+if(window.pcState)pcState();n.showModal();}).catch(function(){location.href=b.href;});return;}
 var d=e.target.closest('.sellers-dlg');if(d&&e.target===d)d.close();});})();
 </script>
 

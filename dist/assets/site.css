@@ -666,6 +666,34 @@ body:has(.home-sec) .site-foot { margin-top: 0; }
 .seller-similar li { display: flex; align-items: center; gap: var(--space-2); }
 .cmp thead .tile { display: flex; margin-bottom: var(--space-2); }
 @media (min-width: 641px) { .tbl-clinics .cell-pic a { white-space: nowrap; } }
+/* Clinic tables (pages/goal.md, Clinic prices; owner task 5 Nov 2026): one row height from 641px; a long plan name is cut with an
+   ellipsis, in full in its title and in the clinic window. State filter: pages/windows.md. */
+@media (min-width: 641px) {
+  :is(.goal-sec, .pep-sold) .tbl-clinics { table-layout: fixed; min-width: 980px; }
+  :is(.goal-sec, .pep-sold) .tbl-clinics tbody tr { height: 72px; }
+  :is(.goal-sec, .pep-sold) .tbl-clinics td { white-space: nowrap; }
+  :is(.goal-sec, .pep-sold) .tbl-clinics td .sub { display: block; margin-left: 0; }
+  :is(.goal-sec, .pep-sold) .tbl-clinics th:last-child { width: 250px; }
+  .goal-sec .tbl-clinics th:nth-child(2) { width: 150px; }
+  .goal-sec .tbl-clinics th:nth-child(3) { width: 250px; }
+  .goal-sec .tbl-clinics th:nth-child(4) { width: 190px; }
+  .pep-sold .tbl-clinics th:nth-child(1) { width: 180px; }
+  .pep-sold .tbl-clinics th:nth-child(3) { width: 150px; }
+  .pep-sold .tbl-clinics th:nth-child(4) { width: 250px; }
+  .tbl-clinics .plan-cut, .tbl-clinics td > a, .tbl-clinics .cell-pic a { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+  .tbl-clinics .plan-cut { display: block; white-space: nowrap; }
+}
+.state-filter { display: flex; align-items: center; gap: 8px; font-size: var(--small-size); }
+.state-filter[hidden] { display: none; }
+.state-filter .input { flex: 0 1 auto; min-width: 0; max-width: 100%; }
+.state-n { margin: 0 0 10px; color: var(--ink-2); }
+.tbl tr[data-state-out] { display: none; }
+.clinic-dlg .state-filter { margin: 0 0 8px; }
+@media (max-width: 640px) {
+  .state-filter { flex-wrap: wrap; width: 100%; }
+  .state-filter span { flex-basis: 100%; }
+  .state-filter .input { flex: 1 1 100%; }
+}
 /* The clinic page's pair (pages.md, Seller, Top block): under the H1 until the H1 and the pair fit one row */
 @media (min-width: 900px) and (max-width: 1179px) {
   .seller-head:has(.seller-pair) { grid-template-columns: minmax(0, 1fr); }
