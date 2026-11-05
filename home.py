@@ -96,7 +96,7 @@ def where_row(b, r):
     chip = ('<span class="chip chip-info">Online clinic</span>' if kind == "clinic" else
             f'<span class="chip chip-neutral">{b.kind_words(r)[1]}</span>')
     return ('<tr>'
-            f'<td><span class="cell-pic">{parts.tile(r["seller_slug"], b.seller_base(b.seller_name(r)), 40, shop=kind == "shop", seller=r)}<span><a class="name" href="/sellers/{r["seller_slug"]}/">{b.seller_name(r)}</a><span class="sub">{escape(where_line(b, r))}</span>{b.not_in_line(r["seller_slug"])}</span></span></td>'
+            f'<td><span class="cell-pic">{parts.tile(r["seller_slug"], b.seller_base(b.seller_name(r)), 40, shop=kind == "shop", seller=r)}<span><a class="name" href="/sellers/{r["seller_slug"]}/">{b.seller_name(r)}</a><span class="sub">{escape(where_line(b, r))}</span></span></span></td>'
             f'<td data-l="Type">{chip}</td>'
             f'<td class="num" data-l="Checks">{b.score_of(r) or 0} of {b.out_of(r)}</td>'
             f'<td class="num" data-l="From">{where_from(b, r)}</td>'
@@ -195,7 +195,7 @@ def goals_section(b):
         plans = b.clinic_plans(g)
         count = b.plural(len(plans), "clinic plan") if plans else b.plural(len(g["peptides"]), "option")
         price, src = goal_price(b, g)
-        inner = (f'<span class="goal-pic goal-c-{g["slug"]}">{parts.goal_art(g["slug"], 48)}</span><span class="goal-name">{g["label"]}</span><span class="small">{count}</span>'
+        inner = (f'<span class="goal-pic goal-c-{g["slug"]}">{parts.goal_photo(g["slug"], 48, small=True)}</span><span class="goal-name">{g["label"]}</span><span class="small">{count}</span>'
                  + (f'<span class="goal-price">{price}</span><span class="small">{src}</span>' if price else ""))
         cards.append(f'<li><a class="goal-card" href="/{g["slug"]}/">{inner}</a></li>' if g.get("page")
                      else f'<li><span class="goal-card">{inner}</span></li>')
