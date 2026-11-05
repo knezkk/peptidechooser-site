@@ -1307,15 +1307,6 @@ def price_sentence(p, pad):
 RX_LINE = {True: " Needs a prescription.", False: " No prescription needed.", None: ""}
 
 
-def alt_chip(p):
-    """"Proven alternative" (chip-info) after the status chip, for an option that is not a peptide but is in the list
-    as the proven choice (`proven_alternative` in data/site.json); "Not a peptide" (chip-neutral) for one sold
-    alongside peptides that is not one (`not_peptide`) (owner, 1 Nov 2026)."""
-    if p.get("proven_alternative"):
-        return '<span class="chip chip-info">Proven alternative</span>'
-    return '<span class="chip chip-neutral">Not a peptide</span>' if p.get("not_peptide") else ""
-
-
 def cosmetic_word(p):
     """"serum" when every listing in a cosmetic window is a serum, else "product" (owner task 3 Nov 2026, the 390px walkthrough:
     "Compare 8 serums" opened creams and lotions)."""
@@ -1344,27 +1335,28 @@ def plan_clinics(g, p, rp):
                 and (r.get("product_kind") == "compounded") == comp})
 
 
-def opt_line(g, p, rp, pad):
-    """The collapsed row's line (Home v2, 3 Nov 2026): the option's `plain` sentence, then its price from data in bold:
-    "From $25/mo at online clinics · 3 clinics" with the plan's footnote and the clinic's FDA letter chip; "From $0.65/mg
-    at 76 shops" from its window; "From $48 at 4 shops" for cosmetics; else the hand price with its footnote."""
-    price = ""
+def opt_line(g, p, rp):
+    """The collapsed row's sentence (option rows v4, 5 Nov 2026): the option's `plain` sentence, with the footnote of the row's
+    plan. It never repeats the price: the button carries it (opt_action), and a row with no button has it in its CTA text."""
+    sup = ""
     if rp:
         sid, n = plan_ref(g, rp)
-        price = (f'<span class="nb"><strong>From {usd(rp["price_monthly"])}/mo at online clinics</strong>'
-                 f'<sup><a class="ref" href="#{sid}" aria-label="Source {n}">{n}</a></sup></span>')
-    elif has_window(p):
-        low, n = window_low(p)
-        if low is not None:
-            unit = money(low) if window_kind(p) == "cosmetic" else f"{per_mg(low)}/mg"
-            price = f'<strong>From {unit} at {plural(n, "shop")}</strong>'
-    elif pad:
-        price = '<span class="nb"><strong>' + re.sub(r"<sup>.*", "", pad).replace('<span class="price-pad">from', "From").replace("</span>", "") + "</strong>" + re.search(r"<sup>.*</sup>", pad).group(0) + "</span>"
+        sup = f'<sup><a class="ref" href="#{sid}" aria-label="Source {n}">{n}</a></sup>'
     text = p.get("plain", "")
-    return f'<span class="opt-plain">{text}{" " if text and price else ""}{price}</span>' if (text or price) else ""
+    return f'<span class="opt-plain">{text}{sup}</span>' if text else ""
 
 
-def opt_action(g, p, rp, lazy):
+def no_listing_cta(p, pad):
+    """A row with no button: its text, with the row's price and footnote when it has one, so no row loses it (option rows v4)."""
+    text = no_listing_text(p)
+    if not pad:
+        return text
+    price = re.search(r"from (\$[\d.,]+/mo)", pad).group(1)
+    sup = re.search(r"<sup>.*</sup>", pad).group(0)
+    return f"From {price} at any pharmacy, no prescription{sup}" if needs_rx(p) is False else f"From {price}. {text}{sup}"
+
+
+def opt_action(g, p, rp, lazy, pad=""):
     """The row's one button, one width on every row (pages.md, Home, Option rows): a row with clinic plans, "Buy from $X/mo · N
     clinics", opening the clinic window (clinic_open); a research-use row, "Prices at N shops" ("Our checks, no shop links"); a
     cosmetic row, "Compare N products" (its window); a row with no listing, its text by kind (no_listing_text)."""
@@ -1372,11 +1364,14 @@ def opt_action(g, p, rp, lazy):
     if btn:
         return btn
     if has_window(p) and window_kind(p) == "cosmetic":
-        n = window_low(p)[1]
-        return f'<span class="pick-act">{sellers_button(p, lazy, f"Compare {plural(n, cosmetic_word(p))}", "btn-wait")}</span>'
+        low, n = window_low(p)
+        label = f"From {money(low)} · {plural(n, cosmetic_word(p))}" if low is not None else f"Compare {plural(n, cosmetic_word(p))}"
+        return f'<span class="pick-act">{sellers_button(p, lazy, label, "btn-wait")}</span>'
     if has_window(p):
-        return f'<span class="pick-act">{sellers_button(p, lazy, kind="btn-wait")}<span class="paid">Our checks, no shop links</span></span>'
-    return f'<span class="pick-act"><span class="paid no-link">{no_listing_text(p)}</span></span>'
+        low, n = window_low(p)
+        label = f'From {per_mg(low)}/mg · {plural(n, "shop")}' if low is not None else None
+        return f'<span class="pick-act">{sellers_button(p, lazy, label, "btn-wait")}<span class="paid">Our checks, no shop links</span></span>'
+    return f'<span class="pick-act"><span class="paid no-link">{no_listing_cta(p, pad)}</span></span>'
 
 
 # "We do not link to them" and its variants (pages.md, Home): said once on Home, in the label legend.
@@ -1402,6 +1397,9 @@ def opt_facts(g, p):
             f'{" · " + rx if rx else ""}</p>')
 
 
+OPT_VARIANT = os.environ.get("OPT_VARIANT", "a")  # the local round's three layouts (the owner picks one; then this goes)
+
+
 def option_rows(g, lazy=False):
     """One goal's step 2 option rows (pages.md, Home, Option rows; also the goal pages): collapsed, the name and chips,
     the `plain` sentence and the price in bold, and one button (opt_action); opened, the does, status and how lines with
@@ -1416,11 +1414,12 @@ def option_rows(g, lazy=False):
         how, status = how_line(p), plain_status(p, drop_price=bool(pad))
         if lazy:
             how, status = unsaid(how), (unsaid(status) if NO_LINK_SAID.search(status) else status)
-        letter = plan_letter(rp).strip() if rp else ""
-        rows.append(f'<li class="opt"><details class="opt-more"><summary class="opt-sum">{option_picture(p, rp)}<span class="opt-m" aria-hidden="true"></span><span class="name">{p["name"]}</span>'
-                    f'<span class="opt-chips">{status_chip(p)}{alt_chip(p)}{letter}</span>{opt_line(g, p, rp, pad)}</summary>'
+        # one status chip next to the name; no seller fact on the row (pages/parts.md, Option rows, 5 Nov 2026)
+        first = f'<span class="opt-first">{p["first_line"]}</span>' if OPT_VARIANT == "c" and p.get("first_line") else ""
+        rows.append(f'<li class="opt opt-v-{OPT_VARIANT}"><details class="opt-more"><summary class="opt-sum">{option_picture(p, rp)}<span class="opt-m" aria-hidden="true"></span>{first}<span class="opt-head"><span class="name">{p["name"]}</span>'
+                    f'<span class="opt-chips">{status_chip(p)}</span></span>{opt_line(g, p, rp)}</summary>'
                     f'<div class="opt-body"><p class="opt-does">{p["does"]}{refs(p, slug, price=not pad)}</p>'
-                    f'<p class="opt-status">{status}</p><p class="opt-how">{how}{cost}</p>{"" if lazy else opt_facts(g, p)}</div></details>{opt_action(g, p, rp, lazy)}</li>')
+                    f'<p class="opt-status">{status}</p><p class="opt-how">{how}{cost}</p>{"" if lazy else opt_facts(g, p)}</div></details>{opt_action(g, p, rp, lazy, pad)}</li>')
     return rows
 
 
@@ -2369,8 +2368,8 @@ def decide_cards(g):
     if best:
         p, rp, n = best
         name = seller_base(rp["seller_name"])
-        cards.append(decide_card("Best approved", p["name"], status_chip(p) + alt_chip(p),
-                                 f'<strong>From {usd(rp["price_monthly"])}/mo at online clinics</strong>{plan_src(g, rp)}{plan_letter(rp)}',
+        cards.append(decide_card("Best approved", p["name"], status_chip(p),
+                                 f'At online clinics{plan_src(g, rp)}',
                                  clinic_open(g, p, rp), option_picture(p, rp)))
     # Cheapest: the lowest monthly price among the goal's plans, labelled with its kind
     plans = goal_plans(g)
@@ -2382,7 +2381,7 @@ def decide_cards(g):
         opens = next((b for b in (clinic_open(g, x, None, c) for x in sorted(g["peptides"], key=lambda x: x.get("plan_kind") != "compounded") if any(r is c for r in option_plans(g, x))) if b), "")
         if opens:  # a plan no option row opens (compounded sermorelin on /muscle/) stays in the clinic table, without a card
             cards.append(decide_card("Cheapest", clean(c["plan_name"]), chip,
-                                     f'<strong>From {usd(c["price_monthly"])}/mo at {name}</strong>{plan_src(g, c)}{plan_letter(c)}',
+                                     f'At {name}{plan_src(g, c)}{plan_letter(c)}',
                                      opens, parts.plan_picture(c)))
     # No prescription: the over-the-counter or cosmetic option; a goal without one, its research-use option
     otc = next((p for p in g["peptides"] if approved_row(p) and needs_rx(p) is False), None)
@@ -2391,8 +2390,8 @@ def decide_cards(g):
         rp = row_plan(g, otc)
         if rp:
             name = seller_base(rp["seller_name"])
-            cards.append(decide_card("No prescription", otc["name"], status_chip(otc) + alt_chip(otc),
-                                     f'<strong>From {usd(rp["price_monthly"])}/mo</strong>{plan_src(g, rp)}{plan_letter(rp)}',
+            cards.append(decide_card("No prescription", otc["name"], status_chip(otc),
+                                     f'Sold without a prescription{plan_src(g, rp)}{plan_letter(rp)}',
                                      clinic_open(g, otc, rp), option_picture(otc, rp)))
         else:
             # no plan that fits a medicine sold without a prescription: its checked price and the row's own text, never a clinic's plan
@@ -2402,7 +2401,7 @@ def decide_cards(g):
                 page = f'/peptides/{otc["substance"]}/' if on_page else "/learn/"
                 label = "FDA status and sources" if on_page else "Read the guides"
                 price = re.search(r"from (\$[\d.,]+/mo)", pad).group(1)
-                cards.append(decide_card("No prescription", otc["name"], status_chip(otc) + alt_chip(otc),
+                cards.append(decide_card("No prescription", otc["name"], status_chip(otc),
                                          f'<strong>From {price}</strong>{re.search(r"<sup>.*</sup>", pad).group(0)}',
                                          # the card's one button (tools/check.py) goes to our own page on the medicine, or the goal's guide
                                          f'<span class="pick-act"><a class="btn btn-wait btn-sm" href="{page}" data-card="{card_slug("No prescription")}">{label}</a>'

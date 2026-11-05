@@ -189,20 +189,26 @@ html:not(.motion) .fig3d-layer { transition: none; }
 .flow-solo { --thumb-row: 52px; }
 .flow .opt { display: grid; grid-template-columns: minmax(0, 1fr) var(--cta-width); gap: 4px 16px; align-items: center; padding: 8px 14px; }
 .flow .opt > .opt-more { grid-column: 1; }
-.opt-sum { display: grid; grid-template-columns: var(--thumb-row) 32px minmax(0, 1fr); grid-template-areas: "t m name" "t chip chip" "t plain plain"; align-items: center; gap: 3px 8px; cursor: pointer; list-style: none; min-height: var(--touch); border-radius: var(--radius-control); }
+.opt-sum { display: grid; grid-template-columns: var(--thumb-row) 32px minmax(0, 1fr); grid-template-areas: "t m head" "t plain plain"; align-items: center; gap: 3px 8px; cursor: pointer; list-style: none; min-height: var(--touch); border-radius: var(--radius-control); }
 .opt-sum > .thumb { grid-area: t; --thumb: var(--thumb-row); align-self: start; border-radius: var(--radius-art); }
 .opt-m { grid-area: m; display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: var(--radius-control); background: var(--neutral-tint); transition: background-color var(--motion-quick); }
 .opt-m::before { content: ""; width: 10px; height: 10px; margin-left: -4px; border-right: 2.5px solid var(--ink); border-bottom: 2.5px solid var(--ink); transform: rotate(-45deg); transition: transform var(--motion-quick); }
 .opt-sum:hover .opt-m { background: var(--line-strong); }
 .opt-more[open] .opt-m::before { margin-left: 0; margin-top: -4px; transform: rotate(45deg); }
-.opt-sum .name { grid-area: name; }
+/* Option rows v4 (pages/parts.md): the name with one status chip on one line, the sentence under it. A: the chip right after the
+   name. B: right-aligned before the button column. C: a first line in plain words, the name and chip under it, smaller. */
+.opt-head { grid-area: head; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; min-width: 0; }
+.opt-v-b .opt-head { justify-content: space-between; flex-wrap: nowrap; }
+.opt-v-b .opt-head .opt-chips { justify-self: end; text-align: right; }
+.opt-v-c .opt-sum { grid-template-areas: "t m first" "t m head" "t plain plain"; row-gap: 1px; }
+.opt-first { grid-area: first; font-weight: 700; line-height: 1.3; }
+.opt-v-c .opt-head .name { font-size: var(--small-size); font-weight: 600; }
 .nb { white-space: nowrap; }
-.opt-sum .opt-chips { grid-area: chip; display: flex; flex-wrap: wrap; gap: 4px 6px; justify-self: start; }
+.opt-sum .opt-chips { display: flex; flex-wrap: wrap; gap: 4px 6px; }
 .opt-sum::-webkit-details-marker { display: none; }
 .opt-sum .name { font-weight: 700; }
 /* Home v2 (3 Nov 2026): the collapsed row says what the option is in one plain sentence, then its price in bold. */
 .opt-sum .opt-plain { grid-area: plain; font-size: var(--small-size); line-height: 1.45; color: var(--ink-2); }
-.opt-sum .opt-plain strong { color: var(--ink); }
 .opt-instead { margin: 10px 0 0; font-size: var(--small-size); color: var(--ink-2); }
 /* The price and its footnote stay on one line; the goal's online-clinic plan line goes under them (pages.md, Home). */
 .opt-body { padding: 4px 0 6px calc(var(--thumb-row) + 8px); display: grid; gap: 4px; }
@@ -441,7 +447,10 @@ body > .crumbs { width: -moz-available; width: -webkit-fill-available; width: st
   .creators { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (min-width: 900px) {
-  .flow .opt { min-height: 96px; }
+  /* equal rows (A4): the tallest row of each layout, a long name with its chip wrapped and two lines of sentence */
+  .flow .opt.opt-v-a { min-height: 116px; }
+  .flow .opt.opt-v-b { min-height: 136px; }
+  .flow .opt.opt-v-c { min-height: 154px; }
   .hero-pair { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0 48px; align-items: start; }
   .hero-pair .what-is { margin: 0; }
   .hero-grid { grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: 48px; align-items: start; }
@@ -482,6 +491,8 @@ body > .crumbs { width: -moz-available; width: -webkit-fill-available; width: st
      option fits the first screen at 390 by 844 (owner, 1 Nov 2026) */
   /* Home v2 (owner's phone sketch, 3 Nov 2026): the row's button sits under its plain line, its small line beside it */
   .flow .opt > .pick-act { grid-column: auto; width: 100%; margin: 0; padding: 4px 0 6px; }
+  /* phones: the name, the chip under it, the sentence, the button (pages/parts.md, Option rows) */
+  .opt-head, .opt-v-b .opt-head { flex-direction: column; flex-wrap: nowrap; align-items: flex-start; justify-content: flex-start; gap: 3px; }
   .flow-compare .step-panel:not([hidden]) { display: flex; flex-direction: column; }
   .flow-compare .goal-for { order: 2; margin: 10px 0 0; }
   .flow-compare .goal-intro { order: 2; margin: 4px 0 0; }
