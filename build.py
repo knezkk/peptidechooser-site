@@ -865,6 +865,10 @@ def clean(t):
     return " ".join(str(t).replace("\u2014", "-").replace("\u2013", "-").split())
 
 
+def seller_name(r):
+    return seller_base(clean(r["seller_name"]))  # never a legal name in brackets, whatever the data holds
+
+
 def money(v):
     return f"${v:,.2f}"
 
@@ -987,7 +991,7 @@ def seller_table(slug, kind=None):
             size = f'{r["form"].capitalize()} · {size}'
         price = money(r["price_usd"]) if r.get("price_usd") is not None else "unknown"
         ppm = (f'{money(r["price_per_mg"])}/mg' if r.get("price_per_mg") is not None else "blend" if r.get("is_blend") else "unknown")
-        seller = clean(SELLERS.get(r["seller_slug"], {}).get("seller_name") or r["seller_name"])
+        seller = seller_base(clean(SELLERS.get(r["seller_slug"], {}).get("seller_name") or r["seller_name"]))
         # the name opens our page on the seller when it has one (owner task 2 Nov 2026); never the seller's own site
         name_html = (f'<a class="name" href="/sellers/{r["seller_slug"]}/">{seller}</a>' if r["seller_slug"] in PROFILES
                      else f'<span class="name">{seller}</span>')
@@ -1534,7 +1538,7 @@ MAKER_CHIP = ' <span class="chip chip-neutral">Maker of an approved drug</span>'
 def letters_all_rows():
     out, more = [], ' class="more"'
     for i, r in enumerate(LETTERS_ALL):
-        seller = f'<span class="co-seller">In our database: {escape(clean(r["seller_name"]))}</span>' if r.get("seller_slug") and r.get("seller_name") else ""
+        seller = f'<span class="co-seller">In our database: {escape(seller_name(r))}</span>' if r.get("seller_slug") and r.get("seller_name") else ""
         subj = escape(clean(r["letter_subject"]))
         out.append(
             f'<tr{more if i >= LETTERS_FIRST else ""}{" data-closed" if r["letter_url"] in CLOSED else ""} data-year="{r["letter_date"][:4]}" data-subs="{" ".join(SUBS_OF_LETTER.get(r["letter_url"], []))}"><td class="num">{nice_date(r["letter_date"])}</td>'
@@ -1606,7 +1610,7 @@ def letters_feed():
         company, subj = clean(r["company_name"]), clean(r["letter_subject"])
         desc = f"{nice_date(r['letter_date'])}. {company}. {subj}. {office(r.get('issuing_office'))}."
         if r.get("seller_slug") and r.get("seller_name"):
-            desc += f" In our database: {clean(r['seller_name'])}."
+            desc += f" In our database: {seller_name(r)}."
         items.append(f"<item><title>{escape(company)}: {escape(subj)}</title><link>{escape(r['letter_url'])}</link>"
                      f"<guid isPermaLink=\"true\">{escape(r['letter_url'])}</guid><pubDate>{rss_date(r['letter_date'])}</pubDate>"
                      f"<description>{escape(desc)}</description></item>")
@@ -2499,10 +2503,6 @@ for _g in ALL_GOALS:
         for _p in _g["peptides"]:
             for _s in subs_of(_p):
                 SUB_GOAL.setdefault(_s, _g)
-
-
-def seller_name(r):
-    return clean(r["seller_name"])
 
 
 def newest_letter(r):
@@ -3609,7 +3609,7 @@ def pep_answer(slug, first=None):
         seen = low.get("price_observed_at") or low.get("last_seen")
         sc = SELLERS.get(low["seller_slug"], {}).get("score")
         out.append(f'The best-checked of the {plural(n, "shop")} shown below{f" ({sc} of {len(SCORE_CHECKS)} checks)" if sc is not None else ""} lists it at {per_mg(low["price_per_mg"])}/mg '
-                   f'({clinic_link(low["seller_slug"], clean(SELLERS.get(low["seller_slug"], {}).get("seller_name") or low["seller_name"]), True)})'
+                   f'({clinic_link(low["seller_slug"], seller_base(clean(SELLERS.get(low["seller_slug"], {}).get("seller_name") or low["seller_name"])), True)})'
                    f'{", checked " + nice_date(seen) if seen else ""}.')
     n = len(LETTER_SUBS.get(slug, [])) if pep_group(s) != "approved" else 0
     # an approved medicine's letters are about sellers, not its approval: the count stays in the letters section (owner
@@ -3830,7 +3830,7 @@ def pep_shops_section(slug):
         return ""
     trs, newest = [], ""
     for r in rows:
-        seller = clean(SELLERS.get(r["seller_slug"], {}).get("seller_name") or r["seller_name"])
+        seller = seller_base(clean(SELLERS.get(r["seller_slug"], {}).get("seller_name") or r["seller_name"]))
         name = clinic_link(r["seller_slug"], seller)
         size = f'{r["amount_mg"]:g} mg' if r.get("amount_mg") else "unknown"
         price = money(r["price_usd"]) if r.get("price_usd") is not None else "unknown"
@@ -3964,7 +3964,7 @@ def pep_where(slug):
             ppm = f'{per_mg(r["price_per_mg"])}/mg' if r.get("price_per_mg") is not None else money(r["price_usd"]) if r.get("price_usd") is not None else "price unknown"
             what = clean(r["product_name"]) if kind == "cosmetic" else f'{sc} of {len(SCORE_CHECKS)} checks' if sc is not None else "not checked yet"
             review = (f'<a class="btn btn-line btn-sm" href="/sellers/{r["seller_slug"]}/">Our review</a>' if r["seller_slug"] in PROFILES else "")
-            lines.append(f'<li><span class="where-who"><span class="name">{escape(clean(SELLERS.get(r["seller_slug"], {}).get("seller_name") or r["seller_name"]))}</span>'
+            lines.append(f'<li><span class="where-who"><span class="name">{escape(seller_base(clean(SELLERS.get(r["seller_slug"], {}).get("seller_name") or r["seller_name"])))}</span>'
                          f'<span class="sub">{escape(what)}</span></span><span class="where-price"><span class="num">{ppm}</span></span>{review}</li>')
         first = rows[0] if rows else None
         if not rows and grp == "cosmetic":
@@ -4986,7 +4986,7 @@ def sources_body():
             regs.setdefault((r.get("entity_state") or "", r["entity_source_url"]), []).append(r)
     registries = [src_li(f"{st} state company registry" if st else "State company registry", url, url.startswith("http"),
                          f'Company found for {plural(len(rows), "seller")}: '
-                         + ", ".join(f'<a href="/sellers/{r["seller_slug"]}/">{escape(clean(r["seller_name"]))}</a>' for r in rows) + ".",
+                         + ", ".join(f'<a href="/sellers/{r["seller_slug"]}/">{escape(seller_name(r))}</a>' for r in rows) + ".",
                          max((r.get("registry_checked_on") or "" for r in rows), default=""))
                   for (st, url), rows in sorted(regs.items())]
     # our own database: what the crawler reads, with the newest date each part was seen
