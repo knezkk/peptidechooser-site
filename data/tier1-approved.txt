@@ -1,0 +1,7 @@
+# Tier 1 approvals (tools/tier1_guard.py; design/pages/every-page.md, Tier 1 guard).
+# Only after the owner gave the phrase in a place the go skill accepts. Under the phrase, the lines the guard printed:
+# ODOBRENO SEO - Karlo - <date>
+# /path/ <hash>
+ODOBRENO SEO - Karlo - 5. 11. 2026
+/sellers/gala-health/ 205b126a5119
+/sellers/humecare/ f0222032dc10

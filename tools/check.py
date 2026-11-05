@@ -9,11 +9,13 @@ import os
 import re
 import subprocess
 import sys
+from datetime import date
 from html import escape, unescape
 from html.parser import HTMLParser
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+import guides  # noqa: E402
 import paid  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -214,6 +216,27 @@ def check_seo(P):
     return errs
 
 
+def article_date_errs(name, node):
+    """An Article's dates are the commit history's (owner answer to #96 Q1 A, 5 Nov 2026; pages/learn.md, Schema), never the
+    build date: a date equal to today passes only when the history gives that very date, because a guide's text can change
+    today. Only a guide not committed yet may have none (the deploy builds from commits, so every guide live has them)."""
+    errs = []
+    slug = node.get("mainEntityOfPage", "").rstrip("/").rsplit("/", 1)[-1]
+    want = guides.guide_dates().get(slug)
+    if not node.get("headline") or not node.get("author"):
+        errs.append(f"{name}: Article without headline or author")
+    if want is None:
+        if node.get("datePublished") or node.get("dateModified"):
+            errs.append(f"{name}: Article dates on a guide the commit history does not hold")
+        return errs
+    today = date.today().isoformat()
+    for key, day in zip(("datePublished", "dateModified"), want):
+        got = node.get(key)
+        if got != day:
+            errs.append(f"{name}: Article {key} {got}, the commit history says {day}" + (" (the build date)" if got == today else ""))
+    return errs
+
+
 def check_schema(P):
     errs = []
     for name, p in P.items():
@@ -234,8 +257,8 @@ def check_schema(P):
                             errs.append(f"{name}: breadcrumb to missing {rel}")
                 if t not in ("Organization", "WebSite", "BreadcrumbList", "Article", "ItemList"):
                     errs.append(f"{name}: schema type {t} not in the allowed list (6.3)")
-                if t == "Article" and not all(node.get(k) for k in ("headline", "datePublished", "author")):
-                    errs.append(f"{name}: Article without headline, datePublished or author")
+                if t == "Article":
+                    errs.extend(article_date_errs(name, node))
                 if t == "ItemList" and not node.get("itemListElement"):
                     errs.append(f"{name}: ItemList without items")
         # The type each page needs (owner task 2 Nov 2026): Organization on Home, BreadcrumbList on every inner page,

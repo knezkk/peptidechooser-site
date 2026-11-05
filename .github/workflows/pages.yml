@@ -7,9 +7,11 @@ permissions:
   contents: read
   pages: write
   id-token: write
+# One group per branch, so a branch run never touches a run on main. A newer run replaces an older one on a branch; on main nothing
+# in progress is cancelled, the newer run waits (w1, 5 Nov 2026).
 concurrency:
-  group: pages
-  cancel-in-progress: true
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 jobs:
   check-and-build:
     runs-on: ubuntu-latest
@@ -41,6 +43,12 @@ jobs:
             python3 tools/og.py --missing
             python3 build.py
           fi
+      # after the last build: the words of a title, description or H1 that differ from the live page stop the deploy without the owner's phrase, numbers and data-born pages pass;
+      # the full list, old and new, stays in this step's log (owner answer to #94 Q2, 5 Nov 2026)
+      - name: tier 1 guard
+        run: |
+          python3 tools/test_tier1_guard.py
+          python3 tools/tier1_guard.py
       - name: check-words, check-seo, check-schema, check-parts
         run: python3 tools/check.py
       - name: check-layout
@@ -54,11 +62,15 @@ jobs:
           # all three together: npm i --no-save removes what an earlier --no-save installed (Playwright, from check-layout)
           npm i --no-save playwright@1.49.1 lighthouse@12.8.2 chrome-launcher@1 >/dev/null
           node tools/check_lighthouse.js
+      # only main publishes: a branch run checks and builds, skips the publishing steps and stays green (owner, 5 Nov 2026)
       - uses: actions/configure-pages@v5
+        if: github.ref == 'refs/heads/main'
       - uses: actions/upload-pages-artifact@v3
+        if: github.ref == 'refs/heads/main'
         with: { path: dist }
   deploy:
     needs: check-and-build
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     environment:
       name: github-pages
