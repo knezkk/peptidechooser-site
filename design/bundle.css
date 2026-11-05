@@ -651,7 +651,7 @@ p.not-in{margin:4px 0 0}
 .goal-c-hair{--g:var(--goal-hair);--gt:var(--goal-hair-tint)}.goal-c-skin{--g:var(--goal-skin);--gt:var(--goal-skin-tint)}.goal-c-weight-loss{--g:var(--goal-weight-loss);--gt:var(--goal-weight-loss-tint)}.goal-c-muscle{--g:var(--goal-muscle);--gt:var(--goal-muscle-tint)}.goal-c-recovery{--g:var(--goal-recovery);--gt:var(--goal-recovery-tint)}.goal-c-libido{--g:var(--goal-libido);--gt:var(--goal-libido-tint)}.goal-c-longevity{--g:var(--goal-longevity);--gt:var(--goal-longevity-tint)}
 .goal-pic{display:flex;align-items:center;justify-content:center;height:84px;margin-bottom:10px;border-radius:var(--radius-art-s);background:var(--gt)}
 .goal-panel{display:none}
-@media (min-width:900px){.goal-panel{display:flex;align-items:center;justify-content:center;height:220px;border-radius:var(--radius-art-l);background:var(--gt)}}
+@media (min-width:900px){.goal-panel{display:flex;align-items:center;justify-content:center;height:220px;border-radius:var(--radius-art-l);background:var(--gt,var(--paper-2))}}
 @media (max-width:640px){.goal-pic{height:60px}.goal-pic .goal-art{width:34px;height:34px}}
 /* The one option-row button (pages.md, Home, Option rows): the same width, height, border and font on every row, label centred */
 .btn-cta{justify-content:center;text-align:center}
