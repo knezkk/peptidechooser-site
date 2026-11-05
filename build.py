@@ -191,7 +191,8 @@ function one(s){if(s.options.length<2)Object.keys(S).sort(function(a,b){return S
 s.value=cur||'all';s.closest('.state-filter').hidden=false;var id=s.getAttribute('data-state-for'),r=id?document.getElementById(id):s.closest('[data-state-root]');if(!r)return;
 var all={},ok={};[].forEach.call(r.querySelectorAll('tr[data-clinic]'),function(t){var c=t.getAttribute('data-clinic'),out=cur&&(' '+(t.getAttribute('data-no')||'')+' ').indexOf(' '+cur+' ')>=0;
 all[c]=1;if(out)t.setAttribute('data-state-out','');else{t.removeAttribute('data-state-out');ok[c]=1;}});
-var n=r.querySelector('.state-n');if(n){n.hidden=!cur;n.textContent=cur?Object.keys(ok).length+' of '+Object.keys(all).length+' '+s.getAttribute('data-noun')+' ship to '+S[cur]:'';}}
+var n=r.querySelector('.state-n');if(n){var w=s.getAttribute('data-noun'),m=Object.keys(all).length,x=m-Object.keys(ok).length;n.hidden=!cur;
+n.textContent=!cur?'':x?x+' of '+m+' '+(x===1?w.slice(0,-1)+' does':w+' do')+' not ship to '+S[cur]:'No '+w.slice(0,-1)+' here is known to skip '+S[cur];}}
 function paint(){[].forEach.call(document.querySelectorAll('select[data-state]'),one);}
 window.pcState=paint;
 document.addEventListener('change',function(e){var s=e.target;if(!s.matches||!s.matches('select[data-state]'))return;cur=s.value==='all'?'':s.value;try{if(cur)localStorage.setItem(K,cur);else localStorage.removeItem(K);}catch(x){}paint();document.dispatchEvent(new Event('pc-state'));});
