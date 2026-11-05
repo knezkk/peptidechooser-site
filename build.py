@@ -1846,7 +1846,9 @@ fromHash();window.addEventListener('hashchange',fromHash);})();
 # each line is drawn only when its data is there (never a placeholder).
 N_SELLERS = len(SHOPS)
 N_CLINIC_PAGES = len(CLINIC_PROFILES)
-N_CLINICS = len({r["seller_slug"] for r in PLANS})
+# One number on Home and /about/ (owner task, 5 Nov 2026): the clinics on /sellers/, that is the clinic pages. A seller with a plan and no
+# page (a tool, pages.md, Category) is not counted. Plan sellers only when the data has no seller pages at all.
+N_CLINICS = N_CLINIC_PAGES or len({r["seller_slug"] for r in PLANS})
 N_LETTERS = DATA.get("letters_all_total") or len(LETTERS_ALL)
 N_STATUS = len({r["substance_slug"] for r in LEGAL_DB or []})
 PULLED = nice_date(DATA["pulled_at"][:10]) if DATA.get("pulled_at") else ""
@@ -2235,9 +2237,10 @@ def table_plans(g):
 
 
 def tools_block(g, first_n):
-    """The goal's "Tools" block (pages.md, Category; owner answer Q4 a, 4 Nov 2026): what helps but does not prescribe. Name, one
-    sentence, btn-action only when the data carries the seller's paid link; a row with `needs` shows nothing until the seller's
-    data sets that flag, and a research-use shop never shows. Returns the block and its source entries, numbered from first_n."""
+    """The goal's "Tools" block (pages.md, Category; owner answer Q4 a, 4 Nov 2026): what helps but does not prescribe. Name and one
+    sentence. A tool has no seller page, so no green button, whatever the data carries (owner task, 5 Nov 2026: a green button only
+    where the seller page exists); a row with `needs` shows nothing until the seller's data sets that flag, and a research-use
+    shop never shows. Returns the block and its source entries, numbered from first_n."""
     items, srcs = [], []
     for t in g.get("tools") or []:
         slug, prof = t["seller_slug"], TOOL_PROFILES.get(t["seller_slug"]) or {}
@@ -2248,10 +2251,7 @@ def tools_block(g, first_n):
         where = f': <a href="{url}" rel="nofollow">{url}</a>' if url and "fda.gov" in url else f": {url}" if url else ""
         srcs.append(f'<li value="{n}" id="src-tool-{slug}">{t["source"]}{where}</li>')
         name = f'<strong>{t["name"]}</strong>'
-        paid = prof.get("paid_url")
-        act = (f'<span class="pick-act"><a class="btn btn-action btn-sm" href="{paid_href(slug, paid)}"{paid_ev(slug, paid)} rel="sponsored">Visit {t["name"]}</a>'
-               f'<span class="paid">Paid link</span></span>') if paid else ""
-        items.append(f'<li class="tool-row"><p>{name}: {t["line"]} <a class="ref" href="#src-tool-{slug}" aria-label="Source {n}"><sup>{n}</sup></a></p>{act}</li>')
+        items.append(f'<li class="tool-row"><p>{name}: {t["line"]} <a class="ref" href="#src-tool-{slug}" aria-label="Source {n}"><sup>{n}</sup></a></p></li>')
     if not items:
         return "", ""
     return (f'''<section class="section goal-sec" id="tools">
