@@ -2241,6 +2241,10 @@ def tools_block(g, first_n):
     sentence. A tool has no seller page, so no green button, whatever the data carries (owner task, 5 Nov 2026: a green button only
     where the seller page exists); a row with `needs` shows nothing until the seller's data sets that flag, and a research-use
     shop never shows. Returns the block and its source entries, numbered from first_n."""
+    # Drawn only with at least two priced tools in the data for this goal (owner, 5 Nov 2026); otherwise no block and no heading.
+    if sum(any(r["seller_slug"] == t["seller_slug"] and r.get("price_monthly") is not None for r in PLANS)
+           for t in g.get("tools") or []) < 2:
+        return "", ""
     items, srcs = [], []
     for t in g.get("tools") or []:
         slug, prof = t["seller_slug"], TOOL_PROFILES.get(t["seller_slug"]) or {}
