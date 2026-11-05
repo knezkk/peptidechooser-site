@@ -41,6 +41,18 @@ var st=document.querySelector('.search-toggle'),q=document.getElementById('hs-q'
 if(st&&q)st.addEventListener('click',function(){if(!n.classList.contains('open'))b.click();q.focus();});
 document.addEventListener('click',function(e){if(n.classList.contains('open')&&!e.target.closest('#site-nav,.nav-toggle,.search-toggle,.head-search,.head-cta'))set(false);});
 document.addEventListener('keydown',function(e){if(e.key==='Escape'&&n.classList.contains('open')){set(false);b.focus();}});})();
+(function(){var K='pc_state',S={AL:'Alabama',AK:'Alaska',AZ:'Arizona',AR:'Arkansas',CA:'California',CO:'Colorado',CT:'Connecticut',DE:'Delaware',DC:'District of Columbia',FL:'Florida',GA:'Georgia',HI:'Hawaii',ID:'Idaho',IL:'Illinois',IN:'Indiana',IA:'Iowa',KS:'Kansas',KY:'Kentucky',LA:'Louisiana',ME:'Maine',MD:'Maryland',MA:'Massachusetts',MI:'Michigan',MN:'Minnesota',MS:'Mississippi',MO:'Missouri',MT:'Montana',NE:'Nebraska',NV:'Nevada',NH:'New Hampshire',NJ:'New Jersey',NM:'New Mexico',NY:'New York',NC:'North Carolina',ND:'North Dakota',OH:'Ohio',OK:'Oklahoma',OR:'Oregon',PA:'Pennsylvania',RI:'Rhode Island',SC:'South Carolina',SD:'South Dakota',TN:'Tennessee',TX:'Texas',UT:'Utah',VT:'Vermont',VA:'Virginia',WA:'Washington',WV:'West Virginia',WI:'Wisconsin',WY:'Wyoming'},cur='';
+try{cur=localStorage.getItem(K)||'';}catch(x){}if(!S[cur])cur='';
+function one(s){if(s.options.length<2)Object.keys(S).sort(function(a,b){return S[a].localeCompare(S[b]);}).forEach(function(k){var o=document.createElement('option');o.value=k;o.textContent=k+' '+S[k];s.appendChild(o);});
+s.value=cur||'all';s.closest('.state-filter').hidden=false;var id=s.getAttribute('data-state-for'),r=id?document.getElementById(id):s.closest('[data-state-root]');if(!r)return;
+var all={},ok={};[].forEach.call(r.querySelectorAll('tr[data-clinic]'),function(t){var c=t.getAttribute('data-clinic'),out=cur&&(' '+(t.getAttribute('data-no')||'')+' ').indexOf(' '+cur+' ')>=0;
+all[c]=1;if(out)t.setAttribute('data-state-out','');else{t.removeAttribute('data-state-out');ok[c]=1;}});
+var n=r.querySelector('.state-n');if(n){var w=s.getAttribute('data-noun'),m=Object.keys(all).length,x=m-Object.keys(ok).length;n.hidden=!cur;
+n.textContent=!cur?'':x?x+' of '+m+' '+(x===1?w.slice(0,-1)+' does':w+' do')+' not ship to '+S[cur]:'No '+w.slice(0,-1)+' here is known to skip '+S[cur];}}
+function paint(){[].forEach.call(document.querySelectorAll('select[data-state]'),one);}
+window.pcState=paint;
+document.addEventListener('change',function(e){var s=e.target;if(!s.matches||!s.matches('select[data-state]'))return;cur=s.value==='all'?'':s.value;try{if(cur)localStorage.setItem(K,cur);else localStorage.removeItem(K);}catch(x){}paint();document.dispatchEvent(new Event('pc-state'));});
+paint();if(cur)document.dispatchEvent(new Event('pc-state'));})();
 
 (function(){var path=location.pathname,pt=document.body&&document.body.getAttribute('data-pt')||'other',bits=path.split('/'),base={page_type:pt,page_path:path};
 if(pt==='seller')base.seller=bits[2];if(pt==='peptide')base.substance=bits[2];if(pt==='goal')base.goal=bits[1];

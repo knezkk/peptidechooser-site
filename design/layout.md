@@ -56,3 +56,5 @@ Run headless Chrome (Playwright) at 320, 390, 768, 1024, 1440, 1920 and 2560px w
 - Lighthouse on mobile: 90+ on Performance, Accessibility, Best Practices and SEO. `tools/check_lighthouse.js` runs it in the deploy on Home, /weight-loss/ and one seller page (one run per page; a page under 90 gets two more and the median counts); a page under 90 fails the deploy. /search/ is `noindex` on purpose, so its SEO score stays at 69: the known exception (owner task 4 Nov 2026).
 
 A page that fails any check does not ship.
+
+**Clinic tables (owner task 5 Nov 2026):** on goal and peptide pages every row is one height from 641px (72px), each cell on its fixed lines. A plan name longer than its cell is cut with an ellipsis, in full in its `title` and in the clinic window, never wrapped. The table keeps 980px and scrolls inside its own wrapper on narrower screens; the page itself never scrolls sideways.

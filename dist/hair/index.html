@@ -62,7 +62,7 @@ try{if(localStorage.getItem('pc-consent')==='yes')pcLoadGA();}catch(e){}
     <p class="small meta"><a href="/about/">Peptide Chooser editorial team</a>. Checked 30 Oct 2026.</p>
         <p class="small meta">Every claim links to its source.</p>
     <p class="intro">Finasteride and minoxidil are the only treatments on this page the FDA has approved for hair loss, and generic finasteride starts at about $10 a month. Copper peptide serums are cosmetics: the evidence is from lab and follicle-culture studies, not from large trials in people.</p>
-    </div><div class="goal-panel goal-c-hair"><svg class="goal-art" width="120" height="120" viewBox="0 0 56 56" aria-hidden="true"><use href="/assets/art.svg#goal-hair"/></svg></div></div>
+    </div><div class="goal-panel goal-c-hair"><img class="goal-photo" src="/assets/photos/goal-hair.jpg" alt="" width="900" height="600" loading="lazy" decoding="async"></div></div>
     <ul class="decide"><li class="panel-line decide-card" data-card="no-prescription"><span class="thumb thumb-foam-bottle" aria-hidden="true"><svg width="56" height="56" viewBox="0 0 56 56"><use href="/assets/art.svg#foam-bottle"/></svg></span><p class="decide-k">No prescription</p><h2>Minoxidil</h2><span class=chips><span class="chip chip-ok">FDA approved</span><span class="chip chip-info">Proven alternative</span></span><p class="decide-price"><strong>From $10/mo</strong><sup><a class="ref" href="#src-opt-1" aria-label="Source 1">1</a></sup></p><span class="pick-act"><a class="btn btn-wait btn-sm" href="/learn/" data-card="no-prescription">Read the guides</a><span class="paid">Any pharmacy, no prescription</span></span></li></ul>
   </div>
 </section>
@@ -108,7 +108,7 @@ document.addEventListener('click',function(e){var b=e.target.closest('.sellers-o
 if(d){e.preventDefault();d.showModal();return;}var src=b.getAttribute('data-src');if(!src)return;e.preventDefault();
 fetch(src).then(function(r){return r.json();}).then(function(j){document.querySelector('.sellers-all').insertAdjacentHTML('beforeend',j.html);
 var n=document.getElementById(b.getAttribute('data-dlg'));n.querySelectorAll('tbody > tr').forEach(function(t){t.style.opacity='1';});
-n.showModal();}).catch(function(){location.href=b.href;});return;}
+if(window.pcState)pcState();n.showModal();}).catch(function(){location.href=b.href;});return;}
 var d=e.target.closest('.sellers-dlg');if(d&&e.target===d)d.close();});})();
 </script>
 
