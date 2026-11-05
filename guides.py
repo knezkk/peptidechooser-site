@@ -382,7 +382,7 @@ def known_sources(b, f):
         on = max((r.get("score_checked_on") or "" for r in b.PROFILES.values()), default="")
         k["own-sellers"] = (f"Peptide Chooser, Peptide sellers and their checks{', checked ' + nice(on) if on else ''}", "/sellers/", "own")
         for slug, r in b.PROFILES.items():
-            k[f"seller-{slug}"] = (f"Peptide Chooser, {b.clean(r['seller_name'])}: our page on this seller"
+            k[f"seller-{slug}"] = (f"Peptide Chooser, {b.seller_name(r)}: our page on this seller"
                                    + (f", checked {nice(r['score_checked_on'])}" if r.get("score_checked_on") else ""), f"/sellers/{slug}/", "own")
     hair = next(g for g in b.ALL_GOALS if g["slug"] == "hair")
     for s in hair.get("sources", []):
@@ -1327,7 +1327,7 @@ def g_checks(b, f, N):
         if met:
             r = met[0]
             used.add(r["seller_slug"])
-            out += (f" One that does: <a href=\"/sellers/{r['seller_slug']}/\">{b.clean(r['seller_name'])}</a>."
+            out += (f" One that does: <a href=\"/sellers/{r['seller_slug']}/\">{b.seller_name(r)}</a>."
                     f"{N('seller-' + r['seller_slug'])}")
         else:
             out += " No shop meets it yet."
