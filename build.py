@@ -1335,7 +1335,7 @@ def plan_clinics(g, p, rp):
                 and (r.get("product_kind") == "compounded") == comp})
 
 
-def opt_line(g, p, rp):
+def opt_line(g, p, rp, tag="span"):
     """The collapsed row's sentence (option rows v4, 5 Nov 2026): the option's `plain` sentence, with the footnote of the row's
     plan. It never repeats the price: the button carries it (opt_action), and a row with no button has it in its CTA text."""
     sup = ""
@@ -1343,7 +1343,7 @@ def opt_line(g, p, rp):
         sid, n = plan_ref(g, rp)
         sup = f'<sup><a class="ref" href="#{sid}" aria-label="Source {n}">{n}</a></sup>'
     text = p.get("plain", "")
-    return f'<span class="opt-plain">{text}{sup}</span>' if text else ""
+    return f'<{tag} class="opt-plain">{text}{sup}</{tag}>' if text else ""
 
 
 def no_listing_cta(p, pad):
@@ -1400,6 +1400,15 @@ def opt_facts(g, p):
 OPT_VARIANT = os.environ.get("OPT_VARIANT", "a")  # the local round's three layouts (the owner picks one; then this goes)
 
 
+def opt_head(g, p, rp):
+    """The collapsed row's lines. A, B, C: the name with its chip, then the sentence. D: "<name> · <what it does>", then the chip
+    with the prescription fact in words; the sentence moves into the opened row."""
+    if OPT_VARIANT == "d":
+        return (f'<span class="opt-one"><span class="name">{p["name"]}</span> · {p["line_one"]}</span>'
+                f'<span class="opt-two">{status_chip(p)}<span class="opt-rx">{p["rx_word"]}</span></span>')
+    return f'<span class="opt-head"><span class="name">{p["name"]}</span><span class="opt-chips">{status_chip(p)}</span></span>{opt_line(g, p, rp)}'
+
+
 def option_rows(g, lazy=False):
     """One goal's step 2 option rows (pages.md, Home, Option rows; also the goal pages): collapsed, the name and chips,
     the `plain` sentence and the price in bold, and one button (opt_action); opened, the does, status and how lines with
@@ -1416,9 +1425,8 @@ def option_rows(g, lazy=False):
             how, status = unsaid(how), (unsaid(status) if NO_LINK_SAID.search(status) else status)
         # one status chip next to the name; no seller fact on the row (pages/parts.md, Option rows, 5 Nov 2026)
         first = f'<span class="opt-first">{p["first_line"]}</span>' if OPT_VARIANT == "c" and p.get("first_line") else ""
-        rows.append(f'<li class="opt opt-v-{OPT_VARIANT}"><details class="opt-more"><summary class="opt-sum">{option_picture(p, rp)}<span class="opt-m" aria-hidden="true"></span>{first}<span class="opt-head"><span class="name">{p["name"]}</span>'
-                    f'<span class="opt-chips">{status_chip(p)}</span></span>{opt_line(g, p, rp)}</summary>'
-                    f'<div class="opt-body"><p class="opt-does">{p["does"]}{refs(p, slug, price=not pad)}</p>'
+        rows.append(f'<li class="opt opt-v-{OPT_VARIANT}"><details class="opt-more"><summary class="opt-sum">{option_picture(p, rp)}<span class="opt-m" aria-hidden="true"></span>{first}{opt_head(g, p, rp)}</summary>'
+                    f'<div class="opt-body">{opt_line(g, p, rp, "p") if OPT_VARIANT == "d" else ""}<p class="opt-does">{p["does"]}{refs(p, slug, price=not pad)}</p>'
                     f'<p class="opt-status">{status}</p><p class="opt-how">{how}{cost}</p>{"" if lazy else opt_facts(g, p)}</div></details>{opt_action(g, p, rp, lazy, pad)}</li>')
     return rows
 

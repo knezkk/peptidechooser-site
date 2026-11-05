@@ -201,6 +201,11 @@ html:not(.motion) .fig3d-layer { transition: none; }
 .opt-v-b .opt-head { justify-content: space-between; flex-wrap: nowrap; }
 .opt-v-b .opt-head .opt-chips { justify-self: end; text-align: right; }
 .opt-v-c .opt-sum { grid-template-areas: "t m first" "t m head" "t plain plain"; row-gap: 1px; }
+.opt-v-d .opt-sum { grid-template-areas: "t m one" "t m two"; row-gap: 2px; }
+.opt-one { grid-area: one; line-height: 1.35; }
+.opt-sum .opt-one .name { display: inline; }
+.opt-two { grid-area: two; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; font-size: var(--small-size); color: var(--ink-2); }
+.opt-body .opt-plain { color: var(--ink); }
 .opt-first { grid-area: first; font-weight: 700; line-height: 1.3; }
 .opt-v-c .opt-head .name { font-size: var(--small-size); font-weight: 600; }
 .nb { white-space: nowrap; }
@@ -451,6 +456,7 @@ body > .crumbs { width: -moz-available; width: -webkit-fill-available; width: st
   .flow .opt.opt-v-a { min-height: 116px; }
   .flow .opt.opt-v-b { min-height: 136px; }
   .flow .opt.opt-v-c { min-height: 154px; }
+  .flow .opt.opt-v-d { min-height: 112px; }
   .hero-pair { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0 48px; align-items: start; }
   .hero-pair .what-is { margin: 0; }
   .hero-grid { grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: 48px; align-items: start; }
