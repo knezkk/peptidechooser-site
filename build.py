@@ -2494,7 +2494,7 @@ def category_body(g):
     <h1>{g["h1"]}</h1>
     {author_line(GOAL_CHECKED)}{SOURCE_LINE}
     <p class="intro">{lead}</p>
-    </div><div class="goal-panel goal-c-{g["slug"]}">{parts.goal_art(g["slug"], 120)}</div></div>
+    </div><div class="goal-panel goal-c-{g["slug"]}">{parts.goal_photo(g["slug"], 120)}</div></div>
     {cards}
   </div>
 </section>
@@ -4847,6 +4847,8 @@ def main():
     (DIST / "assets" / "fonts").mkdir()
     for f in (ROOT / "assets" / "fonts").iterdir():
         shutil.copy(f, DIST / "assets" / "fonts" / f.name)
+    if (ROOT / "assets" / "photos").exists():
+        shutil.copytree(ROOT / "assets" / "photos", DIST / "assets" / "photos")
     if (ROOT / "assets" / "logos").exists():
         shutil.copytree(ROOT / "assets" / "logos", DIST / "assets" / "logos")
     for f in (ROOT / "assets" / "og").glob("*.png"):
