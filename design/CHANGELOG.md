@@ -4,6 +4,7 @@ Newest row first.
 
 | Date | Change | Approved |
 |---|---|---|
+| 5 Nov 2026 | Clinic tables (owner task, design/clinic-table-states): one row height from 641px, plan names cut with an ellipsis; "Not available in" leaves table rows (clinic page and clinic window keep it); "Your state" filter above clinic tables and in clinic windows. | ODOBRENO DIZAJN and ODOBRENO SEO - Karlo - 5. 11. 2026 |
 | 5 Nov 2026 | Goal photos (owner pick, design/goal-photos): one real photograph per goal on the Home "Compare by goal" cards and the goal page panel, in place of the goal drawings; rule 7 and README "Not allowed" allow stock photos only for these. New part `.goal-photo`, `assets/photos/`, `data/goal_photos.json`. Details: pages/parts.md, Goal photos. | ODOBRENO PRAVILA and ODOBRENO DIZAJN - Karlo - 5. 11. 2026 |
 | 5 Nov 2026 | Real logos, one set (PR 106): icon and wordmark per brand; the tile padding fix moves into the bundle. Book lines from PR 104: drops take the bottle drawing; a tool row has no button. | ODOBRENO DIZAJN - Karlo - 5. 11. 2026 |
 | 5 Nov 2026 | The book split, no design change (owner task, rules/process-v2): `README.md` keeps principles and rules; its changelog moves here, newest row first; `pages.md` becomes an index of `pages/<page>.md`; Logo and the Medical cues list move to `pages/parts.md`, Page anatomy to `pages/every-page.md`. ODOBRENO PRAVILA and ODOBRENO DIZAJN - Karlo - 5. 11. 2026. |
