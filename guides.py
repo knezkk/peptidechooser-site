@@ -1769,7 +1769,7 @@ def letter_kind(r):
 
 
 def g_letters_year(b, f, N):
-    on = f["letters_on"] or BUILD_DATE
+    on = f["letters_on"] or b.DATA_CHECKED
     year = on[:4]
     rows = [r for r in b.LETTERS_ALL if (r.get("letter_date") or "").startswith(year)]
     n = len(rows)
