@@ -699,3 +699,7 @@ body:has(.home-sec) .site-foot { margin-top: 0; }
   .seller-head:has(.seller-pair) { grid-template-columns: minmax(0, 1fr); }
   .seller-head:has(.seller-pair) .seller-score { justify-content: flex-start; }
 }
+
+/* A tool's logo tile sits in its sentence (goal page, Tools block; proposed in the hand-off to the book). */
+.tool-row .tile { vertical-align: middle; margin-right: 8px; }
+/* Book: 12% padding of the tile. In bundle.css `padding:12%` resolves against the parent's width, which empties the tile in a wide cell. */

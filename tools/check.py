@@ -1104,11 +1104,13 @@ def check_parts(P):
     # A real logo (pages/parts.md, Seller tile): a file in assets/logos/ needs its entry with a source, and shows beside the clinic's H1
     logos = json.loads((ROOT / "data" / "seller_logos.json").read_text(encoding="utf-8"))
     for f in sorted((ROOT / "assets" / "logos").glob("*")) if (ROOT / "assets" / "logos").exists() else []:
-        e = logos.get(f.stem) or {}
+        e = logos.get(f.stem.removesuffix("-wordmark")) or {}
         if not (e.get("logo_source") and e.get("logo_checked_at")):
             errs.append(f"assets/logos/{f.name}: no source and date in data/seller_logos.json")
         if not (DIST / "assets" / "logos" / f.name).exists():
             errs.append(f"assets/logos/{f.name}: not in the build")
+        if not f.stem.endswith("-wordmark") and not (f.parent / f"{f.stem}-wordmark.png").exists() and not (f.parent / f"{f.stem}-wordmark.svg").exists():
+            errs.append(f"assets/logos/{f.name}: no wordmark file for the H1 slot")
     # Tools block (pages/goal.md, Category): a coupon row stays hidden until its seller's data sets the flag; never a research-use shop
     for g in site.get("goals") or []:
         page = DIST / g["slug"] / "index.html"
