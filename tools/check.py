@@ -384,6 +384,8 @@ def check_paid_plumbing():
         for href in sorted(set(GREEN_HREF.findall(html))):
             if paid.out_dir(href) not in have:
                 errs.append(f"{name}: green button to {href}, which has no redirect page")
+            elif not (DIST / "sellers" / want[paid.out_dir(href)]["seller_slug"] / "index.html").exists():
+                errs.append(f"{name}: green button to {href}, but the seller has no page on the site")
     return errs
 
 
