@@ -191,7 +191,7 @@ def goal_price(b, g):
 
 def goals_section(b):
     cards = []
-    for g in b.ALL_GOALS:
+    for g in b.CHOOSER_GOALS:
         plans = b.clinic_plans(g)
         count = b.plural(len(plans), "clinic plan") if plans else b.plural(len(g["peptides"]), "option")
         price, src = goal_price(b, g)
@@ -202,7 +202,7 @@ def goals_section(b):
     return f"""
 <section class="section home-sec" id="compare">
   <div class="wrap">
-    <div class="sec-hd"><div><h2>Compare by goal</h2><p>{num_word(len(b.ALL_GOALS))} goals, the same rule on each: the FDA-approved option first, then what people buy instead, with its real status.</p></div></div>
+    <div class="sec-hd"><div><h2>Compare by goal</h2><p>{num_word(len(b.CHOOSER_GOALS))} goals, the same rule on each: the FDA-approved option first, then what people buy instead, with its real status.</p></div></div>
     <ul class="goal-cards">{"".join(cards)}</ul>
   </div>
 </section>"""

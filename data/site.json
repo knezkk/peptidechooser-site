@@ -658,6 +658,131 @@
           "source": "Jinfiniti program terms, read 4 Nov 2026"
         }
       ]
+    },
+    {
+      "slug": "menopause",
+      "clinic_table": {
+        "substances": [
+          "estradiol",
+          "estradiol-progesterone",
+          "progesterone",
+          "fezolinetant"
+        ]
+      },
+      "name": "Menopause",
+      "label": "Menopause",
+      "page": true,
+      "title": "Menopause treatments compared, with prices | Peptide Chooser",
+      "h1": "Menopause treatments, compared with what clinics sell.",
+      "description": "Estradiol, estradiol with progesterone and fezolinetant (Veozah) are FDA approved for menopause hot flashes. Compounded hormones are not. What each one is.",
+      "short_answer": "No peptide is FDA approved for menopause symptoms, and none on our lists is sold for them. The FDA-approved options are estradiol, alone or with progesterone, and one non-hormonal pill, fezolinetant (Veozah). Compounded hormones are made by pharmacies and are not FDA approved, so the FDA does not verify their safety, effectiveness or quality before they are sold.",
+      "legal_section": true,
+      "legal_noun": "medicine",
+      "legal_note": "Approved means the FDA approved a product containing it for a stated use. Compounded means a pharmacy made it; a compounded drug is not FDA approved, even when an approved product has the same ingredient.",
+      "main_query": "menopause treatment",
+      "intro": "The FDA-approved options are estradiol, alone or with progesterone, and one non-hormonal pill. Compounded hormones are not FDA approved.",
+      "peptides": [
+        {
+          "name": "Estradiol (pill, patch or gel)",
+          "plain": "An estrogen taken as a pill, patch or gel, FDA approved for hot flashes due to menopause.",
+          "status": "FDA approved",
+          "chip": "ok",
+          "does": "Replaces estrogen, which falls at menopause. In a woman with a uterus, estrogen alone raises the risk of endometrial cancer.",
+          "how": "Prescription, from an online clinic or your doctor.",
+          "status_plain": "FDA approved for moderate to severe hot flashes due to menopause.",
+          "substance": "estradiol",
+          "src": [
+            101,
+            102,
+            103
+          ],
+          "checked": "2026-11-05",
+          "drawing": "pill-bottle"
+        },
+        {
+          "name": "Estradiol with progesterone (Bijuva)",
+          "plain": "One capsule with both hormones, FDA approved for hot flashes in women with a uterus.",
+          "status": "FDA approved",
+          "chip": "ok",
+          "does": "One capsule each evening with food, with an estrogen and progesterone in it. For women with a uterus.",
+          "how": "Prescription, from an online clinic or your doctor.",
+          "status_plain": "FDA approved for moderate to severe hot flashes due to menopause, in women with a uterus.",
+          "substance": "estradiol-progesterone",
+          "src": [
+            104
+          ],
+          "checked": "2026-11-05",
+          "drawing": "pill-bottle"
+        },
+        {
+          "name": "Fezolinetant (Veozah)",
+          "plain": "A daily non-hormonal pill, FDA approved for hot flashes due to menopause.",
+          "status": "FDA approved",
+          "chip": "ok",
+          "does": "One pill a day with no hormone in it. Its label warns of liver injury, so it needs liver blood tests before and during treatment.",
+          "how": "Prescription, with liver blood tests before and during treatment.",
+          "status_plain": "FDA approved for moderate to severe hot flashes due to menopause.",
+          "substance": "fezolinetant",
+          "src": [
+            105
+          ],
+          "checked": "2026-11-05"
+        },
+        {
+          "name": "Compounded hormones",
+          "plain": "Hormones made by a pharmacy and sold by some online clinics, not FDA approved.",
+          "status": "Not FDA approved; pharmacy-made",
+          "chip": "warn",
+          "does": "Hormones a pharmacy makes itself. The FDA does not verify their safety, effectiveness or quality before they are sold.",
+          "how": "Prescription through the clinic.",
+          "status_plain": "Not FDA approved; pharmacy-made.",
+          "plan_kind": "compounded",
+          "plan_substances": [
+            "estradiol",
+            "estradiol-progesterone",
+            "progesterone"
+          ],
+          "src": [
+            106
+          ],
+          "checked": "2026-11-05"
+        }
+      ],
+      "short": "Menopause",
+      "panel_title": "Menopause treatments",
+      "for": "For hot flashes and other menopause symptoms: the FDA-approved medicines, and what compounded hormones are.",
+      "sources": [
+        {
+          "n": 101,
+          "text": "FDA label on DailyMed, Estradiol tablets (Epic Pharma), set id 9333d92f-2585-4b99-aaea-87c01c95125e, read 5 Nov 2026",
+          "url": "https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=9333d92f-2585-4b99-aaea-87c01c95125e"
+        },
+        {
+          "n": 102,
+          "text": "FDA label on DailyMed, Climara (estradiol) patch, set id 1e9702c4-f2d7-4ea8-b6e8-7dca31671864, read 5 Nov 2026",
+          "url": "https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=1e9702c4-f2d7-4ea8-b6e8-7dca31671864"
+        },
+        {
+          "n": 103,
+          "text": "FDA label on DailyMed, EstroGel (estradiol) gel, set id 762ac371-bb8b-47e7-b48f-e80d452c9dd4, read 5 Nov 2026",
+          "url": "https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=762ac371-bb8b-47e7-b48f-e80d452c9dd4"
+        },
+        {
+          "n": 104,
+          "text": "FDA label on DailyMed, Bijuva (estradiol and progesterone) capsules, set id 59eadb88-c9f3-4871-b176-7ddd98faf9bc, read 5 Nov 2026",
+          "url": "https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=59eadb88-c9f3-4871-b176-7ddd98faf9bc"
+        },
+        {
+          "n": 105,
+          "text": "FDA label on DailyMed, Veozah (fezolinetant) tablets, set id cae9f798-24f9-4580-a4fc-e6c710cbda3c, read 5 Nov 2026",
+          "url": "https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=cae9f798-24f9-4580-a4fc-e6c710cbda3c"
+        },
+        {
+          "n": 106,
+          "text": "FDA, Compounding and the FDA: Questions and Answers, read 5 Nov 2026",
+          "url": "https://www.fda.gov/drugs/human-drug-compounding/compounding-and-fda-questions-and-answers"
+        }
+      ]
     }
   ],
   "legal": {
@@ -829,6 +954,60 @@
           "enclomiphene"
         ],
         "no_page": true
+      },
+      {
+        "peptide": "Estradiol (pill, patch or gel)",
+        "status": "FDA approved",
+        "chip": "ok",
+        "note": "moderate to severe hot flashes due to menopause, prescription",
+        "src": 101,
+        "substances": [
+          "estradiol"
+        ],
+        "no_page": true,
+        "goal_only": true,
+        "checked": "2026-11-05"
+      },
+      {
+        "peptide": "Estradiol with progesterone (Bijuva)",
+        "status": "FDA approved",
+        "chip": "ok",
+        "note": "moderate to severe hot flashes due to menopause, in women with a uterus, prescription",
+        "src": 104,
+        "substances": [
+          "estradiol-progesterone"
+        ],
+        "no_page": true,
+        "goal_only": true,
+        "checked": "2026-11-05"
+      },
+      {
+        "peptide": "Fezolinetant (Veozah)",
+        "status": "FDA approved",
+        "chip": "ok",
+        "note": "moderate to severe hot flashes due to menopause, prescription, with liver blood tests",
+        "src": 105,
+        "substances": [
+          "fezolinetant"
+        ],
+        "no_page": true,
+        "goal_only": true,
+        "checked": "2026-11-05"
+      },
+      {
+        "peptide": "Compounded hormones",
+        "status": "Not FDA approved; pharmacy-made",
+        "chip": "warn",
+        "note": "made by a pharmacy; the FDA does not verify safety, effectiveness or quality before sale",
+        "src": 106,
+        "substances": [
+          "estradiol",
+          "estradiol-progesterone",
+          "progesterone"
+        ],
+        "no_page": true,
+        "goal_only": true,
+        "checked": "2026-11-05"
       }
     ],
     "sources": [
