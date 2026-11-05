@@ -697,7 +697,7 @@ def check_parts(P):
                 if m and "hidden" not in m.group(1):
                     errs.append(f"{name}: the {cls} block shows without JavaScript")
             subs = {s for a, _ in trs for s in re.findall(r'data-subs="([^"]*)"', a or "")[0:1] for s in s.split()}
-            sel = re.search(r'<select class="input" id="sellers-sub">(.*?)</select>', html, re.S)
+            sel = re.search(r'<select class="input" id="sellers-sub"[^>]*>(.*?)</select>', html, re.S)
             for v in re.findall(r'<option value="([^"]+)"', sel.group(1) if sel else ""):
                 if v not in subs:
                     errs.append(f"{name}: the substance filter offers {v}, which no row carries")
@@ -1189,6 +1189,67 @@ def check_data(P):
     return errs
 
 
+def check_events(P):
+    """Measurement (pages/every-page.md; owner decision 5 Nov 2026): every button the events script reads carries its data
+    attributes, a window's row count is the window's real count, nothing typed can become a parameter, and the script's one
+    gtag call stands behind the consent gate."""
+    errs = []
+    tag = lambda cls, html: re.findall(rf'<\w+[^>]*class="(?:[^"]* )?{cls}(?: [^"]*)?"[^>]*>', html)
+    texts = page_texts()
+    windows = {n[len("windows/"):-len(".json")]: h for n, h in texts if n.startswith("windows/")}
+    for name, html in texts:
+        for t in tag("btn-action", html):
+            if 'data-ev="paid_link_click"' not in t or "data-ev-seller=" not in t or "data-ev-out_path=" not in t:
+                errs.append(f"{name}: green button without its event attributes: {t[:120]}")
+        for t in tag("btn-wait", html):
+            if "data-ev=" not in t and "data-card=" not in t:
+                errs.append(f"{name}: btn-wait without its event attributes: {t[:120]}")
+        for t in re.findall(r'<a [^>]*class="btn btn-wait[^"]*"[^>]*>\s*See plans', html):
+            if 'data-ev="see_plans_click"' not in t or "data-ev-seller=" not in t:
+                errs.append(f"{name}: See plans without seller: {t[:120]}")
+        for t in tag("sellers-open", html):
+            need = ('data-ev="prices_window_open"', "data-ev-substance=", "data-ev-window_kind=", "data-ev-rows=")
+            if not all(x in t for x in need):
+                errs.append(f"{name}: window button without its event attributes: {t[:120]}")
+                continue
+            key, rows = re.search(r'data-dlg="([^"]+)"', t).group(1), int(re.search(r'data-ev-rows="(\d+)"', t).group(1))
+            inline = re.search(rf'<dialog[^>]*id="{re.escape(key)}".*?</dialog>', html, re.S)
+            win = inline.group(0) if inline else windows.get(key, "")
+            real = sum(b.count("<tr") for b in re.findall(r"<tbody.*?</tbody>", win, re.S))
+            if win and real != rows:
+                errs.append(f"{name}: window {key} says {rows} rows, holds {real}")
+        for t in tag("decide-card", html):
+            if "data-card=" not in t:
+                errs.append(f"{name}: decision card without data-card")
+        for t in tag("pin", html):
+            if "data-goal=" not in t:
+                errs.append(f"{name}: body figure pin without data-goal")
+        for t in tag("goal-item", html):
+            if 'data-ev="goal_pick"' not in t or "data-ev-goal=" not in t:
+                errs.append(f"{name}: goal chooser without its event attributes")
+        for t in tag("legal-check", html):
+            if 'data-ev="legal_check"' not in t:
+                errs.append(f"{name}: the Check form without data-ev")
+        for t in tag("sub-form", html):
+            if 'data-ev="newsletter_submit"' not in t:
+                errs.append(f"{name}: the newsletter form without data-ev")
+        for t in re.findall(r"<input[^>]*data-filter=[^>]*>", html):
+            if 'data-value="text"' not in t:
+                errs.append(f"{name}: a text filter would send what was typed: {t[:120]}")
+        if "gtag('event'" in html:
+            errs.append(f"{name}: a gtag event outside the events script")
+        if 'src="/assets/nav.js"' in html and "<body data-pt=" not in html:
+            errs.append(f"{name}: no page type on <body>")
+    nav = (DIST / "assets" / "nav.js").read_text(encoding="utf-8")
+    gate, calls = nav.find("if(!window.pcGA)return;"), nav.count("gtag(")
+    if gate < 0 or calls != 1 or nav.find("gtag(") < gate:
+        errs.append(f"assets/nav.js: {calls} gtag call(s), the one allowed call must stand behind the consent gate")
+    # allowed: an attribute's value, the length of what was typed, a <select>'s value (a text field carries data-value="text")
+    if re.search(r"\.value\b(?!\.trim\(\)\.length)", re.sub(r"\ba\.value|getAttribute\('data-value'\)\|\|i\.value", "", nav.split("window.pcEv=send")[1])):
+        errs.append("assets/nav.js: the events script reads a typed value")
+    return errs
+
+
 def check_book(P):
     """The book stays split (owner decision, 5 Nov 2026): README.md under 10 KB, no file in design/pages/ over 20 KB, and
     design/pages.md lists every file in design/pages/."""
@@ -1206,7 +1267,7 @@ def check_book(P):
     return errs
 
 
-CHECKS = {"words": check_words, "seo": check_seo, "schema": check_schema, "parts": check_parts, "data": check_data, "book": check_book}
+CHECKS = {"words": check_words, "seo": check_seo, "schema": check_schema, "parts": check_parts, "data": check_data, "book": check_book, "events": check_events}
 
 # Plan names against their form (owner task w2, 3 Nov 2026): a clinic's own plan name can name another form than the
 # plan's `dosage_form` ("Ozempic Pill" for a pen). The site cannot change data, so this only warns, never fails, and the

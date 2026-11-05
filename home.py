@@ -113,10 +113,10 @@ def where_section(b):
     shops = [r for r in rows if seller_kind(b, r) == "shop"]
     clinics = [r for r in rows if seller_kind(b, r) == "clinic"]
     # the substance select: the /sellers/ page's own list (same values, so its hash reads the same)
-    opts = re.search(r'<select class="input" id="sellers-sub">(.*?)</select>', b.sellers_filter(shops, clinics), re.S).group(1)
+    opts = re.search(r'<select class="input" id="sellers-sub"[^>]*>(.*?)</select>', b.sellers_filter(shops, clinics), re.S).group(1)
     mins = "".join(f'<option value="{i}">{"Any" if i == 0 else f"{i} of {len(b.SCORE_CHECKS)}" if i == len(b.SCORE_CHECKS) else f"{i} or more"}</option>'
                    for i in range(len(b.SCORE_CHECKS) + 1))
-    seg = "".join(f'<button type="button" class="seg-b" data-type="{k}" aria-pressed="{"true" if not k else "false"}">{t}</button>'
+    seg = "".join(f'<button type="button" class="seg-b" data-type="{k}" data-filter="type" data-value="{k or "all"}" aria-pressed="{"true" if not k else "false"}">{t}</button>'
                   for k, t in (("", "All"), ("clinic", "Online clinics"), ("shop", "Research-use shops")))
     data = [{"t": seller_kind(b, r), "s": r.get("score") or 0, "u": (b.clinic_subs(r) if seller_kind(b, r) == "clinic" else b.shop_subs(r)),
              "n": b.seller_name(r).lower(), "h": where_row(b, r)} for r in rows]
@@ -126,10 +126,10 @@ def where_section(b):
   <div class="wrap">
     <div class="sec-hd"><div><h2>Where to get it: {n} sellers, each with background checks</h2><p>Online clinics prescribe and ship medicines; research-use shops sell vials labeled for lab use. Every name opens our page on that seller.</p></div></div>
     <form class="where-filter" hidden onsubmit="return false">
-      <div class="where-f"><label for="where-sub">Substance</label><select class="input" id="where-sub"><option value="">Any</option>{opts}</select></div>
+      <div class="where-f"><label for="where-sub">Substance</label><select class="input" id="where-sub" data-filter="substance"><option value="">Any</option>{opts}</select></div>
       <div class="seg" role="group" aria-label="Type">{seg}</div>
-      <div class="where-f"><label for="where-min">Checks</label><select class="input" id="where-min">{mins}</select></div>
-      <div class="where-f where-q"><label for="where-q">Seller name</label><input class="input" id="where-q" type="text" autocomplete="off"></div>
+      <div class="where-f"><label for="where-min">Checks</label><select class="input" id="where-min" data-filter="min_checks">{mins}</select></div>
+      <div class="where-f where-q"><label for="where-q">Seller name</label><input class="input" id="where-q" type="text" autocomplete="off" data-filter="name" data-value="text"></div>
     </form>
     <p class="small where-n" id="where-n" aria-live="polite">Showing {min(WHERE_FIRST, n)} of {n} · online clinics first, then by checks</p>
     <div class="tbl-wrap"><table class="tbl tbl-cards tbl-where" id="where-table"><caption class="vh">Sellers, online clinics first, then by checks</caption>
@@ -265,7 +265,7 @@ def legal_section(b):
     <div>
       <h2>Is it legal today?</h2>
       <p class="lede">Type a peptide. You get its FDA status with the source and date, where it is sold, and what a warning letter says about it.</p>
-      <form class="legal-check" action="/peptides/" method="get" role="search">
+      <form class="legal-check" action="/peptides/" method="get" role="search" data-ev="legal_check">
         <label for="legal-q">Check a peptide, for example BPC-157</label>
         <div class="legal-row"><input class="input" id="legal-q" name="q" type="text" autocomplete="off" required><button class="btn btn-ink" type="submit">Check</button></div>
         <p class="small" id="legal-msg" aria-live="polite"></p>
@@ -282,7 +282,7 @@ def legal_section(b):
 LEGAL_CHECK_JS = """<script>
 (function(){var f=document.querySelector('.legal-check');if(!f)return;
 f.addEventListener('submit',function(e){var S=window.pcSearch;if(!S)return;e.preventDefault();var v=document.getElementById('legal-q').value.trim();
-S.load(function(d){var r=S.find(d,v,20).filter(function(x){return x.type==='Peptide';});location.href=r.length?r[0].url:'/peptides/';});});})();
+S.load(function(d){var r=S.find(d,v,20).filter(function(x){return x.type==='Peptide';});if(window.pcEv)pcEv(f.getAttribute('data-ev'),{substance:r.length?r[0].url.split('/')[2]:'none'});location.href=r.length?r[0].url:'/peptides/';});});})();
 </script>"""
 
 
