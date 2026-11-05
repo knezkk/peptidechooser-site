@@ -1,4 +1,4 @@
-"""Pre-publish checks (rulebook 11.12): words, seo, schema, parts. Run after build.py:
+"""Pre-publish checks (rulebook 11.12): words, seo, schema, parts, data, book. Run after build.py:
     python3 tools/check.py          # all
     python3 tools/check.py words    # one
 Exit code 1 on any failure. A failed check gets fixed; the rule is never lowered.
@@ -85,7 +85,7 @@ class Text(HTMLParser):
             self.parts.append(d)
 
 
-# The six things a peptide page can carry beyond its status (pages.md, Peptide, Thin pages), as the page shows them.
+# The six things a peptide page can carry beyond its status (pages/peptide.md, Peptide, Thin pages), as the page shows them.
 PEP_SIGNALS = {"goal page": r'id="evidence"', "shop table": r'class="tbl (?:tbl-compact )?tbl-cards tbl-sold">.*?<tbody><tr>',
                "clinic plan": r'class="tbl (?:tbl-compact )?tbl-cards tbl-clinics">.*?<tbody><tr', "FDA letter": r'tbl-pep-letters">.*?<tbody><tr>',
                "guide": r'id="guides-h"', "approved brand": r"<li><span>Approved brands</span>"}
@@ -107,7 +107,7 @@ def pages():
     return out
 
 
-# The one exception to the banned "legit" (owner decision 2 Nov 2026; pages.md, Rules that apply to every page): on a
+# The one exception to the banned "legit" (owner decision 2 Nov 2026; pages/every-page.md, Rules that apply to every page): on a
 # /sellers/<slug>/ page, the H2 "Is <Name> legit? What we can check" and the fixed closing sentence under it.
 LEGIT_H2 = re.compile(r"Is [^<>]{1,80} legit\? What we can check")
 LEGIT_CLOSE = "These are the facts we hold; we do not call any seller legit or safe, and we never link to the shop."
@@ -270,7 +270,7 @@ def window_errs(name, html):
                 errs.append(f"{name}: seller window links to a seller ({href})")
         if "btn-action" in m.group(1):
             errs.append(f"{name}: Visit button inside the seller window")
-        # A price window lists shops only (pages.md, Rules that apply to every page): no clinic in it.
+        # A price window lists shops only (pages/every-page.md, Rules that apply to every page): no clinic in it.
         for slug in clinic_slugs():
             if f"/sellers/{slug}/" in m.group(1) or f'data-seller="{slug}"' in m.group(1):
                 errs.append(f"{name}: clinic {slug} inside a price window")
@@ -293,7 +293,7 @@ COSMETIC_FORMS = ("cream", "serum", "lotion", "gel", "topical")
 
 
 def paid_rule():
-    """What the paid link rule needs (pages.md, Buttons; owner decision 4 Nov 2026): research-use shops, sellers with an
+    """What the paid link rule needs (pages/parts.md, Buttons; owner decision 4 Nov 2026): research-use shops, sellers with an
     Adulterated letter and no close-out, and the seller behind each /out/ path."""
     src = Path(os.environ["SITE_JSON"]) if os.environ.get("SITE_JSON") else ROOT / "data" / "site.json"
     d = json.loads(src.read_text(encoding="utf-8"))
@@ -337,7 +337,7 @@ def page_texts():
 
 def check_paid_plumbing():
     """Every green button's /out/ path has a redirect page; every redirect page holds its tracking address from the data
-    and nothing else; /out/ stays out of search; no tracking address anywhere else (pages.md, Paid link redirect page)."""
+    and nothing else; /out/ stays out of search; no tracking address anywhere else (pages/trust.md, Paid link redirect page)."""
     errs = []
     data = paid.load()
     want = {paid.out_dir(r["out_path"]): r for r in data["redirects"]}
@@ -426,7 +426,7 @@ def phrase_hits(rules, html):
 
 
 def wording_report():
-    """A brand's wording rules are advisory (pages.md, Paid link redirect page; owner decision 4 Nov 2026): the table row,
+    """A brand's wording rules are advisory (pages/trust.md, Paid link redirect page; owner decision 4 Nov 2026): the table row,
     list item or card around its green button, and the main part of its own page when that page has one. Lines to print;
     never a failure."""
     data = paid.load()
@@ -488,7 +488,7 @@ def check_parts(P):
         f = DIST / "sellers" / slug / "index.html"
         if f.exists() and "we never link to the shop" in f.read_text(encoding="utf-8"):
             errs.append(f"sellers/{slug}/index.html: clinic page says 'we never link to the shop'")
-    # The Legal pages line on a seller page (owner task 3 Nov 2026; pages.md, Seller): only the five states' wordings, in
+    # The Legal pages line on a seller page (owner task 3 Nov 2026; pages/seller.md, Seller): only the five states' wordings, in
     # the Background check card (the fact alone) and in the legit list ("<state>: <fact>").
     date = r"(?: \(\d{1,2} [A-Z][a-z]{2} \d{4}\))?"
     could = rf"Could not check: the site (?:blocks our crawler|did not answer){date}\."
@@ -532,7 +532,7 @@ def check_parts(P):
         for w, n in about.items():
             if w in home and home[w] != n:
                 errs.append(f"about/index.html: {n} {w}, Home says {home[w]} (a count must come from the same data)")
-    # Substance pages (pages.md, Peptide; owner task 3 Nov 2026): the status line and "Where to get it" (or the cosmetic
+    # Substance pages (pages/peptide.md, Peptide; owner task 3 Nov 2026): the status line and "Where to get it" (or the cosmetic
     # line) on every one; the first seller shown has the most checks among the page's shops.
     for name in P:
         if not re.match(r"peptides/[^/]+/index\.html$", name):
@@ -566,7 +566,7 @@ def check_parts(P):
         for src in re.findall(r'data-src="/(windows/[^"]+)"', html):
             if not (DIST / src).exists():
                 errs.append(f"{name}: window file {src} missing")
-        # The clinic window (pages.md, Pictures and the clinic window): the label's count is the clinics in its window, its price is
+        # The clinic window (pages/windows.md, Clinic window): the label's count is the clinics in its window, its price is
         # a price in the window, and a clinic window never lists a shop's row
         for src, price, n in re.findall(r'data-src="/(windows/clinics-[^"]+)">Buy from \$([\d,.]+)/mo · (\d+) (?:clinic|seller)s?</a>', html):
             if not (DIST / src).exists():
@@ -579,11 +579,11 @@ def check_parts(P):
                 errs.append(f"{name}: {src} has no plan at ${price}, the price on its button")
             if "data-seller=" in win:
                 errs.append(f"{name}: {src} mixes clinics and shops")
-        # Every option row and plan row has a picture (pages.md, Pictures and the clinic window), except a plan whose data names no form
+        # Every option row and plan row has a picture (pages/parts.md, Pictures and the clinic window), except a plan whose data names no form
         for li in re.findall(r'<li class="opt">.*?</summary>', html, re.S):
             if 'class="thumb ' not in li:
                 errs.append(f"{name}: an option row without a picture")
-        # Every option row has a button or its no-listing text (pages.md, Home, Option rows; owner, 4 Nov 2026)
+        # Every option row has a button or its no-listing text (pages/parts.md, Option rows; owner, 4 Nov 2026)
         for li in re.findall(r'<li class="opt">.*?</li>', html, re.S):
             if 'class="btn ' not in li.split("</details>")[-1] and not any(t in li for t in NO_LISTING_TEXTS):
                 errs.append(f"{name}: an option row with neither a button nor its no-listing text")
@@ -595,7 +595,7 @@ def check_parts(P):
             errs.append(f"{name}: a row whose form has no picture; add it to the mapping")
         for m in re.finditer(r'class="btn [^"]*sellers-open"[^>]*data-dlg="clinics-[^"]+"[^>]*>(?!Buy from)', html):
             errs.append(f"{name}: a clinic window's button without the Buy label")
-    # The letters page (pages.md, Letters): every row has a date, a company, a subject and its fda.gov letter; the only
+    # The letters page (pages/letters.md, Letters): every row has a date, a company, a subject and its fda.gov letter; the only
     # links leaving the site go to fda.gov, so no seller domain is linked anywhere on the page.
     if "fda-warning-letters/index.html" in P:
         name = "fda-warning-letters/index.html"
@@ -621,7 +621,7 @@ def check_parts(P):
         # the subject once and no Office column (owner UX audit A27, 3 Nov 2026)
         if body and ("sub-phone" in body.group(1) or 'class="office"' in body.group(1)):
             errs.append(f"{name}: the subject repeated in the company cell or an Office column")
-    # The seller pages (pages.md, Sellers and Seller; owner task 2 Nov 2026): no link to any seller's site; every profile
+    # The seller pages (pages/sellers-list.md and pages/seller.md; owner task 2 Nov 2026): no link to any seller's site; every profile
     # carries the five check marks and the note; the facts are never a verdict.
     for name in (n for n in P if n.startswith("sellers/")):
         html = (DIST / name).read_text(encoding="utf-8")
@@ -660,7 +660,7 @@ def check_parts(P):
             if "Checks are facts we hold about the seller, not a safety or quality grade." not in html:
                 errs.append(f"{name}: no note that the checks are facts, not a grade")
         else:
-            # Filters on /sellers/ (pages.md, Sellers; owner task 2 Nov 2026): without JavaScript the controls stay hidden
+            # Filters on /sellers/ (pages/sellers-list.md, Sellers; owner task 2 Nov 2026): without JavaScript the controls stay hidden
             # and every seller page in the build has its row, none hidden; the script and the filter's options name
             # only sellers and substances that are in the build's rows.
             built = {n.split("/")[1] for n in P if n.startswith("sellers/") and n != "sellers/index.html"}
@@ -705,7 +705,7 @@ def check_parts(P):
                 for s in re.findall(r'href="/sellers/#substance=([^"]+)"', (DIST / pn).read_text(encoding="utf-8")):
                     if s not in opts:
                         errs.append(f"{pn}: links to /sellers/#substance={s}, which the sellers filter does not offer")
-    # Search and Compare any two (pages.md, Every page, Header, Search; Search; Compare; owner task 2 Nov 2026): the index
+    # Search and Compare any two (pages/every-page.md, Every page, Header, Search; Search; Compare; owner task 2 Nov 2026): the index
     # parses, stays under 150 KB and every entry has its five fields and a page that exists; /search/ is noindex; neither
     # page nor the index links to a seller's site.
     idx_file = DIST / "search-index.json"
@@ -731,7 +731,7 @@ def check_parts(P):
                 errs.append(f"search-index.json: {e['name']} links off the site")
     if "search/index.html" in P and "noindex" not in P["search/index.html"].meta.get("robots", ""):
         errs.append("search/index.html: not noindex")
-    # Peptide pages (pages.md, Peptide; owner task 2 Nov 2026): every page opens with the status and its source link (the
+    # Peptide pages (pages/peptide.md, Peptide; owner task 2 Nov 2026): every page opens with the status and its source link (the
     # status line since the substance page v2, 3 Nov 2026), and no page on the site says a dose (an amount with how often or per what, or "take/inject N").
     for name in P:
         if name.startswith("peptides/") and name != "peptides/index.html":
@@ -742,7 +742,7 @@ def check_parts(P):
         m = DOSE.search(text)
         if m:
             errs.append(f"{name}: says a dose ({m.group(0)})")
-    # Comparison pages (pages.md, Compare pairs; owner task 2 Nov 2026): both sides link to their page on our site, a
+    # Comparison pages (pages/compare.md, Compare pairs; owner task 2 Nov 2026): both sides link to their page on our site, a
     # substance pair carries each status source, and the sitemap holds every pair once (never b-vs-a beside a-vs-b).
     pairs = [n for n in P if re.fullmatch(r"compare/[a-z0-9-]+-vs-[a-z0-9-]+/index.html", n)]
     for name in pairs:
@@ -781,7 +781,7 @@ def check_parts(P):
         for k, v in data.items():
             if v.get("k") == "seller" and f'href="/sellers/{k[2:]}/"' not in v.get("h", ""):
                 errs.append(f"compare/index.html: seller {k} does not link to its page")
-    # Thin pages (pages.md, Peptide; owner task 2 Nov 2026): a /peptides/<slug>/ page is indexed only when it shows at
+    # Thin pages (pages/peptide.md, Peptide; owner task 2 Nov 2026): a /peptides/<slug>/ page is indexed only when it shows at
     # least three of the six, each read off the page as built; otherwise it is noindex (and so out of the sitemap).
     for name in P:
         if name.startswith("peptides/") and name != "peptides/index.html":
@@ -792,7 +792,7 @@ def check_parts(P):
                 errs.append(f"{name}: noindex but shows {len(has)} of the six ({', '.join(has)})")
             if len(has) < 3 and not noindex:
                 errs.append(f"{name}: thin ({', '.join(has) or 'status only'}) but indexed")
-    # Orphans (pages.md, Rules that apply to every page): every page in the sitemap is linked from another page of the
+    # Orphans (pages/every-page.md, Rules that apply to every page): every page in the sitemap is linked from another page of the
     # build (not the sitemap or llms.txt, which are not pages).
     sm = (DIST / "sitemap.xml").read_text(encoding="utf-8") if (DIST / "sitemap.xml").exists() else ""
     linked = set()
@@ -805,7 +805,7 @@ def check_parts(P):
     for loc in re.findall(rf"<loc>{re.escape(SITE)}([^<]*)</loc>", sm):
         if loc != "/" and loc not in linked:
             errs.append(f"sitemap.xml: {loc} is linked from no other page")
-    # The author line (pages.md, Rules that apply to every page): every goal, seller, peptide, compare, guide and letters
+    # The author line (pages/every-page.md, Rules that apply to every page): every goal, seller, peptide, compare, guide and letters
     # page carries the one line "<team>. Checked <date>." with the same class, exactly once.
     goals = {f'{g["slug"]}/index.html' for g in json.loads((ROOT / "data" / "site.json").read_text(encoding="utf-8"))["goals"] if g.get("page")}
     for name in P:
@@ -815,7 +815,7 @@ def check_parts(P):
             n = len(AUTHOR_LINE.findall((DIST / name).read_text(encoding="utf-8")))
             if n != 1:
                 errs.append(f"{name}: {n} author lines (want one: '<team>. Checked <date>.' in p.small.meta)")
-    # Home v2 (pages.md, Home; owner task 3 Nov 2026): each section under the hero ends with its one action (at most one
+    # Home v2 (pages/home.md, Home; owner task 3 Nov 2026): each section under the hero ends with its one action (at most one
     # btn-ink and one btn-line outside its tables: the letters section's pair is the most); the page stays under 60 KB
     # (the price windows load on demand); "we do not link" is said once, in the label legend.
     if "index.html" in P:
@@ -885,7 +885,7 @@ def check_parts(P):
             # our own database (the shop prices in a guide) is a source for every shop
             if who in sellers and li and not src.startswith((who, "Peptide Chooser database")):
                 errs.append(f"{name}: footnote {m.group(2)} after ({who}) is not that seller's source")
-    # Goal pages v2 (pages.md, Category; owner task 3 Nov 2026): the decision cards (at most three, one button each, every
+    # Goal pages v2 (pages/goal.md, Category; owner task 3 Nov 2026): the decision cards (at most three, one button each, every
     # number on a card also elsewhere in the page's data), no "Every option, side by side", the clinic table's first row a
     # brand plan when the table has one, and the H1 and title of every goal exactly as data/site.json has them.
     for g in json.loads((ROOT / "data" / "site.json").read_text(encoding="utf-8"))["goals"]:
@@ -915,7 +915,7 @@ def check_parts(P):
         h1 = re.search(r"<h1[^>]*>(.*?)</h1>", html, re.S)
         if not h1 or re.sub(r"<[^>]+>", "", h1.group(1)).strip() != g["h1"]:
             errs.append(f"{name}: H1 is not the goal's h1 in data/site.json")
-    # Clinics are scored out of 4, shops out of 5 (owner decision C9, 3 Nov 2026; pages.md, Seller): no clinic page or row
+    # Clinics are scored out of 4, shops out of 5 (owner decision C9, 3 Nov 2026; pages/seller.md, Seller): no clinic page or row
     # says "of 5", no shop page or row "of 4", no compare pair of two clinics or /sellers/ row mixes them, and /how-we-rate/
     # carries the rule sentence.
     for name in P:
@@ -944,7 +944,7 @@ def check_parts(P):
             wrong = {"Clinic": "of 5", "Seller": "of 4"}.get(e["type"])
             if wrong and re.search(rf"\b\d {wrong}\b", e.get("line", "")):
                 errs.append(f"search-index.json: {e['name']} says '{wrong}'")
-    # The letters feed (pages.md, Letters): it parses as XML and every item links to the letter on fda.gov.
+    # The letters feed (pages/letters.md, Letters): it parses as XML and every item links to the letter on fda.gov.
     feed = DIST / "fda-warning-letters" / "feed.xml"
     if feed.exists():
         import xml.etree.ElementTree as ET
@@ -959,7 +959,7 @@ def check_parts(P):
             link, guid = it.findtext("link") or "", it.findtext("guid") or ""
             if not link.startswith("https://www.fda.gov/") or guid != link or not it.findtext("title") or not it.findtext("pubDate"):
                 errs.append(f"feed.xml: item without its fda.gov link, title or date ({link})")
-    # Header categories (pages.md, Every page, Header; owner task 3 Nov 2026): a nav link never points at a section of
+    # Header categories (pages/every-page.md, Every page, Header; owner task 3 Nov 2026): a nav link never points at a section of
     # Home or of the page itself, and every one opens a built page (with its #id there, for a link into a page).
     ids = {}
     for name in P:
@@ -981,7 +981,7 @@ def check_parts(P):
                     ids[target] = set(re.findall(r'\sid="([^"]+)"', (DIST / target).read_text(encoding="utf-8")))
                 if frag not in ids[target]:
                     errs.append(f"{name}: nav link {href}: no id {frag} on that page")
-    # Header cards (pages.md, Every page, Header; owner task 3 Nov 2026): every panel is a card, never a full-width
+    # Header cards (pages/every-page.md, Every page, Header; owner task 3 Nov 2026): every panel is a card, never a full-width
     # strip (no container class, no width:100%); the count sentence under "Start here" matches the build.
     sellers = len([d for d in (DIST / "sellers").iterdir() if (d / "index.html").exists()]) if (DIST / "sellers").exists() else 0
     peps = len([d for d in (DIST / "peptides").iterdir() if (d / "index.html").exists()]) if (DIST / "peptides").exists() else 0
@@ -999,7 +999,7 @@ def check_parts(P):
             for num, word in re.findall(r"(\d+) (seller|substance|FDA letter)s?\b", cnt):
                 if int(num) != want[word]:
                     errs.append(f"{name}: header count '{num} {word}' but the build has {want[word]}")
-    # Guides and /learn/ (pages.md, Learn, Guide; owner task w2, 3 Nov 2026): the short answer opens with a sentence
+    # Guides and /learn/ (pages/learn.md, Learn, Guide; owner task w2, 3 Nov 2026): the short answer opens with a sentence
     # under 160 characters; "What to do next" links at least one built page; no /learn/ group is empty; no guide title
     # twice. A redirect page (data/redirects.json) is noindex, carries its canonical and points at a built page.
     titles, openings, six = {}, {}, {}
@@ -1049,7 +1049,7 @@ def check_parts(P):
             m = re.search(r'url=(/[^"]*)"', html)
             if 'content="noindex"' not in html or 'rel="canonical"' not in html or not m or not (DIST / m.group(1).strip("/") / "index.html").exists():
                 errs.append(f"{f.relative_to(DIST)}: redirect page without noindex, canonical or a built target")
-    # Compare (pages.md, Compare any two, Compare pairs; owner task w2, 3 Nov 2026): a pair page's verdict states two
+    # Compare (pages/compare.md, Compare any two, Compare pairs; owner task w2, 3 Nov 2026): a pair page's verdict states two
     # facts or is left out, never one; no "Not shown" row; the tool's pickers offer both sides of every built pair.
     tool = (DIST / "compare" / "index.html").read_text(encoding="utf-8") if (DIST / "compare" / "index.html").exists() else ""
     offered = set(re.findall(r'<option value="([^"]+)"', tool.split('id="cmp-b"')[0])) if tool else set()
@@ -1067,14 +1067,14 @@ def check_parts(P):
             ok = f"u.{slug}" in offered if kind == "peptides" else any(v.startswith(f"p.{slug}.") for v in offered)
             if tool and not ok:
                 errs.append(f"{name}: the tool's pickers do not offer {slug}")
-    # Not available in (pages.md, Category): a clinic with state limits shows them on its profile, from the data file
+    # Not available in (pages/goal.md, Category): a clinic with state limits shows them on its profile, from the data file
     site = json.loads((Path(os.environ["SITE_JSON"]) if os.environ.get("SITE_JSON") else ROOT / "data" / "site.json").read_text(encoding="utf-8"))
     states = {k: v for k, v in json.loads((ROOT / "data" / "clinic_states.json").read_text(encoding="utf-8")).items() if not k.startswith("_")}
     for slug in sorted({r["seller_slug"] for r in site.get("seller_states") or []} or states):
         page = DIST / "sellers" / slug / "index.html"
         if page.exists() and 'class="not-in"' not in page.read_text(encoding="utf-8"):
             errs.append(f"sellers/{slug}/index.html: no Not available in line")
-    # A real logo (pages.md, Seller tile): a file in assets/logos/ needs its entry with a source, and shows beside the clinic's H1
+    # A real logo (pages/parts.md, Seller tile): a file in assets/logos/ needs its entry with a source, and shows beside the clinic's H1
     logos = json.loads((ROOT / "data" / "seller_logos.json").read_text(encoding="utf-8"))
     for f in sorted((ROOT / "assets" / "logos").glob("*")) if (ROOT / "assets" / "logos").exists() else []:
         e = logos.get(f.stem) or {}
@@ -1082,7 +1082,7 @@ def check_parts(P):
             errs.append(f"assets/logos/{f.name}: no source and date in data/seller_logos.json")
         if not (DIST / "assets" / "logos" / f.name).exists():
             errs.append(f"assets/logos/{f.name}: not in the build")
-    # Tools block (pages.md, Category): a coupon row stays hidden until its seller's data sets the flag; never a research-use shop
+    # Tools block (pages/goal.md, Category): a coupon row stays hidden until its seller's data sets the flag; never a research-use shop
     for g in site.get("goals") or []:
         page = DIST / g["slug"] / "index.html"
         for t in g.get("tools") or []:
@@ -1090,7 +1090,7 @@ def check_parts(P):
             shows = page.exists() and f'id="src-tool-{t["seller_slug"]}"' in page.read_text(encoding="utf-8")
             if shows and ((t.get("needs") and prof.get(t["needs"]) is not True) or (prof.get("product_count") or 0) > 0):
                 errs.append(f'{g["slug"]}/index.html: {t["name"]} shows in Tools without its flag, or is a research-use shop')
-    # /sources/ (pages.md, Sources): every group shown has at least one source
+    # /sources/ (pages/trust.md, Sources): every group shown has at least one source
     src = DIST / "sources" / "index.html"
     if src.exists():
         for sec in re.findall(r'<section class="src-group"[^>]*>(.*?)</section>', src.read_text(encoding="utf-8"), re.S):
@@ -1151,7 +1151,24 @@ def check_data(P):
     return errs
 
 
-CHECKS = {"words": check_words, "seo": check_seo, "schema": check_schema, "parts": check_parts, "data": check_data}
+def check_book(P):
+    """The book stays split (owner decision, 5 Nov 2026): README.md under 10 KB, no file in design/pages/ over 20 KB, and
+    design/pages.md lists every file in design/pages/."""
+    book = ROOT / "design"
+    errs = []
+    size = (book / "README.md").stat().st_size
+    if size >= 10_000:
+        errs.append(f"design/README.md is {size} bytes, must be under 10 KB")
+    index = (book / "pages.md").read_text(encoding="utf-8")
+    for f in sorted((book / "pages").glob("*.md")):
+        if f.stat().st_size > 20_000:
+            errs.append(f"design/pages/{f.name} is {f.stat().st_size} bytes, must be at most 20 KB")
+        if f"pages/{f.name}" not in index:
+            errs.append(f"design/pages.md does not list pages/{f.name}")
+    return errs
+
+
+CHECKS = {"words": check_words, "seo": check_seo, "schema": check_schema, "parts": check_parts, "data": check_data, "book": check_book}
 
 # Plan names against their form (owner task w2, 3 Nov 2026): a clinic's own plan name can name another form than the
 # plan's `dosage_form` ("Ozempic Pill" for a pen). The site cannot change data, so this only warns, never fails, and the

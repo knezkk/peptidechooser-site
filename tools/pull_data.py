@@ -22,6 +22,7 @@ Reads the `site.*` views through the read-only role (peptide-data spec 0015) and
 Everything else in site.json (hand-checked prices with their sources, texts, goals) is left untouched.
 Run before build.py:  SITE_DATABASE_URL=postgres://site_reader:...@host:5432/postgres python3 tools/pull_data.py
 Without SITE_DATABASE_URL it exits 0 and changes nothing, so a local build never needs the database.
+The address comes from the environment, or else from a `.env` file in the worktree (never committed).
 """
 import json
 import os
@@ -32,7 +33,21 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 DATA = ROOT / "data" / "site.json"
 PAID = ROOT / "data" / "paid.json"
-URL = os.environ.get("SITE_DATABASE_URL", "")
+
+
+def database_url():
+    """The environment wins; else the SITE_DATABASE_URL line of .env, read by hand (no dependency)."""
+    if os.environ.get("SITE_DATABASE_URL"):
+        return os.environ["SITE_DATABASE_URL"]
+    env = ROOT / ".env"
+    for line in env.read_text(encoding="utf-8").splitlines() if env.exists() else []:
+        key, _, value = line.strip().removeprefix("export ").partition("=")
+        if key.strip() == "SITE_DATABASE_URL":
+            return value.strip().strip("'\"")
+    return ""
+
+
+URL = database_url()
 
 
 def fetch(sql):
