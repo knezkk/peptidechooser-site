@@ -7,6 +7,7 @@ import collections
 import json
 import os
 import re
+import subprocess
 import sys
 from html import escape, unescape
 from html.parser import HTMLParser
@@ -1121,11 +1122,43 @@ def seller_domains():
     return {re.sub(r"^www\.", "", h.lower()) for h in hosts if h}
 
 
+MONTHS = {m: i + 1 for i, m in enumerate("Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec".split())}
+DATE_STAMP = re.compile(r"\b(Last updated|Tracked since|First seen(?: by us)?:?|Subscribers as of|As of|[Cc]hecked(?: on)?:?)\s+"
+                        r"(?:(\d{1,2}) )?(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) (20\d\d)\b")
+
+
+def check_dates(site_text):
+    """Rule 4: a date a reader sees as ours ("Checked", "Prices checked", "Last updated", "Tracked since", "First seen", "As of")
+    is a date in data/site.json, so never the build clock or typed. "Last updated" on /privacy/ and /disclosure/ is the date of
+    the commit that changed their text. A source's own stamp ("current as of") is the source's and is not ours to check."""
+    errs = []
+    days = set(re.findall(r"\d{4}-\d{2}-\d{2}", site_text))
+    months = {d[:7] for d in days}
+    commits = set(subprocess.run(["git", "log", "--format=%cs", "--", "build.py", "paid.py"], cwd=ROOT, capture_output=True, text=True).stdout.split())
+    for name, html in page_texts():
+        if name.startswith("out/"):
+            continue
+        text = re.sub(r"<(script|style|head)\b.*?</\1>", " ", html, flags=re.S)
+        text = " ".join(unescape(re.sub(r"<[^>]+>", " ", text)).split())
+        for label, day, mon, year in sorted(set(DATE_STAMP.findall(text))):
+            month = f"{year}-{MONTHS[mon]:02d}"
+            iso = f"{month}-{int(day):02d}" if day else ""
+            if label == "Last updated" and name in ("privacy/index.html", "disclosure/index.html"):
+                ok = iso in commits
+            else:
+                ok = iso in days if day else month in months
+            if not ok:
+                errs.append(f"{name}: \"{label} {(day + ' ') if day else ''}{mon} {year}\" is not a date in the data")
+    return errs
+
+
 def check_data(P):
     # Rulebook 11.8: no number without a date and a source. When the database statuses are in site.json
     # (tools/pull_data.py), every one of them must carry its source link and a date.
     errs = []
-    d = json.loads((ROOT / "data" / "site.json").read_text(encoding="utf-8"))
+    site_text = (ROOT / "data" / "site.json").read_text(encoding="utf-8")
+    errs += check_dates(site_text)
+    d = json.loads(site_text)
     for r in d.get("legal_db") or []:
         name = r.get("substance_slug", "?")
         if not r.get("source_url"):

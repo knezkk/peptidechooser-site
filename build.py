@@ -45,13 +45,14 @@ CHECKED = nice_date(DATA["checked"])
 def text_changed(*ranges):
     """The date of the last commit that changed these lines (owner answer Q2 b, 4 Nov 2026): "Last updated" on /privacy/ and
     /disclosure/, never typed. Each range is (first line regex, last line regex, file). A shallow clone would give the wrong
-    date, so the build stops; lines with no commit yet are today's."""
+    date, so the build stops; lines with no commit yet take the newest commit's date, never the build clock."""
     def git(*args):
         return subprocess.run(["git", *args], cwd=ROOT, capture_output=True, text=True)
     if git("rev-parse", "--is-shallow-repository").stdout.strip() == "true":
         sys.exit("build.py: a shallow clone has no text dates; check out with fetch-depth 0")
     dates = [git("log", "-1", "-s", "--format=%cs", "-L", f"/{a}/,/{b}/:{f}").stdout.strip()[:10] for a, b, f in ranges]
-    return nice_date(max(d or date.today().isoformat() for d in dates))
+    newest = git("log", "-1", "--format=%cs").stdout.strip()
+    return nice_date(max(d or newest for d in dates))
 
 
 GA4_ID = DATA.get("ga4_id", "")
