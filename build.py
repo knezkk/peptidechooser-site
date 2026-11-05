@@ -594,7 +594,8 @@ def plural(n, word):
 
 
 # A goal's clinic plans (pages.md, Category, weight loss; owner task 2 Nov 2026): the rows of site.plan_prices whose
-# substance is one of the goal's `clinic_plans.substances`, and, with `programs`, the plans that name no medication.
+# substance is one of the goal's `clinic_plans.substances`. A plan with no substance, or another one, shows only on the seller's
+# own page, never on a goal page or in a clinic window, until the data carries a goal tag (owner answer to #104 Q2 A, 5 Nov 2026).
 BRANDED = ("branded", "oral_branded")
 
 
@@ -603,7 +604,7 @@ def clinic_plans(g):
     if not cp:
         return []
     rows = [r for r in PLANS if r.get("price_monthly") is not None
-            and (r["substance_slug"] in cp["substances"] or (r["substance_slug"] is None and cp.get("programs")))]
+            and r["substance_slug"] in cp["substances"]]
     return sorted(rows, key=lambda r: (float(r["price_monthly"]), r["seller_name"], r["plan_name"]))
 
 
@@ -2207,7 +2208,7 @@ def clinic_section(g, rows):
         care = care_note(r)
         # on phones the first CLINICS_FIRST rows show until "Show all N" (owner answer Q2 a, 2 Nov 2026; bundle.css, Clinic table)
         more = ' class="more"' if i >= CLINICS_FIRST else ""
-        trs.append(f'<tr{more}><td>{clinic_link(r["seller_slug"], seller_base(r["seller_name"]))}{not_in_line(r["seller_slug"])}</td><td data-l="Plan">{explain_brand(r["plan_name"], named)}</td>'
+        trs.append(f'<tr{more} data-s="{r["substance_slug"]}"><td>{clinic_link(r["seller_slug"], seller_base(r["seller_name"]))}{not_in_line(r["seller_slug"])}</td><td data-l="Plan">{explain_brand(r["plan_name"], named)}</td>'
                    f'<td>{plan_chip(g, r)}</td>'
                    f'<td data-l="Per month"><span class="num">{usd(r["price_monthly"])}</span>{plan_letter(r)}{f"<span class=sub>{care}</span>" if care else ""}</td>'
                    # every row: the letter chip by the price, no FDA letter column, "See plans" to our clinic page (owner answers
@@ -2304,7 +2305,7 @@ def goal_clinic_section(g, rows):
         k = plan_kind(r)
         kind = "brand" if k in ("brand", "generic") else "compounded" if k == "compounded" else "other"
         more = ' class="more"' if i >= CLINICS_FIRST else ""
-        trs.append(f'<tr{more} data-k="{kind}" data-f="{plan_form(r)}" data-l="{1 if (r.get("fda_letter_count") or 0) else 0}">'
+        trs.append(f'<tr{more} data-s="{r["substance_slug"]}" data-k="{kind}" data-f="{plan_form(r)}" data-l="{1 if (r.get("fda_letter_count") or 0) else 0}">'
                    f'<td><span class="cell-pic">{parts.plan_picture(r)}<span class="name">{explain_brand(r["plan_name"], named)}</span></span></td>'
                    f'<td data-l="What it is">{plan_chip(g, r)}</td>'
                    f'<td data-l="Per month"><span class="num">{usd(r["price_monthly"])}</span>{plan_letter(r)}{f"<span class=sub>{care}</span>" if care else ""}</td>'
