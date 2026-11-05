@@ -74,7 +74,9 @@ def plan_drawing(r):
     a form word in its name; anything else has no drawing."""
     if r.get("product_kind") == "compounded":
         return "vial-compounded"
-    return form_drawing((r.get("dosage_form") or "").replace("_", " ")) or form_drawing(r.get("plan_name"))
+    # Drops are a liquid (design/pages/parts.md, the one mapping); only a plan's own form says so, because "drops" in running text can mean something else.
+    form = (r.get("dosage_form") or "").replace("_", " ").replace("drops", "liquid")
+    return form_drawing(form) or form_drawing(r.get("plan_name"))
 
 
 def plan_picture(r):

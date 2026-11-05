@@ -62,10 +62,13 @@ GA4_ID = DATA.get("ga4_id", "")
 # in localStorage under "pc-consent" so the bar is shown once.
 # Google's script loads only after "Accept" (now or on an earlier visit), so nothing reaches Google before consent, as the
 # privacy policy says; consent mode alone still sent cookieless pings (design/site-polish, 2 Nov 2026).
+# The search words (?q=) never reach Google: the address and the referrer are sent without them (pages/every-page.md, Measurement).
 ANALYTICS = f"""<script>
 window.dataLayer=window.dataLayer||[];function gtag(){{dataLayer.push(arguments);}}
 gtag('consent','default',{{ad_storage:'denied',ad_user_data:'denied',ad_personalization:'denied',analytics_storage:'denied'}});
 window.pcLoadGA=function(){{if(window.pcGA)return;window.pcGA=1;gtag('consent','update',{{analytics_storage:'granted'}});
+function noq(u){{try{{var x=new URL(u);x.searchParams.delete('q');return x.href;}}catch(e){{return '';}}}}
+gtag('set',{{page_location:noq(location.href),page_referrer:noq(document.referrer)}});
 gtag('js',new Date());gtag('config','{GA4_ID}',{{anonymize_ip:true}});var s=document.createElement('script');s.async=true;
 s.src='https://www.googletagmanager.com/gtag/js?id={GA4_ID}';document.head.appendChild(s);}};
 try{{if(localStorage.getItem('pc-consent')==='yes')pcLoadGA();}}catch(e){{}}
@@ -85,6 +88,33 @@ try{localStorage.setItem('pc-consent',v);}catch(e){}
 if(v==='yes'&&window.pcLoadGA){pcLoadGA();}
 b.hidden=true;});})();
 </script>""" if GA4_ID else ""
+
+
+def ev(name, **params):
+    """The data attributes the events script reads (pages/every-page.md, Measurement): slugs and numbers only."""
+    return f' data-ev="{name}"' + "".join(f' data-ev-{k}="{escape(str(v))}"' for k, v in params.items() if v not in (None, ""))
+
+
+def page_type(path):
+    """`page_type` of every event, on <body data-pt> (pages/every-page.md, Measurement)."""
+    bits = path.strip("/").split("/")
+    if path == "/":
+        return "home"
+    if len(bits) == 1 and bits[0] in {g["slug"] for g in ALL_GOALS}:
+        return "goal"
+    if bits[0] == "compare":
+        return "compare"
+    if bits[0] == "fda-warning-letters":
+        return "letters"
+    if bits[0] == "search":
+        return "search"
+    if bits[0] == "sellers":
+        return "seller" if len(bits) > 1 else "sellers"
+    if bits[0] == "peptides" and len(bits) > 1:
+        return "peptide"
+    if bits[0] == "learn" and len(bits) > 1:
+        return "guide"
+    return "other"
 
 
 def author_line(iso):
@@ -150,6 +180,31 @@ if(st&&q)st.addEventListener('click',function(){if(!n.classList.contains('open')
 document.addEventListener('click',function(e){if(n.classList.contains('open')&&!e.target.closest('#site-nav,.nav-toggle,.search-toggle,.head-search,.head-cta'))set(false);});
 document.addEventListener('keydown',function(e){if(e.key==='Escape'&&n.classList.contains('open')){set(false);b.focus();}});})();
 """
+# Measurement (pages/every-page.md, Measurement; owner decision 5 Nov 2026): what visitors click, in the cached nav.js. One gate,
+# the page view's (window.pcGA, set only after "Accept"): without consent an event is dropped, never queued. One listener per
+# kind on `document`, so windows loaded on demand are covered; capture, so it runs before a click moves or removes anything.
+# Parameters come from data-ev-* attributes the build writes (slugs and numbers), never from what a visitor typed.
+EVENTS_SCRIPT = r"""
+(function(){var path=location.pathname,pt=document.body&&document.body.getAttribute('data-pt')||'other',bits=path.split('/'),base={page_type:pt,page_path:path};
+if(pt==='seller')base.seller=bits[2];if(pt==='peptide')base.substance=bits[2];if(pt==='goal')base.goal=bits[1];
+function send(n,o){try{if(!window.pcGA)return;var p={},k;for(k in base)p[k]=base[k];for(k in o)if(o[k]||o[k]===0)p[k]=o[k];gtag('event',n,p);}catch(x){}}
+window.pcEv=send;
+function own(el){var o={},g=el.closest('[data-goal]');[].forEach.call(el.attributes,function(a){if(a.name.indexOf('data-ev-')===0)o[a.name.slice(8)]=/^\d+(\.\d+)?$/.test(a.value)?Number(a.value):a.value;});
+if(g&&!o.goal)o.goal=g.getAttribute('data-goal');return o;}
+function typed(s){var i=document.querySelector(s);return i?i.value.trim().length:0;}
+function letter(a){var m=/\/warning-letters\/([^\/]+)/.exec(a.pathname);return m&&m[1].indexOf('about-')!==0?m[1].slice(0,100):'none';}
+document.addEventListener('click',function(e){try{var t=e.target;if(!t||!t.closest)return;
+var a=t.closest('a[href]'),el=t.closest('[data-ev]'),c=t.closest('[data-card]'),f=t.closest('button[data-filter]'),r=t.closest('#hs-list a,#sp-results a');
+if(a&&/(^|\.)fda\.gov$/.test(a.hostname))send('outbound_fda',{letter:letter(a)});
+if(c&&t.closest('a,button')&&!t.closest('.ref'))send('decision_card_click',{card:c.getAttribute('data-card')});
+if(r){var k=r.querySelector('.chip');send('search',{query_length:typed(r.closest('#hs-list')?'#hs-q':'#sp-q'),result_type:k?k.textContent.toLowerCase():'other'});}
+if(f&&!(f.classList.contains('seg-b')&&f.getAttribute('aria-pressed')==='true'))send('filter_change',{filter:f.getAttribute('data-filter'),value:f.getAttribute('data-value')});
+if(el&&el.tagName!=='FORM'&&el.getAttribute('aria-pressed')!=='true')send(el.getAttribute('data-ev'),own(el));
+}catch(x){}},true);
+document.addEventListener('change',function(e){try{var i=e.target;if(i&&i.getAttribute&&i.getAttribute('data-filter')&&i.tagName!=='BUTTON')send('filter_change',{filter:i.getAttribute('data-filter'),value:i.getAttribute('data-value')||i.value});}catch(x){}},true);
+document.addEventListener('submit',function(e){try{var f=e.target;if(f.matches('.head-search,#sp-form')){var n=f.querySelector('input').value.trim().length;if(n)send('search',{query_length:n,result_type:'page'});}
+else if(f.getAttribute('data-ev')==='newsletter_submit')send('newsletter_submit',{});}catch(x){}},true);})();
+"""
 # one cached file for every page instead of 4 KB inline on each (Home stays under its 60 KB check with the card menu)
 NAV_JS = '<script src="/assets/nav.js" defer></script>'
 # Design book, Every page, Header, Search (owner task 2 Nov 2026): a plain field right of the links on wide screens, the first
@@ -188,7 +243,7 @@ for(var j=0;j<o.length;j++)o[j].setAttribute('aria-selected',j===act?'true':'fal
 inp.addEventListener('input',draw);inp.addEventListener('focus',function(){load(function(){});if(inp.value.trim())draw();});
 inp.addEventListener('keydown',function(e){if(e.key==='ArrowDown'){e.preventDefault();if(list.hidden)draw();else mark(act+1);}
 else if(e.key==='ArrowUp'){e.preventDefault();if(!list.hidden)mark(act-1);}
-else if(e.key==='Enter'&&!list.hidden&&act>=0&&res[act]){e.preventDefault();location.href=res[act].url;}
+else if(e.key==='Enter'&&!list.hidden&&act>=0&&res[act]){e.preventDefault();if(window.pcEv)pcEv('search',{query_length:inp.value.trim().length,result_type:String(res[act].type).toLowerCase()});location.href=res[act].url;}
 else if(e.key==='Escape'&&!list.hidden){e.preventDefault();e.stopPropagation();close();}});
 document.addEventListener('click',function(e){if(!f.contains(e.target))close();});})();
 </script>"""
@@ -284,10 +339,10 @@ def goal_from(g):
     return f'{usd(plan["price_monthly"])}/mo' if plan else None
 
 
-def nav_link(path, href, label, sub=""):
+def nav_link(path, href, label, sub="", attrs=""):
     cur = ' aria-current="page"' if href == path else ""
     sub = f'<span class="nav-sub">{sub}</span>' if sub else ""
-    return f'<li><a href="{href}"{cur}><span class="nav-l">{label}</span>{sub}</a></li>'
+    return f'<li><a href="{href}"{cur}{attrs}><span class="nav-l">{label}</span>{sub}</a></li>'
 
 
 def nav_counts():
@@ -312,7 +367,7 @@ def nav_cats(path):
 
     def goal_link(sl):
         g = goals[sl]
-        return nav_link(path, f"/{sl}/", g["label"], plural(len(g["peptides"]), "option") + (f", from {goal_from(g)}" if goal_from(g) else ""))
+        return nav_link(path, f"/{sl}/", g["label"], plural(len(g["peptides"]), "option") + (f", from {goal_from(g)}" if goal_from(g) else ""), ev("goal_pick", goal=sl))
 
     def col(groups):
         out = "".join(f'<p class="nav-h">{head}</p><ul>{"".join(goal_link(x) for x in slugs if x in goals)}</ul>'
@@ -419,7 +474,7 @@ def page(path, title, description, body, schema="", crumb=None):
 {NAV_HEAD}
 {ANALYTICS}
 </head>
-<body>
+<body data-pt="{page_type(path)}">
 <a class="skip" href="#main">Skip to content</a>
 <div class="notice"><div class="wrap"><p>Independent. Every price checked and dated. Some links pay us. <a href="/disclosure/">How we make money</a></p></div></div>
 <header class="site-head">
@@ -671,6 +726,19 @@ def paid_href(seller_slug, paid):
     return paid if paid.startswith("/out/") else f"/out/{seller_slug}/"
 
 
+def paid_ev(seller_slug, paid):
+    return ev("paid_link_click", seller=seller_slug, out_path=paid_href(seller_slug, paid))
+
+
+def plans_ev(seller_slug, plan=None):
+    """"See plans": the plan the row shows, else the clinic's cheapest (the price its row shows)."""
+    r = PROFILES.get(seller_slug)
+    rows = [x for x in (clinic_plan_rows(r) if r else []) if x.get("price_monthly") is not None]
+    shown = plan or (min(rows, key=lambda x: float(x["price_monthly"])) if rows else None)
+    return ev("see_plans_click", seller=seller_slug, price_month=shown and shown.get("price_monthly"),
+              kind=shown and plan_kind(shown), substance=plan and plan.get("substance_slug"))
+
+
 def plan_letter(r):
     """The clinic's FDA letter chip beside a clinic price (owner decision 2 Nov 2026, enforced after the owner UX audit,
     3 Nov 2026: Strut Health's $25/mo showed no letter): every place a plan price appears, or "" without a letter."""
@@ -845,10 +913,10 @@ def clinic_button(seller_slug, label, small="Our clinic page", plan=None, paid_o
     paid = (plan or {}).get("paid_url") or r.get("paid_url")
     if paid_ok and paid:
         tail = label.split(" · ", 1)[1] if " · " in label else ""
-        return (f'<span class="pick-act"><a class="btn btn-action btn-sm" href="{paid_href(seller_slug, paid)}" rel="sponsored">'
+        return (f'<span class="pick-act"><a class="btn btn-action btn-sm" href="{paid_href(seller_slug, paid)}"{paid_ev(seller_slug, paid)} rel="sponsored">'
                 f'Visit {seller_base(r["seller_name"])}{" · " + tail if tail else ""}'
                 + ('<span class="paid">Paid link</span></a></span>' if in_table else '</a><span class="paid">Paid link</span></span>'))
-    return (f'<span class="pick-act"><a class="btn btn-wait btn-sm" href="/sellers/{seller_slug}/">{label}</a>'
+    return (f'<span class="pick-act"><a class="btn btn-wait btn-sm" href="/sellers/{seller_slug}/"{plans_ev(seller_slug, plan)}>{label}</a>'
             f'{"" if in_table else f"""<span class="paid">{small}</span>"""}</span>')
 
 
@@ -1140,7 +1208,7 @@ def clinic_open(g, p, rp=None, low=None):
     key = clinic_key(g, p)
     href = f'/{g["slug"]}/#clinics' if (g.get("clinic_plans") or g.get("clinic_table")) and g.get("page") else f'/sellers/{plan["seller_slug"]}/'
     small = '<span class="paid">Pharmacy, no prescription</span>' if otc else ""
-    return (f'<span class="pick-act"><a class="btn btn-wait btn-sm btn-cta sellers-open" href="{href}" data-dlg="{key}" data-src="/windows/{key}.json">'
+    return (f'<span class="pick-act"><a class="btn btn-wait btn-sm btn-cta sellers-open" href="{href}" data-dlg="{key}" data-src="/windows/{key}.json"{ev("prices_window_open", substance="compounded" if p.get("plan_kind") == "compounded" else p.get("substance"), window_kind="clinic", rows=len(rows))}>'
             f'Buy from {usd(plan["price_monthly"])}/mo · {plural(n, noun)}</a>{small}</span>')
 
 
@@ -1199,12 +1267,15 @@ def sellers_button(p, lazy=False, label=None, kind="btn-line"):
         return ""
     n = len({r["seller_slug"] for s in subs_of(p) for r in seller_rows(s, window_kind(p))})
     key = window_key(p)
+    kind_w = window_kind(p)
+    subs = [s for s in subs_of(p) if seller_rows(s, kind_w)]
+    opens = ev("prices_window_open", substance=subs[0], window_kind=kind_w, rows=sum(len(seller_rows(s, kind_w)) for s in subs))
     label = label or f'Prices at {n} shop{"s" if n != 1 else ""}'
     if lazy:
         first = next(s for s in subs_of(p) if seller_rows(s, window_kind(p)))
         href = f"/peptides/{first}/#sold" if first in PEPTIDE_SLUGS else "/sellers/"
-        return f'<a class="btn {kind} btn-sm btn-cta sellers-open" href="{href}" data-dlg="{key}" data-src="/windows/{key}.json">{label}</a>'
-    return f'<a class="btn {kind} btn-sm btn-cta sellers-open" href="#{key}" data-dlg="{key}">{label}</a>'
+        return f'<a class="btn {kind} btn-sm btn-cta sellers-open" href="{href}" data-dlg="{key}" data-src="/windows/{key}.json"{opens}>{label}</a>'
+    return f'<a class="btn {kind} btn-sm btn-cta sellers-open" href="#{key}" data-dlg="{key}"{opens}>{label}</a>'
 
 
 def opt_price(p, slug):
@@ -1370,7 +1441,7 @@ def rail():
     chips, compare = [], []
     for i, g in enumerate(ALL_GOALS):
         slug, hide = g["slug"], "" if i == 0 else " hidden"
-        chips.append(f'<button type="button" class="goal-item" data-goal="{slug}" aria-pressed="{"true" if i == 0 else "false"}" '
+        chips.append(f'<button type="button" class="goal-item" data-goal="{slug}"{ev("goal_pick", goal=slug)} aria-pressed="{"true" if i == 0 else "false"}" '
                      f'aria-controls="opts-{slug}"><span>{g["label"]}</span><span class="small">{len(g["peptides"])} options</span></button>')
         rows = option_rows(g, lazy=True)
         link = (f'<a class="btn btn-ink" href="/{slug}/">Compare {g["short"].lower()} options</a>' if g.get("page") else
@@ -1555,16 +1626,16 @@ LETTERS_YEARS = sorted({r["letter_date"][:4] for r in LETTERS_ALL}, reverse=True
 # The substance filter (pages.md, Letters; owner task 2 Nov 2026): every substance a letter names, most letters first
 SUB_NAME = {r["substance_slug"]: clean(r["substance_name"] or r["substance_slug"]) for r in DATA.get("letter_substances") or []}
 SUB_COUNTS = sorted(((slug, len(v)) for slug, v in LETTER_SUBS.items()), key=lambda x: (-x[1], SUB_NAME[x[0]].lower()))
-SUB_SELECT = ('<div class="legal-filter sub-filter"><label for="letters-sub">Substance</label><select class="input" id="letters-sub">'
+SUB_SELECT = ('<div class="legal-filter sub-filter"><label for="letters-sub">Substance</label><select class="input" id="letters-sub" data-filter="substance">'
               '<option value="">Any substance</option>'
               + "".join(f'<option value="{slug}">{escape(SUB_NAME[slug])} ({n})</option>' for slug, n in SUB_COUNTS)
               + "</select></div>") if SUB_COUNTS else ""
 YEAR_CHIPS = "".join(
-    f'<button type="button" class="year-chip" data-year="{y}" aria-pressed="false">{y} <span>{sum(r["letter_date"][:4] == y for r in LETTERS_ALL)}<span class="vh"> letters</span></span></button>'
+    f'<button type="button" class="year-chip" data-year="{y}" data-filter="year" data-value="{y}" aria-pressed="false">{y} <span>{sum(r["letter_date"][:4] == y for r in LETTERS_ALL)}<span class="vh"> letters</span></span></button>'
     for y in LETTERS_YEARS)
 # The "Closed" chip (pages.md, Letters): only when at least one letter on the page has its close-out letter.
 N_CLOSED = sum(r["letter_url"] in CLOSED for r in LETTERS_ALL)
-CLOSED_CHIP = (f'<div class="year-chips" role="group" aria-labelledby="letters-status"><span id="letters-status">Status</span><button type="button" class="year-chip" id="letters-closed" aria-pressed="false">Closed <span>{N_CLOSED}<span class="vh"> letters</span></span></button></div>'
+CLOSED_CHIP = (f'<div class="year-chips" role="group" aria-labelledby="letters-status"><span id="letters-status">Status</span><button type="button" class="year-chip" id="letters-closed" data-filter="status" data-value="closed" aria-pressed="false">Closed <span>{N_CLOSED}<span class="vh"> letters</span></span></button></div>'
                if N_CLOSED else "")
 LETTERS_PAGE_JS = """<script>
 (function(){var tb=document.getElementById('letters-table');if(!tb)return;var f=document.querySelector('.letters-filter'),q=document.getElementById('letters-q'),
@@ -1590,7 +1661,7 @@ FEED_N = 50
 SUBSCRIBE_BOX = f"""<section class="subscribe" aria-labelledby="sub-h">
       <h2 id="sub-h">Get new letters</h2>
       <p>New FDA warning letters to peptide sellers, by email or RSS. No ads, no selling of data.</p>
-      <form class="sub-form" action="https://buttondown.com/api/emails/embed-subscribe/{escape(BUTTONDOWN)}" method="post" target="_blank">
+      <form class="sub-form" action="https://buttondown.com/api/emails/embed-subscribe/{escape(BUTTONDOWN)}" method="post" target="_blank" data-ev="newsletter_submit">
         <label for="sub-email">Your email</label>
         <div class="sub-row"><input class="input" type="email" id="sub-email" name="email" autocomplete="email" required><button class="btn btn-ink" type="submit">Subscribe</button><a class="btn btn-line" href="{FEED_PATH}">RSS feed</a></div>
       </form>
@@ -1646,7 +1717,7 @@ LETTERS_PAGE = f"""
 <section class="band-2" id="letters-list">
   <div class="wrap">
     <div class="letters-filter" hidden>
-      <div class="legal-filter"><label for="letters-q">Filter by company</label><input class="input" id="letters-q" type="text" autocomplete="off"><button type="button" class="btn btn-line btn-sm" id="letters-clear">Clear</button></div>
+      <div class="legal-filter"><label for="letters-q">Filter by company</label><input class="input" id="letters-q" type="text" autocomplete="off" data-filter="company" data-value="text"><button type="button" class="btn btn-line btn-sm" id="letters-clear">Clear</button></div>
       {SUB_SELECT}
       <div class="year-chips" role="group" aria-labelledby="letters-years"><span id="letters-years">Year</span>{YEAR_CHIPS}</div>
       {CLOSED_CHIP}
@@ -1728,10 +1799,11 @@ if(e.target.closest('.fig3d-back')){out(true);return;}
 var p=e.target.closest('.pin');
 if(cur){if(!p)out(false);return;}
 var best=null,d=Infinity;pins.forEach(function(x){var q=x.getBoundingClientRect(),n=Math.hypot(e.clientX-q.left-q.width/2,e.clientY-q.top-q.height/2);if(n<d){d=n;best=x;}});
-if(best&&d<=Math.max(44,box.offsetHeight*0.2))choose(best.getAttribute('data-goal'));});
+if(best&&d<=Math.max(44,box.offsetHeight*0.2))pinPick(best.getAttribute('data-goal'));});
+function pinPick(k){if(window.pcEv)pcEv('goal_pick',{goal:k});choose(k);}
 function pre(e){var p=e.target.closest&&e.target.closest('.pin');if(p)ensure(p.getAttribute('data-goal'));}
 box.addEventListener('mouseover',pre);box.addEventListener('focusin',pre);
-box.addEventListener('keydown',function(e){if((e.key==='Enter'||e.key===' ')&&e.target.classList.contains('pin')){e.preventDefault();choose(e.target.getAttribute('data-goal'));}});
+box.addEventListener('keydown',function(e){if((e.key==='Enter'||e.key===' ')&&e.target.classList.contains('pin')){e.preventDefault();pinPick(e.target.getAttribute('data-goal'));}});
 document.addEventListener('keydown',function(e){if(e.key==='Escape'&&cur)out(box.contains(document.activeElement));});
 return {go:go,out:out,preload:ensure};};
 </script>"""
@@ -1763,7 +1835,7 @@ root.addEventListener('mouseleave',function(){hover(null);});
 root.addEventListener('keydown',function(e){var t=e.target;
 // Arrow keys move to the next or previous chip and choose it (Tab, Enter and Space work as on any button).
 var i=chips.indexOf(t);if(i<0)return;var d={ArrowRight:1,ArrowDown:1,ArrowLeft:-1,ArrowUp:-1}[e.key];if(!d)return;
-e.preventDefault();var n=chips[(i+d+chips.length)%chips.length];n.focus();act(n.getAttribute('data-goal'));});
+e.preventDefault();var n=chips[(i+d+chips.length)%chips.length];n.focus();if(window.pcEv)pcEv('goal_pick',{goal:n.getAttribute('data-goal')});act(n.getAttribute('data-goal'));});
 // /#goals-<slug> (the header's goal menu) chooses that goal on load and when the hash changes.
 function fromHash(){var m=location.hash.match(/^#goals-([a-z0-9-]+)$/);
 if(m&&root.querySelector('.goal-item[data-goal="'+m[1]+'"]')){act(m[1]);root.scrollIntoView();}}
@@ -1774,7 +1846,9 @@ fromHash();window.addEventListener('hashchange',fromHash);})();
 # each line is drawn only when its data is there (never a placeholder).
 N_SELLERS = len(SHOPS)
 N_CLINIC_PAGES = len(CLINIC_PROFILES)
-N_CLINICS = len({r["seller_slug"] for r in PLANS})
+# One number on Home and /about/ (owner task, 5 Nov 2026): the clinics on /sellers/, that is the clinic pages. A seller with a plan and no
+# page (a tool, pages.md, Category) is not counted. Plan sellers only when the data has no seller pages at all.
+N_CLINICS = N_CLINIC_PAGES or len({r["seller_slug"] for r in PLANS})
 N_LETTERS = DATA.get("letters_all_total") or len(LETTERS_ALL)
 N_STATUS = len({r["substance_slug"] for r in LEGAL_DB or []})
 PULLED = nice_date(DATA["pulled_at"][:10]) if DATA.get("pulled_at") else ""
@@ -2114,11 +2188,11 @@ def clinic_row_act(r):
     owner decision 4 Nov 2026); otherwise btn-wait "See plans" to our clinic page."""
     name, paid = seller_base(r["seller_name"]), r.get("paid_url") or PROFILES.get(r["seller_slug"], {}).get("paid_url")
     if paid:
-        return (f'<span class="pick-act"><a class="btn btn-action btn-sm" href="{paid_href(r["seller_slug"], paid)}" rel="sponsored">Visit {name}'
+        return (f'<span class="pick-act"><a class="btn btn-action btn-sm" href="{paid_href(r["seller_slug"], paid)}"{paid_ev(r["seller_slug"], paid)} rel="sponsored">Visit {name}'
                 '<span class="paid">Paid link</span></a></span>')
     if r["seller_slug"] not in PROFILES:
         return ""
-    return (f'<span class="pick-act"><a class="btn btn-wait btn-sm" href="/sellers/{r["seller_slug"]}/">See plans</a></span>')
+    return (f'<span class="pick-act"><a class="btn btn-wait btn-sm" href="/sellers/{r["seller_slug"]}/"{plans_ev(r["seller_slug"], r)}>See plans</a></span>')
 
 
 def clinic_section(g, rows):
@@ -2163,9 +2237,10 @@ def table_plans(g):
 
 
 def tools_block(g, first_n):
-    """The goal's "Tools" block (pages.md, Category; owner answer Q4 a, 4 Nov 2026): what helps but does not prescribe. Name, one
-    sentence, btn-action only when the data carries the seller's paid link; a row with `needs` shows nothing until the seller's
-    data sets that flag, and a research-use shop never shows. Returns the block and its source entries, numbered from first_n."""
+    """The goal's "Tools" block (pages.md, Category; owner answer Q4 a, 4 Nov 2026): what helps but does not prescribe. Name and one
+    sentence. A tool has no seller page, so no green button, whatever the data carries (owner task, 5 Nov 2026: a green button only
+    where the seller page exists); a row with `needs` shows nothing until the seller's data sets that flag, and a research-use
+    shop never shows. Returns the block and its source entries, numbered from first_n."""
     items, srcs = [], []
     for t in g.get("tools") or []:
         slug, prof = t["seller_slug"], TOOL_PROFILES.get(t["seller_slug"]) or {}
@@ -2176,10 +2251,7 @@ def tools_block(g, first_n):
         where = f': <a href="{url}" rel="nofollow">{url}</a>' if url and "fda.gov" in url else f": {url}" if url else ""
         srcs.append(f'<li value="{n}" id="src-tool-{slug}">{t["source"]}{where}</li>')
         name = f'<strong>{t["name"]}</strong>'
-        paid = prof.get("paid_url")
-        act = (f'<span class="pick-act"><a class="btn btn-action btn-sm" href="{paid_href(slug, paid)}" rel="sponsored">Visit {t["name"]}</a>'
-               f'<span class="paid">Paid link</span></span>') if paid else ""
-        items.append(f'<li class="tool-row"><p>{name}: {t["line"]} <a class="ref" href="#src-tool-{slug}" aria-label="Source {n}"><sup>{n}</sup></a></p>{act}</li>')
+        items.append(f'<li class="tool-row"><p>{name}: {t["line"]} <a class="ref" href="#src-tool-{slug}" aria-label="Source {n}"><sup>{n}</sup></a></p></li>')
     if not items:
         return "", ""
     return (f'''<section class="section goal-sec" id="tools">
@@ -2239,11 +2311,11 @@ def goal_clinic_section(g, rows):
                    f'<td data-l="Clinic"><span class="cell-pic">{parts.tile(r["seller_slug"], seller_base(r["seller_name"]), 28, seller=PROFILES.get(r["seller_slug"]))}{clinic_link(r["seller_slug"], seller_base(r["seller_name"]), True)}</span>{not_in_line(r["seller_slug"])}</td>'
                    f'<td class="act">{clinic_row_act(r)}</td></tr>')
     seg = lambda grp, opts: (f'<div class="seg" role="group" aria-label="{grp[1]}">'
-                             + "".join(f'<button type="button" class="seg-b" data-g="{grp[0]}" data-v="{v}" aria-pressed="{"true" if not v else "false"}">{t}</button>'
+                             + "".join(f'<button type="button" class="seg-b" data-g="{grp[0]}" data-v="{v}" data-filter="{grp[0]}" data-value="{v or "all"}" aria-pressed="{"true" if not v else "false"}">{t}</button>'
                                        for v, t in opts) + "</div>")
     filt = (f'<div class="clinic-filter" hidden>{seg(("kind", "Kind of plan"), (("brand", "Brand"), ("compounded", "Compounded"), ("", "All")))}'
             f'{seg(("form", "Form"), (("pill", "Pill"), ("shot", "Shot"), ("", "All")))}'
-            '<button type="button" class="year-chip" aria-pressed="false">No FDA letter</button></div>')
+            '<button type="button" class="year-chip" data-filter="fda_letter" data-value="none" aria-pressed="false">No FDA letter</button></div>')
     return f"""
 <section class="band-2 goal-sec" id="clinics">
   <div class="wrap">
@@ -2270,8 +2342,12 @@ def plan_src(g, r):
     return f'<sup><a class="ref" href="#{sid}" aria-label="Source {n}">{n}</a></sup>'
 
 
+def card_slug(key):
+    return key.lower().replace(" ", "-")
+
+
 def decide_card(key, name, chips, price, act, pic=""):
-    return (f'<li class="panel-line decide-card">{pic}<p class="decide-k">{key}</p><h2>{name}</h2>'
+    return (f'<li class="panel-line decide-card" data-card="{card_slug(key)}">{pic}<p class="decide-k">{key}</p><h2>{name}</h2>'
             f'{f"<span class=chips>{chips}</span>" if chips else ""}<p class="decide-price">{price}</p>{act}</li>')
 
 
@@ -2329,7 +2405,7 @@ def decide_cards(g):
                 cards.append(decide_card("No prescription", otc["name"], status_chip(otc) + alt_chip(otc),
                                          f'<strong>From {price}</strong>{re.search(r"<sup>.*</sup>", pad).group(0)}',
                                          # the card's one button (tools/check.py) goes to our own page on the medicine, or the goal's guide
-                                         f'<span class="pick-act"><a class="btn btn-wait btn-sm" href="{page}">{label}</a>'
+                                         f'<span class="pick-act"><a class="btn btn-wait btn-sm" href="{page}" data-card="{card_slug("No prescription")}">{label}</a>'
                                          f'<span class="paid">{no_listing_text(otc)}</span></span>',
                                          option_picture(otc, None)))
     elif cos:
@@ -2917,13 +2993,13 @@ def seller_action(r):
     Q1 b, 4 Nov 2026)."""
     if r["seller_slug"] in CLINIC_PROFILES:
         plans = clinic_plan_rows(r)
-        compare = (f'<a class="btn btn-ink" href="/compare/?a=p.{r["seller_slug"]}.{plans[0]["plan_slug"]}">Compare with another clinic</a>'
+        compare = (f'<a class="btn btn-ink" href="/compare/?a=p.{r["seller_slug"]}.{plans[0]["plan_slug"]}"{ev("compare_pick", kind="plan")}>Compare with another clinic</a>'
                    if plans else "")
         if not r.get("paid_url"):
             return compare
-        return (f'<div class="seller-pair">{compare}<span class="pick-act"><a class="btn btn-action" href="{paid_href(r["seller_slug"], r["paid_url"])}" rel="sponsored">'
+        return (f'<div class="seller-pair">{compare}<span class="pick-act"><a class="btn btn-action" href="{paid_href(r["seller_slug"], r["paid_url"])}"{paid_ev(r["seller_slug"], r["paid_url"])} rel="sponsored">'
                 f'Visit {seller_base(seller_name(r))}</a><span class="paid">Paid link</span></span></div>')
-    return f'<a class="btn btn-ink" href="/compare/?a=s.{r["seller_slug"]}">Compare with another shop</a>'
+    return f'<a class="btn btn-ink" href="/compare/?a=s.{r["seller_slug"]}"{ev("compare_pick", kind="seller")}>Compare with another shop</a>'
 
 
 def seller_page(r):
@@ -3021,18 +3097,18 @@ def sellers_filter(shops, clinics):
     sorts = "".join(f'<option value="{k}">{t}</option>' for k, t in SELLER_SORTS)
     # each chip carries its count of clinics and of shops; the script shows the open tab's (owner task w2, 3 Nov 2026)
     chips = "".join(
-        f'<button type="button" class="year-chip" data-check="{k}" data-nc="{sum(bool(r.get(f)) for r in clinics)}" data-ns="{sum(bool(r.get(f)) for r in shops)}" aria-pressed="false">'
+        f'<button type="button" class="year-chip" data-check="{k}" data-filter="check" data-value="{k}" data-nc="{sum(bool(r.get(f)) for r in clinics)}" data-ns="{sum(bool(r.get(f)) for r in shops)}" aria-pressed="false">'
         f'{t} <span class="chip-n">{sum(bool(r.get(f)) for r in shops)}</span></button>'
         for k, f, t in SELLER_CHECKS)
     # phones (owner task 3 Nov 2026, the 390px walkthrough): the filters fold behind one "Filter" button, the count beside it
     return f"""<div class="letters-filter sellers-filter" hidden>
       <div class="filter-bar"><button type="button" class="btn btn-line btn-sm filter-toggle" aria-expanded="false" aria-controls="sellers-fbody">Filter</button></div>
       <div class="filter-body" id="sellers-fbody">
-      <div class="legal-filter"><label for="sellers-q">Filter by name</label><input class="input" id="sellers-q" type="text" autocomplete="off"><button type="button" class="btn btn-line btn-sm" id="sellers-clear">Clear</button></div>
-      <div class="legal-filter sub-filter"><label for="sellers-sub">Substance</label><select class="input" id="sellers-sub"><option value="">Any substance</option>{opts}</select>
-      <label for="sellers-min">Minimum checks</label><select class="input" id="sellers-min">{mins}</select>
-      <label for="sellers-sort" class="sort-shops">Sort</label><select class="input sort-shops" id="sellers-sort">{sorts}</select>
-      <label for="clinics-sort" class="sort-clinics">Sort</label><select class="input sort-clinics" id="clinics-sort"><option value="checks">Most checks</option><option value="low">Lowest monthly price</option></select></div>
+      <div class="legal-filter"><label for="sellers-q">Filter by name</label><input class="input" id="sellers-q" type="text" autocomplete="off" data-filter="name" data-value="text"><button type="button" class="btn btn-line btn-sm" id="sellers-clear">Clear</button></div>
+      <div class="legal-filter sub-filter"><label for="sellers-sub">Substance</label><select class="input" id="sellers-sub" data-filter="substance"><option value="">Any substance</option>{opts}</select>
+      <label for="sellers-min">Minimum checks</label><select class="input" id="sellers-min" data-filter="min_checks">{mins}</select>
+      <label for="sellers-sort" class="sort-shops">Sort</label><select class="input sort-shops" id="sellers-sort" data-filter="sort">{sorts}</select>
+      <label for="clinics-sort" class="sort-clinics">Sort</label><select class="input sort-clinics" id="clinics-sort" data-filter="sort"><option value="checks">Most checks</option><option value="low">Lowest monthly price</option></select></div>
       <div class="year-chips" role="group" aria-labelledby="sellers-checks"><span id="sellers-checks">Checks met</span>{chips}</div>
       </div>
       <p class="small" id="sellers-n" aria-live="polite"></p>
@@ -3140,8 +3216,8 @@ def sellers_index():
     lede = (f"{plural(len(clinics), 'online clinic')} that prescribe and ship, then {plural(len(shops), 'research-use shop')}. " if clinics else
             f"{plural(len(shops), 'research-use shop')}. ") + "Every name opens our page on that seller; checks are facts we hold, not a grade."
     tabs = ("<div class=\"seg sellers-tabs\" role=\"group\" aria-label=\"Show\" hidden>"
-            f'<button type="button" class="seg-b" data-type="clinics" aria-pressed="true">Online clinics ({len(clinics)})</button>'
-            f'<button type="button" class="seg-b" data-type="shops" aria-pressed="false">Research-use shops ({len(shops)})</button></div>') if clinics and shops else ""
+            f'<button type="button" class="seg-b" data-type="clinics"{ev("tab_change", tab="clinics")} aria-pressed="true">Online clinics ({len(clinics)})</button>'
+            f'<button type="button" class="seg-b" data-type="shops"{ev("tab_change", tab="shops")} aria-pressed="false">Research-use shops ({len(shops)})</button></div>') if clinics and shops else ""
     shops_sec = f"""
     <section class="sellers-sec" id="shops" aria-labelledby="shops-h">
       <h2 id="shops-h" class="h-sources">Research-use shops</h2>
@@ -3406,7 +3482,7 @@ ul.className='search-list cmp-list';ul.id=id;ul.setAttribute('role','listbox');u
 w.querySelector('label').setAttribute('for',inp.id);sel.hidden=true;sel.tabIndex=-1;w.appendChild(inp);w.appendChild(ul);
 var items=[].slice.call(sel.querySelectorAll('option')).filter(function(o){return o.value;}).map(function(o){return{v:o.value,t:o.text,g:o.parentNode.label||''};});
 function close(){ul.hidden=true;inp.setAttribute('aria-expanded','false');inp.removeAttribute('aria-activedescendant');act=-1;}
-function choose(x){sel.value=x.v;inp.value=x.t;close();}
+function choose(x){sel.value=x.v;inp.value=x.t;close();if(window.pcEv)pcEv('compare_pick',{kind:(D[x.v]||{}).k});}
 // names that start with what was typed come first, then the others, each in group order
 function draw(){var q=inp.value.trim().toLowerCase(),st=function(x){return q&&x.t.toLowerCase().indexOf(q)===0?0:1;};
 res=items.filter(function(x){return!q||x.t.toLowerCase().indexOf(q)>=0;}).map(function(x,i){return[st(x),i,x];})
@@ -4130,7 +4206,7 @@ def peptides_index():
         for t in rows for name, x, grp, chip, label, sentence, low in [t])
     jump = "".join(f'<a class="year-chip" href="#az-{k.lower()}">{k}</a>' for k in firsts)
     counts = {k: sum(t[2] == k for t in rows) for k, _ in PEP_FILTERS}
-    chips = "".join(f'<button type="button" class="year-chip" data-group="{k}" aria-pressed="true">{w} <span>{counts[k]}</span></button>'
+    chips = "".join(f'<button type="button" class="year-chip" data-group="{k}" data-filter="group" data-value="{k}" aria-pressed="true">{w} <span>{counts[k]}</span></button>'
                     for k, w in PEP_FILTERS if counts[k])
     checked = max(pep_checked(x) for x in PEPTIDE_SLUGS)
     return f"""
@@ -4815,7 +4891,7 @@ def main():
     (DIST / "windows").mkdir(exist_ok=True)
     for k, html in GOAL_PANELS.items():
         (DIST / "windows" / f"goal-{k}.json").write_text(json.dumps({"html": html}), encoding="utf-8")
-    (DIST / "assets" / "nav.js").write_text(NAV_SCRIPT, encoding="utf-8")
+    (DIST / "assets" / "nav.js").write_text(NAV_SCRIPT + EVENTS_SCRIPT, encoding="utf-8")
     if home.JS:
         (DIST / "assets" / "home.js").write_text(home.JS, encoding="utf-8")
     if home.ROWS:
