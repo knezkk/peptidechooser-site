@@ -19,7 +19,7 @@ import guides  # noqa: E402
 import paid  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
-NO_LISTING_TEXTS = ("Any pharmacy, no prescription", "On prescription; no clinic prices yet",
+NO_LISTING_TEXTS = ("Any pharmacy, no prescription", "at any pharmacy, no prescription", "On prescription; no clinic prices yet",
                     "Sold in creams and serums; no prices checked", "No listings yet")
 DIST = ROOT / "dist"
 SITE = "https://peptidechooser.com"
@@ -1111,6 +1111,14 @@ def check_parts(P):
             errs.append(f"assets/logos/{f.name}: not in the build")
         if not f.stem.endswith("-wordmark") and not (f.parent / f"{f.stem}-wordmark.png").exists() and not (f.parent / f"{f.stem}-wordmark.svg").exists():
             errs.append(f"assets/logos/{f.name}: no wordmark file for the H1 slot")
+    # The goal photos (pages/parts.md, Goal photos): a file in assets/photos/ needs its entry with photographer, URL, licence and date
+    photos = json.loads((ROOT / "data" / "goal_photos.json").read_text(encoding="utf-8"))
+    for f in sorted((ROOT / "assets" / "photos").glob("*")):
+        e = photos.get(f.stem.removeprefix("goal-").removesuffix("-450")) or {}
+        if not all(e.get(k) for k in ("photographer", "url", "licence", "checked_at")):
+            errs.append(f"assets/photos/{f.name}: no photographer, URL, licence and date in data/goal_photos.json")
+        if not (DIST / "assets" / "photos" / f.name).exists():
+            errs.append(f"assets/photos/{f.name}: not in the build")
     # Tools block (pages/goal.md, Category): a coupon row stays hidden until its seller's data sets the flag; never a research-use shop
     for g in site.get("goals") or []:
         page = DIST / g["slug"] / "index.html"
