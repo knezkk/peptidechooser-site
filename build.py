@@ -875,10 +875,14 @@ TOOL_PROFILES = {t["seller_slug"]: PROFILES.pop(t["seller_slug"]) for g in DATA.
 SHOPS = {k: r for k, r in PROFILES.items() if (r.get("product_count") or 0) > 0}
 CLINIC_PROFILES = {k: r for k, r in PROFILES.items() if k not in SHOPS}
 # A real logo (pages.md, Seller tile): the entry in data/seller_logos.json and the brand's file in assets/logos/, both, never a shop.
+# A tool has no seller page: its logo is used only in the Tools block. An entry with neither a page nor a tool waits for its seller.
+TOOL_LOGOS = {}
 for _slug, _logo in json.loads((ROOT / "data" / "seller_logos.json").read_text(encoding="utf-8")).items():
     _file = next((f for f in (ROOT / "assets" / "logos" / f"{_slug}.{e}" for e in ("svg", "png")) if f.exists()), None)
     if _file and _slug in CLINIC_PROFILES:
         CLINIC_PROFILES[_slug].update(_logo, logo_path=f"/assets/logos/{_file.name}")
+    elif _file and _slug in {t["seller_slug"] for g in DATA.get("goals") or [] for t in g.get("tools") or []} and _slug not in SHOPS:
+        TOOL_LOGOS[_slug] = {**_logo, "logo_path": f"/assets/logos/{_file.name}"}
 
 
 # States a clinic does not serve (pages.md, Category and Seller; owner task 4 Nov 2026): data/clinic_states.json, keyed by
@@ -2250,7 +2254,7 @@ def tools_block(g, first_n):
         url = t.get("url")
         where = f': <a href="{url}" rel="nofollow">{url}</a>' if url and "fda.gov" in url else f": {url}" if url else ""
         srcs.append(f'<li value="{n}" id="src-tool-{slug}">{t["source"]}{where}</li>')
-        name = f'<strong>{t["name"]}</strong>'
+        name = f'{parts.tile(slug, t["name"], 28, seller=TOOL_LOGOS[slug]) if slug in TOOL_LOGOS else ""}<strong>{t["name"]}</strong>'
         items.append(f'<li class="tool-row"><p>{name}: {t["line"]} <a class="ref" href="#src-tool-{slug}" aria-label="Source {n}"><sup>{n}</sup></a></p></li>')
     if not items:
         return "", ""
@@ -3015,7 +3019,7 @@ def seller_page(r):
   <div class="wrap">
     <div class="seller-head">
       <div class="seller-id">
-        {f'<img class="h1-logo" src="{r["logo_path"]}" alt="" height="28">' if clinic and r.get("logo_path") else parts.tile(r["seller_slug"], seller_base(seller_name(r)), 72, shop=not clinic, seller=r)}
+        {f'<img class="h1-logo" src="{r.get("wordmark_path") or r["logo_path"]}" alt="" height="28">' if clinic and r.get("logo_path") else parts.tile(r["seller_slug"], seller_base(seller_name(r)), 72, shop=not clinic, seller=r)}
         <div class="seller-id-text">
         <h1>{seller_base(seller_name(r))} review</h1>
         <p class="seller-kind"><span class="chip chip-neutral">{kind_words(r)[1]}</span></p>
