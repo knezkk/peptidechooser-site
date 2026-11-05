@@ -31,7 +31,7 @@ The site looks like a good clinic's online intake: clean white, calm clinical bl
 
 The cues, each with its rules, are in `pages/parts.md`, Medical cues.
 
-Not allowed: fake documents (anything that could pass as a real prescription, lab report or letter), stock doctors, pills or syringes as decoration, caduceus or cross icons, handwriting fonts, script signatures.
+Not allowed: fake documents (anything that could pass as a real prescription, lab report or letter), stock photos, except the goal photos (parts.md), stock doctors, pills or syringes as decoration, caduceus or cross icons, handwriting fonts, script signatures.
 
 ## Motion (updated 30 Oct 2026, clinic intake)
 

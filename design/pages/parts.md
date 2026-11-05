@@ -37,7 +37,15 @@ Everything else is a text link in `action` green. A partner without an affiliate
 - `tools/check.py` fails an option row or plan row with no drawing, except a plan whose data names no form at all, which keeps the space.
 - Sizes: Home option rows 56, goal option rows and decision cards 52, tables and the window 40, phones 48; the drawing fills 72% of its tile. Radius `radius-art`, `radius-art-s` at 40.
 
-**Goal drawings.** Seven, in `assets/art.svg`, each in its goal's colour wherever the goal appears: tokens `goal-hair`, `goal-skin`, `goal-weight-loss`, `goal-muscle`, `goal-recovery`, `goal-libido`, `goal-longevity`, a dark line (`value`) on a light panel (`tint`), at least 4.5:1. Home "Compare by goal" cards: 48 on a panel 84 tall (60 tall with 34 on phones). Goal page: 120 on a panel 300 by 220 beside the H1 from 900px, not drawn below it. No drawings in the By goal menu or the "Compare other goals" buttons (owner answers Q5 a, Q6 b).
+**Goal drawings.** Seven, in `assets/art.svg`, each in its goal's colour: tokens `goal-hair`, `goal-skin`, `goal-weight-loss`, `goal-muscle`, `goal-recovery`, `goal-libido`, `goal-longevity`, a dark line (`value`) on a light panel (`tint`), at least 4.5:1. The goal photos below take their place; a goal without a photo entry falls back to its drawing, at 48 on the Home card (34 on phones) and 120 on the goal panel. No picture of either kind in the By goal menu or the "Compare other goals" buttons (owner answers Q5 a, Q6 b).
+
+**Goal photos (owner pick, 5 Nov 2026).** One real photograph per goal, so a beginner sees what the goal is about.
+- **Where:** the Home "Compare by goal" cards (panel 84 tall, 60 on phones) and the goal page panel (300 by 220 beside the H1 from 900px, not drawn below it). Nowhere else: no heroes, option rows, seller pages or guides. Product drawings stay drawings.
+- **Frame:** close crop, 3:2 source, calm light, one subject a beginner recognises at the phone card size.
+- **Never:** a person's face, a product or its packaging, a brand or readable logo, a needle in skin, a before-and-after, anything suggesting a result. Never an AI image of a person.
+- **Treatment, the same for all:** 3:2 crop at 900 by 600, saturation 72%, contrast stretched between the 1st and 99th percentile, a 12% wash of `ink`. Files `assets/photos/goal-<slug>.jpg` and a 450 by 300 `-450` version for the Home cards. The panel's own radius; `object-fit: cover`. No gradient, no text on the photo.
+- **Sources:** only free sources whose licence allows commercial use without attribution (Unsplash License, Pexels License, CC0). `data/goal_photos.json` holds photographer, URL, licence and check date per goal; a file without its entry fails `tools/check.py`. An AI image only where no photo exists, marked as such in the data.
+- **Alt:** empty, decorative, because the goal's name stands beside it.
 
 ## Logo
 

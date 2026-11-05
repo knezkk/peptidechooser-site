@@ -195,7 +195,7 @@ def goals_section(b):
         plans = b.clinic_plans(g)
         count = b.plural(len(plans), "clinic plan") if plans else b.plural(len(g["peptides"]), "option")
         price, src = goal_price(b, g)
-        inner = (f'<span class="goal-pic goal-c-{g["slug"]}">{parts.goal_art(g["slug"], 48)}</span><span class="goal-name">{g["label"]}</span><span class="small">{count}</span>'
+        inner = (f'<span class="goal-pic goal-c-{g["slug"]}">{parts.goal_photo(g["slug"], 48, small=True)}</span><span class="goal-name">{g["label"]}</span><span class="small">{count}</span>'
                  + (f'<span class="goal-price">{price}</span><span class="small">{src}</span>' if price else ""))
         cards.append(f'<li><a class="goal-card" href="/{g["slug"]}/">{inner}</a></li>' if g.get("page")
                      else f'<li><span class="goal-card">{inner}</span></li>')

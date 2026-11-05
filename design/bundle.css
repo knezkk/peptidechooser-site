@@ -650,6 +650,7 @@ p.not-in{margin:4px 0 0}
 .goal-art{flex:none;fill:none;stroke:var(--g,var(--clinic));stroke-width:2.4;stroke-linecap:round}
 .goal-c-hair{--g:var(--goal-hair);--gt:var(--goal-hair-tint)}.goal-c-skin{--g:var(--goal-skin);--gt:var(--goal-skin-tint)}.goal-c-weight-loss{--g:var(--goal-weight-loss);--gt:var(--goal-weight-loss-tint)}.goal-c-muscle{--g:var(--goal-muscle);--gt:var(--goal-muscle-tint)}.goal-c-recovery{--g:var(--goal-recovery);--gt:var(--goal-recovery-tint)}.goal-c-libido{--g:var(--goal-libido);--gt:var(--goal-libido-tint)}.goal-c-longevity{--g:var(--goal-longevity);--gt:var(--goal-longevity-tint)}
 .goal-pic{display:flex;align-items:center;justify-content:center;height:84px;margin-bottom:10px;border-radius:var(--radius-art-s);background:var(--gt)}
+.goal-photo{display:block;width:100%;height:100%;object-fit:cover;border-radius:inherit}
 .goal-panel{display:none}
 @media (min-width:900px){.goal-panel{display:flex;align-items:center;justify-content:center;height:220px;border-radius:var(--radius-art-l);background:var(--gt)}}
 @media (max-width:640px){.goal-pic{height:60px}.goal-pic .goal-art{width:34px;height:34px}}
