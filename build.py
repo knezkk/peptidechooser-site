@@ -881,9 +881,10 @@ PRODUCTS = DATA.get("products") or []
 SELLERS = {r["seller_slug"]: r for r in DATA.get("sellers") or []}
 # Seller pages (pages.md, Seller): one per seller in site.seller_profile, through tools/pull_data.py
 PROFILES = {r["seller_slug"]: r for r in DATA.get("seller_profiles") or []}
-# A tool (pages.md, Category, Tools) does not prescribe: no seller page, not counted as a clinic. A shop stays a shop.
+# A tool (pages.md, Category, Tools) does not prescribe: no seller page, not counted as a clinic. A shop stays a shop. An entry
+# with `clinic` prescribes too (Vitals Vault, owner answer to #104 Q1 A): it keeps its seller page and counts as a clinic.
 TOOL_PROFILES = {t["seller_slug"]: PROFILES.pop(t["seller_slug"]) for g in DATA.get("goals") or [] for t in g.get("tools") or []
-                 if not (PROFILES.get(t["seller_slug"]) or {"product_count": 1}).get("product_count")}
+                 if not t.get("clinic") and not (PROFILES.get(t["seller_slug"]) or {"product_count": 1}).get("product_count")}
 # Shops and clinics (peptide-data decision 26; pages.md, Rules that apply to every page): a shop lists products
 # (product_count > 0), a clinic only plans (product_count 0). Every list of shops takes SHOPS; a clinic is never in one.
 SHOPS = {k: r for k, r in PROFILES.items() if (r.get("product_count") or 0) > 0}
@@ -2282,19 +2283,27 @@ def table_plans(g):
 def tools_block(g, first_n):
     """The goal's "Tools" block (pages.md, Category; owner answer Q4 a, 4 Nov 2026): what helps but does not prescribe. Name and one
     sentence. A tool has no seller page, so no green button, whatever the data carries (owner task, 5 Nov 2026: a green button only
-    where the seller page exists); a row with `needs` shows nothing until the seller's data sets that flag, and a research-use
+    where the seller page exists); an entry with `clinic` has that page, so it keeps the button; a row with `needs` shows nothing until the seller's data sets that flag, and a research-use
     shop never shows. Returns the block and its source entries, numbered from first_n."""
     items, srcs = [], []
     for t in g.get("tools") or []:
         slug, prof = t["seller_slug"], TOOL_PROFILES.get(t["seller_slug"]) or {}
         if slug in SHOPS or (t.get("needs") and prof.get(t["needs"]) is not True):
             continue
+        line, source, act = t["line"], t["source"], ""
+        if t.get("clinic"):  # also a clinic: its cheapest plan comes from the data, and the row keeps the clinic's one button
+            plan = min((r for r in PLANS if r["seller_slug"] == slug and r.get("price_monthly")), key=lambda r: r["price_monthly"], default=None)
+            if not plan or slug not in PROFILES:
+                continue
+            line = line.format(plan=f'{plan["plan_name"]} at {usd(plan["price_monthly"])} a month')
+            source = source.format(checked=nice_date(plan["observed_at"]))
+            act = clinic_button(slug, "See plans", plan=plan)
         n = first_n + len(srcs)
         url = t.get("url")
         where = f': <a href="{url}" rel="nofollow">{url}</a>' if url and "fda.gov" in url else f": {url}" if url else ""
-        srcs.append(f'<li value="{n}" id="src-tool-{slug}">{t["source"]}{where}</li>')
+        srcs.append(f'<li value="{n}" id="src-tool-{slug}">{source}{where}</li>')
         name = f'{parts.tile(slug, t["name"], 28, seller=TOOL_LOGOS[slug]) if slug in TOOL_LOGOS else ""}<strong>{t["name"]}</strong>'
-        items.append(f'<li class="tool-row"><p>{name}: {t["line"]} <a class="ref" href="#src-tool-{slug}" aria-label="Source {n}"><sup>{n}</sup></a></p></li>')
+        items.append(f'<li class="tool-row"><p>{name}: {line} <a class="ref" href="#src-tool-{slug}" aria-label="Source {n}"><sup>{n}</sup></a></p>{act}</li>')
     if not items:
         return "", ""
     return (f'''<section class="section goal-sec" id="tools">
