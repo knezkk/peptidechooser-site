@@ -41,6 +41,10 @@ jobs:
             python3 tools/og.py --missing
             python3 build.py
           fi
+      # after the last build: a title, description or H1 that differs from the live page stops the deploy without the owner's phrase;
+      # the full list, old and new, stays in this step's log (owner answer to #94 Q2, 5 Nov 2026)
+      - name: tier 1 guard
+        run: python3 tools/tier1_guard.py
       - name: check-words, check-seo, check-schema, check-parts
         run: python3 tools/check.py
       - name: check-layout
