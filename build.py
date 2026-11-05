@@ -2020,20 +2020,39 @@ def category_page(g):
     return page_footnotes(category_body(g))
 
 
+# Like with like (owner UX audit A26, 3 Nov 2026: a pair compared a pill with an injection): a plan's form from its
+# dosage_form, and per clinic the cheapest compounded plan of each form.
+PLAN_FORM_WORD = {"injection_vial": "Injection", "pen": "Pen", "tablet": "Pill", "capsule": "Pill", "topical": "Topical",
+                  "solution": "Topical", "bundle": "Bundle", "drops": "Drops", "troche": "Troche", "odt": "Dissolving tablet"}
+FORM_NOT_STATED = "Form not stated"
+# its own name (owner, 3 Nov 2026): plan_form is the goal page filter's "pill"/"shot"; the same name made the later
+# definition replace the earlier one
+def plan_form_word(r):
+    """The form the data names. The data has no membership field: a plan with no form counts as one only when its own name
+    says so (Ivim's "Membership and Medication"; owner decision 4 Nov 2026, answer 3 A)."""
+    word = PLAN_FORM_WORD.get(r.get("dosage_form") or "")
+    return word or ("Membership" if "membership" in (r.get("plan_name") or "").lower() else FORM_NOT_STATED)
+
+
 KIND_CHIP = {"brand": ("ok", "Brand"), "compounded": ("warn", "Compounded"), "program": ("neutral", "Program"),
-             # owner task 2 Nov 2026: "other" (a membership or a bundle) is never called compounded; "generic" (an approved
-             # medicine under its own name) renders once the data side sends it
-             "other": ("neutral", "Other"), "generic": ("ok", "Generic")}
-KIND_NOTE = {"other": "a membership or a bundle, see the clinic's page"}
+             # owner task 2 Nov 2026: "other" is never called compounded, and its label is the plan's form (kind_chip);
+             # "generic" (an approved medicine under its own name) renders once the data side sends it
+             "generic": ("ok", "Generic")}
+
+
+def kind_chip(r):
+    """(chip class, label) of a plan's kind. Owner decision 4 Nov 2026 (answer 3 A): an "other" plan says only what the
+    data names, its form or "Form not stated"."""
+    k = plan_kind(r)
+    return ("neutral", plan_form_word(r)) if k == "other" else KIND_CHIP[k]
 
 
 def plan_chip(g, r):
     """What a plan is, as a chip: "Brand, diabetes" (chip-info) for a brand approved for another use (owner answer Q1 a,
     2 Nov 2026: Ozempic is approved for diabetes, not weight loss), else the KIND_CHIP of its kind."""
     use = other_use(g, r)
-    chip, label = ("info", f"Brand, {use}") if use else KIND_CHIP[plan_kind(r)]
-    note = KIND_NOTE.get(plan_kind(r), "") if not use else ""
-    return f'<span class="chip chip-{chip}">{label}</span>' + (f'<span class="sub">{note}</span>' if note else "")
+    chip, label = ("info", f"Brand, {use}") if use else kind_chip(r)
+    return f'<span class="chip chip-{chip}">{label}</span>'
 
 
 def plan_kind(r):
@@ -2169,7 +2188,7 @@ def tools_block(g, first_n):
 def plan_form(r):
     """"pill" or "shot" from the plan's dosage form; "" when the data names none or another form (it counts under All only)."""
     f = (r.get("dosage_form") or "").lower()
-    return "pill" if f in ("tablet", "capsule", "oral") else "shot" if f in ("injection_vial", "pen", "injection") else ""
+    return "pill" if f in ("tablet", "capsule", "oral", "odt") else "shot" if f in ("injection_vial", "pen", "injection") else ""
 
 
 def clinic_order(r):
@@ -3324,7 +3343,7 @@ def compare_plan(r):
     who = (f'<a class="name" href="/sellers/{r["seller_slug"]}/">{seller}</a>' if r["seller_slug"] in PROFILES
            else f'<span class="name">{seller}</span>')
     use = plan_other_use(r)
-    chip, label = ("info", f"Brand, {use}") if use else KIND_CHIP[plan_kind(r)]
+    chip, label = ("info", f"Brand, {use}") if use else kind_chip(r)
     n = r.get("fda_letter_count") or 0
     letter = (f'<a class="chip chip-warn chip-link" href="{letter_href(r["seller_slug"])}">FDA letter {nice_date(r["last_fda_letter_date"])}</a>'
               if n and r.get("last_fda_letter_date") else "None")
@@ -3333,8 +3352,7 @@ def compare_plan(r):
     return {"k": "plan", "h": f'{parts.tile(r["seller_slug"], seller_base(r["seller_name"]), 40, seller=PROFILES.get(r["seller_slug"]))}{who}<span class="cmp-sub">{escape(r["plan_name"])}</span>', "c": [
         ("Per month", f'<span class="num">{usd(r["price_monthly"])}/mo</span>'),
         ("Care fee", care),
-        ("What it is", f'<span class="chip chip-{chip}">{label}</span>'
-                       + (f'<span class="cmp-sub">{KIND_NOTE[plan_kind(r)]}</span>' if not use and plan_kind(r) in KIND_NOTE else "")),
+        ("What it is", f'<span class="chip chip-{chip}">{label}</span>'),
         ("Substance", escape(sub_label(r["substance_slug"])) if r.get("substance_slug") else "Names no medication"),
         ("FDA letter", letter),
         ("Prices checked", nice_date(r["last_seen"]))]}
@@ -4472,15 +4490,6 @@ def cmp_body(h1, checked, answer, table, links, pre, note, verdict="", nxt=""):
 """
 
 
-# Like with like (owner UX audit A26, 3 Nov 2026: a pair compared a pill with an injection): a plan's form from its
-# dosage_form, and per clinic the cheapest compounded plan of each form.
-PLAN_FORM_WORD = {"injection_vial": "Injection", "pen": "Pen", "tablet": "Pill", "capsule": "Pill", "topical": "Topical",
-                  "solution": "Topical"}
-# its own name (owner, 3 Nov 2026): plan_form above is the goal page filter's "pill"/"shot"; the same name made the later
-# definition replace the earlier one
-plan_form_word = lambda r: PLAN_FORM_WORD.get(r.get("dosage_form") or "", "Form not stated")
-
-
 def clinic_forms(c, sub):
     """{form: the clinic's cheapest compounded plan of the substance in that form}, cheapest form first."""
     out = {}
@@ -4527,21 +4536,21 @@ def cmp_clinic_answer(a, b, subs):
     for s in subs:
         fa, fb = clinic_forms(a, s), clinic_forms(b, s)
         # the verdict compares one form both sell (the cheapest such form), and names it
-        common = sorted((f for f in fa if f in fb and f != "Form not stated"),
+        common = sorted((f for f in fa if f in fb and f != FORM_NOT_STATED),
                         key=lambda f: float(fa[f]["price_monthly"]) + float(fb[f]["price_monthly"]))
-        if list(fa) == list(fb) == ["Form not stated"]:
-            common = ["Form not stated"]
+        if list(fa) == list(fb) == [FORM_NOT_STATED]:
+            common = [FORM_NOT_STATED]
         if not common:
             # no form both state: no "cheaper", each side's lowest price with its form, or that it states none
-            side = lambda n, fs: "; ".join(f"{n} {usd(r['price_monthly'])} a month" + ("" if f == "Form not stated" else f" ({f.lower()})")
-                                           for f, r in list(fs.items())[:1]) + (", form not stated" if list(fs)[0] == "Form not stated" else "")
+            side = lambda n, fs: "; ".join(f"{n} {usd(r['price_monthly'])} a month" + ("" if f == FORM_NOT_STATED else f" ({f.lower()})")
+                                           for f, r in list(fs.items())[:1]) + (", form not stated" if list(fs)[0] == FORM_NOT_STATED else "")
             out.append(f"For compounded {s}, the two do not list the same form, so neither is called cheaper: "
                        f"{side(na, fa)}; {side(nb, fb)}.")
             continue
         form = common[0]
         pa, pb = fa[form], fb[form]
-        what = (f"compounded {s} (neither plan states the form)" if form == "Form not stated" else
-                f"compounded {s} as {'an' if form[0] in 'AEIOU' else 'a'} {form.lower()}")
+        what = (f"compounded {s} (neither plan states the form)" if form == FORM_NOT_STATED else
+                f"compounded {s} as {'' if form == 'Drops' else 'an ' if form[0] in 'AEIOU' else 'a '}{form.lower()}")
         if float(pa["price_monthly"]) == float(pb["price_monthly"]):
             out.append(f"For {what}, both list {usd(pa['price_monthly'])} a month.")
             continue

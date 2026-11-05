@@ -28,6 +28,7 @@ BANNED_WORDS = [
     r"\bcomprehensive\b", r"\bensure\b", r"\butili[sz]e\b", r"\bin order to\b", r"\baffiliate link\b",
     r"\blegit\b",
     r"\bcoming soon\b",
+    r"\ba membership or a bundle\b",  # owner decision 4 Nov 2026 (answer 3 A): "Form not stated", or the form the data names
 ]
 BANNED_CHARS = {"—": "em dash", "–": "en dash"}
 
