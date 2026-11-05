@@ -646,8 +646,9 @@
         {
           "seller_slug": "vitals-vault",
           "name": "Vitals Vault",
-          "line": "Blood test panels drawn at a Quest lab; it tests and does not prescribe.",
-          "source": "Vitals Vault, home page, read 4 Nov 2026",
+          "clinic": true,
+          "line": "Blood test panels drawn at a Quest lab, and an online weight-loss plan: {plan}.",
+          "source": "Vitals Vault, home page, read 4 Nov 2026; plan price checked {checked}",
           "url": "https://vitalsvault.com"
         },
         {
