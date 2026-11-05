@@ -58,11 +58,15 @@ jobs:
           # all three together: npm i --no-save removes what an earlier --no-save installed (Playwright, from check-layout)
           npm i --no-save playwright@1.49.1 lighthouse@12.8.2 chrome-launcher@1 >/dev/null
           node tools/check_lighthouse.js
+      # only main publishes: a branch run checks and builds, skips the publishing steps and stays green (owner, 5 Nov 2026)
       - uses: actions/configure-pages@v5
+        if: github.ref == 'refs/heads/main'
       - uses: actions/upload-pages-artifact@v3
+        if: github.ref == 'refs/heads/main'
         with: { path: dist }
   deploy:
     needs: check-and-build
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     environment:
       name: github-pages

@@ -6,11 +6,14 @@ the hand-checked rows, the database rows tools/pull_data.py writes (plans, lette
 MedlinePlus pages listed in SOURCES. A sentence whose number is missing from the data is left out, never filled in.
 build.py imports this module and calls pages(build) once its own helpers exist.
 """
+import ast
 import json
 import re
+import subprocess
 from collections import Counter
 from datetime import date
 from html import escape
+from pathlib import Path
 
 BUILD_DATE = date.today().isoformat()
 
@@ -1766,7 +1769,7 @@ def letter_kind(r):
 
 
 def g_letters_year(b, f, N):
-    on = f["letters_on"] or BUILD_DATE
+    on = f["letters_on"] or b.DATA_CHECKED
     year = on[:4]
     rows = [r for r in b.LETTERS_ALL if (r.get("letter_date") or "").startswith(year)]
     n = len(rows)
@@ -2145,12 +2148,50 @@ TEXTS = {"is-bpc-157-legal": g_bpc, "are-peptides-safe": g_safe, "how-to-read-a-
          "what-research-use-only-means": g_ruo, "peptide-seller-checks-by-the-numbers": g_by_numbers}
 
 
+GUIDE_DATES = {}
+
+
+def guide_dates():
+    """{slug: (published, modified)} from the commit history (owner answer to #96 Q1 A, 5 Nov 2026; pages/learn.md, Schema):
+    published the commit that first added the guide, modified the last commit that changed its text, which is its entry in
+    GUIDES and its text function in TEXTS, compared as parsed code so a comment or a moved line is not a change. Follows
+    the branch's own line (--first-parent), because commits of parallel branches interleave by date and would look like
+    changes back and forth. A guide not committed yet has no dates; never the build date."""
+    if GUIDE_DATES:
+        return GUIDE_DATES
+    root = Path(__file__).resolve().parent
+    run = lambda *a: subprocess.run(["git", *a], cwd=root, capture_output=True, text=True)
+    last = {}
+    log = run("log", "--first-parent", "--reverse", "--format=%H %cs", "--", "guides.py").stdout
+    for line in log.splitlines():
+        sha, day = line.split()
+        try:
+            tree = ast.parse(run("show", f"{sha}:guides.py").stdout)
+        except SyntaxError:
+            continue
+        top = {t.targets[0].id: t.value for t in tree.body if isinstance(t, ast.Assign) and isinstance(t.targets[0], ast.Name)}
+        funcs = {f.name: f for f in tree.body if isinstance(f, ast.FunctionDef)}
+        texts = top.get("TEXTS")
+        names = {k.value: v.id for k, v in zip(texts.keys, texts.values) if isinstance(v, ast.Name)} if isinstance(texts, ast.Dict) else {}
+        for entry in top["GUIDES"].elts if isinstance(top.get("GUIDES"), ast.List) else []:
+            slug = next((v.value for k, v in zip(entry.keys, entry.values) if k.value == "slug"), None)
+            text = ast.dump(entry) + ast.dump(funcs[names[slug]] if names.get(slug) in funcs else ast.Pass())
+            was = last.get(slug)
+            if not was:
+                last[slug] = [day, day, text]
+            elif was[2] != text:
+                was[1:] = [day, text]
+    GUIDE_DATES.update({slug: (v[0], v[1]) for slug, v in last.items()})
+    return GUIDE_DATES
+
+
 def article_schema(b, g):
     url = f"{b.SITE}/learn/{g['slug']}/"
+    dates = guide_dates().get(g["slug"])
     org = {"@type": "Organization", "name": "Peptide Chooser", "url": b.SITE + "/"}
     return ('<script type="application/ld+json">' + json.dumps({
         "@context": "https://schema.org", "@type": "Article", "headline": g["title"], "description": g["desc"],
-        "datePublished": BUILD_DATE, "dateModified": BUILD_DATE, "author": org,
+        **({"datePublished": dates[0], "dateModified": dates[1]} if dates else {}), "author": org,
         "publisher": dict(org, logo={"@type": "ImageObject", "url": f"{b.SITE}/assets/icon-512.png"}),
         "mainEntityOfPage": url, "image": f"{b.SITE}/assets/og/learn-{g['slug']}.png"}) + "</script>")
 
