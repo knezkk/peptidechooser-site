@@ -4,3 +4,4 @@
 # /path/ <hash>
 ODOBRENO SEO - Karlo - 5. 11. 2026
 /sellers/gala-health/ 205b126a5119
+/sellers/humecare/ f0222032dc10
