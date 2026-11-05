@@ -1133,6 +1133,8 @@ def check_dates(site_text):
     the commit that changed their text. A source's own stamp ("current as of") is the source's and is not ours to check."""
     errs = []
     days = set(re.findall(r"\d{4}-\d{2}-\d{2}", site_text))
+    # a source note in the data can carry its date in words ("checked 2 Nov 2026")
+    days |= {f"{y}-{MONTHS[m]:02d}-{int(d):02d}" for d, m, y in re.findall(r"\b(\d{1,2}) (Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) (20\d\d)\b", site_text)}
     months = {d[:7] for d in days}
     commits = set(subprocess.run(["git", "log", "--format=%cs", "--", "build.py", "paid.py"], cwd=ROOT, capture_output=True, text=True).stdout.split())
     for name, html in page_texts():
