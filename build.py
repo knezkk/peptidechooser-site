@@ -3091,6 +3091,112 @@ def legit_description(d, r):
     return d + tail if len(d) < 150 and len(d) + len(tail) <= 160 else d
 
 
+def and_list(xs):
+    xs = list(xs)
+    return "" if not xs else xs[0] if len(xs) == 1 else ", ".join(xs[:-1]) + " and " + xs[-1]
+
+
+def legit_more(r):
+    """The "Is <Name> legit?" section's longer text (owner queue block 7, round a2, 7 Nov 2026: about 400 words, from data,
+    additions only). One paragraph per field group; a missing field drops its sentence, and nothing here is a verdict."""
+    name, clinic = seller_base(seller_name(r)), is_clinic(r)
+    kind = kind_words(r)[0]
+    out = []
+    first, on = r.get("first_seen"), r.get("score_checked_on")
+    who = [f"{name} is {'an' if kind[0] in 'aeiou' else 'a'} {kind}."]
+    if first and on:
+        who.append(f"We have tracked it since {nice_date(first[:10])} and last checked it on {nice_date(on[:10])}.")
+    out.append(" ".join(who))
+    if clinic:
+        plans = clinic_plan_rows(r)
+        if plans:
+            lo, hi = plans[0]["price_monthly"], max(p["price_monthly"] for p in plans)
+            comp = sum(1 for p in plans if plan_kind(p) == "compounded")
+            brand = sum(1 for p in plans if plan_kind(p) == "brand")
+            t = [f"Its price page shows {plural(len(plans), 'plan')}" + (f", from {usd(lo)} to {usd(hi)} a month." if hi != lo else f" at {usd(lo)} a month.")]
+            if comp:
+                lead = ("The plan is" if len(plans) == 1 else f"All {len(plans)} are") if comp == len(plans) else f"{plural(comp, 'plan')} {'are' if comp > 1 else 'is'}"
+                t.append(f"{lead} compounded: made by a pharmacy and not FDA approved, even when an approved medicine has the same ingredient.")
+            if brand:
+                t.append(f"{plural(brand, 'plan')} {'are brand-name medicines' if brand > 1 else 'is a brand-name medicine'}.")
+            fees = {care_words(p) for p in plans}
+            t.append("The care fee is not shown on its price page." if fees == {"care fee not known"} else f"Care fees, where shown: {and_list(sorted(fees - {'care fee not known'}))}.")
+            out.append(" ".join(t))
+        states = (CLINIC_STATES.get(r["seller_slug"]) or {}).get("not_in") or []
+        out.append(f"It does not take patients in {and_list([STATES.get(x, x) for x in states])}." if states
+                   else "We have no state limits on file for it.")
+        out.append("An online clinic publishes no lab reports: a pharmacy fills each prescription, so we check the clinic on four facts, not five.")
+    else:
+        subs = sorted(SELLER_SUBS.get(r["seller_slug"], []), key=lambda s: (-(s.get("listing_count") or 0), s["substance_slug"]))
+        t = []
+        if r.get("product_count") is not None and r.get("substance_count") is not None:
+            t.append(f"It lists {plural(r['product_count'], 'product')} across {plural(r['substance_count'], 'substance')}.")
+        if subs:
+            top = [f"{sub_label(s['substance_slug'])} ({plural(s['listing_count'], 'listing')})" for s in subs[:3] if s.get("listing_count")]
+            if top:
+                t.append(f"The most listed: {and_list(top)}.")
+        lo, hi = r.get("price_per_mg_min"), r.get("price_per_mg_max")
+        if lo is not None and lo >= 0.01 and hi is not None:
+            t.append(f"Price per mg: {per_mg_range(lo, hi)}.")
+        if r.get("seller_kind") == "S1_RUO":
+            t.append("These are research-use peptides: vials labelled for lab use, not approved for use in people.")
+            ok = [sub_label(s["substance_slug"]) for s in subs if (db_status(s["substance_slug"]) or {}).get("chip") == "ok"]
+            if ok:
+                t.append(f"{and_list(ok[:3])} {'is' if len(ok[:3]) == 1 else 'are'} in FDA-approved medicines, but a research-use vial is not that medicine.")
+        elif r.get("seller_kind") == "S4_SUPPLEMENT_COSMETIC":
+            t.append("Supplements and cosmetics do not need FDA approval before they are sold.")
+        if t:
+            out.append(" ".join(t))
+        if subs:
+            withc = [sub_label(s["substance_slug"]) for s in subs if s.get("has_coa")]
+            lab = (f"We found a lab report for {len(withc)} of the {plural(len(subs), 'substance')} in the table above" + (f": {and_list(withc[:4])}." if len(withc) <= 4 else ".")
+                   if withc else f"We found no lab report for any of the {plural(len(subs), 'substance')} in the table above.")
+            if r.get("newest_coa_date"):
+                lab += f" The newest is dated {nice_date(r['newest_coa_date'])}."
+            out.append(lab + " A lab report tests one batch; it says nothing about a vial from another batch, and we do not test products ourselves.")
+    letters = sorted(SELLER_LETTERS.get(r["seller_slug"], []), key=lambda x: x["letter_date"], reverse=True)
+    if letters:
+        t = [f"The FDA sent {name} {plural(len(letters), 'warning letter')}."]
+        for x in letters[:3]:
+            t.append(f"On {nice_date(x['letter_date'])}: {clean(x['letter_subject'])}" + (f", closed on {nice_date(x['closed_on'])}." if x.get("closed_on") else "."))
+        out.append(" ".join(t))
+    elif r.get("score_no_fda_letter"):
+        out.append(f"We found no FDA warning letter to {name} in the letters the FDA publishes" + (f", as of {nice_date(on[:10])}." if on else "."))
+    if shown_company(r) and r.get("entity_evidence") == "registry":
+        st = STATES.get(r.get("entity_state") or "", r.get("entity_state") or "")
+        out.append(f"The company behind it is {clean(r['entity_name']).rstrip('.')}" + (f", {r['registry_status']} in the {st} business registry" if r.get("registry_status") and st else "")
+                   + (f" on {nice_date(r['registry_checked_on'])}." if r.get("registry_checked_on") else "."))
+    elif shown_company(r):
+        out.append(f"The FDA's letter names the company: {clean(r['entity_name']).rstrip('.')}. We did not find it in a state business registry.")
+    else:
+        out.append(f"We could not match {name} to a company in a state business registry. We show a company only from a registry or an FDA letter, never from the seller's own pages.")
+    state, _ = legal_state(r)
+    legal_on = r.get("legal_checked_on") or r.get("terms_checked_on")
+    when = f" on {nice_date(legal_on[:10])}" if legal_on else ""
+    if state == "Met":
+        out.append(f"Its terms, privacy and refund pages were all there when we looked{when}.")
+    elif state == "Not met":
+        miss = [w for k, w in (("terms", "terms"), ("privacy", "privacy"), ("refund", "refund")) if not r.get(f"{k}_seen")]
+        out.append(f"When we looked{when}, we could not find its {and_list(miss)} {'page' if len(miss) == 1 else 'pages'}.")
+    elif state == "Could not check":
+        out.append(f"Its site did not let us read its terms, privacy and refund pages{when}.")
+    else:
+        out.append("We have not yet checked its terms, privacy and refund pages.")
+    return "".join(f"\n  <p>{escape(p, quote=False)}</p>" for p in out)
+
+
+def seller_org_schema(r):
+    """The seller as an Organization (owner queue block 7, round a2, 7 Nov 2026): its name, and the company and state only
+    when the page shows them (a state registry or an FDA letter). No url or sameAs: we never link to a seller's site."""
+    org = {"@context": "https://schema.org", "@type": "Organization", "@id": f"{SITE}/sellers/{r['seller_slug']}/#seller",
+           "name": seller_base(seller_name(r))}
+    if shown_company(r):
+        org["legalName"] = clean(r["entity_name"]).rstrip(".")
+        if r.get("entity_state") in STATES:
+            org["address"] = {"@type": "PostalAddress", "addressRegion": r["entity_state"], "addressCountry": "US"}
+    return '<script type="application/ld+json">' + json.dumps(org, ensure_ascii=False) + "</script>"
+
+
 def legit_section(r):
     """"Is <Name> legit? What we can check" (pages.md, Seller; owner tasks 2 and 3 Nov 2026): the seller's checks by name (a shop's five, a clinic's four), each
     "Met:" or "Not met:" with its fact and date (the only place they appear; the marks are in the card), the company
@@ -3105,7 +3211,7 @@ def legit_section(r):
     return f"""
 <section class="seller-sec legit" id="legit" aria-labelledby="legit-h">
   <h2 id="legit-h">{legit_heading(r)}</h2>
-  <ul class="check-list legit-list">{items}</ul>
+  <ul class="check-list legit-list">{items}</ul>{legit_more(r)}
   <p class="small legit-close">{(LEGIT_CLOSE_PAID if r.get("paid_url") else LEGIT_CLOSE_CLINIC) if is_clinic(r) else LEGIT_CLOSE}</p>
 </section>"""
 
@@ -3503,7 +3609,7 @@ if PROFILES:
     for _r in sorted(PROFILES.values(), key=lambda x: x["seller_slug"]):
         PAGES.append((f"/sellers/{_r['seller_slug']}/", f"sellers/{_r['seller_slug']}/index.html", seller_title(_r),
                       legit_description(clinic_description(_r) if _r["seller_slug"] in CLINIC_PROFILES else seller_description(_r), _r), seller_page(_r),
-                      faq_schema(seller_faq_pairs(_r)[1]),
+                      seller_org_schema(_r) + faq_schema(seller_faq_pairs(_r)[1]),
                       [("/sellers/", "Sellers"), (f"/sellers/{_r['seller_slug']}/", seller_name(_r))]))
 
 
