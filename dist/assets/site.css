@@ -277,6 +277,7 @@ html:not(.motion) .fig3d-layer { transition: none; }
 .sub-filter .input { flex: 0 1 260px; }
 .legit-list { max-width: 760px; margin-top: 12px; } /* "Is <Name> legit?" on seller pages: the check card's list at reading width */
 .legit-close { max-width: 58ch; margin: 12px 0 0; color: var(--ink-2); }
+.legit p:not(.legit-close) { max-width: 68ch; margin: var(--space-3) 0 0; } /* the plain paragraphs after the checks list (w3, round a2) */
 .check-nolab { margin: 4px 0 0; font-size: var(--small-size); line-height: var(--small-lh); color: var(--ink-2); } /* a clinic: why the lab-report check is never met */
 /* Seller page (pages.md, Seller; owner task 3 Nov 2026): the top block (H1 at display-2 with the score and the page's
    action on its row from 900px), then 8 + 4 columns from 900px: the sections left, the card and "Similar sellers" right,
