@@ -5051,9 +5051,13 @@ def main():
                                         "This page does not exist on Peptide Chooser. Go to the home page or compare peptide options by goal; the link may be old or mistyped.", NOT_FOUND), encoding="utf-8")
     # Redirects (owner task w2, 3 Nov 2026; empty until the owner approves a URL change, rule 8): data/redirects.json maps
     # an old path to its new one; GitHub Pages has no server redirects, so each old path gets a page with a meta refresh,
-    # the canonical of the new page and noindex. Never a path the build already has.
+    # the canonical of the new page and noindex. Never a path the build already has. A redirect to a page this data does
+    # not build (/sellers/ in the repo data, which holds no sellers) is left out, never pointed at a missing page.
     for old_path, new_path in REDIRECTS.items():
         assert not built(old_path), f"redirect from {old_path}, which is still a page"
+        if not built(new_path) and not (DIST / new_path.strip("/") / "index.html").exists():
+            print(f"redirect {old_path} left out: {new_path} is not built with this data")
+            continue
         target = DIST / old_path.strip("/") / "index.html"
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_text(f'<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Moved</title>'
