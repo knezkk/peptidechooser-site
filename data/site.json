@@ -287,7 +287,6 @@
           "liraglutide",
           "orforglipron"
         ],
-        "programs": true,
         "other_use": {
           "Ozempic": "diabetes"
         }
@@ -450,27 +449,27 @@
       "page": true,
       "title": "BPC-157 and TB-500 for healing, compared | Peptide Chooser",
       "h1": "Peptides for healing and joints, compared with what is approved.",
-      "description": "BPC-157 and TB-500 are sold for injuries and joints, but neither is approved for any use. The evidence, the FDA's July 2026 proposal and what sellers charge.",
-      "short_answer": "Nothing on this page is FDA approved. BPC-157 and TB-500 have animal studies only; in July 2026 an FDA advisory committee reviewed both for pharmacy compounding and the FDA proposed keeping them off the list. Research-use shops sell them anyway; we show their prices and checks and do not link to them.",
+      "description": "BPC-157 and TB-500 are sold for injuries and joints, but neither is approved for any use. The evidence, the HHS policy of Oct 2026 and what sellers charge.",
+      "short_answer": "Nothing on this page is FDA approved. BPC-157 and TB-500 have animal studies only; in July 2026 the FDA proposed keeping both off the pharmacy compounding list, and on 30 Oct 2026 HHS said it does not intend to act against licensed pharmacies that compound them under 10 conditions. Research-use shops sell them anyway; we show their prices and checks and do not link to them.",
       "legal_section": true,
       "map": {
         "x": 61.5,
         "y": 72
       },
       "main_query": "peptides for healing",
-      "intro": "Nothing is approved for injury recovery. In July 2026 an FDA advisory committee reviewed BPC-157 and TB-500 for pharmacy compounding, and the FDA proposed keeping both off the list.",
+      "intro": "Nothing is approved for injury recovery. Since 30 Oct 2026 an HHS policy lets licensed pharmacies compound BPC-157 and TB-500 under conditions; neither is FDA approved.",
       "peptides": [
         {
           "name": "BPC-157",
           "plain": "The most searched healing peptide, in vials labelled for lab use. Not approved, tested in animals only.",
-          "status": "Not approved; FDA proposed excluding it from compounding (Jul 2026)",
+          "status": "{hhs_status}",
           "chip": "neutral",
-          "does": "The most searched \"healing peptide\". Animal studies only; the FDA reviewed it for pharmacy compounding on 23 Jul 2026 and proposed keeping it off the list.",
+          "does": "The most searched \"healing peptide\". Animal studies only. {hhs_does}",
           "how": "Research-use shops only.",
           "status_plain": "Not approved for any use.",
           "substance": "bpc-157",
           "src": [
-            6
+            13
           ],
           "line_one": "vials sold for healing",
           "rx_word": "research use only"
@@ -478,14 +477,14 @@
         {
           "name": "TB-500",
           "plain": "A copy of a natural repair protein, sold next to BPC-157 in vials for lab use. Not approved for any use.",
-          "status": "Not approved; FDA proposed excluding it from compounding (Jul 2026)",
+          "status": "{hhs_status}",
           "chip": "neutral",
-          "does": "A copy of a natural repair protein, sold alongside BPC-157. Same July 2026 review, same proposal.",
+          "does": "A copy of a natural repair protein, sold alongside BPC-157. {hhs_does}",
           "how": "Research-use shops only.",
           "status_plain": "Not approved for any use.",
           "substance": "tb-500",
           "src": [
-            6
+            13
           ],
           "line_one": "vials sold for tissue repair",
           "rx_word": "research use only"
@@ -643,27 +642,27 @@
       "page": true,
       "title": "Peptides for energy and aging, compared | Peptide Chooser",
       "h1": "Peptides for energy and aging, compared with the evidence.",
-      "description": "Epitalon, MOTS-c and NAD+ shots are sold for energy and anti-aging. None is FDA approved; the FDA reviewed two in July 2026. The evidence and the prices.",
-      "short_answer": "Nothing on this page is FDA approved. Epitalon and MOTS-c were reviewed by an FDA advisory committee in July 2026 for pharmacy compounding, and the FDA proposed keeping them off the list. NAD+ is not a peptide at all; clinics sell it as shots and drips without approval. We show prices and checks for the research-use products and do not link to the shops.",
+      "description": "Epitalon, MOTS-c and NAD+ shots are sold for energy and anti-aging. None is FDA approved; HHS changed the rules for two in Oct 2026. The evidence and prices.",
+      "short_answer": "Nothing on this page is FDA approved. In July 2026 the FDA proposed keeping Epitalon and MOTS-c off the pharmacy compounding list; on 30 Oct 2026 HHS said it does not intend to act against licensed pharmacies that compound them under 10 conditions. NAD+ is not a peptide at all; clinics sell it as shots and drips without approval. We show prices and checks for the research-use products and do not link to the shops.",
       "legal_section": true,
       "map": {
         "x": 74,
         "y": 32
       },
       "main_query": "nad injections",
-      "intro": "No peptide is approved for aging or energy. The ones sold for it were reviewed by an FDA advisory committee in July 2026, and the FDA proposed keeping them off the compounding list.",
+      "intro": "No peptide is approved for aging or energy. Since 30 Oct 2026 an HHS policy lets licensed pharmacies compound Epitalon and MOTS-c under conditions; neither is FDA approved.",
       "peptides": [
         {
           "name": "Epitalon",
           "plain": "A short peptide sold as an anti-aging shot, in vials for lab use. Not approved; human evidence is thin.",
-          "status": "Not approved; FDA proposed excluding it from compounding (Jul 2026)",
+          "status": "{hhs_status}",
           "chip": "neutral",
-          "does": "A four-amino-acid peptide sold as an \"anti-aging\" shot; human evidence is thin and old. Reviewed by the FDA in July 2026; proposed exclusion.",
+          "does": "A four-amino-acid peptide sold as an \"anti-aging\" shot; human evidence is thin and old. {hhs_does}",
           "how": "Research-use shops.",
           "status_plain": "Not approved.",
           "substance": "epitalon",
           "src": [
-            6
+            13
           ],
           "line_one": "vials sold as an anti-aging shot",
           "rx_word": "research use only"
@@ -671,14 +670,14 @@
         {
           "name": "MOTS-c",
           "plain": "A peptide sold for energy, in vials labelled for lab use. Not approved and tested in animals only.",
-          "status": "Not approved; FDA proposed excluding it from compounding (Jul 2026)",
+          "status": "{hhs_status}",
           "chip": "neutral",
-          "does": "A \"mitochondrial\" peptide sold for energy; animal studies only. Same July 2026 review.",
+          "does": "A \"mitochondrial\" peptide sold for energy; animal studies only. {hhs_does}",
           "how": "Research-use shops.",
           "status_plain": "Not approved.",
           "substance": "mots-c",
           "src": [
-            6
+            13
           ],
           "line_one": "vials sold for energy",
           "rx_word": "research use only"
@@ -794,36 +793,36 @@
         "peptide": "BPC-157",
         "status": "Not approved",
         "chip": "neutral",
-        "note": "FDA advisory committee reviewed it for compounding on 23 Jul 2026; FDA proposed not to allow it",
-        "src": 6,
+        "note": "{hhs_note}",
+        "src": 13,
         "substances": [
           "bpc-157"
         ],
-        "note_with_db": true
+        "checked": "2026-11-07"
       },
       {
         "peptide": "TB-500",
         "status": "Not approved",
         "chip": "neutral",
-        "note": "same July 2026 review; FDA proposed not to allow it",
-        "src": 6,
+        "note": "{hhs_note}",
+        "src": 13,
         "substances": [
           "tb-500"
         ],
-        "note_with_db": true
+        "checked": "2026-11-07"
       },
       {
         "peptide": "MOTS-c, Epitalon",
         "status": "Not approved",
         "chip": "neutral",
-        "note": "same July 2026 review; FDA proposed not to allow them",
-        "src": 6,
+        "note": "{hhs_note_many}",
+        "src": 13,
         "substances": [
           "mots-c",
           "epitalon"
         ],
-        "note_with_db": true,
-        "note_each": "same July 2026 review; FDA proposed not to allow it"
+        "note_each": "{hhs_note}",
+        "checked": "2026-11-07"
       },
       {
         "peptide": "Retatrutide",
@@ -945,8 +944,59 @@
         "n": 11,
         "text": "Operation Supplement Safety (US Department of Defense), Clomiphene and Enclomiphene, content current as of 12 Jan 2026, read 4 Nov 2026",
         "url": "https://www.opss.org/article/clomiphene-and-enclomiphene-drugs-not-dietary-supplements"
+      },
+      {
+        "n": 12,
+        "text": "Federal Register, HHS, Enforcement Discretion Policy Regarding 503A Compounding Using Certain Peptide Bulk Drug Substances, notice of availability, 91 FR 68526, 30 Oct 2026, read 7 Nov 2026",
+        "url": "https://www.federalregister.gov/documents/2026/10/30/2026-22192/enforcement-discretion-policy-regarding-503a-compounding-using-certain-peptide-bulk-drug-substances"
+      },
+      {
+        "n": 13,
+        "text": "HHS, Enforcement Discretion Policy Regarding 503A Compounding Using Certain Peptide Bulk Drug Substances, with Appendices A and B, read 7 Nov 2026",
+        "url": "https://www.hhs.gov/sites/default/files/hhs-503a-peptide-enforcement-discretion-policy-appendix-b.pdf"
       }
-    ]
+    ],
+    "hhs_policy": {
+      "date": "2026-10-30",
+      "seen": "2026-11-07",
+      "src": 13,
+      "notice_src": 12,
+      "url": "https://www.hhs.gov/sites/default/files/hhs-503a-peptide-enforcement-discretion-policy-appendix-b.pdf",
+      "substances": [
+        "bpc-157",
+        "epitalon",
+        "kpv",
+        "mots-c",
+        "semax",
+        "tb-500"
+      ],
+      "note": "HHS said on 30 Oct 2026 it does not intend to act against licensed pharmacies that compound it for one patient on a prescription, under 10 conditions; that is not FDA approval",
+      "note_many": "HHS said on 30 Oct 2026 it does not intend to act against licensed pharmacies that compound them for one patient on a prescription, under 10 conditions; that is not FDA approval",
+      "meta": "since 30 Oct 2026 HHS allows limited pharmacy compounding under conditions",
+      "status": "Not approved; HHS allows limited pharmacy compounding (Oct 2026)",
+      "sentence": "On 30 Oct 2026 the US Department of Health and Human Services (HHS) said it does not intend to act against licensed pharmacies that compound {what} for one patient on a prescription, under 10 conditions. That is not FDA approval, and research-use vials are still not approved for use in people.",
+      "does": "Covered by the HHS compounding policy of Oct 2026.",
+      "conditions": [
+        "The peptide is on the policy's list (Appendix A).",
+        "It has the identity and route of use the policy describes (Appendix B).",
+        "It comes from a facility registered with the FDA, with a valid certificate of analysis (COA) that meets the FDA's test criteria.",
+        "Its original maker is registered with the FDA and follows good manufacturing practice, and the COA names the factory.",
+        "The pharmacy reports what it makes, serious side effects and quality problems to the FDA (MedWatch) and to the states involved.",
+        "The label says \"This is a compounded drug product. Not for resale.\"",
+        "Each product has one active ingredient from the list.",
+        "A pill or other oral form needs records that it is absorbed well enough in people.",
+        "The only device packed with it is an FDA 510(k)-cleared syringe.",
+        "It meets every other rule of the federal drug law, including clean conditions and a prescription for each patient."
+      ],
+      "routes": {
+        "bpc-157": "under the skin, into a muscle, by mouth or on the skin",
+        "tb-500": "injection under the skin or into a muscle",
+        "epitalon": "injection under the skin or into a muscle, in courses with breaks",
+        "mots-c": "injection under the skin or into a muscle",
+        "kpv": "by mouth or on the skin",
+        "semax": "in the nose"
+      }
+    }
   },
   "creators": {
     "checked": "2026-10-25",

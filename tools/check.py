@@ -941,6 +941,13 @@ def check_parts(P):
         t = re.search(r'<table class="tbl tbl-compact tbl-cards tbl-clinics">.*?<tbody>(.*?)</tbody>', html, re.S)
         if t and "chip-ok\">Brand<" in t.group(1).replace('"', '\"') and not re.match(r'\s*<tr[^>]*data-k="brand"', t.group(1)):
             errs.append(f"{name}: the clinic table's first row is not a brand plan")
+        # A goal page's clinic table holds only plans whose substance is on the goal's list (owner answer to #104 Q2 A, 5 Nov 2026).
+        allowed = set((g.get("clinic_plans") or {}).get("substances") or (g.get("clinic_table") or {}).get("substances") or [])
+        clinics = re.search(r'id="clinics".*?<tbody>(.*?)</tbody>', html, re.S)
+        for tr in re.findall(r"<tr\b[^>]*>", clinics.group(1)) if clinics else []:
+            found = re.search(r'data-s="([^"]*)"', tr)
+            if not found or found.group(1) not in allowed:
+                errs.append(f"{name}: a clinic table row whose substance is not on the goal's list ({found.group(1) if found else 'none'})")
         if P[name].title != g["title"]:
             errs.append(f"{name}: title is not the goal's title in data/site.json")
         h1 = re.search(r"<h1[^>]*>(.*?)</h1>", html, re.S)
