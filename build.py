@@ -471,8 +471,13 @@ def og_name(path):
 FEED_LINK = '\n<link rel="alternate" type="application/rss+xml" title="FDA warning letters to peptide sellers" href="/fda-warning-letters/feed.xml">'
 
 
+# One page per search (data/canonicals.json, queue block 8): a listed page points its canonical at the page that keeps the
+# search, leaves the sitemap and llms.txt, and links to it from other pages go to that page.
+CANON = json.loads((ROOT / "data" / "canonicals.json").read_text(encoding="utf-8"))["pages"] if (ROOT / "data" / "canonicals.json").exists() else {}
+
+
 def page(path, title, description, body, schema="", crumb=None):
-    canonical = SITE + path
+    canonical = SITE + CANON.get(path, path)
     og = f"{SITE}/assets/og/{og_name(path)}.png"
     return f"""<!doctype html>
 <html lang="en">
@@ -5342,7 +5347,7 @@ def llms_sections():
     goal_paths = {goal_href(g) for g in ALL_GOALS if g.get("page")}
     groups = {"Home and goals": [], **{name: [] for _, name in LLMS_SECTIONS}, "About the site": []}
     for p, _, t, d, *_ in PAGES:
-        if p in NOINDEX:
+        if p in NOINDEX or p in CANON:
             continue
         name = ("Home and goals" if p in goal_paths or p == "/" else
                 next((n for pre, n in LLMS_SECTIONS if p.startswith(pre)), "About the site"))
@@ -5374,6 +5379,9 @@ def main():
     for path, out, title, desc, body, schema, crumb in PAGES:
         if crumb:
             schema = schema + breadcrumb_schema(crumb)
+        for c, t in CANON.items():
+            if path not in (c, t):
+                body = body.replace(f'href="{c}"', f'href="{t}"')
         target = DIST / out
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_text(page(path, title, desc, body, schema, crumb), encoding="utf-8")
@@ -5430,7 +5438,7 @@ def main():
                 (DIST / "windows" / f"{clinic_key(g, p)}.json").write_text(json.dumps({"html": clinic_window(g, p)}), encoding="utf-8")
     (DIST / "search-index.json").write_text(json.dumps(search_index(), ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
     lastmod = DATA_CHECKED  # sitemap lastmod and the footer's "Data checked"
-    urls = "".join(f"<url><loc>{SITE}{p[0]}</loc><lastmod>{lastmod}</lastmod></url>" for p in PAGES if p[0] not in NOINDEX)
+    urls = "".join(f"<url><loc>{SITE}{p[0]}</loc><lastmod>{lastmod}</lastmod></url>" for p in PAGES if p[0] not in NOINDEX and p[0] not in CANON)
     (DIST / "sitemap.xml").write_text(
         f'<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">{urls}</urlset>\n')
     (DIST / "pages.json").write_text(json.dumps([{"path": p[0], "title": p[2]} for p in PAGES] + [{"path": "/404", "title": "Page not found | Peptide Chooser"}]))

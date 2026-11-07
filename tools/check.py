@@ -164,6 +164,10 @@ def check_words(P):
 
 
 RULE8 = Path(__file__).resolve().parent.parent / "data" / "rule8.json"
+# One page per search (queue block 8): a page listed here points its canonical at the page that keeps the search, which
+# must be built, and stays out of the sitemap.
+_CANON = Path(__file__).resolve().parent.parent / "data" / "canonicals.json"
+CANON = json.loads(_CANON.read_text(encoding="utf-8"))["pages"] if _CANON.exists() else {}
 
 
 def rule8_errs(P):
@@ -213,14 +217,19 @@ def check_seo(P):
         if d in descs:
             errs.append(f"{name}: description duplicates {descs[d]}")
         descs[d] = name
-        if name != "404.html" and p.canonical != SITE + path:
-            errs.append(f"{name}: canonical {p.canonical} != {SITE + path}")
+        if name != "404.html" and p.canonical != SITE + CANON.get(path, path):
+            errs.append(f"{name}: canonical {p.canonical} != {SITE + CANON.get(path, path)}")
+        if path in CANON:
+            if CANON[path].strip("/") + "/index.html" not in P:
+                errs.append(f"{name}: canonical target {CANON[path]} is not built")
+            if f"<loc>{SITE}{path}</loc>" in sitemap:
+                errs.append(f"{name}: page with another canonical in the sitemap")
         if not p.og:
             errs.append(f"{name}: no og:image")
         elif not (DIST / p.og.replace(SITE + "/", "")).exists():
             errs.append(f"{name}: og:image file missing {p.og}")
         noindex = "noindex" in p.meta.get("robots", "")
-        if name != "404.html" and not noindex and f"<loc>{SITE}{path}</loc>" not in sitemap:
+        if name != "404.html" and not noindex and path not in CANON and f"<loc>{SITE}{path}</loc>" not in sitemap:
             errs.append(f"{name}: not in sitemap")
         if noindex and f"<loc>{SITE}{path}</loc>" in sitemap:
             errs.append(f"{name}: noindex page in the sitemap")
