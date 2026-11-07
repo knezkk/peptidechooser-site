@@ -421,8 +421,12 @@ def g_bpc(b, f, N):
         status = f"BPC-157 is not FDA approved for any use.{N('drugsfda-hair')} {hand['note'][0].upper()}{hand['note'][1:]}.{N('legal-' + str(hand['src']))}"
     else:
         status = f"{hand['status']}: {hand['note']}.{N('legal-' + str(hand['src']))}"
-    # the July 2026 review stays in the short answer (rule 8: this page only gains text)
-    status += f" Before that, in July 2026, the FDA proposed not to let pharmacies use it.{N('legal-6')}"
+    # rule 8: this page only gains text, so the withdrawn nomination and the July 2026 review keep their sentences
+    wd = next((r for r in b.LEGAL_DB or [] if r["substance_slug"] == "bpc-157" and r["regime"] == "fda_nomination_withdrawn"), None)
+    if wd and st and st["sentence"] == b.HHS.get("note"):
+        wsrc = next((k for k, (_, u) in SOURCES.items() if u == wd["source_url"]), "fda-bulk-risks")
+        status += f" Its nomination for pharmacy compounding was withdrawn.{N(wsrc)}"
+    status += f" FDA advisory committee reviewed it for compounding on 23 Jul 2026; FDA proposed not to allow it.{N('legal-6')}"
     short = (f"{status} "
              + (f"The FDA's warning letters we track went to the companies selling peptides, not to people who bought them for "
                 f"themselves.{N('db-letters')}" if f["letters"] else ""))
