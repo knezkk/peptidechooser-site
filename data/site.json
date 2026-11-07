@@ -301,6 +301,7 @@
       "peptides": [
         {
           "name": "Semaglutide (Wegovy)",
+          "plan_form": "shot",
           "plain": "A weekly shot on prescription, for obesity or overweight with a health problem. It cuts appetite.",
           "status": "FDA approved",
           "chip": "ok",
@@ -316,6 +317,7 @@
         },
         {
           "name": "Tirzepatide (Zepbound)",
+          "plan_form": "shot",
           "plain": "A weekly shot on prescription, for the same use as Wegovy. It had a larger average loss in trials.",
           "status": "FDA approved",
           "chip": "ok",
