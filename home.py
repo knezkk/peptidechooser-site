@@ -67,7 +67,7 @@ def where_from(b, r):
         if not plans:
             return "unknown"
         p, fee = plans[0], plans[0].get("membership_fee_monthly")
-        return f'{b.usd(p["price_monthly"])}/mo' + (f' + {b.usd(fee)} care' if fee and float(fee) > 0 else "")
+        return f'{b.usd(p["price_monthly"])}/mo' + (f' incl. {b.usd(fee)} care' if fee and float(fee) > 0 else "")
     lo = b.compare_ppm(r)[0]
     return f"{b.per_mg(lo)}/mg" if lo is not None else "unknown"
 
@@ -182,10 +182,8 @@ def goal_price(b, g):
         return f'from {b.usd(p["price_monthly"])}/mo', (f"compounded {sub}" if p.get("product_kind") == "compounded" else f"{sub}, clinic").strip(", ")
     subs = {s for p in g["peptides"] if not b.approved_row(p) and p.get("chip") != "info" for s in b.subs_of(p)}
     subs -= {s for s in subs if b.pep_status(s) and b.pep_group(b.pep_status(s)) == "approved"}  # never an approved medicine
-    # the lowest price per mg any shop lists for those substances (seller_substances), inside the /compare/ band
-    vals = [x["price_per_mg_min"] for slug, rows in b.SELLER_SUBS.items() if slug in b.SHOPS for x in rows
-            if x.get("substance_slug") in subs and x.get("price_per_mg_min") is not None
-            and b.PPM_LOW <= x["price_per_mg_min"] <= b.PPM_HIGH]
+    # the lowest price per mg of a vial any shop lists for those substances, inside the /compare/ band (task 33: vials only)
+    vals = b.vial_ppm(r for r in b.PRODUCTS if r["seller_slug"] in b.SHOPS and r["substance_slug"] in subs)
     return (f"from {b.per_mg(min(vals))}/mg", "research-use only") if vals else ("", "")
 
 
@@ -212,7 +210,7 @@ def goals_section(b):
 
 RATE = [("Lab reports", "A lab report dated in the last 12 months."),
         ("No FDA letter", "No FDA warning letter matched to its web or street address."),
-        ("Company found", "The business behind the shop found in a state registry."),
+        ("Found in a state registry", "The business behind the shop, found in a state registry."),
         ("Legal pages", "A terms page and a privacy or refund page, seen in the last 30 days."),
         ("Fresh prices", "A price per milligram seen in the last 30 days.")]
 

@@ -567,6 +567,8 @@ def item_list_schema(name, items):
 
 
 ALL_GOALS = DATA["goals"]
+# The hair goal's cosmetic option is a scalp product (data agent's task 33): its window takes only listings named for hair or scalp.
+SCALP_OPTIONS = {id(p) for g in ALL_GOALS if g["slug"] == "hair" for p in g.get("peptides") or [] if p["status"].startswith("Cosmetic")}
 LEGAL = DATA["legal"]
 CREATORS = DATA["creators"]
 SOURCES_HOME = "".join(
@@ -585,6 +587,14 @@ OPT_REF = {id(p): (len(LEGAL["sources"]) + len(LIVE_GOALS) + i + 1, f"opt-{i + 1
 # the day we last saw that price. A goal with no plan row shows nothing (owner, 31 Oct 2026). Compounded plans are left
 # out: the line sits under an FDA-approved option, and a pharmacy-made copy is not that product (owner, 31 Oct 2026).
 PLANS = DATA.get("plans") or []
+# A plan's monthly figure includes its monthly membership or care fee when the data has one (data agent's task 33, owner
+# 7 Nov 2026: Ivim stores the medication, $65, and the membership, $74.99, apart; the reader pays $139.99). The medicine's
+# own price stays in price_medicine; the care fee is shown as included, never added twice.
+for _p in PLANS:
+    _p["price_medicine"] = _p.get("price_monthly")
+    _fee = _p.get("membership_fee_monthly")
+    if _p.get("price_monthly") is not None and _fee is not None and float(_fee) > 0:
+        _p["price_monthly"] = round(float(_p["price_monthly"]) + float(_fee), 2)
 
 
 def cheapest_plan(g):
@@ -853,6 +863,14 @@ def db_status(slug):
     if not rows:
         return None
     (rank, chip, label, sentence), row = min(rows, key=lambda x: x[0][0])
+    # a status split by route (GHK-Cu: category 1 "except for injectable routes", a withdrawn nomination "for injectable
+    # routes"; data agent's task 33): both rows are shown, each with its own words, listing and source, the same everywhere
+    inj = [x for x in rows if re.search(r"\(for injectable routes", x[1].get("fda_listing") or "")]
+    other = [x for x in rows if re.search(r"\(except for injectable routes", x[1].get("fda_listing") or "")]
+    routes = [(by, x[0][3], x[1]) for by, x in (("by injection", min(inj, key=lambda x: x[0][0]) if inj else None),
+                                                 ("by other routes", min(other, key=lambda x: x[0][0]) if other else None)) if x]
+    if len(routes) == 2:
+        sentence = "; ".join(f"{by}, {said}" for by, said, _ in routes)
     # generic products carry the substance's own name as their brand; those are not brands (Finasteride -> Propecia, Proscar)
     generic = row["canonical_name"].split()[0].title()
     brands = sorted({brand_base(a["brand_name"]) for a in APPROVED_DB if a["substance_slug"] == slug and a.get("brand_name")} - {generic})[:4]
@@ -861,8 +879,12 @@ def db_status(slug):
     # two rows with two wordings ("except for injectable" on category 1, "for injectable" on the withdrawn nomination);
     # another row's wording under this status would pair the wrong facts.
     listing = row.get("fda_listing") or ""
+    split = [{"listing": r.get("fda_listing") or "", "url": r["source_url"]} for _, _, r in routes] if len(routes) == 2 else []
     return {"chip": chip, "label": label, "sentence": sentence, "name": name, "url": row["source_url"],
-            "seen": row["first_seen_by_us"], "listing": listing}
+            "seen": min(r["first_seen_by_us"] for _, _, r in routes) if split else row["first_seen_by_us"],
+            "listing": "; ".join(f'"{x["listing"]}"' for x in split)[1:-1] if split else listing, "routes": split,
+            # the short form for a meta description (160 characters)
+            "meta": "by injection, its compounding nomination was withdrawn; by other routes, pharmacies may compound it" if split else ""}
 
 
 def source_word(url):
@@ -871,7 +893,11 @@ def source_word(url):
 
 
 def listing_html(s):
-    """The FDA's own wording for a substance in small under its status, when the database has it (fda_listing)."""
+    """The FDA's own wording for a substance in small under its status, when the database has it (fda_listing). A status
+    split by route shows both listings, each linked to its own FDA source."""
+    if s and s.get("routes"):
+        return ('<span class="listing">FDA listings: ' + "; ".join(
+            f'<a href="{escape(x["url"])}" rel="nofollow">"{escape(x["listing"])}"</a>' for x in s["routes"]) + "</span>")
     return f'<span class="listing">FDA listing: "{escape(s["listing"])}"</span>' if s and s.get("listing") else ""
 
 
@@ -1060,11 +1086,25 @@ COSMETIC_FORMS = ("cream", "serum", "lotion", "gel", "topical")
 is_cosmetic = lambda p: p["status"].startswith("Cosmetic")
 
 
+COSMETIC_KINDS = ("cosmetic", "scalp")
+SCALP_WORDS = re.compile(r"\b(?:hair|scalp)\b", re.I)
+
+
 def form_ok(r, kind):
-    """kind None: every listing; "cosmetic": cosmetic forms only; "research": every listing that is not a cosmetic form."""
+    """kind None: every listing; "cosmetic": cosmetic forms only; "scalp": cosmetic forms whose name says hair or scalp (data
+    agent's task 33: a body lotion or a skin cream is not a scalp serum); "research": every listing not of a cosmetic form."""
     if kind is None:
         return True
-    return (r.get("form") in COSMETIC_FORMS) == (kind == "cosmetic")
+    if kind == "scalp":
+        return r.get("form") in COSMETIC_FORMS and bool(SCALP_WORDS.search(r.get("product_name") or ""))
+    return (r.get("form") in COSMETIC_FORMS) == (kind in COSMETIC_KINDS)
+
+
+def vial_ppm(rows):
+    """The prices per mg a research-use "from $X/mg" may use: vials only (site.products.form = 'vial'), inside the /compare/
+    band; powders and listings with no form do not count (data agent's task 33, 7 Nov 2026)."""
+    return [r["price_per_mg"] for r in rows if r.get("form") == "vial" and r.get("price_per_mg") is not None
+            and PPM_LOW <= r["price_per_mg"] <= PPM_HIGH]
 
 
 def seller_rows(slug, kind=None):
@@ -1086,7 +1126,7 @@ def seller_rows(slug, kind=None):
 # The seller score (pages.md, Seller window, owner 2 Nov 2026): five yes/no checks from site.sellers, in this order, with
 # the short name each mark carries. Facts we hold about the seller, never a safety or quality grade.
 SCORE_CHECKS = [("score_lab_testing", "Lab reports"), ("score_no_fda_letter", "No FDA letter"),
-                ("score_registered_company", "Company found"), ("score_legal_pages", "Legal pages"),
+                ("score_registered_company", "Found in a state registry"), ("score_legal_pages", "Legal pages"),
                 ("score_fresh_prices", "Fresh prices")]
 # Online clinics are scored out of 4 (owner decision C9, 3 Nov 2026; pages.md, Seller): they publish no lab reports, so
 # the lab check is never counted for a clinic. A score is never compared across the two kinds.
@@ -1116,8 +1156,8 @@ def score_line(r):
     s = SELLERS.get(r["seller_slug"], {})
     if s.get("score") is None:
         return ""
-    marks = "".join(f'<span class="chip chip-{"ok" if s.get(k) else "neutral"} mark-{"yes" if s.get(k) else "no"}">{t}'
-                    f'<span class="vh">: {"yes" if s.get(k) else "no"}</span></span>' for k, t in SCORE_CHECKS)
+    marks = "".join(f'<span class="chip chip-{"ok" if s.get(k) else "neutral"} mark-{"yes" if s.get(k) else "no"}">'
+                    f'<span class="vh">{t}: {"yes" if s.get(k) else "no"}</span><span aria-hidden="true">{t}</span></span>' for k, t in SCORE_CHECKS)
     return (f'<span class="score"><span class="score-n"><span class="num">{s["score"]}</span> of {len(SCORE_CHECKS)} checks</span>'
             f'<span class="score-marks">{marks}</span></span>')
 
@@ -1152,7 +1192,7 @@ def seller_table(slug, kind=None):
         if variant and variant.lower() not in name.lower():
             name += f", {variant}"
         size = f'{r["amount_mg"]:g} mg' if r.get("amount_mg") else "size unknown"
-        if kind == "cosmetic" and r.get("form"):  # the form word per row in a cosmetic window ("Serum", "Cream", "Topical")
+        if kind in COSMETIC_KINDS and r.get("form"):  # the form word per row in a cosmetic window ("Serum", "Cream", "Topical")
             size = f'{r["form"].capitalize()} · {size}'
         price = money(r["price_usd"]) if r.get("price_usd") is not None else "unknown"
         ppm = (f'{per_mg(r["price_per_mg"])}/mg' if r.get("price_per_mg") is not None else "blend" if r.get("is_blend") else "unknown")
@@ -1162,11 +1202,11 @@ def seller_table(slug, kind=None):
                      else f'<span class="name">{seller}</span>')
         trs.append(f'<tr data-seller="{r["seller_slug"]}" data-form="{escape(r.get("form") or "")}"><td>{name_html}</td><td data-l="Product">{name}<span class="sub">{size}</span></td>'
                    f'<td data-l="Price"><span class="num">{price}</span></td>'
-                   + ("" if kind == "cosmetic" else f'<td data-l="Per mg"><span class="num">{ppm}</span></td>') +
+                   + ("" if kind in COSMETIC_KINDS else f'<td data-l="Per mg"><span class="num">{ppm}</span></td>') +
                    f'<td class="checks">{score_line(r)}{check_chips(r)}{seller_closed_chip(r["seller_slug"])}</td></tr>')
         seen = r.get("price_observed_at") or r.get("last_seen")
         src.append(f'<li>{seller}, {name}{", " + nice_date(seen) if seen else ""}: {r["product_url"]}</li>')
-    per_mg_th = "" if kind == "cosmetic" else '<th scope="col">Per mg</th>'  # a cream has no price per mg
+    per_mg_th = "" if kind in COSMETIC_KINDS else '<th scope="col">Per mg</th>'  # a cream has no price per mg
     table = (f'<div class="tbl-wrap"><table class="tbl"><thead><tr><th scope="col">Seller</th><th scope="col">Product</th>'
              f'<th scope="col">Price</th>{per_mg_th}<th scope="col">Background check</th></tr></thead>'
              f'<tbody>{"".join(trs)}</tbody></table></div>')
@@ -1180,11 +1220,14 @@ def subs_of(p):
 
 
 def window_kind(p):
-    return "cosmetic" if is_cosmetic(p) else "research"
+    """"scalp" for a cosmetic option on the hair goal (its window lists scalp products only), "cosmetic" for another
+    cosmetic option, else "research"."""
+    return ("scalp" if id(p) in SCALP_OPTIONS else "cosmetic") if is_cosmetic(p) else "research"
 
 
 def window_key(p):
-    return ("cosmetics-" if is_cosmetic(p) else "sellers-") + "-".join(s for s in subs_of(p) if seller_rows(s, window_kind(p)))
+    kind = window_kind(p)
+    return {"scalp": "scalp-", "cosmetic": "cosmetics-"}.get(kind, "sellers-") + "-".join(s for s in subs_of(p) if seller_rows(s, kind))
 
 
 def window_who(p):
@@ -1192,7 +1235,7 @@ def window_who(p):
     the window may not say "Research-use sellers"): cosmetic listings "Cosmetic shops"; all research-use shops "Research-use
     sellers"; all clinics or pharmacies "Clinics and pharmacies"; a mix "Sellers"."""
     kind = window_kind(p)
-    if kind == "cosmetic":
+    if kind in COSMETIC_KINDS:
         return "Cosmetic shops"
     kinds = {(SELLERS.get(r["seller_slug"]) or PROFILES.get(r["seller_slug"]) or {}).get("seller_kind") or ""
              for s in subs_of(p) for r in seller_rows(s, kind)}
@@ -1222,7 +1265,7 @@ def seller_window(p):
   <div class="dlg-hd"><h2 id="{key}-h">{title}</h2><form method="dialog"><button class="btn btn-line btn-sm" type="submit">Close</button></form></div>
   <p class="dlg-lede">{window_who(p)}, with our checks.{checked}</p>
   {"".join(parts)}
-  {"" if kind == "cosmetic" else '<p class="dlg-foot">Price per mg is price divided by the stated amount; blends have no per-mg price.</p>'}
+  {"" if kind in COSMETIC_KINDS else '<p class="dlg-foot">Price per mg is price divided by the stated amount; blends have no per-mg price.</p>'}
   {f'<p class="dlg-foot dlg-score">Checks are facts we hold about the seller, not a safety or quality grade. Checked {nice_date(scored)}.</p>' if scored else ""}
   <ol class="dlg-src">{"".join(src)}</ol>
 </div></dialog>"""
@@ -1326,7 +1369,7 @@ def clinic_window(g, p):
                    f'<td data-l="What it is">{plan_chip(g, r)}</td>'
                    f'<td data-l="Form">{plan_form_word(r)}</td>'
                    f'<td data-l="Per month"><span class="num">{usd(r["price_monthly"])}</span>{plan_letter(r)}{seller_closed_chip(r["seller_slug"])}</td>'
-                   f'<td data-l="Care fee">{"not known" if fee is None else "none" if float(fee) == 0 else usd(fee) + "/mo"}</td>'
+                   f'<td data-l="Care fee">{"not known" if fee is None else "none" if float(fee) == 0 else usd(fee) + "/mo, included"}</td>'
                    f'<td data-l="Checks">{checks}</td>'
                    f'<td class="act">{clinic_row_act(r)}</td></tr>')
     newest = max(r["last_seen"] for r in rows)
@@ -1407,7 +1450,7 @@ RX_LINE = {True: " Needs a prescription.", False: " No prescription needed.", No
 def cosmetic_word(p):
     """"serum" when every listing in a cosmetic window is a serum, else "product" (owner task 3 Nov 2026, the 390px walkthrough:
     "Compare 8 serums" opened creams and lotions)."""
-    rows = [r for s in subs_of(p) for r in seller_rows(s, "cosmetic")]
+    rows = [r for s in subs_of(p) for r in seller_rows(s, window_kind(p))]
     return "serum" if rows and all("serum" in clean(r.get("product_name") or "").lower() for r in rows) else "product"
 
 
@@ -1417,10 +1460,10 @@ def window_low(p):
     kind = window_kind(p)
     rows = [r for s in subs_of(p) for r in seller_rows(s, kind)]
     n = len({r["seller_slug"] for r in rows})
-    if kind == "cosmetic":
+    if kind in COSMETIC_KINDS:
         vals = [r["price_usd"] for r in rows if r.get("price_usd") is not None]
     else:
-        vals = [r["price_per_mg"] for r in rows if r.get("price_per_mg") is not None and PPM_LOW <= r["price_per_mg"] <= PPM_HIGH]
+        vals = vial_ppm(r for s in subs_of(p) for r in PRODUCTS if r["substance_slug"] == s and r["seller_slug"] not in CLINIC_PROFILES)
     return (min(vals) if vals else None), n
 
 
@@ -1460,7 +1503,7 @@ def opt_action(g, p, rp, lazy, pad=""):
     btn = clinic_open(g, p, rp)
     if btn:
         return btn
-    if has_window(p) and window_kind(p) == "cosmetic":
+    if has_window(p) and window_kind(p) in COSMETIC_KINDS:
         low, n = window_low(p)
         label = f"From {money(low)} · {plural(n, cosmetic_word(p))}" if low is not None else f"Compare {plural(n, cosmetic_word(p))}"
         return f'<span class="pick-act">{sellers_button(p, lazy, label, "btn-wait")}</span>'
@@ -1525,7 +1568,7 @@ def approved_instead(g):
     """Under a goal's options when none of them has a clinic or a cosmetic button (pages.md, Home, Option rows): one line
     to the goal's guide (`approved_instead_guide`), never an invented clinic row."""
     gd = next((x for x in guides.GUIDES if x["slug"] == g.get("approved_instead_guide")), None)
-    linkable = any(row_plan(g, p) and p.get("substance") or (has_window(p) and window_kind(p) == "cosmetic") for p in g["peptides"])
+    linkable = any(row_plan(g, p) and p.get("substance") or (has_window(p) and window_kind(p) in COSMETIC_KINDS) for p in g["peptides"])
     return f'<p class="opt-instead">What is approved instead: <a href="/learn/{gd["slug"]}/">{gd["title"]}</a></p>' if gd and not linkable else ""
 
 
@@ -2069,7 +2112,7 @@ HOW = f"""
 <h3>No FDA letter</h3>
 <p>Met when the FDA's public list of warning letters holds no letter matched to the seller by its web address or street address. A letter that only shares a company name is not counted, because names repeat. A miss means the FDA sent the seller at least one warning letter; the seller page links each one.{f' We keep every letter to peptide sellers, compounders and online clinics, {N_LETTERS} so far, on our <a href="/fda-warning-letters/">FDA warning letters</a> page.' if LETTERS_ALL and N_LETTERS else ""}</p>
 <p>A warning letter is the FDA's notice of violations it believes it found. The company responds, and when the FDA has verified the corrections a close-out letter follows. A letter does not withdraw any approval. We show a seller's letter next to its price and every letter on its page, and a letter alone does not stop a paid link. We still refuse a paid link in two cases: a research-use shop, always, and a seller whose letter is about adulterated drug products while the FDA has published no close-out letter. <a href="{FDA_ABOUT_LETTERS}" rel="nofollow">What the FDA says about warning letters</a></p>
-<h3>Company found</h3>
+<h3>Found in a state registry</h3>
 <p>Met when we find the business behind the shop in a state business registry, matched with high confidence. A miss means we did not find it. We do not search every state's registry yet, so a real company can still show as not found. When an FDA letter names the company, the seller page says so, but that alone does not meet this check.</p>
 <h3>Legal pages</h3>
 <p>Met when the seller's site has a terms page and a privacy or refund page, seen by our crawler in the last 30 days. A miss means we did not see those pages in that time. Having them says nothing about what they promise.</p>
@@ -2247,10 +2290,10 @@ def plan_kind(r):
 
 
 def care_note(r):
-    """"+ $99/mo care" when the plan adds a monthly membership, "all-in" when it adds none, "care fee not known" when the
+    """"incl. $99/mo care" when the price holds a monthly membership (task 33), "all-in" when it adds none, "care fee not known" when the
     data has no fee (owner answer Q3 b, 2 Nov 2026)."""
     fee = r.get("membership_fee_monthly")
-    return "care fee not known" if fee is None else "all-in" if float(fee) == 0 else f"+ {usd(fee)}/mo care"
+    return "care fee not known" if fee is None else "all-in" if float(fee) == 0 else f"incl. {usd(fee)}/mo care"
 
 
 CLINICS_FIRST = 10
@@ -2527,7 +2570,7 @@ def decide_cards(g):
                                          f'<span class="paid">{no_listing_text(otc)}</span></span>',
                                          option_picture(otc, None)))
     elif cos:
-        if has_window(cos) and window_kind(cos) == "cosmetic":
+        if has_window(cos) and window_kind(cos) in COSMETIC_KINDS:
             low, n = window_low(cos)
             what = cosmetic_word(cos)
             if low is not None:
@@ -2767,7 +2810,7 @@ def clinic_description(r):
     n = r.get("fda_letter_count") or 0
     letters = "No FDA warning letter." if not n else f"{plural(n, 'FDA warning letter')}, the newest {nice_date(newest_letter(r))}."
     fee = plans[0].get("membership_fee_monthly") if plans else None
-    care = "care fee not known" if fee is None else "no care fee" if float(fee) == 0 else f"plus {usd(fee)}/mo care"
+    care = "care fee not known" if fee is None else "no care fee" if float(fee) == 0 else f"{usd(fee)}/mo care included"
     price = f"{plural(len(plans), 'plan')} from {usd(plans[0]['price_monthly'])}/mo, {care}." if plans else ""
     on = nice_date(r["score_checked_on"]) if r.get("score_checked_on") else ""
     score = f"{score_of(r)} of {out_of(r)} checks met on {on}." if on else ""
@@ -2836,8 +2879,9 @@ def check_lines(r):
     legal = ({"Not checked yet": "Terms, privacy and refund pages: not checked yet.",
               "Could not check": f"Could not check: {said}"}.get(state, said))
     seen_on = prices_checked(r)  # the same date as "Prices checked" above the table: one price date per page (audit, 7 Nov 2026)
+    # the check is the data's (site.sellers.score_fresh_prices: a price per mg in the last 30 days); the date never decides it
     fresh = (f"Prices checked {nice_date(seen_on)}." if r.get("score_fresh_prices") and seen_on else
-             f"No recent price; the newest is from {nice_date(seen_on)}." if seen_on else "No price seen.")
+             f"No price per mg seen in the last 30 days; the newest price we hold is from {nice_date(seen_on)}." if seen_on else "No price seen.")
     return dict(zip([k for k, _ in SCORE_CHECKS], (lab, letter, company, legal, fresh)))
 
 
@@ -2853,8 +2897,10 @@ def card_chip(k, t, r):
     if k == "score_no_fda_letter":
         t, state = ("FDA letter: none" if on else f'FDA letter: yes ({r.get("fda_letter_count") or 1})'), ""
     else:
-        state = f'<span class="vh">: {"yes" if on else "no"}</span>'
-    return f'<span class="chip chip-{"ok" if on else "neutral"} mark-{"yes" if on else "no"}">{t}{state}</span>'
+        # the spoken state goes first, with the name, so a long name never pushes it past the edge (320px, task 33)
+        state = f'<span class="vh">{t}: {"yes" if on else "no"}</span>'
+    shown = f'<span aria-hidden="true">{t}</span>' if state else t
+    return f'<span class="chip chip-{"ok" if on else "neutral"} mark-{"yes" if on else "no"}">{state}{shown}</span>'
 
 
 def check_card(r):
@@ -2942,7 +2988,7 @@ def company_source(r):
 
 
 def company_ledger(r):
-    """The company as a 3-row ledger under the "Company found" check (owner task 3 Nov 2026): Name, State, Found in with
+    """The company as a 3-row ledger under the "Found in a state registry" check (owner task 3 Nov 2026): Name, State, Found in with
     its source; only with a company from a state registry or an FDA letter (owner answer Q4 a)."""
     if not shown_company(r):
         return ""
@@ -3002,16 +3048,23 @@ def plan_goal(p):
 
 def care_words(p):
     fee = p.get("membership_fee_monthly")
-    return "care fee not known" if fee is None else "no separate care fee" if float(fee) == 0 else f"plus {usd(fee)} a month for care"
+    return "care fee not known" if fee is None else "no separate care fee" if float(fee) == 0 else f"{usd(fee)} a month for care included"
+
+
+def plan_cost(x):
+    """What a month of the plan costs the reader, for comparing two plans: the monthly figure (care fee included) plus a
+    consult fee when the data has one (data agent's task 33, 7 Nov 2026)."""
+    return float(x["price_monthly"]) + float(x.get("consult_fee") or 0)
 
 
 def cheapest_elsewhere(p):
-    """The lowest monthly price for the same medication and kind at another clinic, or None."""
-    if not p["substance_slug"]:
+    """The lowest-cost plan at another clinic with the same medication, kind and stated dosage form, or None. A plan with no
+    stated form gets no pair: a pill is never set against a shot (data agent's task 33, 7 Nov 2026)."""
+    if not p["substance_slug"] or not p.get("dosage_form"):
         return None
     rows = [x for x in PLANS if x["seller_slug"] != p["seller_slug"] and x["substance_slug"] == p["substance_slug"]
-            and plan_kind(x) == plan_kind(p) and x.get("price_monthly") is not None]
-    return min(rows, key=lambda x: (float(x["price_monthly"]), x["seller_name"]), default=None)
+            and x.get("dosage_form") == p["dosage_form"] and plan_kind(x) == plan_kind(p) and x.get("price_monthly") is not None]
+    return min(rows, key=lambda x: (plan_cost(x), x["seller_name"]), default=None)
 
 
 def clinic_answer(r):
@@ -3046,12 +3099,13 @@ def clinic_plans_section(r):
     trs = []
     for p in plans:
         other = cheapest_elsewhere(p)
-        elsewhere = (f'<span class="cell-pic">{parts.tile(other["seller_slug"], seller_base(other["seller_name"]), 24, seller=PROFILES.get(other["seller_slug"]))}<span><span class="num">{usd(other["price_monthly"])}</span><span class="sub">{clinic_link(other["seller_slug"], seller_base(other["seller_name"]))}</span></span></span>'
-                     if other else '<span class="sub">no other clinic</span>' if p["substance_slug"] else '<span class="sub">no medication named</span>')
+        elsewhere = (f'<span class="cell-pic">{parts.tile(other["seller_slug"], seller_base(other["seller_name"]), 24, seller=PROFILES.get(other["seller_slug"]))}<span><span class="num">{usd(plan_cost(other))}</span><span class="sub">{clinic_link(other["seller_slug"], seller_base(other["seller_name"]))}</span></span></span>'
+                     if other else '<span class="sub">no medication named</span>' if not p["substance_slug"]
+                     else '<span class="sub">form not stated</span>' if not p.get("dosage_form") else '<span class="sub">no other clinic</span>')
         fee = p.get("membership_fee_monthly")
         trs.append(f'<tr><td><span class="cell-pic">{parts.plan_picture(p)}<span class="name">{clean(p["plan_name"])}</span></span></td><td data-l="What it is">{plan_chip(plan_goal(p), p)}</td>'
                    f'<td class="num" data-l="Per month">{usd(p["price_monthly"])}</td>'
-                   f'<td data-l="Care fee">{"not known" if fee is None else "none" if float(fee) == 0 else usd(fee) + "/mo"}</td>'
+                   f'<td data-l="Care fee">{"not known" if fee is None else "none" if float(fee) == 0 else usd(fee) + "/mo, included"}</td>'
                    f'<td data-l="Cheapest elsewhere">{elsewhere}</td></tr>')
     on = prices_checked(r)
     return f"""
@@ -3062,7 +3116,7 @@ def clinic_plans_section(r):
     <thead><tr><th scope="col">Plan</th><th scope="col">What it is</th><th scope="col">Per month</th><th scope="col">Care fee</th><th scope="col">Cheapest elsewhere</th></tr></thead>
     <tbody>{"".join(trs)}</tbody>
   </table></div>
-  <p class="small seller-note">Per month is the clinic's published monthly price for the plan; the care fee is its monthly membership, when it shows one. Cheapest elsewhere is the lowest price for the same medication and kind at another clinic we track.</p>
+  <p class="small seller-note">Per month is the clinic's published monthly price for the plan, with its monthly membership or care fee included when it shows one. Cheapest elsewhere is the lowest monthly cost, care and consult fees included, for the same medication, kind and form at another clinic we track; a plan whose form is not stated gets none.</p>
 </section>"""
 
 
@@ -3200,7 +3254,7 @@ def seller_org_schema(r):
 def legit_section(r):
     """"Is <Name> legit? What we can check" (pages.md, Seller; owner tasks 2 and 3 Nov 2026): the seller's checks by name (a shop's five, a clinic's four), each
     "Met:" or "Not met:" with its fact and date (the only place they appear; the marks are in the card), the company
-    ledger under "Company found", then the closing sentence."""
+    ledger under "Found in a state registry", then the closing sentence."""
     lines = check_lines(r)
     legal = legal_state(r)
     line = lambda k: f"{legal[0]}: {legal[1]}" if k == "score_legal_pages" else f'{"Met" if r.get(k) else "Not met"}: {lines[k]}'
@@ -3332,7 +3386,7 @@ def sellers_order(x):
 # attributes, so it names no seller. Without JavaScript the controls stay hidden and every shop and clinic shows.
 # chip labels in plain words (owner task w2, UX audit B7, 3 Nov 2026)
 SELLER_CHECKS = [("lab", "score_lab_testing", "Lab report this year"), ("letter", "score_no_fda_letter", "No FDA letter"),
-                 ("company", "score_registered_company", "Company found"), ("legal", "score_legal_pages", "Legal pages found"),
+                 ("company", "score_registered_company", "Found in a state registry"), ("legal", "score_legal_pages", "Legal pages found"),
                  ("fresh", "score_fresh_prices", "Prices this month")]
 SELLER_SORTS = [("checks", "Most checks"), ("products", "Most products"), ("price", "Lowest price per mg"), ("name", "Name"),
                 ("since", "Tracked since, oldest first")]
@@ -3704,7 +3758,7 @@ def compare_plan(r):
     letter = (f'<a class="chip chip-warn chip-link" href="{letter_href(r["seller_slug"])}">FDA letter {nice_date(r["last_fda_letter_date"])}</a>'
               if n and r.get("last_fda_letter_date") else "None")
     fee = r.get("membership_fee_monthly")
-    care = "Not known" if fee is None else "None, all-in" if float(fee) == 0 else f"{usd(fee)}/mo"
+    care = "Not known" if fee is None else "None, all-in" if float(fee) == 0 else f"{usd(fee)}/mo, included"
     return {"k": "plan", "h": f'{parts.tile(r["seller_slug"], seller_base(r["seller_name"]), 40, seller=PROFILES.get(r["seller_slug"]))}{who}<span class="cmp-sub">{escape(r["plan_name"])}</span>', "c": [
         ("Per month", f'<span class="num">{usd(r["price_monthly"])}/mo</span>'),
         ("Care fee", care),
@@ -3716,8 +3770,8 @@ def compare_plan(r):
 
 def compare_seller(r):
     """One seller's column: the head (a link to its page) and the seven rows (pages.md, Compare)."""
-    marks = "".join(f'<span class="chip chip-{"ok" if r.get(k) else "neutral"} mark-{"yes" if r.get(k) else "no"}">{t}'
-                    f'<span class="vh">: {"yes" if r.get(k) else "no"}</span></span>' for k, t in SCORE_CHECKS)
+    marks = "".join(f'<span class="chip chip-{"ok" if r.get(k) else "neutral"} mark-{"yes" if r.get(k) else "no"}">'
+                    f'<span class="vh">{t}: {"yes" if r.get(k) else "no"}</span><span aria-hidden="true">{t}</span></span>' for k, t in SCORE_CHECKS)
     ppm = per_mg_range(*compare_ppm(r))
     ppm = ppm[:1].upper() + ppm[1:]
     n = r.get("fda_letter_count")
@@ -3950,7 +4004,9 @@ def pep_answer(slug, first=None):
     names the seller shown first in "Where to get it" (`first`; owner task 3 Nov 2026), else the cheapest."""
     s = pep_status(slug)
     host = source_word(s["url"])
-    out = [f'{s["label"]}: {s["sentence"]}. <a href="{escape(s["url"])}" rel="nofollow">{host}</a>, {nice_date(s["seen"])}.']
+    links = (" and ".join(f'<a href="{escape(x["url"])}" rel="nofollow">{source_word(x["url"])}</a>' for x in s["routes"])
+             if s.get("routes") else f'<a href="{escape(s["url"])}" rel="nofollow">{host}</a>')
+    out = [f'{s["label"]}: {s["sentence"]}. {links}, {nice_date(s["seen"])}.']
     n = len(pep_status_rows(slug))
     if n > 1:  # several current rows, each a line in the facts card (owner task 2 Nov 2026)
         who = "The FDA lists it" if not any(r["regime"] == "hhs_503a_interim" for r in pep_status_rows(slug)) else "The FDA and HHS list it"
@@ -4001,7 +4057,7 @@ def pep_description(slug):
     """110 to 160 characters from the same facts: status, the price, the goal pages, the check date."""
     s, n = pep_status(slug), pep_short(slug)
     # the HHS policy's long note does not fit a description; its short form does (legal.hhs_policy.meta)
-    parts = [f'{n}: {s["label"]}, {HHS["meta"] if HHS and s["sentence"] in (HHS["note"], HHS["note_many"]) else s["sentence"]}.']
+    parts = [f'{n}: {s["label"]}, {HHS["meta"] if HHS and s["sentence"] in (HHS["note"], HHS["note_many"]) else s.get("meta") or s["sentence"]}.']
     low = pep_low_shop(slug)
     plan = pep_low_plan(slug) if pep_group(s) == "approved" else None
     if low:
@@ -4364,8 +4420,9 @@ def pep_page(slug):
     src = PepSources()
     src.n(f'{"FDA" if "fda.gov" in s["url"] else "Source"}, status of {pep_short(slug)}, {nice_date(s["seen"])}', s["url"])
     host = source_word(s["url"])
-    status = (f'<p class="pep-status"><span class="chip chip-{s["chip"]}">{s["label"]}</span> {pep_means(slug)} '
-              f'<a href="{escape(s["url"])}" rel="nofollow">{host}</a></p>')
+    status_src = (" and ".join(f'<a href="{escape(x["url"])}" rel="nofollow">{source_word(x["url"])}</a>' for x in s["routes"])
+                  if s.get("routes") else f'<a href="{escape(s["url"])}" rel="nofollow">{host}</a>')
+    status = (f'<p class="pep-status"><span class="chip chip-{s["chip"]}">{s["label"]}</span> {pep_means(slug)} {status_src}</p>')
     where, first = pep_where(slug)
     ev_id, evidence = unwrap(pep_evidence(slug, src))
     lt_id, letters = unwrap(pep_letters_section(slug))
@@ -4452,6 +4509,11 @@ def pep_means(slug):
     """"What it means" in plain words (owner UX audit B16): the sentence of the status row the legal tables show (the
     lowest rank, as db_status picks it), from list_words; a hand-written status keeps its own sentence."""
     rows = sorted(pep_status_rows(slug), key=lambda r: DB_STATUS[(r["regime"], r["status_value"])][0])
+    st = db_status(slug)
+    if st and st.get("routes"):  # a status split by route: both rows, each with its route (task 33)
+        by = {x["listing"]: ("By injection" if "(for injectable" in x["listing"] else "By other routes") for x in st["routes"]}
+        return " ".join(f'{by[r["fda_listing"]]}: {list_words(r)[1][0].lower()}{list_words(r)[1][1:]}'
+                        for r in sorted(rows, key=lambda r: by.get(r.get("fda_listing"), "")) if r.get("fda_listing") in by)
     if rows:
         return list_words(rows[0])[1]
     t = pep_status(slug)["sentence"]
@@ -4873,8 +4935,8 @@ def cmp_form_cell(c, other, sub):
 def cmp_clinic_cells(c, subs, other=None):
     p = PROFILES[c]
     plans = [cmp_clinic_plan(c, s) for s in subs]
-    marks = "".join(f'<span class="chip chip-{"ok" if p.get(k) else "neutral"} mark-{"yes" if p.get(k) else "no"}">{t}'
-                    f'<span class="vh">: {"yes" if p.get(k) else "no"}</span></span>' for k, t in seller_checks(p))
+    marks = "".join(f'<span class="chip chip-{"ok" if p.get(k) else "neutral"} mark-{"yes" if p.get(k) else "no"}">'
+                    f'<span class="vh">{t}: {"yes" if p.get(k) else "no"}</span><span aria-hidden="true">{t}</span></span>' for k, t in seller_checks(p))
     fee = plans[0].get("membership_fee_monthly")
     n, last = p.get("fda_letter_count") or 0, p.get("last_fda_letter_date")
     state = STATES.get(p.get("entity_state") or "", p.get("entity_state") or "")
@@ -4882,7 +4944,7 @@ def cmp_clinic_cells(c, subs, other=None):
                f'{escape(clean(p["entity_name"]))}{", " + state if state else ""}'
                f'<span class="cmp-sub">{"State registry" if p["entity_evidence"] == "registry" else "Named in an FDA letter"}</span>')
     return [cmp_form_cell(c, other, s) for s in subs] + [
-        "Not known" if fee is None else "None, all-in" if float(fee) == 0 else f"{usd(fee)}/mo",
+        "Not known" if fee is None else "None, all-in" if float(fee) == 0 else f"{usd(fee)}/mo, included",
         f'<a class="chip chip-warn chip-link" href="{letter_href(p["seller_slug"])}">FDA letter {nice_date(last)}</a>' if n and last else "None",
         f'<span class="score"><span class="score-n"><span class="num">{score_of(p)}</span> of {out_of(p)} checks</span>'
         f'<span class="score-marks">{marks}</span></span>',
@@ -4894,12 +4956,12 @@ def cmp_clinic_cells(c, subs, other=None):
 def first_month(r):
     """What a plan costs in its first month with the care or membership fee (owner's audit, 7 Nov 2026: a "cheaper" verdict
     compares this total, not the price alone). A fee the data does not know counts as none and is said so."""
-    return float(r.get("price_first_month") or r["price_monthly"]) + float(r.get("membership_fee_monthly") or 0)
+    return float(r.get("price_first_month") or r["price_medicine"]) + float(r.get("membership_fee_monthly") or 0)
 
 
 def first_month_note(r):
     """"$286 with care ($151 a month + $135/mo care)", "$159 all-in" or "$129 (care fee not known)"."""
-    fee, base = r.get("membership_fee_monthly"), float(r.get("price_first_month") or r["price_monthly"])
+    fee, base = r.get("membership_fee_monthly"), float(r.get("price_first_month") or r["price_medicine"])
     month = "first month" if r.get("price_first_month") else "a month"
     if fee is None:
         return f"{usd(base)} (care fee not known)"
@@ -5369,7 +5431,7 @@ def sources_body():
         if r.get("entity_evidence") == "registry" and r.get("entity_source_url"):
             regs.setdefault((r.get("entity_state") or "", r["entity_source_url"]), []).append(r)
     registries = [src_li(f"{st} state company registry" if st else "State company registry", url, url.startswith("http"),
-                         f'Company found for {plural(len(rows), "seller")}: '
+                         f'Found in a state registry for {plural(len(rows), "seller")}: '
                          + ", ".join(f'<a href="/sellers/{r["seller_slug"]}/">{escape(seller_name(r))}</a>' for r in rows) + ".",
                          max((r.get("registry_checked_on") or "" for r in rows), default=""))
                   for (st, url), rows in sorted(regs.items())]

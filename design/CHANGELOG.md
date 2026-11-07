@@ -4,6 +4,7 @@ Newest row first.
 
 | Date | Change | Approved |
 |---|---|---|
+| 7 Nov 2026 | Data agent task 33 rules (owner queue block 19 w2, PR 127): the company check reads "Found in a state registry" (book wording follows); on compare pages under 640px the check chips wrap (`white-space:normal`, `max-width:100%`) so the longer label never scrolls sideways at 320px; the /hair/ scalp-serum rule stays as written (owner answer A). | ODOBRENO SEO - Karlo - 7. 11. 2026 - PR #127 |
 | 7 Nov 2026 | SEO pass, round a2 (owner queue block 7, feat/seo-seller-text): the legit section on every seller page gains data-born paragraphs (pages/seller.md), seller pages from a median of about 340 to about 600 words; the seller's Organization JSON-LD without url. No new part or look. | Waits for ODOBRENO SEO |
 | 7 Nov 2026 | /sellers/ compact top and filter row (PR 123, owner answer A): one-sentence hero, labelled controls in one row, Clear inside the name search, phones fold to Filter and count. | ODOBRENO DIZAJN and ODOBRENO SEO - Karlo - 7. 11. 2026 |
 | 7 Nov 2026 | SEO pass, round a (owner queue block 5, feat/seo-pass-2026-11-07): every seller title ends in "| Peptide Chooser" (middle words shorten first), except the 37 rule 8 pages in `data/rule8.json`, which keep their live title and H1; the FAQ part on every seller page with FAQPage JSON-LD; `tools/check.py` allows FAQPage and checks its questions are on the page. No new part or look. | Waits for ODOBRENO SEO |
