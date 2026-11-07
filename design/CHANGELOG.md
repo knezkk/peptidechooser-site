@@ -5,6 +5,7 @@ Newest row first.
 | Date | Change | Approved |
 |---|---|---|
 | 7 Nov 2026 | SEO pass, round a (owner queue block 5, feat/seo-pass-2026-11-07): every seller title ends in "| Peptide Chooser" (middle words shorten first), except the 37 rule 8 pages in `data/rule8.json`, which keep their live title and H1; the FAQ part on every seller page with FAQPage JSON-LD; `tools/check.py` allows FAQPage and checks its questions are on the page. No new part or look. | Waits for ODOBRENO SEO |
+| 7 Nov 2026 | HHS compounding policy of 30 Oct 2026 (owner queue block 4, feat/hhs-legal-status): one wording in `legal.hhs_policy`, used by the legal tables, option rows, peptide and compare pages and the guides; /sources/ group "FDA and HHS"; no new part or colour | Waits for ODOBRENO SEO |
 | 7 Nov 2026 | Tier 1 guard (PR 115): a seller page's data-born meta description passes by rule. | ODOBRENO PRAVILA - Karlo - 5. 11. 2026; ODOBRENO DIZAJN - Karlo - 7. 11. 2026 |
 | 7 Nov 2026 | FAQ part (owner's assistant task, design/faq-block): questions as h3 between hairlines, answers from data; first on one seller page. | ODOBRENO DIZAJN and ODOBRENO SEO - Karlo - 7. 11. 2026 |
 | 5 Nov 2026 | Tools block only with two priced tools (PR 112); Vitals Vault is a clinic with a seller page (PR 110). | ODOBRENO DIZAJN - Karlo - 5. 11. 2026 |

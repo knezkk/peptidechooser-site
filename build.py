@@ -27,6 +27,21 @@ AUTHOR = "Peptide Chooser editorial team"
 
 # SITE_JSON points at another data file (a local preview with database rows); the deploy always reads data/site.json.
 DATA = json.loads(Path(os.environ.get("SITE_JSON") or ROOT / "data" / "site.json").read_text(encoding="utf-8"))
+# The HHS compounding policy of 30 Oct 2026 is worded once, in legal.hhs_policy (owner queue block 4, 7 Nov 2026): every
+# {hhs_<key>} in the data is that entry's text, so no page types its own version.
+HHS = DATA["legal"].get("hhs_policy") or {}
+if HHS:
+    _raw = json.dumps(DATA, ensure_ascii=False)
+    for _k, _v in HHS.items():
+        if isinstance(_v, str):
+            _raw = _raw.replace("{hhs_" + _k + "}", json.dumps(_v, ensure_ascii=False)[1:-1])
+    DATA = json.loads(_raw)
+    HHS = DATA["legal"]["hhs_policy"]
+
+
+def hhs_sentence(what):
+    """The policy in one sentence for the peptides named in `what` ("BPC-157 and TB-500"), from legal.hhs_policy."""
+    return HHS["sentence"].replace("{what}", what) if HHS else ""
 TOKENS = json.loads((ROOT / "design" / "tokens.json").read_text(encoding="utf-8"))
 LIVE_GOALS = [g for g in DATA["goals"] if g.get("live")]
 # the newest data date of this build: the database pull when connected, else the hand-checked date (owner, Q1 a, 2 Nov 2026)
@@ -655,6 +670,17 @@ def plan_fits(p, r):
             and not re.search(r"\boral\b", r.get("plan_name") or "", re.I))
 
 
+def form_fits(p, r, strict=True):
+    """An option that names its form (`plan_form`, "shot" or "pill") takes only plans of that form: a card's price and window are
+    the same medicine in the same form (owner's audit, 7 Nov 2026: the Wegovy shot card showed the Wegovy Pill's price). Its window
+    (strict=False) leaves out only plans of another stated form, so a plan that states none still shows, as "Form not stated"."""
+    if not p.get("plan_form"):
+        return True
+    f = (r.get("dosage_form") or "").lower()  # plan_form's words, read here because module-level tables call this first
+    form = "pill" if f in ("tablet", "capsule", "oral", "odt") else "shot" if f in ("injection_vial", "pen", "injection") else ""
+    return form == p["plan_form"] or (not strict and not f)
+
+
 def compounded_subs(g, p):
     """The substances of a compounded row: its own `plan_substances` (the hair goal's minoxidil spray), else the goal's approved ones."""
     return set(p.get("plan_substances") or []) or {x["substance"] for x in g["peptides"] if x.get("substance") and x["status"].startswith("FDA approved")}
@@ -674,7 +700,7 @@ def row_plan(g, p):
         if not (p.get("substance") and p["status"].startswith("FDA approved")):
             return None
         found = [r for r in PLANS if r["substance_slug"] == p["substance"] and r.get("price_monthly") is not None
-                 and r.get("product_kind") != "compounded" and plan_fits(p, r)]
+                 and r.get("product_kind") != "compounded" and plan_fits(p, r) and form_fits(p, r)]
         best = min(found, key=lambda r: (float(r["price_monthly"]), r["seller_name"])) if found else None
         plan = GOAL_PLANS.get(g["slug"])
         return plan if best and plan and best["seller_slug"] == plan["seller_slug"] and best["plan_slug"] == plan["plan_slug"] else best
@@ -684,7 +710,7 @@ def row_plan(g, p):
         found = [r for r in rows if r.get("product_kind") == "compounded" and r["substance_slug"] in subs]
     elif p.get("substance") and p["status"].startswith("FDA approved"):
         found = [r for r in rows if r["substance_slug"] == p["substance"] and r.get("product_kind") in BRANDED
-                 and not other_use(g, r)]
+                 and not other_use(g, r) and form_fits(p, r)]
     else:
         return None
     return found[0] if found else None
@@ -775,6 +801,13 @@ def plan_line(g, cls, r=None):
 # page renders the hand-written statuses and dates above, unchanged.
 DB = DATA.get("db")
 LEGAL_DB = DATA.get("legal_db")
+# Until the database carries the HHS policy (regime hhs_503a_interim, status listed), its rows come from legal.hhs_policy,
+# one per listed substance the database already names, so a database build shows the same status as the repo build.
+if LEGAL_DB is not None and HHS and not any(r["regime"] == "hhs_503a_interim" for r in LEGAL_DB):
+    _names = {r["substance_slug"]: r["canonical_name"] for r in LEGAL_DB}
+    LEGAL_DB = LEGAL_DB + [{"substance_slug": x, "canonical_name": _names[x], "regime": "hhs_503a_interim", "status_value": "listed",
+                            "source_url": HHS["url"], "source_id": "hand_hhs_policy", "first_seen_by_us": HHS["seen"], "valid_from": HHS["date"], "fda_listing": None}
+                           for x in HHS["substances"] if x in _names]
 APPROVED_DB = DATA.get("approved_db") or []
 _plan_seen = max((r["last_seen"] for r in GOAL_PLANS.values()), default="")
 _prices_on = DB.get("prices_checked_on", "") if DB else ""
@@ -785,6 +818,8 @@ GOAL_CHECKED = max(DATA["checked"], _prices_on, _plan_seen)  # the goal pages' d
 # not legal statuses and are skipped.
 DB_STATUS = {
     ("fda_approval", "approved"): (0, "ok", "FDA approved", "an FDA-approved product exists"),
+    # the HHS policy of 30 Oct 2026 is newer than the FDA's lists for the six peptides it names, so it wins over them
+    ("hhs_503a_interim", "listed"): (0.5, "neutral", "Not approved", HHS.get("note", "")),
     ("fda_cat2_safety", "category_2"): (1, "neutral", "Not approved", "on the FDA list of substances that may be unsafe to compound"),
     ("fda_503a_category", "category_2"): (2, "neutral", "Not approved", "the FDA found safety concerns; pharmacies may not compound it"),
     ("fda_503a_category", "category_3"): (3, "neutral", "Not approved", "nominated for compounding without enough data; pharmacies may not compound it"),
@@ -816,6 +851,11 @@ def db_status(slug):
     listing = row.get("fda_listing") or ""
     return {"chip": chip, "label": label, "sentence": sentence, "name": name, "url": row["source_url"],
             "seen": row["first_seen_by_us"], "listing": listing}
+
+
+def source_word(url):
+    """The link word for a status source: "FDA source" for fda.gov, else "Source" (the HHS policy)."""
+    return "FDA source" if "fda.gov" in url else "Source"
 
 
 def listing_html(s):
@@ -1100,7 +1140,7 @@ def seller_table(slug, kind=None):
         if kind == "cosmetic" and r.get("form"):  # the form word per row in a cosmetic window ("Serum", "Cream", "Topical")
             size = f'{r["form"].capitalize()} · {size}'
         price = money(r["price_usd"]) if r.get("price_usd") is not None else "unknown"
-        ppm = (f'{money(r["price_per_mg"])}/mg' if r.get("price_per_mg") is not None else "blend" if r.get("is_blend") else "unknown")
+        ppm = (f'{per_mg(r["price_per_mg"])}/mg' if r.get("price_per_mg") is not None else "blend" if r.get("is_blend") else "unknown")
         seller = seller_base(clean(SELLERS.get(r["seller_slug"], {}).get("seller_name") or r["seller_name"]))
         # the name opens our page on the seller when it has one (owner task 2 Nov 2026); never the seller's own site
         name_html = (f'<a class="name" href="/sellers/{r["seller_slug"]}/">{seller}</a>' if r["seller_slug"] in PROFILES
@@ -1227,7 +1267,7 @@ def option_plans(g, p):
         return [r for r in priced if r["substance_slug"] in subs and r.get("product_kind") == "compounded"]
     if not (p.get("substance") and approved_row(p)):
         return []
-    return [r for r in priced if r["substance_slug"] == p["substance"] and not other_use(g, r) and plan_fits(p, r)]
+    return [r for r in priced if r["substance_slug"] == p["substance"] and not other_use(g, r) and plan_fits(p, r) and form_fits(p, r, strict=False)]
 
 
 def clinic_key(g, p):
@@ -1570,6 +1610,8 @@ def legal_rows(only=None):
         if not found or not all(found):
             if not r.get("db_only"):  # a db_only row (finasteride, minoxidil) is shown only from the database
                 out.append(hand(r))  # a row switches to the database only when every substance in it has a status there
+                if r.get("checked"):  # a hand row checked later than the table (the HHS rows, 7 Nov 2026) dates the stamp
+                    seen.append(r["checked"])
             continue
         for slug, s in zip(r["substances"], found):
             if not keep([slug]):
@@ -1580,7 +1622,7 @@ def legal_rows(only=None):
             note = (f'. {n[0].upper() + n[1:]}. <a class="ref" href="#src-{r["src"]}" aria-label="Source {r["src"]}">'
                     f'<sup>{r["src"]}</sup></a>') if r.get("note_with_db") else ""
             out.append(f'<tr><td>{legal_name([slug], s["name"] + route(slug, s))}</td><td><span class="chip chip-{s["chip"]}">{s["label"]}</span></td>'
-                       f'<td>{s["sentence"]}{" " + r["use"] if r.get("use") else ""} <a class="ref" href="{s["url"]}" rel="nofollow">FDA source</a>, {nice_date(s["seen"])}{note}{listing_html(s)}</td></tr>')
+                       f'<td>{s["sentence"]}{" " + r["use"] if r.get("use") else ""} <a class="ref" href="{s["url"]}" rel="nofollow">{source_word(s["url"])}</a>, {nice_date(s["seen"])}{note}{listing_html(s)}</td></tr>')
     # Every other substance with a database status gets its own row (owner, 1 Nov 2026: the table lists every substance
     # the database has a status for, plus the hand rows it lacks), then all rows are sorted by name.
     shown = {slug for r in LEGAL["rows"] for slug in r.get("substances", [])
@@ -1591,7 +1633,7 @@ def legal_rows(only=None):
             continue
         seen.append(s["seen"])
         out.append(f'<tr><td>{legal_name([slug], s["name"] + route(slug, s))}</td><td><span class="chip chip-{s["chip"]}">{s["label"]}</span></td>'
-                   f'<td>{s["sentence"]} <a class="ref" href="{s["url"]}" rel="nofollow">FDA source</a>, {nice_date(s["seen"])}{listing_html(s)}</td></tr>')
+                   f'<td>{s["sentence"]} <a class="ref" href="{s["url"]}" rel="nofollow">{source_word(s["url"])}</a>, {nice_date(s["seen"])}{listing_html(s)}</td></tr>')
     out.sort(key=lambda row: re.sub(r"<[^>]+>", "", row.split("</td>")[0]).strip().lower())
     checked = nice_date(max(seen)) if seen else nice_date(LEGAL["checked"])
     return out, checked
@@ -2776,7 +2818,7 @@ def check_lines(r):
     state, said = legal_state(r)
     legal = ({"Not checked yet": "Terms, privacy and refund pages: not checked yet.",
               "Could not check": f"Could not check: {said}"}.get(state, said))
-    seen_on = r.get("price_updated_at")
+    seen_on = prices_checked(r)  # the same date as "Prices checked" above the table: one price date per page (audit, 7 Nov 2026)
     fresh = (f"Prices checked {nice_date(seen_on)}." if r.get("score_fresh_prices") and seen_on else
              f"No recent price; the newest is from {nice_date(seen_on)}." if seen_on else "No price seen.")
     return dict(zip([k for k, _ in SCORE_CHECKS], (lab, letter, company, legal, fresh)))
@@ -3011,6 +3053,8 @@ LEGIT_CLOSE = "These are the facts we hold; we do not call any seller legit or s
 # a clinic is not a research-use shop: no link until a paid one exists, and then it is marked (owner UX audit, 3 Nov 2026)
 LEGIT_CLOSE_CLINIC = ("These are the facts we hold; we do not call any seller legit or safe. We do not link to the clinic "
                       "until it has a paid link, and we say so when it does.")
+# a clinic with a paid link: the no-link sentence goes and nothing replaces it; "Paid link" under its button says it (owner, 5 Nov 2026)
+LEGIT_CLOSE_PAID = "These are the facts we hold; we do not call any seller legit or safe."
 
 
 def legit_heading(r):
@@ -3045,7 +3089,7 @@ def legit_section(r):
 <section class="seller-sec legit" id="legit" aria-labelledby="legit-h">
   <h2 id="legit-h">{legit_heading(r)}</h2>
   <ul class="check-list legit-list">{items}</ul>
-  <p class="small legit-close">{LEGIT_CLOSE_CLINIC if is_clinic(r) else LEGIT_CLOSE}</p>
+  <p class="small legit-close">{(LEGIT_CLOSE_PAID if r.get("paid_url") else LEGIT_CLOSE_CLINIC) if is_clinic(r) else LEGIT_CLOSE}</p>
 </section>"""
 
 
@@ -3679,9 +3723,10 @@ if PLANS or PROFILES:
 # Peptide pages (pages.md, Peptide and Peptides; owner task 2 Nov 2026): /peptides/ and one page per substance in
 # PEPTIDE_SLUGS, everything from data; a missing fact drops its block. No dose anywhere, no link to a shop or a clinic.
 REGIME_WORDS = {"fda_approval": "Drugs@FDA", "fda_503a_category": "503A list", "fda_cat2_safety": "Category 2 list",
-                "fda_nomination_withdrawn": "503A nomination", "fda_shortage": "Shortage list"}
+                "fda_nomination_withdrawn": "503A nomination", "fda_shortage": "Shortage list",
+                "hhs_503a_interim": "HHS compounding policy"}
 VALUE_WORDS = {"approved": "approved", "category_1": "category 1", "category_2": "category 2", "category_3": "category 3",
-               "withdrawn": "withdrawn", "in_shortage": "in shortage", "to_be_discontinued": "to be discontinued"}
+               "withdrawn": "withdrawn", "listed": "listed", "in_shortage": "in shortage", "to_be_discontinued": "to be discontinued"}
 # forms read off the shops' product names and the clinics' plan forms (only words we find; nothing is guessed)
 FORM_WORDS = [("nasal spray", "nasal spray"), ("spray", "spray"), ("capsule", "capsule"), ("serum", "serum"), ("cream", "cream"),
               ("tablet", "tablet"), ("powder", "powder"), ("vial", "vial"), ("pen", "pen")]
@@ -3700,7 +3745,7 @@ def pep_status(slug):
     src = next(x for x in LEGAL["sources"] if x["n"] == r["src"])
     name = re.sub(r"\s*\(.*\)", "", r["peptide"]) if r.get("substances") == [slug] else substance_name(slug)
     return {"chip": r["chip"], "label": r["status"], "sentence": r["note"], "name": name, "url": src["url"],
-            "seen": LEGAL["checked"], "hand": True}
+            "seen": r.get("checked") or LEGAL["checked"], "hand": True}
 
 
 def pep_name(slug):
@@ -3780,11 +3825,12 @@ def pep_answer(slug, first=None):
     """The short answer, one sentence per fact, each with its link; a missing fact drops its sentence. The price sentence
     names the seller shown first in "Where to get it" (`first`; owner task 3 Nov 2026), else the cheapest."""
     s = pep_status(slug)
-    host = "FDA source" if "fda.gov" in s["url"] else "Source"
+    host = source_word(s["url"])
     out = [f'{s["label"]}: {s["sentence"]}. <a href="{escape(s["url"])}" rel="nofollow">{host}</a>, {nice_date(s["seen"])}.']
     n = len(pep_status_rows(slug))
     if n > 1:  # several current rows, each a line in the facts card (owner task 2 Nov 2026)
-        out.append(f'The FDA lists it in {n} places; <a href="#facts-h">see the facts</a>.')
+        who = "The FDA lists it" if not any(r["regime"] == "hhs_503a_interim" for r in pep_status_rows(slug)) else "The FDA and HHS list it"
+        out.append(f'{who} in {n} places; <a href="#facts-h">see the facts</a>.')
     goals = list(dict.fromkeys(g["slug"] for g, _ in pep_goals(slug)))
     if goals:
         gs = [next(g for g in ALL_GOALS if g["slug"] == x) for x in goals]
@@ -3830,7 +3876,8 @@ def pep_title(slug):
 def pep_description(slug):
     """110 to 160 characters from the same facts: status, the price, the goal pages, the check date."""
     s, n = pep_status(slug), pep_short(slug)
-    parts = [f'{n}: {s["label"]}, {s["sentence"]}.']
+    # the HHS policy's long note does not fit a description; its short form does (legal.hhs_policy.meta)
+    parts = [f'{n}: {s["label"]}, {HHS["meta"] if HHS and s["sentence"] in (HHS["note"], HHS["note_many"]) else s["sentence"]}.']
     low = pep_low_shop(slug)
     plan = pep_low_plan(slug) if pep_group(s) == "approved" else None
     if low:
@@ -3871,6 +3918,7 @@ def pep_status_rows(slug):
 PLAIN_STATUS = {
     ("fda_approval", "approved"): ("FDA approval", "An approved product is listed in Drugs@FDA"),
     ("fda_nomination_withdrawn", "withdrawn"): ("Pharmacy compounding", "Not on the list of substances pharmacies may compound; its nomination was withdrawn"),
+    ("hhs_503a_interim", "listed"): ("HHS compounding policy", HHS.get("note", "")[:1].upper() + HHS.get("note", "")[1:]),
     ("fda_503a_category", "category_1"): ("Pharmacy compounding", "On the list of substances pharmacies may compound while the FDA reviews it"),
     ("fda_503a_category", "category_2"): ("Pharmacy compounding", "On the FDA list of substances with safety concerns; pharmacies may not compound it"),
     ("fda_503a_category", "category_3"): ("Pharmacy compounding", "Nominated without enough data; pharmacies may not compound it"),
@@ -3912,7 +3960,7 @@ def pep_facts(slug, s):
     for r in pep_status_rows(slug):
         chip, label = DB_STATUS[(r["regime"], r["status_value"])][1:3]
         listing = f'<span class="listing">FDA listing: "{escape(r["fda_listing"])}"</span>' if r.get("fda_listing") else ""
-        host = "FDA source" if "fda.gov" in r["source_url"] else "Source"
+        host = source_word(r["source_url"])
         name, said = list_words(r)
         rows.append((name, f'<span class="chip chip-{chip}">{label}</span> {said}{listing}'
                      f' <a href="{escape(r["source_url"])}" rel="nofollow">{host}</a>'))
@@ -4022,7 +4070,7 @@ def pep_shops_section(slug):
         name = clinic_link(r["seller_slug"], seller)
         size = f'{r["amount_mg"]:g} mg' if r.get("amount_mg") else "unknown"
         price = money(r["price_usd"]) if r.get("price_usd") is not None else "unknown"
-        ppm = (f'{money(r["price_per_mg"])}/mg' if r.get("price_per_mg") is not None else "blend" if r.get("is_blend") else "unknown")
+        ppm = (f'{per_mg(r["price_per_mg"])}/mg' if r.get("price_per_mg") is not None else "blend" if r.get("is_blend") else "unknown")
         seen = r.get("price_observed_at") or r.get("last_seen") or ""
         newest = max(newest, seen)
         trs.append(f'<tr><td>{name}</td><td class="num" data-l="Size">{size}</td><td class="num" data-l="Price">{price}</td>'
@@ -4190,7 +4238,7 @@ def pep_page(slug):
     s = pep_status(slug)
     src = PepSources()
     src.n(f'{"FDA" if "fda.gov" in s["url"] else "Source"}, status of {pep_short(slug)}, {nice_date(s["seen"])}', s["url"])
-    host = "FDA source" if "fda.gov" in s["url"] else "Source"
+    host = source_word(s["url"])
     status = (f'<p class="pep-status"><span class="chip chip-{s["chip"]}">{s["label"]}</span> {pep_means(slug)} '
               f'<a href="{escape(s["url"])}" rel="nofollow">{host}</a></p>')
     where, first = pep_where(slug)
@@ -4465,7 +4513,7 @@ def cmp_status_words(slug):
 def cmp_sub_cell(slug, goals):
     """One substance's cells, in the row order of cmp_sub_rows."""
     s = pep_status(slug)
-    host = "FDA source" if "fda.gov" in s["url"] else "Source"
+    host = source_word(s["url"])
     approved = pep_group(s) == "approved"
     low, n = pep_low_shop(slug), len({r["seller_slug"] for r in pep_shops(slug)})
     plan = pep_low_plan(slug) if approved else None
@@ -4718,14 +4766,30 @@ def cmp_clinic_cells(c, subs, other=None):
     ]
 
 
+def first_month(r):
+    """What a plan costs in its first month with the care or membership fee (owner's audit, 7 Nov 2026: a "cheaper" verdict
+    compares this total, not the price alone). A fee the data does not know counts as none and is said so."""
+    return float(r.get("price_first_month") or r["price_monthly"]) + float(r.get("membership_fee_monthly") or 0)
+
+
+def first_month_note(r):
+    """"$286 with care ($151 a month + $135/mo care)", "$159 all-in" or "$129 (care fee not known)"."""
+    fee, base = r.get("membership_fee_monthly"), float(r.get("price_first_month") or r["price_monthly"])
+    month = "first month" if r.get("price_first_month") else "a month"
+    if fee is None:
+        return f"{usd(base)} (care fee not known)"
+    if float(fee) == 0:
+        return f"{usd(base)} all-in"
+    return f"{usd(first_month(r))} with care ({usd(base)} {month} + {usd(fee)}/mo care)"
+
+
 def cmp_clinic_answer(a, b, subs):
     na, nb = cmp_clinic_name(a), cmp_clinic_name(b)
     out = []
     for s in subs:
         fa, fb = clinic_forms(a, s), clinic_forms(b, s)
         # the verdict compares one form both sell (the cheapest such form), and names it
-        common = sorted((f for f in fa if f in fb and f != FORM_NOT_STATED),
-                        key=lambda f: float(fa[f]["price_monthly"]) + float(fb[f]["price_monthly"]))
+        common = sorted((f for f in fa if f in fb and f != FORM_NOT_STATED), key=lambda f: first_month(fa[f]) + first_month(fb[f]))
         if list(fa) == list(fb) == [FORM_NOT_STATED]:
             common = [FORM_NOT_STATED]
         if not common:
@@ -4739,12 +4803,11 @@ def cmp_clinic_answer(a, b, subs):
         pa, pb = fa[form], fb[form]
         what = (f"compounded {s} (neither plan states the form)" if form == FORM_NOT_STATED else
                 f"compounded {s} as {'' if form == 'Drops' else 'an ' if form[0] in 'AEIOU' else 'a '}{form.lower()}")
-        if float(pa["price_monthly"]) == float(pb["price_monthly"]):
-            out.append(f"For {what}, both list {usd(pa['price_monthly'])} a month.")
+        if first_month(pa) == first_month(pb):
+            out.append(f"For {what}, both come to {usd(first_month(pa))} in the first month, care included.")
             continue
-        lo, hi = sorted(((na, pa), (nb, pb)), key=lambda x: float(x[1]["price_monthly"]))
-        out.append(f"For {what}, {lo[0]} is cheaper: {usd(lo[1]['price_monthly'])} a month ({care_note(lo[1])}) "
-                   f"against {usd(hi[1]['price_monthly'])} ({care_note(hi[1])}).")
+        lo, hi = sorted(((na, pa), (nb, pb)), key=lambda x: first_month(x[1]))
+        out.append(f"For {what}, {lo[0]} is cheaper in the first month: {first_month_note(lo[1])} against {first_month_note(hi[1])}.")
     la, lb = [(PROFILES[x].get("fda_letter_count") or 0, PROFILES[x].get("last_fda_letter_date")) for x in (a, b)]
     if la[0] and lb[0]:
         out.append("Both have an FDA warning letter.")
@@ -4763,19 +4826,19 @@ def cmp_clinic_facts(a, b, subs):
     side = lambda first: fa if first else fb
     for sub in subs[:1]:
         xa, xb = clinic_forms(a, sub), clinic_forms(b, sub)
-        common = sorted((f for f in xa if f in xb and f in FORM_PLURAL), key=lambda f: float(xa[f]["price_monthly"]) + float(xb[f]["price_monthly"]))
+        common = sorted((f for f in xa if f in xb and f in FORM_PLURAL), key=lambda f: first_month(xa[f]) + first_month(xb[f]))
         if common:
             f = common[0]
-            x, y = float(xa[f]["price_monthly"]), float(xb[f]["price_monthly"])
+            x, y = first_month(xa[f]), first_month(xb[f])
             if x != y:
-                lo = (na, x, y) if x < y else (nb, y, x)
+                lo, hi = (na, xa[f], xb[f]) if x < y else (nb, xb[f], xa[f]), (xb[f] if x < y else xa[f])
                 what = f"compounded {sub} {FORM_PLURAL[f]}"
-                side(x < y).append((f"price matters most: {what} from {usd(lo[1])}/mo against {usd(lo[2])}",
-                                    f"price: {what} at {lo[0]} start at {usd(lo[1])} a month, against {usd(lo[2])}"))
+                side(x < y).append((f"price matters most: in the first month, {what} cost {first_month_note(lo[1])} against {first_month_note(hi)}",
+                                    f"price: in the first month, {what} at {lo[0]} cost {first_month_note(lo[1])} against {first_month_note(hi)}"))
     la, lb = (PROFILES[x].get("fda_letter_count") or 0 for x in (a, b))
     if bool(la) != bool(lb):
         side(not la).append(("you want a clinic with no FDA warning letter",
-                             f"{na if lb else nb} has an FDA warning letter and {nb if lb else na} has none"))
+                             f"{nb if lb else na} has an FDA warning letter and {na if lb else nb} has none"))
     sa, sb = (score_of(PROFILES[x]) or 0 for x in (a, b))
     if sa != sb:
         side(sa > sb).append((f"you want more of our four checks met: {max(sa, sb)} against {min(sa, sb)}",
@@ -5132,13 +5195,13 @@ def sources_body():
     plan_ids = [sid for sid in re.findall(r'<li id="(src-plan-[^"]+)">', SOURCES_HOME)]
     seller_hosts = {host("https://" + r["domain"]) for r in PROFILES.values() if r.get("domain")}
     seller_hosts |= {host(r["pricing_url"]) for r in PLANS if r.get("pricing_url")}
-    db_urls = {r["source_url"] for r in LEGAL_DB or []}
+    db_urls = {r["source_url"] for r in LEGAL_DB or [] if r.get("source_id") != "hand_hhs_policy"}
     fda, medline, pubmed, prices = [], [], {}, []
     for url, (text, link, pages) in cited.items():
         h = host(url)
         if url in db_urls:
             continue  # listed once below, with every substance the database reads from it
-        if h.endswith("fda.gov") or h == "dailymed.nlm.nih.gov":
+        if h.endswith("fda.gov") or h in ("dailymed.nlm.nih.gov", "www.hhs.gov", "www.federalregister.gov"):
             fda.append(src_li(text, url, link, used_on(pages), ids=home_ids.get(url, ())))
         elif h == "medlineplus.gov":
             medline.append(src_li(text, url, link, used_on(pages), ids=home_ids.get(url, ())))
@@ -5150,6 +5213,8 @@ def sources_body():
     # the database's FDA sources: one entry per source list (the status rows link one page, or one openFDA query per substance)
     by_src = {}
     for r in LEGAL_DB or []:
+        if r.get("source_id") == "hand_hhs_policy":  # the HHS rows come from legal.hhs_policy, whose sources are listed above
+            continue
         by_src.setdefault(r["source_id"], []).append(r)
     for rows in by_src.values():
         urls = sorted({r["source_url"] for r in rows})
@@ -5196,7 +5261,7 @@ def sources_body():
                           max((r.get("score_checked_on") or "" for r in PROFILES.values()), default="")))
     if DATA.get("pulled_at") and own:
         own.append(src_li("Peptide Chooser database", "", False, "The copy this build of the site was made from.", DATA["pulled_at"][:10]))
-    groups = [("src-fda", "FDA", fda), ("src-medlineplus", "MedlinePlus", medline)]
+    groups = [("src-fda", "FDA and HHS" if HHS else "FDA", fda), ("src-medlineplus", "MedlinePlus", medline)]
     sec = []
     for gid, head, items in groups + [("src-prices", "Price pages", prices), ("src-registries", "State registries", registries),
                                       ("src-database", "Our own database", own)]:
