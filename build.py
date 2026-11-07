@@ -2243,6 +2243,62 @@ def category_page(g):
     return page_footnotes(category_body(g))
 
 
+# Questions on a goal page (SEO round c, group 2, queue block 9): the searches "peptides for skin", "best peptides for
+# muscle growth" and the like, answered from the goal's approved texts and its option rows; no new claim.
+GOAL_FAQ = {"skin", "muscle", "weight-loss", "hair"}
+
+
+def goal_price_word(g, p):
+    """The row's own price words in plain text: its cost line ("From $10/mo (generic, pharmacy coupon). Online clinics from
+    $50/mo (Winona)."), else its button ("From $0.10/mg · 16 shops" -> "from $0.10/mg at 16 shops"), or ""."""
+    plain = lambda t: " ".join(unescape(re.sub(r"<[^>]+>", " ", re.sub(r"<sup>.*?</sup>", "", t, flags=re.S))).split())
+    pad, rp = opt_price(p, g["slug"]), row_plan(g, p)
+    cost = plain(price_sentence(p, pad) + (" " + plan_line(g, "plan-in", rp) if rp else ""))
+    cost = re.sub(r"\s+([).,])", r"\1", re.sub(r"\(\s+", "(", cost)).strip()
+    cost = re.sub(r"\) FDA letter (\d{1,2} \w{3} \d{4})", r", FDA warning letter \1)", cost)
+    if re.search(r"\$\d", cost):
+        return cost.rstrip(".")
+    t = re.sub(r'<span class="paid[^"]*">.*?</span>', "", opt_action(g, p, rp, False, pad), flags=re.S)
+    t = plain(t).replace("Buy from", "from").replace(" · ", " at ").replace("From", "from").rstrip(".")
+    t = re.sub(r" at (\d+ (?:products|creams|serums))", r" across \1", t)
+    return t if re.search(r"\$\d", t) else ""
+
+
+def goal_faq_pairs(g):
+    if g["slug"] not in GOAL_FAQ or not g.get("main_query"):
+        return []
+    mq, opts = g["main_query"], g["peptides"]
+    first = re.split(r"(?<=\.)\s", g["short_answer"], 1)[0]
+    pairs = [(f"What are the best {mq}?",
+              f"{first} The options on this page: " + "; ".join(f'{p["name"]}, {p["line_one"]}' for p in opts) + ".")]
+    groups = {}
+    for p in opts:
+        groups.setdefault(p["status"], []).append(p["name"])
+    pairs.append((f"Are {mq} FDA approved?",
+                  " ".join(f"{st}: {and_list(ns)}." for st, ns in groups.items())
+                  + (' Each status has its source under "Is it legal today?".' if g.get("legal_section") else "")))
+    prices = [(p["name"], goal_price_word(g, p)) for p in opts]
+    prices = [(n, w) for n, w in prices if re.search(r"\$\d", w)]
+    if prices:
+        pairs.append((f"How much do {mq} cost?",
+                      " ".join(f"{n}: {w[0].lower() + w[1:]}." for n, w in prices) + f" Prices checked {nice_date(GOAL_CHECKED)}."))
+    rx = {}
+    for p in opts:
+        rx.setdefault(p["rx_word"], []).append(p["name"])
+    pairs.append((f"Do I need a prescription for {mq}?",
+                  " ".join(f"{w[0].upper() + w[1:]}: {and_list(ns)}." for w, ns in rx.items())))
+    return pairs
+
+
+def goal_faq(g):
+    pairs = goal_faq_pairs(g)
+    return f'<section class="section goal-sec" id="faq"><div class="wrap">{faq_block(mq_cap(g), pairs, "faq-h")}</div></section>' if pairs else ""
+
+
+def mq_cap(g):
+    return g["main_query"]
+
+
 # Like with like (owner UX audit A26, 3 Nov 2026: a pair compared a pill with an injection): a plan's form from its
 # dosage_form, and per clinic the cheapest compounded plan of each form.
 PLAN_FORM_WORD = {"injection_vial": "Injection", "pen": "Pen", "tablet": "Pill", "capsule": "Pill", "topical": "Topical",
@@ -2662,7 +2718,7 @@ def category_body(g):
       <div class="flow-compare"><div class="step-panel"><p class="goal-for">{g["for"]}</p><ul class="opts">{opt_html}</ul>{instead}</div></div>
     </div>
   </div>
-</section>{goal_clinic_section(g, plans)}{tools_html}{legal_html}
+</section>{goal_clinic_section(g, plans)}{tools_html}{legal_html}{goal_faq(g)}
 <!--next:{g["slug"]}-->
 {sources_html}
 <div class="wrap sellers-all">{windows}</div>
@@ -3647,7 +3703,7 @@ if LETTERS_ALL:
 for _g in ALL_GOALS:
     if _g.get("page"):
         PAGES.append((f"/{_g['slug']}/", f"{_g['slug']}/index.html", _g["title"], _g["description"],
-                      category_page(_g), "", [(f"/{_g['slug']}/", _g["name"])]))
+                      category_page(_g), faq_schema(goal_faq_pairs(_g)), [(f"/{_g['slug']}/", _g["name"])]))
 
 if PROFILES:
     PAGES.append(("/sellers/", "sellers/index.html", "Peptide sellers and their checks | Peptide Chooser",
