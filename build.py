@@ -830,6 +830,8 @@ DB_STATUS = {
     ("fda_approval", "approved"): (0, "ok", "FDA approved", "an FDA-approved product exists"),
     # the HHS policy of 30 Oct 2026 is newer than the FDA's lists for the six peptides it names, so it wins over them
     ("hhs_503a_interim", "listed"): (0.5, "neutral", "Not approved", HHS.get("note", "")),
+    # the database's own value for the same policy (data agent, 7 Nov 2026): the same words as the hand rows
+    ("hhs_503a_interim", "enforcement_discretion"): (0.5, "neutral", "Not approved", HHS.get("note", "")),
     ("fda_cat2_safety", "category_2"): (1, "neutral", "Not approved", "on the FDA list of substances that may be unsafe to compound"),
     ("fda_503a_category", "category_2"): (2, "neutral", "Not approved", "the FDA found safety concerns; pharmacies may not compound it"),
     ("fda_503a_category", "category_3"): (3, "neutral", "Not approved", "nominated for compounding without enough data; pharmacies may not compound it"),
@@ -3848,7 +3850,7 @@ REGIME_WORDS = {"fda_approval": "Drugs@FDA", "fda_503a_category": "503A list", "
                 "fda_nomination_withdrawn": "503A nomination", "fda_shortage": "Shortage list",
                 "hhs_503a_interim": "HHS compounding policy"}
 VALUE_WORDS = {"approved": "approved", "category_1": "category 1", "category_2": "category 2", "category_3": "category 3",
-               "withdrawn": "withdrawn", "listed": "listed", "in_shortage": "in shortage", "to_be_discontinued": "to be discontinued"}
+               "withdrawn": "withdrawn", "listed": "listed", "enforcement_discretion": "listed", "in_shortage": "in shortage", "to_be_discontinued": "to be discontinued"}
 # forms read off the shops' product names and the clinics' plan forms (only words we find; nothing is guessed)
 FORM_WORDS = [("nasal spray", "nasal spray"), ("spray", "spray"), ("capsule", "capsule"), ("serum", "serum"), ("cream", "cream"),
               ("tablet", "tablet"), ("powder", "powder"), ("vial", "vial"), ("pen", "pen")]
@@ -4041,6 +4043,7 @@ PLAIN_STATUS = {
     ("fda_approval", "approved"): ("FDA approval", "An approved product is listed in Drugs@FDA"),
     ("fda_nomination_withdrawn", "withdrawn"): ("Pharmacy compounding", "Not on the list of substances pharmacies may compound; its nomination was withdrawn"),
     ("hhs_503a_interim", "listed"): ("HHS compounding policy", HHS.get("note", "")[:1].upper() + HHS.get("note", "")[1:]),
+    ("hhs_503a_interim", "enforcement_discretion"): ("HHS compounding policy", HHS.get("note", "")[:1].upper() + HHS.get("note", "")[1:]),
     ("fda_503a_category", "category_1"): ("Pharmacy compounding", "On the list of substances pharmacies may compound while the FDA reviews it"),
     ("fda_503a_category", "category_2"): ("Pharmacy compounding", "On the FDA list of substances with safety concerns; pharmacies may not compound it"),
     ("fda_503a_category", "category_3"): ("Pharmacy compounding", "Nominated without enough data; pharmacies may not compound it"),
