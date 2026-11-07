@@ -62,6 +62,41 @@ class Numbers(unittest.TestCase):
         self.assertFalse(g.only_numbers(page("Old title", "same 1", "h"), page("New title", "same 2", "h")))
 
 
+class SellerDescriptions(unittest.TestCase):
+    """Block 15 (owner, 5 Nov 2026): a seller description passes when only its data slots change."""
+    OLD = page("Gala Health review: plans, prices and checks", "Gala Health is an online clinic that prescribes Semaglutide and Tirzepatide. "
+               "2 plans from $99/mo, care fee not known. No FDA warning letter. 2 of 4 checks met on 4 Nov 2026.", "Gala Health review")
+
+    def passes(self, new, path="/sellers/gala-health/"):
+        return g.data_description(path, self.OLD, new)
+
+    def test_medicine_list_change_passes(self):
+        new = dict(self.OLD, description="Gala Health is an online clinic that prescribes NAD+, Semaglutide, Sermorelin and Tirzepatide. "
+                                         "4 plans from $69/mo, care fee not known. No FDA warning letter.")
+        self.assertTrue(self.passes(new))
+
+    def test_letters_care_fee_and_checks_pass(self):
+        new = dict(self.OLD, description="Gala Health is an online clinic that prescribes 5 medicines. 3 plans from $49/mo, plus $99/mo care. "
+                                         "1 FDA warning letter, the newest 9 Sep 2025. 3 of 4 checks met on 6 Nov 2026.")
+        self.assertTrue(self.passes(new))
+
+    def test_new_hand_written_word_stops(self):
+        new = dict(self.OLD, description=self.OLD["description"].replace("is an online clinic", "is the best online clinic"))
+        self.assertFalse(self.passes(new))
+        new = dict(self.OLD, description=self.OLD["description"] + " Our top pick this year.")
+        self.assertFalse(self.passes(new))
+
+    def test_title_change_stops(self):
+        self.assertFalse(self.passes(dict(self.OLD, title="Gala Health review: the cheapest clinic online")))
+
+    def test_other_seller_name_stops(self):
+        self.assertFalse(self.passes(dict(self.OLD, description=self.OLD["description"].replace("Gala Health is", "Gala Clinic is"))))
+
+    def test_not_a_seller_page_stops(self):
+        new = dict(self.OLD, description=self.OLD["description"].replace("Semaglutide and Tirzepatide", "Semaglutide"))
+        self.assertFalse(self.passes(new, "/weight-loss/"))
+
+
 class NewPages(unittest.TestCase):
     def follows(self, path, p, live=LIVE):
         return g.follows_template(path, p, live, FACTS)
