@@ -1,0 +1,8 @@
+{
+  "rule": "One page per search (queue block 8). GitHub Pages has no 301, so a page listed here keeps its URL but points its canonical (and og:url) at the page that keeps the search, leaves the sitemap and llms.txt, and every link to it from another page goes to that page instead. tools/check.py checks the target is built.",
+  "source": "Google Search Console, last 3 months, read by the owner's assistant 7 Nov 2026: /compare/finasteride-vs-minoxidil/ 0 impressions, /learn/finasteride-vs-minoxidil/ 3, /compare/bpc-157-vs-tb-500/ 0, /learn/bpc-157-vs-tb-500/ 0. Owner chose option a for both pairs, 7 Nov 2026.",
+  "pages": {
+    "/compare/finasteride-vs-minoxidil/": "/learn/finasteride-vs-minoxidil/",
+    "/compare/bpc-157-vs-tb-500/": "/learn/bpc-157-vs-tb-500/"
+  }
+}
