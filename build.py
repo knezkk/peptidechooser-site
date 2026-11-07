@@ -3377,12 +3377,13 @@ def sellers_filter(shops, clinics):
     return f"""<div class="letters-filter sellers-filter" hidden>
       <div class="filter-bar"><button type="button" class="btn btn-line btn-sm filter-toggle" aria-expanded="false" aria-controls="sellers-fbody">Filter</button></div>
       <div class="filter-body" id="sellers-fbody">
-      <div class="legal-filter"><label for="sellers-q">Filter by name</label><input class="input" id="sellers-q" type="text" autocomplete="off" data-filter="name" data-value="text"><button type="button" class="btn btn-line btn-sm" id="sellers-clear">Clear</button></div>
-      <div class="legal-filter sub-filter"><label for="sellers-sub">Substance</label><select class="input" id="sellers-sub" data-filter="substance"><option value="">Any substance</option>{opts}</select>
-      <label for="sellers-min">Minimum checks</label><select class="input" id="sellers-min" data-filter="min_checks">{mins}</select>
-      <label for="sellers-sort" class="sort-shops">Sort</label><select class="input sort-shops" id="sellers-sort" data-filter="sort">{sorts}</select>
-      <span class="sort-clinics">{state_filter("clinics", "clinics")}</span>
-      <label for="clinics-sort" class="sort-clinics">Sort</label><select class="input sort-clinics" id="clinics-sort" data-filter="sort"><option value="checks">Most checks</option><option value="low">Lowest monthly price</option></select></div>
+      <div class="sf-field sf-name"><label for="sellers-q">Filter by name</label><span class="sf-q"><input class="input" id="sellers-q" type="text" autocomplete="off" data-filter="name" data-value="text"><button type="button" class="sf-clear" id="sellers-clear">Clear</button></span></div>
+      <div class="sf-field"><label for="sellers-sub">Substance</label><select class="input" id="sellers-sub" data-filter="substance"><option value="">Any substance</option>{opts}</select></div>
+      <div class="sf-field"><label for="sellers-min">Minimum checks</label><select class="input" id="sellers-min" data-filter="min_checks">{mins}</select></div>
+      <div class="sf-field sort-shops"><label for="sellers-sort">Sort</label><select class="input" id="sellers-sort" data-filter="sort">{sorts}</select></div>
+      <span class="sf-field sort-clinics">{state_filter("clinics", "clinics")}</span>
+      <div class="sf-field sort-clinics"><label for="clinics-sort">Sort</label><select class="input" id="clinics-sort" data-filter="sort"><option value="checks">Most checks</option><option value="low">Lowest monthly price</option></select></div>
+      <span class="sf-break" aria-hidden="true"></span>
       <div class="year-chips" role="group" aria-labelledby="sellers-checks"><span id="sellers-checks">Checks met</span>{chips}</div>
       </div>
       <p class="small" id="sellers-n" aria-live="polite"></p>
@@ -3488,8 +3489,8 @@ def sellers_index():
     checked = max((r["score_checked_on"] for r in PROFILES.values() if r.get("score_checked_on")), default="")
     more = (f'<p class="legal-more sellers-more" hidden><button type="button" class="btn btn-line" id="sellers-all">Show all {len(shops)}</button></p>'
             if len(shops) > SELLERS_FIRST else "")
-    lede = (f"{plural(len(clinics), 'online clinic')} that prescribe and ship, then {plural(len(shops), 'research-use shop')}. " if clinics else
-            f"{plural(len(shops), 'research-use shop')}. ") + "Every name opens our page on that seller; checks are facts we hold, not a grade."
+    lede = (f"{plural(len(clinics), 'online clinic')} that prescribe and ship, then {plural(len(shops), 'research-use shop')}." if clinics else
+            f"{plural(len(shops), 'research-use shop')}.")
     tabs = ("<div class=\"seg sellers-tabs\" role=\"group\" aria-label=\"Show\" hidden>"
             f'<button type="button" class="seg-b" data-type="clinics"{ev("tab_change", tab="clinics")} aria-pressed="true">Online clinics ({len(clinics)})</button>'
             f'<button type="button" class="seg-b" data-type="shops"{ev("tab_change", tab="shops")} aria-pressed="false">Research-use shops ({len(shops)})</button></div>') if clinics and shops else ""
@@ -3512,8 +3513,8 @@ def sellers_index():
 </section>
 <section class="band-2" id="sellers-list">
   <div class="wrap">
-    {tabs}
-    {sellers_filter(shops, clinics)}
+    <div class="sellers-top">{tabs}
+    {sellers_filter(shops, clinics)}</div>
     {clinics_directory(clinics)}{shops_sec}
     {COMPARE_LINK}
     <p class="small" style="margin-top:16px">Checks are facts we hold about the seller, not a safety or quality grade. <a href="/how-we-rate/">How we rate</a></p>
@@ -5157,9 +5158,13 @@ def main():
                                         "This page does not exist on Peptide Chooser. Go to the home page or compare peptide options by goal; the link may be old or mistyped.", NOT_FOUND), encoding="utf-8")
     # Redirects (owner task w2, 3 Nov 2026; empty until the owner approves a URL change, rule 8): data/redirects.json maps
     # an old path to its new one; GitHub Pages has no server redirects, so each old path gets a page with a meta refresh,
-    # the canonical of the new page and noindex. Never a path the build already has.
+    # the canonical of the new page and noindex. Never a path the build already has. A redirect to a page this data does
+    # not build (/sellers/ in the repo data, which holds no sellers) is left out, never pointed at a missing page.
     for old_path, new_path in REDIRECTS.items():
         assert not built(old_path), f"redirect from {old_path}, which is still a page"
+        if not built(new_path) and not (DIST / new_path.strip("/") / "index.html").exists():
+            print(f"redirect {old_path} left out: {new_path} is not built with this data")
+            continue
         target = DIST / old_path.strip("/") / "index.html"
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_text(f'<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Moved</title>'

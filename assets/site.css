@@ -708,3 +708,39 @@ body:has(.home-sec) .site-foot { margin-top: 0; }
 /* A tool's logo tile sits in its sentence (goal page, Tools block; proposed in the hand-off to the book). */
 .tool-row .tile { vertical-align: middle; margin-right: 8px; }
 /* Book: 12% padding of the tile. In bundle.css `padding:12%` resolves against the parent's width, which empties the tile in a wide cell. */
+
+/* /sellers/ compact top (proposal, w4 block 5, 7 Nov 2026; not in the book: see .handoff/to-w1.md). Tokens only. */
+.letters-hd:has(+ #sellers-list) { padding: var(--space-5) 0 var(--space-5); }
+.letters-hd:has(+ #sellers-list) h1 { margin-bottom: var(--space-2); }
+.letters-hd:has(+ #sellers-list) .lede { margin-bottom: var(--space-3); }
+.letters-hd + #sellers-list { margin-top: 0; padding-top: var(--space-5); }
+.sellers-top { display: flex; flex-wrap: wrap; align-items: flex-end; gap: var(--space-3); margin-bottom: var(--space-5); }
+.sellers-top .sellers-tabs { margin: 0; }
+.sellers-top .sellers-filter:not([hidden]), .sellers-top .filter-body { display: contents; }
+.sellers-top .filter-bar { display: none; }
+.sf-field { display: flex; flex-direction: column; gap: var(--space-1); }
+.sellers-filter .sf-field[hidden] { display: none; }
+.sf-field > label, .sf-field .state-filter > span { font-weight: 600; font-size: var(--small-size); }
+.sf-field .state-filter { flex-direction: column; align-items: flex-start; gap: var(--space-1); }
+.sf-field .input { width: auto; max-width: 220px; field-sizing: content; }
+.sf-q { position: relative; display: block; }
+.sf-name .input { width: 190px; max-width: none; padding-right: 64px; field-sizing: fixed; }
+.sf-clear { position: absolute; right: var(--space-1); top: 50%; transform: translateY(-50%); min-height: 36px; padding: 0 var(--space-2); border: 0; background: none; font: 600 var(--small-size) var(--font-text); color: var(--ink-2); text-decoration: underline; cursor: pointer; }
+.sf-clear:focus-visible { outline: 3px solid var(--clinic); outline-offset: 0; }
+.sf-break { flex-basis: 100%; height: 0; }
+.sellers-top .year-chips { flex: 0 1 auto; }
+.sellers-top #sellers-n { flex: 1 1 auto; margin: 0; text-align: right; }
+@media (max-width: 640px) {
+  .letters-hd:has(+ #sellers-list) { padding: var(--space-4) 0; }
+  .letters-hd + #sellers-list { padding-top: var(--space-4); }
+  .sellers-top { display: block; margin-bottom: var(--space-4); }
+  .sellers-top .sellers-tabs { margin-bottom: var(--space-2); }
+  .sellers-top .sellers-filter:not([hidden]) { display: grid; grid-template-columns: auto 1fr; align-items: center; column-gap: var(--space-3); }
+  .sellers-top .filter-bar { display: block; margin: 0; grid-row: 1; grid-column: 1; }
+  .sellers-top #sellers-n { grid-row: 1; grid-column: 2; text-align: left; }
+  .sellers-top .filter-body.open { display: flex; flex-direction: column; align-items: stretch; gap: var(--space-3); grid-row: 2; grid-column: 1 / -1; margin-top: var(--space-3); }
+  .sellers-top .filter-body:not(.open) { display: none; }
+  .sf-field .input, .sf-name .input { width: 100%; max-width: none; }
+  .sf-break { display: none; }
+}
+.sellers-sec[hidden] + .sellers-sec { margin-top: 0; }
