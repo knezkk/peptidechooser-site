@@ -685,3 +685,8 @@ p.not-in{margin:4px 0 0}
 .seller-pair .paid{text-align:center}
 @media (min-width:641px){.seller-pair{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media (min-width:900px){.seller-pair{grid-template-columns:repeat(2,var(--cta-width));width:auto}}
+/* FAQ (pages/parts.md, FAQ): questions as h3 between hairlines, answers as plain paragraphs; no accordion, no icon */
+.faq-list{border-top:1px solid var(--line)}
+.faq-item{padding:var(--space-3) 0;border-bottom:1px solid var(--line)}
+.faq-item h3{margin:0 0 4px;font:700 var(--ui-size)/1.35 var(--font-text);color:var(--ink)}
+.faq-item p{margin:0;max-width:68ch;color:var(--ink-2);line-height:1.55}
