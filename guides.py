@@ -156,8 +156,17 @@ RELATED_MAX = 5
 
 LEARN_TITLE = "Peptide guides in plain words | Peptide Chooser"
 LEARN_H1 = "Peptide guides in plain words"
-LEARN_DESC = ("Twenty-eight short guides on peptides in the US: what is legal, how to check a seller, GLP-1 prices, and peptides "
+# The count comes from GUIDES, spelled out at the start of the sentence (owner's audit, 7 Nov 2026: it said 28 with 26 guides).
+LEARN_DESC = ("{n} short guides on peptides in the US: what is legal, how to check a seller, GLP-1 prices, and peptides "
               "for hair, skin, muscle, libido and aging.")
+_ONES = "zero one two three four five six seven eight nine ten eleven twelve thirteen fourteen fifteen sixteen seventeen eighteen nineteen".split()
+_TENS = "twenty thirty forty fifty sixty seventy eighty ninety".split()
+
+
+def spelled(n):
+    """1 to 99 in words, capitalised: "Twenty-six"; larger numbers stay digits."""
+    w = _ONES[n] if n < 20 else _TENS[n // 10 - 2] + ("-" + _ONES[n % 10] if n % 10 else "") if n < 100 else str(n)
+    return w[0].upper() + w[1:]
 
 # Outside pages the guides cite (fda.gov and MedlinePlus only, plus the sources already on the site, which build.py
 # hands over). The date is the page's own "Content current as of" where it shows one.
@@ -2364,4 +2373,4 @@ def pages(b):
     inbound = {g["slug"]: sum(1 for path, body in bodies if path != f"/learn/{g['slug']}/" and f'href="/learn/{g["slug"]}/"' in body)
                for g in GUIDES}
     start = sorted(GUIDES, key=lambda g: (-inbound[g["slug"]], GUIDES.index(g)))[:START_HERE]
-    return [("/learn/", "learn/index.html", LEARN_TITLE, LEARN_DESC, learn_body(b, mins, start), "", [("/learn/", "Learn")])] + out
+    return [("/learn/", "learn/index.html", LEARN_TITLE, LEARN_DESC.format(n=spelled(len(GUIDES))), learn_body(b, mins, start), "", [("/learn/", "Learn")])] + out
