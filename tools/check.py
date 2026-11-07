@@ -1304,7 +1304,93 @@ def check_book(P):
     return errs
 
 
-CHECKS = {"words": check_words, "seo": check_seo, "schema": check_schema, "parts": check_parts, "data": check_data, "book": check_book, "events": check_events}
+def check_logic(P):
+    """Page logic from the owner's SEO audit (7 Nov 2026), so none of it comes back: the FDA-letter holder named right, a
+    "cheaper" verdict that is cheaper in the first month with care, an option window in the option's own form, counts that
+    match their rows, a meta price the page shows, and one price-check date per seller page."""
+    errs = []
+    d = json.loads((ROOT / "data" / "site.json").read_text(encoding="utf-8"))
+    base = lambda n: re.sub(r"\s*\(.*\)", "", n or "").strip()
+    letters = {base(r["seller_name"]): r.get("fda_letter_count") or 0 for r in d.get("seller_profiles") or []}
+    text_of = lambda html: " ".join(re.sub(r"<[^>]+>", " ", re.sub(r"<(script|style|head)\b.*?</\1>", " ", html, flags=re.S)).split())
+    money = lambda x: float(x.replace(",", ""))
+    for name in P:
+        if not name.startswith("compare/"):
+            continue
+        t = text_of((DIST / name).read_text(encoding="utf-8"))
+        # 1. "X has an FDA warning letter ... Y has none": X holds a letter, Y does not
+        for x, y in re.findall(r"((?:[A-Z0-9][\w.+&'-]*)(?: [A-Z0-9][\w.+&'-]*){0,3}) has an FDA warning letter(?: from [^;.]+)?(?:;| and) ((?:[A-Z0-9][\w.+&'-]*)(?: [A-Z0-9][\w.+&'-]*){0,3}) has none", t):
+            if x in letters and y in letters and not (letters[x] and not letters[y]):
+                errs.append(f"{name}: says {x} has an FDA warning letter and {y} none; the data says {x} {letters[x]}, {y} {letters[y]}")
+        # 2. a "cheaper" verdict compares the first month with care, and the lower total is named
+        if re.search(r"is cheaper: \$", t):
+            errs.append(f"{name}: a 'cheaper' verdict on the monthly price alone, not the first month with care")
+        for lo, hi in re.findall(r"is cheaper in the first month: \$([\d,.]+)[^.]*? against \$([\d,.]+)", t) + \
+                       re.findall(r"in the first month, [^.]*? cost \$([\d,.]+)[^$]*? against \$([\d,.]+)", t):
+            if money(lo) >= money(hi):
+                errs.append(f"{name}: calls ${lo} cheaper than ${hi}")
+    # 3. an option that names its form opens a window of that form only, and its button's price is that window's lowest
+    words = {"shot": {"Pen", "Injection"}, "pill": {"Pill", "Dissolving tablet"}}
+    for g in d.get("goals") or []:
+        page = DIST / g["slug"] / "index.html"
+        if not (g.get("page") and page.exists()):
+            continue
+        html = page.read_text(encoding="utf-8")
+        for p in g.get("peptides") or []:
+            if not (p.get("plan_form") and p.get("substance")):
+                continue
+            f = DIST / "windows" / f'clinics-{g["slug"]}-{p["substance"]}.json'
+            if not f.exists():
+                continue
+            w = json.loads(f.read_text(encoding="utf-8")).get("html", "")
+            ok = words[p["plan_form"]] | {"Form not stated", "Membership"}  # the two words of a plan that states no form
+            forms = {re.sub(r"<[^>]+>", "", x).strip() for x in re.findall(r'<td data-l="Form">(.*?)</td>', w, re.S)}
+            if forms - ok:
+                errs.append(f'{g["slug"]}/index.html: {p["name"]} is a {p["plan_form"]}, its window lists {", ".join(sorted(forms - ok))}')
+            # the button's price is the window's lowest brand plan in the option's own form
+            prices = []
+            for row in re.findall(r"<tr\b[^>]*>(.*?)</tr>", w, re.S):
+                cell = re.search(r'<td data-l="Form">(.*?)</td>', row, re.S)
+                pr = re.search(r'<td data-l="Per month"><span class="num">\$([\d,.]+)', row)
+                if ">Brand<" in row and cell and pr and re.sub(r"<[^>]+>", "", cell.group(1)).strip() in words[p["plan_form"]]:
+                    prices.append(money(pr.group(1)))
+            btn = re.search(rf'data-src="/windows/{re.escape(f.name)}"[^>]*>Buy from \$([\d,.]+)/mo', html)
+            if prices and btn and money(btn.group(1)) != min(prices):
+                errs.append(f'{g["slug"]}/index.html: {p["name"]} says from ${btn.group(1)}, its window starts at ${min(prices):,.2f}')
+    # 4. counts that match their rows: the guides /learn/ lists, the substances /peptides/ lists
+    if "learn/index.html" in P:
+        html = (DIST / "learn" / "index.html").read_text(encoding="utf-8")
+        main = re.search(r"<main\b.*?</main>", html, re.S)
+        listed = {x for x in re.findall(r'href="/learn/([^"/#]+)/"', main.group(0) if main else html)}
+        m = re.match(r"(\S+) short guides", P["learn/index.html"].meta.get("description", ""))
+        spelled = "zero one two three four five six seven eight nine ten eleven twelve thirteen fourteen fifteen sixteen seventeen eighteen nineteen".split()
+        tens = "twenty thirty forty fifty sixty seventy eighty ninety".split()
+        word = lambda n: spelled[n] if n < 20 else tens[n // 10 - 2] + ("-" + spelled[n % 10] if n % 10 else "")
+        if m and m.group(1).lower() not in (word(len(listed)), str(len(listed))):
+            errs.append(f"learn/index.html: the description says {m.group(1)} guides, the page lists {len(listed)}")
+    if "peptides/index.html" in P:
+        html = (DIST / "peptides" / "index.html").read_text(encoding="utf-8")
+        body = re.search(r"<tbody>(.*?)</tbody>", html, re.S)
+        subs = set(re.findall(r'href="/peptides/([^"/]+)/"', body.group(1))) if body else set()
+        m = re.search(r"(\d+) in all", P["peptides/index.html"].meta.get("description", ""))
+        if m and int(m.group(1)) != len(subs):
+            errs.append(f"peptides/index.html: the description says {m.group(1)} in all, the table lists {len(subs)} substances")
+    # 5. a peptide page's meta price is one the page shows
+    for name in P:
+        if re.fullmatch(r"peptides/[^/]+/index\.html", name):
+            m = re.search(r"Lowest shop price (\$[\d,.]+/mg)", P[name].meta.get("description", ""))
+            if m and m.group(1) not in text_of((DIST / name).read_text(encoding="utf-8")):
+                errs.append(f"{name}: the description's {m.group(1)} is nowhere on the page")
+    # 6. one price-check date per seller page
+    for name in P:
+        if re.fullmatch(r"sellers/[^/]+/index\.html", name):
+            days = set(re.findall(r"Prices checked (\d{1,2} \w+ \d{4})", text_of((DIST / name).read_text(encoding="utf-8"))))
+            if len(days) > 1:
+                errs.append(f"{name}: more than one price-check date ({', '.join(sorted(days))})")
+    return errs
+
+
+CHECKS = {"words": check_words, "seo": check_seo, "schema": check_schema, "parts": check_parts, "data": check_data, "book": check_book, "events": check_events, "logic": check_logic}
 
 # Plan names against their form (owner task w2, 3 Nov 2026): a clinic's own plan name can name another form than the
 # plan's `dosage_form` ("Ozempic Pill" for a pen). The site cannot change data, so this only warns, never fails, and the

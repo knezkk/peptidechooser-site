@@ -655,6 +655,17 @@ def plan_fits(p, r):
             and not re.search(r"\boral\b", r.get("plan_name") or "", re.I))
 
 
+def form_fits(p, r, strict=True):
+    """An option that names its form (`plan_form`, "shot" or "pill") takes only plans of that form: a card's price and window are
+    the same medicine in the same form (owner's audit, 7 Nov 2026: the Wegovy shot card showed the Wegovy Pill's price). Its window
+    (strict=False) leaves out only plans of another stated form, so a plan that states none still shows, as "Form not stated"."""
+    if not p.get("plan_form"):
+        return True
+    f = (r.get("dosage_form") or "").lower()  # plan_form's words, read here because module-level tables call this first
+    form = "pill" if f in ("tablet", "capsule", "oral", "odt") else "shot" if f in ("injection_vial", "pen", "injection") else ""
+    return form == p["plan_form"] or (not strict and not f)
+
+
 def compounded_subs(g, p):
     """The substances of a compounded row: its own `plan_substances` (the hair goal's minoxidil spray), else the goal's approved ones."""
     return set(p.get("plan_substances") or []) or {x["substance"] for x in g["peptides"] if x.get("substance") and x["status"].startswith("FDA approved")}
@@ -674,7 +685,7 @@ def row_plan(g, p):
         if not (p.get("substance") and p["status"].startswith("FDA approved")):
             return None
         found = [r for r in PLANS if r["substance_slug"] == p["substance"] and r.get("price_monthly") is not None
-                 and r.get("product_kind") != "compounded" and plan_fits(p, r)]
+                 and r.get("product_kind") != "compounded" and plan_fits(p, r) and form_fits(p, r)]
         best = min(found, key=lambda r: (float(r["price_monthly"]), r["seller_name"])) if found else None
         plan = GOAL_PLANS.get(g["slug"])
         return plan if best and plan and best["seller_slug"] == plan["seller_slug"] and best["plan_slug"] == plan["plan_slug"] else best
@@ -684,7 +695,7 @@ def row_plan(g, p):
         found = [r for r in rows if r.get("product_kind") == "compounded" and r["substance_slug"] in subs]
     elif p.get("substance") and p["status"].startswith("FDA approved"):
         found = [r for r in rows if r["substance_slug"] == p["substance"] and r.get("product_kind") in BRANDED
-                 and not other_use(g, r)]
+                 and not other_use(g, r) and form_fits(p, r)]
     else:
         return None
     return found[0] if found else None
@@ -1100,7 +1111,7 @@ def seller_table(slug, kind=None):
         if kind == "cosmetic" and r.get("form"):  # the form word per row in a cosmetic window ("Serum", "Cream", "Topical")
             size = f'{r["form"].capitalize()} · {size}'
         price = money(r["price_usd"]) if r.get("price_usd") is not None else "unknown"
-        ppm = (f'{money(r["price_per_mg"])}/mg' if r.get("price_per_mg") is not None else "blend" if r.get("is_blend") else "unknown")
+        ppm = (f'{per_mg(r["price_per_mg"])}/mg' if r.get("price_per_mg") is not None else "blend" if r.get("is_blend") else "unknown")
         seller = seller_base(clean(SELLERS.get(r["seller_slug"], {}).get("seller_name") or r["seller_name"]))
         # the name opens our page on the seller when it has one (owner task 2 Nov 2026); never the seller's own site
         name_html = (f'<a class="name" href="/sellers/{r["seller_slug"]}/">{seller}</a>' if r["seller_slug"] in PROFILES
@@ -1227,7 +1238,7 @@ def option_plans(g, p):
         return [r for r in priced if r["substance_slug"] in subs and r.get("product_kind") == "compounded"]
     if not (p.get("substance") and approved_row(p)):
         return []
-    return [r for r in priced if r["substance_slug"] == p["substance"] and not other_use(g, r) and plan_fits(p, r)]
+    return [r for r in priced if r["substance_slug"] == p["substance"] and not other_use(g, r) and plan_fits(p, r) and form_fits(p, r, strict=False)]
 
 
 def clinic_key(g, p):
@@ -2772,7 +2783,7 @@ def check_lines(r):
     state, said = legal_state(r)
     legal = ({"Not checked yet": "Terms, privacy and refund pages: not checked yet.",
               "Could not check": f"Could not check: {said}"}.get(state, said))
-    seen_on = r.get("price_updated_at")
+    seen_on = prices_checked(r)  # the same date as "Prices checked" above the table: one price date per page (audit, 7 Nov 2026)
     fresh = (f"Prices checked {nice_date(seen_on)}." if r.get("score_fresh_prices") and seen_on else
              f"No recent price; the newest is from {nice_date(seen_on)}." if seen_on else "No price seen.")
     return dict(zip([k for k, _ in SCORE_CHECKS], (lab, letter, company, legal, fresh)))
@@ -3974,7 +3985,7 @@ def pep_shops_section(slug):
         name = clinic_link(r["seller_slug"], seller)
         size = f'{r["amount_mg"]:g} mg' if r.get("amount_mg") else "unknown"
         price = money(r["price_usd"]) if r.get("price_usd") is not None else "unknown"
-        ppm = (f'{money(r["price_per_mg"])}/mg' if r.get("price_per_mg") is not None else "blend" if r.get("is_blend") else "unknown")
+        ppm = (f'{per_mg(r["price_per_mg"])}/mg' if r.get("price_per_mg") is not None else "blend" if r.get("is_blend") else "unknown")
         seen = r.get("price_observed_at") or r.get("last_seen") or ""
         newest = max(newest, seen)
         trs.append(f'<tr><td>{name}</td><td class="num" data-l="Size">{size}</td><td class="num" data-l="Price">{price}</td>'
@@ -4670,14 +4681,30 @@ def cmp_clinic_cells(c, subs, other=None):
     ]
 
 
+def first_month(r):
+    """What a plan costs in its first month with the care or membership fee (owner's audit, 7 Nov 2026: a "cheaper" verdict
+    compares this total, not the price alone). A fee the data does not know counts as none and is said so."""
+    return float(r.get("price_first_month") or r["price_monthly"]) + float(r.get("membership_fee_monthly") or 0)
+
+
+def first_month_note(r):
+    """"$286 with care ($151 a month + $135/mo care)", "$159 all-in" or "$129 (care fee not known)"."""
+    fee, base = r.get("membership_fee_monthly"), float(r.get("price_first_month") or r["price_monthly"])
+    month = "first month" if r.get("price_first_month") else "a month"
+    if fee is None:
+        return f"{usd(base)} (care fee not known)"
+    if float(fee) == 0:
+        return f"{usd(base)} all-in"
+    return f"{usd(first_month(r))} with care ({usd(base)} {month} + {usd(fee)}/mo care)"
+
+
 def cmp_clinic_answer(a, b, subs):
     na, nb = cmp_clinic_name(a), cmp_clinic_name(b)
     out = []
     for s in subs:
         fa, fb = clinic_forms(a, s), clinic_forms(b, s)
         # the verdict compares one form both sell (the cheapest such form), and names it
-        common = sorted((f for f in fa if f in fb and f != FORM_NOT_STATED),
-                        key=lambda f: float(fa[f]["price_monthly"]) + float(fb[f]["price_monthly"]))
+        common = sorted((f for f in fa if f in fb and f != FORM_NOT_STATED), key=lambda f: first_month(fa[f]) + first_month(fb[f]))
         if list(fa) == list(fb) == [FORM_NOT_STATED]:
             common = [FORM_NOT_STATED]
         if not common:
@@ -4691,12 +4718,11 @@ def cmp_clinic_answer(a, b, subs):
         pa, pb = fa[form], fb[form]
         what = (f"compounded {s} (neither plan states the form)" if form == FORM_NOT_STATED else
                 f"compounded {s} as {'' if form == 'Drops' else 'an ' if form[0] in 'AEIOU' else 'a '}{form.lower()}")
-        if float(pa["price_monthly"]) == float(pb["price_monthly"]):
-            out.append(f"For {what}, both list {usd(pa['price_monthly'])} a month.")
+        if first_month(pa) == first_month(pb):
+            out.append(f"For {what}, both come to {usd(first_month(pa))} in the first month, care included.")
             continue
-        lo, hi = sorted(((na, pa), (nb, pb)), key=lambda x: float(x[1]["price_monthly"]))
-        out.append(f"For {what}, {lo[0]} is cheaper: {usd(lo[1]['price_monthly'])} a month ({care_note(lo[1])}) "
-                   f"against {usd(hi[1]['price_monthly'])} ({care_note(hi[1])}).")
+        lo, hi = sorted(((na, pa), (nb, pb)), key=lambda x: first_month(x[1]))
+        out.append(f"For {what}, {lo[0]} is cheaper in the first month: {first_month_note(lo[1])} against {first_month_note(hi[1])}.")
     la, lb = [(PROFILES[x].get("fda_letter_count") or 0, PROFILES[x].get("last_fda_letter_date")) for x in (a, b)]
     if la[0] and lb[0]:
         out.append("Both have an FDA warning letter.")
@@ -4715,19 +4741,19 @@ def cmp_clinic_facts(a, b, subs):
     side = lambda first: fa if first else fb
     for sub in subs[:1]:
         xa, xb = clinic_forms(a, sub), clinic_forms(b, sub)
-        common = sorted((f for f in xa if f in xb and f in FORM_PLURAL), key=lambda f: float(xa[f]["price_monthly"]) + float(xb[f]["price_monthly"]))
+        common = sorted((f for f in xa if f in xb and f in FORM_PLURAL), key=lambda f: first_month(xa[f]) + first_month(xb[f]))
         if common:
             f = common[0]
-            x, y = float(xa[f]["price_monthly"]), float(xb[f]["price_monthly"])
+            x, y = first_month(xa[f]), first_month(xb[f])
             if x != y:
-                lo = (na, x, y) if x < y else (nb, y, x)
+                lo, hi = (na, xa[f], xb[f]) if x < y else (nb, xb[f], xa[f]), (xb[f] if x < y else xa[f])
                 what = f"compounded {sub} {FORM_PLURAL[f]}"
-                side(x < y).append((f"price matters most: {what} from {usd(lo[1])}/mo against {usd(lo[2])}",
-                                    f"price: {what} at {lo[0]} start at {usd(lo[1])} a month, against {usd(lo[2])}"))
+                side(x < y).append((f"price matters most: in the first month, {what} cost {first_month_note(lo[1])} against {first_month_note(hi)}",
+                                    f"price: in the first month, {what} at {lo[0]} cost {first_month_note(lo[1])} against {first_month_note(hi)}"))
     la, lb = (PROFILES[x].get("fda_letter_count") or 0 for x in (a, b))
     if bool(la) != bool(lb):
         side(not la).append(("you want a clinic with no FDA warning letter",
-                             f"{na if lb else nb} has an FDA warning letter and {nb if lb else na} has none"))
+                             f"{nb if lb else na} has an FDA warning letter and {na if lb else nb} has none"))
     sa, sb = (score_of(PROFILES[x]) or 0 for x in (a, b))
     if sa != sb:
         side(sa > sb).append((f"you want more of our four checks met: {max(sa, sb)} against {min(sa, sb)}",
