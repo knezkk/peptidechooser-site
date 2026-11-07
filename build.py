@@ -3007,6 +3007,8 @@ LEGIT_CLOSE = "These are the facts we hold; we do not call any seller legit or s
 # a clinic is not a research-use shop: no link until a paid one exists, and then it is marked (owner UX audit, 3 Nov 2026)
 LEGIT_CLOSE_CLINIC = ("These are the facts we hold; we do not call any seller legit or safe. We do not link to the clinic "
                       "until it has a paid link, and we say so when it does.")
+# a clinic with a paid link: the no-link sentence goes and nothing replaces it; "Paid link" under its button says it (owner, 5 Nov 2026)
+LEGIT_CLOSE_PAID = "These are the facts we hold; we do not call any seller legit or safe."
 
 
 def legit_heading(r):
@@ -3041,7 +3043,7 @@ def legit_section(r):
 <section class="seller-sec legit" id="legit" aria-labelledby="legit-h">
   <h2 id="legit-h">{legit_heading(r)}</h2>
   <ul class="check-list legit-list">{items}</ul>
-  <p class="small legit-close">{LEGIT_CLOSE_CLINIC if is_clinic(r) else LEGIT_CLOSE}</p>
+  <p class="small legit-close">{(LEGIT_CLOSE_PAID if r.get("paid_url") else LEGIT_CLOSE_CLINIC) if is_clinic(r) else LEGIT_CLOSE}</p>
 </section>"""
 
 
