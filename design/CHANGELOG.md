@@ -5,6 +5,7 @@ Newest row first.
 | Date | Change | Approved |
 |---|---|---|
 | 7 Nov 2026 | HHS compounding policy of 30 Oct 2026 (owner queue block 4, feat/hhs-legal-status): one wording in `legal.hhs_policy`, used by the legal tables, option rows, peptide and compare pages and the guides; /sources/ group "FDA and HHS"; no new part or colour | Waits for ODOBRENO SEO |
+| 7 Nov 2026 | Tier 1 guard (PR 115): a seller page's data-born meta description passes by rule. | ODOBRENO PRAVILA - Karlo - 5. 11. 2026; ODOBRENO DIZAJN - Karlo - 7. 11. 2026 |
 | 7 Nov 2026 | FAQ part (owner's assistant task, design/faq-block): questions as h3 between hairlines, answers from data; first on one seller page. | ODOBRENO DIZAJN and ODOBRENO SEO - Karlo - 7. 11. 2026 |
 | 5 Nov 2026 | Tools block only with two priced tools (PR 112); Vitals Vault is a clinic with a seller page (PR 110). | ODOBRENO DIZAJN - Karlo - 5. 11. 2026 |
 | 5 Nov 2026 | Option rows, layout D (owner brief, design/option-row-v4): line 1 "<name> · <what it does>", line 2 one status chip and the prescription fact; the sentence, how it is taken and the sources in the opened row; the price only on the button or CTA text; no seller fact on the collapsed row; decision cards follow. | ODOBRENO DIZAJN and ODOBRENO SEO - Karlo - 5. 11. 2026 |
