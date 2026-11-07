@@ -340,7 +340,7 @@ def goals_strip(heading, skip=None):
     """The goals strip (pages.md, Category and Letters; owner task 2 Nov 2026): a heading and one row of btn-line links to
     the goal pages, each labelled with the goal's `label`; a goal page leaves itself out (`skip`)."""
     links = "".join(f'<a class="btn btn-line btn-sm" href="/{g["slug"]}/">{g["label"]}</a>'
-                    for g in ALL_GOALS if g.get("page") and g["slug"] != skip)
+                    for g in CHOOSER_GOALS if g.get("page") and g["slug"] != skip)
     return f"""
 <section class="section goals-strip" id="other-goals">
   <div class="wrap">
@@ -671,6 +671,15 @@ def plan_fits(p, r):
             and not re.search(r"\boral\b", r.get("plan_name") or "", re.I))
 
 
+def row_fits(p, r):
+    """A plan stands on an FDA-approved row when its substance is the row's `substance` or one of its `plan_substances` (the
+    data's own slug: Winona's "estrogen" on the Estradiol row), and its name matches the row's `plan_name_match` when the row
+    has one (only the forms the approval covers: tablets and patches, never a body cream; owner task 7 Nov 2026)."""
+    if r["substance_slug"] != p["substance"] and r["substance_slug"] not in (p.get("plan_substances") or []):
+        return False
+    return not p.get("plan_name_match") or bool(re.search(p["plan_name_match"], r.get("plan_name") or "", re.I))
+
+
 def form_fits(p, r, strict=True):
     """An option that names its form (`plan_form`, "shot" or "pill") takes only plans of that form: a card's price and window are
     the same medicine in the same form (owner's audit, 7 Nov 2026: the Wegovy shot card showed the Wegovy Pill's price). Its window
@@ -700,7 +709,7 @@ def row_plan(g, p):
     if not g.get("clinic_plans"):
         if not (p.get("substance") and p["status"].startswith("FDA approved")):
             return None
-        found = [r for r in PLANS if r["substance_slug"] == p["substance"] and r.get("price_monthly") is not None
+        found = [r for r in PLANS if row_fits(p, r) and r.get("price_monthly") is not None
                  and r.get("product_kind") != "compounded" and plan_fits(p, r) and form_fits(p, r)]
         best = min(found, key=lambda r: (float(r["price_monthly"]), r["seller_name"])) if found else None
         plan = GOAL_PLANS.get(g["slug"])
@@ -710,7 +719,7 @@ def row_plan(g, p):
         subs = compounded_subs(g, p)
         found = [r for r in rows if r.get("product_kind") == "compounded" and r["substance_slug"] in subs]
     elif p.get("substance") and p["status"].startswith("FDA approved"):
-        found = [r for r in rows if r["substance_slug"] == p["substance"] and r.get("product_kind") in BRANDED
+        found = [r for r in rows if row_fits(p, r) and r.get("product_kind") in BRANDED
                  and not other_use(g, r) and form_fits(p, r)]
     else:
         return None
@@ -893,6 +902,9 @@ def plain_status(item, drop_price=False):
 # tools/render_body/. Only the images and manifest.json ship; assets/body/ holds one folder per look. Pins sit where the
 # render's own camera puts them; a goal's view (zoom z, centre v) comes from the manifest too.
 BODY = json.loads((ROOT / "assets" / "body" / "manifest.json").read_text(encoding="utf-8"))
+# Home's chooser, its goal cards and the 404 list hold the goals with a pin on the figure (every chooser goal is on the
+# figure, pages.md, Home). A goal page without a pin (/menopause/) is built but stays off them until the figure has its pin.
+CHOOSER_GOALS = [g for g in ALL_GOALS if all(g["slug"] in v["pins"] for v in BODY["variants"].values())]
 BODY_DEFAULT = "neutral-clay"
 
 
@@ -900,7 +912,7 @@ def figure_3d(variant=BODY_DEFAULT):
     base = f"/assets/body/{variant}/"
     pins = BODY["variants"][variant]["pins"]
     btns = []
-    for i, g in enumerate(ALL_GOALS):
+    for i, g in enumerate(CHOOSER_GOALS):
         u, v = pins[g["slug"]]
         on = i == 0
         btns.append(f'<span class="pin{" on" if on else ""}" aria-hidden="true" data-goal="{g["slug"]}" aria-pressed="{"true" if on else "false"}" '
@@ -1268,7 +1280,7 @@ def option_plans(g, p):
         return [r for r in priced if r["substance_slug"] in subs and r.get("product_kind") == "compounded"]
     if not (p.get("substance") and approved_row(p)):
         return []
-    return [r for r in priced if r["substance_slug"] == p["substance"] and not other_use(g, r) and plan_fits(p, r) and form_fits(p, r, strict=False)]
+    return [r for r in priced if row_fits(p, r) and not other_use(g, r) and plan_fits(p, r) and form_fits(p, r, strict=False)]
 
 
 def clinic_key(g, p):
@@ -1522,7 +1534,7 @@ def rail():
     """The flow (design book, pages.md, Home): the goal rows, then per goal the option list, where the top pick's row
     carries the Visit button. Every goal's options are in the page; only the first goal's show until another is chosen."""
     chips, compare = [], []
-    for i, g in enumerate(ALL_GOALS):
+    for i, g in enumerate(CHOOSER_GOALS):
         slug, hide = g["slug"], "" if i == 0 else " hidden"
         chips.append(f'<button type="button" class="goal-item" data-goal="{slug}"{ev("goal_pick", goal=slug)} aria-pressed="{"true" if i == 0 else "false"}" '
                      f'aria-controls="opts-{slug}"><span>{g["label"]}</span><span class="small">{len(g["peptides"])} options</span></button>')
@@ -1605,8 +1617,10 @@ def legal_rows(only=None):
                       f'<td>{r["note"]} <a class="ref" href="#src-{r["src"]}" aria-label="Source {r["src"]}"><sup>{r["src"]}</sup></a></td></tr>')
     out, seen = [], []
     for r in LEGAL["rows"]:
-        if not keep(r.get("substances", [])):
-            continue
+        if not keep(r.get("substances", [])) or (only is None and r.get("goal_only")):
+            continue  # a goal_only row and its source live on that goal's page, not in Home's table
+        if only is not None and r.get("checked"):
+            seen.append(r["checked"])
         found = [db_status(slug) for slug in r.get("substances", [])] if LEGAL_DB else []
         if not found or not all(found):
             if not r.get("db_only"):  # a db_only row (finasteride, minoxidil) is shown only from the database
@@ -2147,7 +2161,7 @@ def page_sources(rows_html, own):
     """The Home source entries an option row on another page links to (price, option and plan sources), kept under
     their Home numbers so a footnote reads the same everywhere. A row may not link a number the page uses itself."""
     used = list(dict.fromkeys(re.findall(r'href="#(src-[^"]+)"[^>]*>(?:<sup>)?(\d+)', rows_html)))
-    clash = {i for i, _ in used} & own
+    clash = {i for i, _ in used} & own & set(re.findall(r'<li id="(src-[^"]+)">', SOURCES_HOME))
     assert not clash, f"option rows link sources that this page numbers differently: {clash}"
     out = []
     for sid, n in sorted(used, key=lambda x: int(x[1])):
@@ -2560,12 +2574,12 @@ def category_body(g):
     <details class="legal-acc" id="legal-acc"><summary><h2>Is it legal today?</h2><span class="stamp">FDA status checked {legal_checked}</span></summary>
     <div class="legal-acc-in">
       {f"<p>{moved}</p>" if moved else ""}
-      <p class="small">FDA status of the peptides on this page, each with its source.</p>
+      <p class="small">FDA status of the {g.get("legal_noun", "peptide")}s on this page, each with its source.</p>
       <div class="tbl-wrap"><table class="tbl tbl-legal">
-        <thead><tr><th scope="col">Peptide</th><th scope="col">Status</th><th scope="col">What that means</th></tr></thead>
+        <thead><tr><th scope="col">{g.get("legal_noun", "peptide").capitalize()}</th><th scope="col">Status</th><th scope="col">What that means</th></tr></thead>
         <tbody>{"".join(legal)}</tbody>
       </table></div>
-      <p class="small" style="margin-top:12px">{LEGAL_NOTE} {ALL_SUBSTANCES}</p>
+      <p class="small" style="margin-top:12px">{g.get("legal_note", LEGAL_NOTE)} {ALL_SUBSTANCES}</p>
     </div></details>
   </div>
 </section>{LEGAL_ACC_JS}""" if legal else (f'<section class="section goal-sec"><div class="wrap"><p>{moved}</p></div></section>' if moved else "")
@@ -2719,22 +2733,26 @@ def short_answer(r):
     return out
 
 
+# Rule 8 (CLAUDE.md): pages with Search Console impressions keep their live title and H1 (data/rule8.json, owner task 7 Nov 2026).
+RULE8 = json.loads((Path(__file__).parent / "data" / "rule8.json").read_text(encoding="utf-8"))["pages"] if (Path(__file__).parent / "data" / "rule8.json").exists() else {}
+
+
 def seller_title(r):
-    """Title (Tier 1): the full pattern, shortened step by step to the 60 characters tools/check.py allows."""
-    name = seller_name(r)
+    """Title (Tier 1): the full pattern, shortened step by step to the 60 characters tools/check.py allows, always ending in
+    "| Peptide Chooser" (owner queue block 5, round a, 7 Nov 2026): the middle words shorten, the brand stays."""
+    kept = RULE8.get(f'/sellers/{r["seller_slug"]}/')
+    if kept:
+        return kept["title"]
+    name, end = seller_name(r), " | Peptide Chooser"
     if r["seller_slug"] in CLINIC_PROFILES:
         base = re.sub(r"\s*\(.*\)", "", name).strip()
-        for t in (f"{name} review: plans, prices and checks | Peptide Chooser", f"{base} review: plans, prices and checks | Peptide Chooser",
-                  f"{base} review: plans, prices and checks", f"{base} review | Peptide Chooser"):
-            if len(t) <= 60:
-                return t
-        return f"{base} review"
-    for t in (f"{name} review: prices, lab reports, FDA letters | Peptide Chooser",
-              f"{name} review: prices, lab reports, FDA letters",
-              f"{name} review: prices and lab reports", f"{name} review | Peptide Chooser", f"{name} review"):
-        if len(t) <= 60:
-            return t
-    return t
+        tries = [f"{n} review{w}{end}" for n in dict.fromkeys((name, base))
+                 for w in (": plans, prices and checks", ": plans, prices, checks", ": plans and prices", "")]
+        last = f"{base} review"
+    else:
+        tries = [f"{name} review{w}{end}" for w in (": prices, lab reports, FDA letters", ": prices, lab reports", ": lab reports", "")]
+        last = f"{name} review"
+    return next((t for t in tries if len(t) <= 60), last)
 
 
 def clinic_description(r):
@@ -3090,9 +3108,19 @@ def legit_section(r):
 </section>"""
 
 
-# The FAQ part (pages/parts.md, FAQ; owner's assistant task, 7 Nov 2026): first on one seller page as the book's example. Every
-# answer is a sentence the page already holds from data, never a new claim. w3 adds it to other pages.
-FAQ_SELLERS = {"maximus-maximus-health-inc"}  # a clinic with an FDA letter and no paid link: every answer kind shows
+# The FAQ part (pages/parts.md, FAQ; owner's assistant task, 7 Nov 2026): first on one seller page as the book's example, then
+# on every seller page with its FAQPage schema (owner queue block 5, round a, 7 Nov 2026). Every answer is a sentence the page
+# already holds from data, never a new claim.
+
+
+def faq_schema(pairs):
+    """FAQPage JSON-LD with the same questions and answers the page shows, tags stripped."""
+    plain = lambda x: re.sub(r"\s+", " ", unescape(re.sub(r"<[^>]+>", "", x))).strip()
+    els = [{"@type": "Question", "name": plain(q), "acceptedAnswer": {"@type": "Answer", "text": plain(a)}} for q, a in pairs if q and a]
+    if not els:
+        return ""
+    return ('<script type="application/ld+json">'
+            + json.dumps({"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": els}, ensure_ascii=False) + "</script>")
 
 
 def faq_block(name, pairs, heading_id):
@@ -3104,10 +3132,8 @@ def faq_block(name, pairs, heading_id):
             f'  <div class="faq-list">{items}</div>\n</section>')
 
 
-def seller_faq(r):
-    """A seller's questions, answered from its data (FAQ_SELLERS only, for now)."""
-    if r["seller_slug"] not in FAQ_SELLERS:
-        return ""
+def seller_faq_pairs(r):
+    """A seller's questions, answered from its data."""
     name, lines, clinic = seller_base(seller_name(r)), check_lines(r), is_clinic(r)
     states = (CLINIC_STATES.get(r["seller_slug"]) or {}).get("not_in") or []
     ans = clinic_answer(r) if clinic else short_answer(r)
@@ -3119,7 +3145,12 @@ def seller_faq(r):
         (f"Does {name} ship to every state?", f"Not to {', '.join(STATES.get(x, x) for x in states)}." if states else f"We have no state limits on file for {name}.") if clinic else ("", ""),
         (f"How do we check {name}?", f"On {home.num_word(len(checks)).lower()} facts: {', '.join(checks[:-1])} and {checks[-1]}. Each is a yes or no with its date, in the list above."),
     ]
-    return faq_block(name, [(q, a) for q, a in pairs if q], "faq-h")
+    return name, [(q, a) for q, a in pairs if q and a]
+
+
+def seller_faq(r):
+    name, pairs = seller_faq_pairs(r)
+    return faq_block(name, pairs, "faq-h")
 
 
 def seller_action(r):
@@ -3421,7 +3452,7 @@ NOT_FOUND = f"""
 <h1>This page doesn't exist</h1>
 <p class="lede">The link may be old or mistyped. Try the search above.</p>
 <div class="btn-row"><a class="btn btn-ink" href="/">Go to the home page</a></div>
-<ul class="nf-links">{"".join(f'<li><a href="{goal_href(g)}">{g["label"]}</a></li>' for g in ALL_GOALS)}</ul>
+<ul class="nf-links">{"".join(f'<li><a href="{goal_href(g)}">{g["label"]}</a></li>' for g in CHOOSER_GOALS)}</ul>
 <ul class="nf-links">{"".join(f'<li><a href="{u}">{t}</a></li>' for u, t, ok in _NF_MORE if ok)}</ul>
 </div></section>
 """
@@ -3469,7 +3500,8 @@ if PROFILES:
                   [("/sellers/", "Sellers")]))
     for _r in sorted(PROFILES.values(), key=lambda x: x["seller_slug"]):
         PAGES.append((f"/sellers/{_r['seller_slug']}/", f"sellers/{_r['seller_slug']}/index.html", seller_title(_r),
-                      legit_description(clinic_description(_r) if _r["seller_slug"] in CLINIC_PROFILES else seller_description(_r), _r), seller_page(_r), "",
+                      legit_description(clinic_description(_r) if _r["seller_slug"] in CLINIC_PROFILES else seller_description(_r), _r), seller_page(_r),
+                      faq_schema(seller_faq_pairs(_r)[1]),
                       [("/sellers/", "Sellers"), (f"/sellers/{_r['seller_slug']}/", seller_name(_r))]))
 
 

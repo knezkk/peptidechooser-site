@@ -163,8 +163,30 @@ def check_words(P):
     return errs
 
 
+RULE8 = Path(__file__).resolve().parent.parent / "data" / "rule8.json"
+
+
+def rule8_errs(P):
+    """CLAUDE.md rule 8: a page in data/rule8.json (Search Console impressions) keeps its title and H1; a built page whose
+    title or first H1 differs fails (owner task 7 Nov 2026). Only additions."""
+    if not RULE8.exists():
+        return []
+    errs = []
+    for path, keep in json.loads(RULE8.read_text(encoding="utf-8"))["pages"].items():
+        p = P.get(path.strip("/") + "/index.html")
+        if p is None:
+            continue
+        h1 = next((" ".join(t.split()) for tag, t in p.h if tag == "h1"), "")
+        if p.title.strip() != keep["title"]:
+            errs.append(f"{path}: rule 8, title changed: {p.title.strip()!r}, keeps {keep['title']!r}")
+        if h1 != keep["h1"]:
+            errs.append(f"{path}: rule 8, H1 changed: {h1!r}, keeps {keep['h1']!r}")
+    return errs
+
+
 def check_seo(P):
     errs, titles, descs = [], {}, {}
+    errs += rule8_errs(P)
     sitemap = (DIST / "sitemap.xml").read_text()
     for name, p in P.items():
         path = "/" if name == "index.html" else "/" + name.replace("index.html", "")
@@ -256,7 +278,17 @@ def check_schema(P):
                         target = DIST / rel.strip("/")
                         if rel != "/" and not (target / "index.html").exists():
                             errs.append(f"{name}: breadcrumb to missing {rel}")
-                if t not in ("Organization", "WebSite", "BreadcrumbList", "Article", "ItemList"):
+                if t == "FAQPage":
+                    # owner queue block 5, round a (7 Nov 2026): only questions the page shows, each with an answer
+                    qs = node.get("mainEntity") or []
+                    if not qs:
+                        errs.append(f"{name}: FAQPage without questions")
+                    for q in qs:
+                        if not (q.get("acceptedAnswer") or {}).get("text"):
+                            errs.append(f"{name}: FAQPage question without an answer: {q.get('name')}")
+                        elif (q.get("name") or "") not in [" ".join(t.split()) for tag, t in p.h if tag == "h3"]:
+                            errs.append(f"{name}: FAQPage question not shown on the page: {q.get('name')}")
+                if t not in ("Organization", "WebSite", "BreadcrumbList", "Article", "ItemList", "FAQPage"):
                     errs.append(f"{name}: schema type {t} not in the allowed list (6.3)")
                 if t == "Article":
                     errs.extend(article_date_errs(name, node))
