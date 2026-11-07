@@ -191,6 +191,7 @@ def rule8_errs(P):
 def check_seo(P):
     errs, titles, descs = [], {}, {}
     errs += rule8_errs(P)
+    canon = {c: t for c, t in CANON.items() if t.strip("/") + "/index.html" in P}  # a target not built: the line waits
     sitemap = (DIST / "sitemap.xml").read_text()
     for name, p in P.items():
         path = "/" if name == "index.html" else "/" + name.replace("index.html", "")
@@ -217,11 +218,9 @@ def check_seo(P):
         if d in descs:
             errs.append(f"{name}: description duplicates {descs[d]}")
         descs[d] = name
-        if name != "404.html" and p.canonical != SITE + CANON.get(path, path):
-            errs.append(f"{name}: canonical {p.canonical} != {SITE + CANON.get(path, path)}")
-        if path in CANON:
-            if CANON[path].strip("/") + "/index.html" not in P:
-                errs.append(f"{name}: canonical target {CANON[path]} is not built")
+        if name != "404.html" and p.canonical != SITE + canon.get(path, path):
+            errs.append(f"{name}: canonical {p.canonical} != {SITE + canon.get(path, path)}")
+        if path in canon:
             if f"<loc>{SITE}{path}</loc>" in sitemap:
                 errs.append(f"{name}: page with another canonical in the sitemap")
         if not p.og:
@@ -229,7 +228,7 @@ def check_seo(P):
         elif not (DIST / p.og.replace(SITE + "/", "")).exists():
             errs.append(f"{name}: og:image file missing {p.og}")
         noindex = "noindex" in p.meta.get("robots", "")
-        if name != "404.html" and not noindex and path not in CANON and f"<loc>{SITE}{path}</loc>" not in sitemap:
+        if name != "404.html" and not noindex and path not in canon and f"<loc>{SITE}{path}</loc>" not in sitemap:
             errs.append(f"{name}: not in sitemap")
         if noindex and f"<loc>{SITE}{path}</loc>" in sitemap:
             errs.append(f"{name}: noindex page in the sitemap")

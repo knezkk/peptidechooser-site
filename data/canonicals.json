@@ -1,8 +1,9 @@
 {
-  "rule": "One page per search (queue block 8). GitHub Pages has no 301, so a page listed here keeps its URL but points its canonical (and og:url) at the page that keeps the search, leaves the sitemap and llms.txt, and every link to it from another page goes to that page instead. tools/check.py checks the target is built.",
-  "source": "Google Search Console, last 3 months, read by the owner's assistant 7 Nov 2026: /compare/finasteride-vs-minoxidil/ 0 impressions, /learn/finasteride-vs-minoxidil/ 3, /compare/bpc-157-vs-tb-500/ 0, /learn/bpc-157-vs-tb-500/ 0. Owner chose option a for both pairs, 7 Nov 2026.",
+  "rule": "One page per search (queue block 8). GitHub Pages has no 301, so a page listed here keeps its URL but points its canonical (and og:url) at the page that keeps the search, leaves the sitemap and llms.txt, and every link to it from another page goes to that page instead. A line whose target this build does not have (a /compare/ page built only with the real data) waits: the page keeps its own canonical. tools/check.py checks the same.",
+  "source": "Google Search Console, last 3 months, read by the owner's assistant 7 Nov 2026: /compare/finasteride-vs-minoxidil/ 0 impressions, /learn/finasteride-vs-minoxidil/ 3, /compare/bpc-157-vs-tb-500/ 0, /learn/bpc-157-vs-tb-500/ 0. Owner chose option a for both pairs, 7 Nov 2026. Added 7 Nov 2026 (owner, PR #129 question 2): /learn/semaglutide-vs-tirzepatide-price/ 0 impressions, /compare/semaglutide-vs-tirzepatide/ 0; the /compare/ page, which PR #129 makes longer, keeps the search.",
   "pages": {
     "/compare/finasteride-vs-minoxidil/": "/learn/finasteride-vs-minoxidil/",
-    "/compare/bpc-157-vs-tb-500/": "/learn/bpc-157-vs-tb-500/"
+    "/compare/bpc-157-vs-tb-500/": "/learn/bpc-157-vs-tb-500/",
+    "/learn/semaglutide-vs-tirzepatide-price/": "/compare/semaglutide-vs-tirzepatide/"
   }
 }

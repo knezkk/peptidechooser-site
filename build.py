@@ -5200,6 +5200,8 @@ def llms_sections():
 
 
 def main():
+    global CANON
+    CANON = {c: t for c, t in CANON.items() if built(t) and built(c)}  # a target this build lacks: the line waits
     if DIST.exists():
         shutil.rmtree(DIST)
     (DIST / "assets" / "og").mkdir(parents=True)
@@ -5222,7 +5224,8 @@ def main():
         if crumb:
             schema = schema + breadcrumb_schema(crumb)
         for c, t in CANON.items():
-            if path not in (c, t):
+            # the guides index lists every guide, a guide with another canonical too (its count is Tier 1 text)
+            if path not in (c, t) and not (path == "/learn/" and c.startswith("/learn/")):
                 body = body.replace(f'href="{c}"', f'href="{t}"')
         target = DIST / out
         target.parent.mkdir(parents=True, exist_ok=True)
