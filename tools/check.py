@@ -1433,7 +1433,57 @@ def check_logic(P):
     return errs
 
 
-CHECKS = {"words": check_words, "seo": check_seo, "schema": check_schema, "parts": check_parts, "data": check_data, "book": check_book, "events": check_events, "logic": check_logic}
+def check_rules33(P):
+    """The data agent's task 33 rules (owner, 7 Nov 2026): "Cheapest elsewhere" pairs only plans of one stated form and
+    medicine; a research-use "from $X/mg" is a vial's price; a scalp window lists only products named for hair or scalp."""
+    errs = []
+    d = json.loads((ROOT / "data" / "site.json").read_text(encoding="utf-8"))
+    plans = d.get("plans") or []
+    text = lambda h: " ".join(unescape(re.sub(r"<[^>]+>", " ", h)).split())
+    # 2. Cheapest elsewhere: a plan with no stated form gets no price; a paired clinic has a plan of the same form and medicine
+    for name in P:
+        m = re.fullmatch(r"sellers/([^/]+)/index.html", name)
+        if not m:
+            continue
+        html = (DIST / name).read_text(encoding="utf-8")
+        mine = [x for x in plans if x["seller_slug"] == m.group(1)]
+        for row in re.findall(r"<tr>(.*?)</tr>", html, re.S):
+            cell = re.search(r'<td data-l="Cheapest elsewhere">(.*?)</td>', row, re.S)
+            plan = re.search(r'<span class="name">(.*?)</span>', row, re.S)
+            if not (cell and plan):
+                continue
+            pn = text(plan.group(1))
+            fits = [x for x in mine if " ".join((x["plan_name"] or "").split()) == pn]
+            other = re.search(r'href="/sellers/([^/"]+)/', cell.group(1))
+            if "$" not in cell.group(1) or not fits:
+                continue
+            if all(not x.get("dosage_form") for x in fits):
+                errs.append(f"{name}: '{pn}' states no form but shows a cheapest-elsewhere price")
+            elif other and not any(y["seller_slug"] == other.group(1) and y.get("dosage_form") == x["dosage_form"]
+                                   and y["substance_slug"] == x["substance_slug"] for x in fits for y in plans):
+                errs.append(f"{name}: '{pn}' is paired with {other.group(1)}, which has no plan of its form and medicine")
+    # 3. a research-use "from $X/mg" on Home and the goal pages is the price per mg of a vial
+    fmt = lambda v: f"${v:,.2f}" if v >= 0.1 else f"${v:.2g}"
+    vials = {fmt(r["price_per_mg"]) for r in d.get("products") or [] if r.get("form") == "vial" and r.get("price_per_mg") is not None}
+    goal_pages = ["index.html"] + [f'{g["slug"]}/index.html' for g in d.get("goals") or [] if g.get("page")]
+    for name in goal_pages:
+        if name not in P:
+            continue
+        for x in set(re.findall(r"[Ff]rom (\$[\d.,]+)/mg", text((DIST / name).read_text(encoding="utf-8")))):
+            if x not in vials:
+                errs.append(f"{name}: 'from {x}/mg' is not the price of a vial")
+    # 4. a scalp window lists only products named for hair or scalp, and /hair/ opens no general cosmetic window
+    for f in sorted((DIST / "windows").glob("scalp-*.json")) if (DIST / "windows").exists() else []:
+        html = json.loads(f.read_text(encoding="utf-8")).get("html", "")
+        for pn in re.findall(r'<span class="name">(.*?)</span>', html, re.S):
+            if not re.search(r"\b(?:hair|scalp)\b", text(pn), re.I):
+                errs.append(f"windows/{f.name}: '{text(pn)}' is not named for hair or scalp")
+    if "hair/index.html" in P and "/windows/cosmetics-" in (DIST / "hair" / "index.html").read_text(encoding="utf-8"):
+        errs.append("hair/index.html: opens a cosmetic window that is not limited to scalp products")
+    return errs
+
+
+CHECKS = {"words": check_words, "seo": check_seo, "schema": check_schema, "parts": check_parts, "data": check_data, "book": check_book, "events": check_events, "logic": check_logic, "rules33": check_rules33}
 
 # Plan names against their form (owner task w2, 3 Nov 2026): a clinic's own plan name can name another form than the
 # plan's `dosage_form` ("Ozempic Pill" for a pen). The site cannot change data, so this only warns, never fails, and the

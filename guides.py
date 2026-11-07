@@ -476,7 +476,7 @@ def g_bpc(b, f, N):
 <p>A lab report is a start, not proof. It covers one batch, tested once, and it is only worth something if a lab outside the shop did the test. Our guide on <a href="/learn/how-to-read-a-coa/">how to read a peptide COA</a> shows what to look for.</p>
 
 <h2>How do we check the shops that sell it?</h2>
-<p>For every shop we hold the same five checks: Lab reports, No FDA letter, Company found, Legal pages and Fresh prices. Each one is a yes or no that we can show the source for, and we add them up to a score out of five.</p>
+<p>For every shop we hold the same five checks: Lab reports, No FDA letter, Found in a state registry, Legal pages and Fresh prices. Each one is a yes or no that we can show the source for, and we add them up to a score out of five.</p>
 <p>On our <a href="/recovery/">recovery page</a>, the BPC-157 row has a "Prices at" button with the number of shops. It opens a window with {window}, each with its price per mg, its five checks and six facts: a COA for that listing, FDA warning letters, the registered company, whether the shop is active, when we first saw it and when we last checked the price.</p>
 <p>These checks are facts we hold about the shop. They are not a safety or quality grade, and a shop with five of five is still selling a product that is not approved.</p>"""
     nxt = (("/recovery/", "Compare recovery options"), (b.LETTERS_URL, "See FDA warning letters"))
@@ -519,7 +519,7 @@ def g_safe(b, f, N):
 
 <h2>How do we show safety on this site?</h2>
 <p>Every option on our goal pages carries one of four labels: FDA approved, Cosmetic, Not FDA approved, pharmacy-made, or Not approved. We never call a research-use peptide safe, because nobody has the data to say so.</p>
-<p>For shops we show facts, not grades: five checks (Lab reports, No FDA letter, Company found, Legal pages, Fresh prices) and the listing's own lab report. A shop that meets all five still sells a product that is not approved.</p>
+<p>For shops we show facts, not grades: five checks (Lab reports, No FDA letter, Found in a state registry, Legal pages, Fresh prices) and the listing's own lab report. A shop that meets all five still sells a product that is not approved.</p>
 <h2>What should you ask before you buy?</h2>
 <ul>
 <li>Which of the four kinds is it: approved, pharmacy-made, cosmetic or research-use?</li>
@@ -993,9 +993,9 @@ def g_sema_price(b, f, N):
     unknown = sum(r.get("membership_fee_monthly") is None for r in comp)
     allin = sum(r.get("membership_fee_monthly") is not None and float(r["membership_fee_monthly"]) == 0 for r in comp)
     fee_p = ("<p>" + (f"Of the {len(comp)} plans, {allin} say{'s' if allin == 1 else ''} the price is all-in and {len(fees)} add{'s' if len(fees) == 1 else ''} a monthly fee. " if comp else "")
-             + (f"At {b.seller_base(fee_ex['seller_name'])}, {b.usd(fee_ex['price_monthly'])} for the medicine plus "
+             + (f"At {b.seller_base(fee_ex['seller_name'])}, {b.usd(fee_ex['price_medicine'])} for the medicine plus "
                 f"{b.usd(fee_ex['membership_fee_monthly'])} for care makes "
-                f"{b.usd(float(fee_ex['price_monthly']) + float(fee_ex['membership_fee_monthly']))} a month.{ref(fee_ex)} " if fee_ex else "")
+                f"{b.usd(fee_ex['price_monthly'])} a month.{ref(fee_ex)} " if fee_ex else "")
              + (f"For {unknown} plan{'s' if unknown != 1 else ''} the clinic's page did not show whether a fee is added, so ask before you sign up." if unknown else "")
              + "</p>")
     newest = max((r["last_seen"] for r in comp + brand), default=None)
@@ -1293,7 +1293,7 @@ def g_sema_tirz(b, f, N):
 <p>A clinic with an FDA warning letter is still listed; the chip opens our <a href="{b.LETTERS_URL}">letters page</a>. Prices are the clinics' published monthly prices; "from" prices are the lowest shown.</p>
 
 <h2>What does the care fee add?</h2>
-<p>Under each price is the clinic's care fee: "all-in" when the price includes the prescriber and check-ins, a monthly amount when it is charged on top, or "care fee not known" when the clinic's page did not say.{f" {len(fee)} of the plans above add a fee on top." if fee else ""} Add it before you compare two plans.</p>
+<p>Under each price is the clinic's care fee: "all-in" when the price includes the prescriber and check-ins, "incl." and a monthly amount when the clinic charges one on top, already added into the price, or "care fee not known" when the clinic's page did not say.{f" {len(fee)} of the plans above add a fee on top." if fee else ""}</p>
 
 <h2>What does the price not tell you?</h2>
 <ul>
@@ -1399,7 +1399,7 @@ def g_checks(b, f, N):
 <p>Met when the FDA's list of warning letters holds no letter matched to the shop by its web address or street address. A letter that only shares a company name does not count, because names repeat.{N('own-how-we-rate')}</p>
 <p>{example("score_no_fda_letter")} This is the one check where a miss means we found something against the shop: the FDA sent it a letter, and its page links the letter.</p>
 
-<h2>Company found</h2>
+<h2>Found in a state registry</h2>
 <p>Met when we find the business behind the shop in a state business registry, matched with high confidence. We do not search every state yet, so a real company can still show as not found.{N('own-how-we-rate')}</p>
 <p>{example("score_registered_company")}</p>
 
@@ -1624,7 +1624,7 @@ def g_clinic_shop(b, f, N):
 <p>We check a shop on five facts and an online clinic on four: lab reports apply only to shops.{N('own-how-we-rate')}</p>
 <ul>
 <li><strong>Lab reports</strong> are a shop check. Online clinics publish none, so a clinic is not scored on it; that says nothing about the pharmacy behind it.</li>
-<li><strong>No FDA letter</strong>, <strong>Company found</strong> and <strong>Legal pages</strong> mean the same for both.{N('own-how-we-rate')}</li>
+<li><strong>No FDA letter</strong>, <strong>Found in a state registry</strong> and <strong>Legal pages</strong> mean the same for both.{N('own-how-we-rate')}</li>
 <li><strong>Fresh prices</strong> means our own crawl saw a current price on the seller's site in the last 30 days.{N('own-how-we-rate')}</li>
 </ul>
 <p>Our <a href="/how-we-rate/">How we rate</a> page explains each check with an example.</p>
@@ -1940,7 +1940,7 @@ def g_bpc_price(b, f, N):
 
 <h2>What does a low price leave out?</h2>
 <p>A low price per mg does not mean a good buy. BPC-157 is not approved for use in people, and the FDA found little or no information on its safety in people.{N('fda-bulk-risks')} The cheapest vial and the dearest one share that.</p>
-<p>Our five checks (Lab reports, No FDA letter, Company found, Legal pages, Fresh prices) tell you facts about the shop, not about the vial.{N('own-how-we-rate')} Our <a href="/peptides/bpc-157/">BPC-157 page</a> has its FDA status and the letters that name it, and our guide <a href="/learn/is-bpc-157-legal/">Is BPC-157 legal?</a> explains the July 2026 review.</p>
+<p>Our five checks (Lab reports, No FDA letter, Found in a state registry, Legal pages, Fresh prices) tell you facts about the shop, not about the vial.{N('own-how-we-rate')} Our <a href="/peptides/bpc-157/">BPC-157 page</a> has its FDA status and the letters that name it, and our guide <a href="/learn/is-bpc-157-legal/">Is BPC-157 legal?</a> explains the July 2026 review.</p>
 <p>We do not give doses. None of this is medical advice.</p>"""
     nxt = (("/recovery/", "Compare recovery options"), ("/learn/how-to-read-a-coa/", "How to read a COA"))
     return short, body, nxt
@@ -1957,7 +1957,7 @@ def g_oz_weg(b, f, N):
     short = ("Ozempic and Wegovy both contain semaglutide. Ozempic is FDA approved for blood sugar in adults with type 2 diabetes; "
              f"Wegovy is FDA approved for weight management.{N('label-ozempic')}{N('label-wegovy')} "
              + (f"At the online clinics we track, brand plans start at: {and_list(parts)}. " if parts else "")
-             + "Some clinics add a monthly care fee on top, so compare the total.")
+             + "Where a clinic adds a monthly care fee, the prices here include it.")
     fees = [r for r in plans if r.get("membership_fee_monthly") is not None and float(r["membership_fee_monthly"]) > 0]
     table = plan_table(b, plans, N, "glp1") if plans else "<p>We show the brand plans once the clinic plans are in our database.</p>"
     newest = max((r["last_seen"] for r in plans), default=None)
@@ -1990,7 +1990,7 @@ def g_oz_weg(b, f, N):
 <p>A clinic with an FDA warning letter is still listed; the chip opens our <a href="{b.LETTERS_URL}">letters page</a>. Each clinic's name opens our page on it.</p>
 
 <h2>What does the care fee add?</h2>
-<p>"All-in" means the price covers the prescriber and the check-ins. A monthly amount means a fee on top of the medicine. "Care fee not known" means the clinic's page did not say.{f" {len(fees)} of the {len(plans)} plans above add a fee on top." if fees else ""} Add the fee before you compare two plans.</p>
+<p>"All-in" means the price covers the prescriber and the check-ins. A monthly amount means a fee on top of the medicine, already added into the price shown. "Care fee not known" means the clinic's page did not say.{f" {len(fees)} of the {len(plans)} plans above add a fee on top." if fees else ""}</p>
 
 <h2>Why do the prices differ so much?</h2>
 <p>Clinic prices follow what the clinic pays for the brand and how it bills, and some plans are for a pen while others are for a pill. Check the plan name in the table to see which form a price is for, and ask whether the price changes as the dose goes up.</p>
@@ -2126,7 +2126,7 @@ def g_by_numbers(b, f, N):
     met = [(t, sum(bool(r.get(k)) for r in scored)) for k, t in b.SCORE_CHECKS]
     spread = Counter(r["score"] for r in scored)
     mid = sorted(r["score"] for r in scored)[total // 2]
-    coa, letter, company = (dict(met).get(x, 0) for x in ("Lab reports", "No FDA letter", "Company found"))
+    coa, letter, company = (dict(met).get(x, 0) for x in ("Lab reports", "No FDA letter", "Found in a state registry"))
     short = (f"As of {nice(on)}, we check {total} peptide shops.{N('own-sellers')} {coa} meet our Lab reports check, {letter} have no FDA "
              f"warning letter matched to them and {company} have a company we found in a state registry.{N('own-sellers')} The middle "
              f"score is {mid} of 5."
@@ -2141,7 +2141,7 @@ def g_by_numbers(b, f, N):
     spread_rows = [(f"{s} of 5", spread.get(s, 0)) for s in range(5, -1, -1)]
     body = f"""
 <h2>What are these numbers?</h2>
-<p>Every peptide shop we track gets the same five yes or no checks: Lab reports, No FDA letter, Company found, Legal pages and Fresh prices. The score is how many it meets.{N('own-how-we-rate')} This page counts them again each time we pull our data; these numbers are as of {nice(on)}.</p>
+<p>Every peptide shop we track gets the same five yes or no checks: Lab reports, No FDA letter, Found in a state registry, Legal pages and Fresh prices. The score is how many it meets.{N('own-how-we-rate')} This page counts them again each time we pull our data; these numbers are as of {nice(on)}.</p>
 <p>Our <a href="/how-we-rate/">How we rate</a> page explains each check with an example.</p>
 
 <h2>Which kinds of shop are they?</h2>
@@ -2159,7 +2159,7 @@ def g_by_numbers(b, f, N):
 <ul>
 <li><strong>Lab reports</strong>: at least one lab report dated in the last 12 months, for any product.</li>
 <li><strong>No FDA letter</strong>: no warning letter matched to the shop by web address or street address.</li>
-<li><strong>Company found</strong>: the business behind the shop found in a state registry, with high confidence.</li>
+<li><strong>Found in a state registry</strong>: the business behind the shop, matched in a state registry with high confidence.</li>
 <li><strong>Legal pages</strong>: a terms page and a privacy or refund page, seen in the last 30 days.</li>
 <li><strong>Fresh prices</strong>: a price per mg seen by our crawl in the last 30 days.</li>
 </ul>
