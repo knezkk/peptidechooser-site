@@ -374,14 +374,14 @@ def known_sources(b, f):
                            "Their prices and checks are in the seller windows on our goal pages", "/recovery/", "own")
     st = b.db_status("bpc-157")
     if st:
-        k["db-bpc"] = (f"FDA status of BPC-157 in the Peptide Chooser database, first seen {nice(st['seen'])}", st["url"], "link")
+        k["db-bpc"] = (f"{'FDA' if 'fda.gov' in st['url'] else 'HHS'} status of BPC-157 in the Peptide Chooser database, first seen {nice(st['seen'])}", st["url"], "link")
     if f["letters"]:
         k["db-letters"] = (f"Peptide Chooser, FDA warning letters to peptide sellers, compounders and online clinics, "
                            f"checked {nice(f['letters_on'])}", b.LETTERS_URL, "own")
     for slug in sorted({r["substance_slug"] for r in b.LEGAL_DB or []} - {"bpc-157"}):
         st = b.db_status(slug)
         if st:
-            k[f"db-{slug}"] = (f"FDA status of {b.substance_name(slug)} in the Peptide Chooser database, first seen {nice(st['seen'])}",
+            k[f"db-{slug}"] = (f"{'FDA' if 'fda.gov' in st['url'] else 'HHS'} status of {b.substance_name(slug)} in the Peptide Chooser database, first seen {nice(st['seen'])}",
                                st["url"], "link")
     for r in b.PLANS:
         k[f"plan-{r['seller_slug']}-{r['plan_slug']}"] = (f"{b.seller_base(r['seller_name'])}, {r['plan_name']}, {nice(r['last_seen'])}",
@@ -418,12 +418,24 @@ def g_bpc(b, f, N):
     # The status sentence a reader sees on /recovery/ and in "Is it legal today?" (owner task 2 Nov 2026): the database's
     # status with its source, then the hand note on the July 2026 review; without the database, the hand row alone.
     st, hand = b.db_status("bpc-157"), next(r for r in b.LEGAL["rows"] if r.get("substances") == ["bpc-157"])
-    if st:
+    if st and st["sentence"] == b.HHS.get("note"):  # the policy is too long for a first sentence: approval first, then the policy
+        src = next((k for k, (_, u) in SOURCES.items() if u == st["url"]), "legal-13")
+        status = f"BPC-157 is not FDA approved for any use.{N('drugsfda-hair')} {st['sentence'][0].upper()}{st['sentence'][1:]}.{N(src)}"
+    elif st:
         src = next((k for k, (_, u) in SOURCES.items() if u == st["url"]), "db-bpc")
         status = f"{st['label']}: {st['sentence']}.{N(src)}"
-        status += f" {hand['note'][0].upper()}{hand['note'][1:]}.{N('legal-6')}"
+        if hand["note"] != st["sentence"]:
+            status += f" {hand['note'][0].upper()}{hand['note'][1:]}.{N('legal-' + str(hand['src']))}"
+    elif hand["note"] == b.HHS.get("note"):
+        status = f"BPC-157 is not FDA approved for any use.{N('drugsfda-hair')} {hand['note'][0].upper()}{hand['note'][1:]}.{N('legal-' + str(hand['src']))}"
     else:
-        status = f"{hand['status']}: {hand['note']}.{N('legal-6')}"
+        status = f"{hand['status']}: {hand['note']}.{N('legal-' + str(hand['src']))}"
+    # rule 8: this page only gains text, so the withdrawn nomination and the July 2026 review keep their sentences
+    wd = next((r for r in b.LEGAL_DB or [] if r["substance_slug"] == "bpc-157" and r["regime"] == "fda_nomination_withdrawn"), None)
+    if wd and st and st["sentence"] == b.HHS.get("note"):
+        wsrc = next((k for k, (_, u) in SOURCES.items() if u == wd["source_url"]), "fda-bulk-risks")
+        status += f" Its nomination for pharmacy compounding was withdrawn.{N(wsrc)}"
+    status += f" FDA advisory committee reviewed it for compounding on 23 Jul 2026; FDA proposed not to allow it.{N('legal-6')}"
     short = (f"{status} "
              + (f"The FDA's warning letters we track went to the companies selling peptides, not to people who bought them for "
                 f"themselves.{N('db-letters')}" if f["letters"] else ""))
@@ -443,12 +455,15 @@ def g_bpc(b, f, N):
 <p>No. There is no FDA-approved medicine that contains BPC-157, for any use. An approved medicine is one whose maker sent the FDA its trial data and the FDA found that the benefits outweigh the known risks for the people it is meant for.{N('fda-approval')} Nobody has done that for BPC-157.</p>
 <p>The FDA's page on substances that may be risky in pharmacy-made medicines lists BPC-157 among those whose nomination for pharmacy compounding was withdrawn. It says BPC-157 made by a pharmacy may set off an immune reaction when given some ways, may be hard to make free of unwanted peptide fragments, and has little or no safety information behind it.{N('fda-bulk-risks')}</p>
 
+<h2>What changed on 30 Oct 2026?</h2>
+{hhs_block(b, N, "bpc-157")}
+
 <h2>What did the FDA review in July 2026?</h2>
 <p>On 23 and 24 July 2026 the FDA's Pharmacy Compounding Advisory Committee, a panel of outside experts, reviewed BPC-157 together with TB-500, MOTS-c and epitalon. The question was whether pharmacies may use these substances to make medicines for patients on a prescription. The FDA proposed not to allow it.{N('legal-6')}</p>
 <p>A committee advises; the FDA decides. A proposal is a step, not the last word. We keep the status on our <a href="/#legal">Is it legal today?</a> table and change this page when the FDA publishes what it decided.</p>
 
 <h2>Is BPC-157 the same as TB-500?</h2>
-<p>No. TB-500 is a lab-made copy of part of a natural repair protein, and shops often sell it next to BPC-157 or in the same blend. It went through the same July 2026 review and got the same proposal: not approved, and the FDA proposed not to let pharmacies use it.{N('legal-6')}</p>
+<p>No. TB-500 is a lab-made copy of part of a natural repair protein, and shops often sell it next to BPC-157 or in the same blend. It went through the same July 2026 review and got the same proposal: not approved, and the FDA proposed not to let pharmacies use it.{N('legal-6')} The HHS policy of 30 Oct 2026 covers TB-500 too, as an injection.{N('legal-13')}</p>
 <p>A blend of the two is not a tested product either. Nobody has studied the mix in people, and a lab report for a blend rarely says how much of each peptide is in the vial.</p>
 
 <h2>What does "research use only" mean?</h2>
@@ -701,7 +716,7 @@ def g_hair(b, f, N):
 <p>Many shampoos, conditioners and scalp tonics list peptides, such as copper peptides, among their ingredients. They are cosmetics too, under the same rules as serums.{N('legal-5')} A peptide on the ingredient list tells you what is in the bottle, not what it does.</p>
 
 <h2>What about injectable peptides sold for hair?</h2>
-<p>Research-use shops sell vials of BPC-157, TB-500 and injectable GHK-Cu, and some of them market these for hair. None is approved for any use.{N('legal-7')} In July 2026 the FDA proposed not to let pharmacies use BPC-157 or TB-500 to make medicines.{N('legal-6')}</p>
+<p>Research-use shops sell vials of BPC-157, TB-500 and injectable GHK-Cu, and some of them market these for hair. None is approved for any use.{N('legal-7')} In July 2026 the FDA proposed not to let pharmacies use BPC-157 or TB-500 to make medicines.{N('legal-6')} {b.hhs_sentence('BPC-157 or TB-500')}{N('legal-13')}</p>
 <p>We found no studies in people that show these injections grow hair. We list their prices and checks on our hair page and never link to the shops.</p>
 {clinics}
 <h2>How do you tell evidence from marketing?</h2>
@@ -726,6 +741,21 @@ def shops_line(b, f, slug, N):
         return ""
     mid = f"; the middle price across their listings is {b.money(s['ppm_median'])} per mg" if s.get("ppm_median") is not None else ""
     return f"{s['shops']} shops we track list {b.substance_name(slug)}{mid}.{N('db-sellers')}"
+
+
+def hhs_block(b, N, slug=None):
+    """The HHS policy of 30 Oct 2026 in full (owner queue block 4, 7 Nov 2026): the sentence, the route for `slug`, the
+    ten conditions in plain words, and what may change. Everything comes from legal.hhs_policy in data/site.json."""
+    h = b.HHS
+    if not h:
+        return ""
+    route = (f"<p>For {b.pep_short(slug)} the policy covers these routes: {h['routes'][slug]}.{N('legal-13')}</p>"
+             if slug and slug in h["routes"] else "")
+    conds = "".join(f"<li>{c}</li>" for c in h["conditions"])
+    return (f"<p>{b.hhs_sentence('BPC-157, TB-500, Epitalon, MOTS-c, KPV or Semax')}{N('legal-13')}</p>{route}"
+            f"<p>The ten conditions, in short:{N('legal-13')}</p><ol>{conds}</ol>"
+            f"<p>HHS says it may revisit the policy if a safety or quality problem shows up, and the FDA may later propose adding some "
+            f"or all of these peptides to the 503A list through rulemaking.{N('legal-12')}</p>")
 
 
 def status_words(b, slug, N, plain=False):
@@ -911,8 +941,9 @@ def g_inject(b, f, N):
                f"{f['ruo_letters']} went to research-use peptide shops.{N('db-letters')} Each letter names the products and the "
                "claims the FDA objects to; you can read it in full on fda.gov.</p>") if f["letters"] else ""
     table = plan_table(b, f["hair_plans"], N, "hair") if f["hair_plans"] else ""
-    july = (f"<p>In July 2026 the FDA's advisory committee on pharmacy compounding reviewed BPC-157 and TB-500: {review}.{N('legal-6')} "
-            'Our guide <a href="/learn/is-bpc-157-legal/">Is BPC-157 legal?</a> explains what that review means.</p>') if review else ""
+    july = (f"<p>In July 2026 the FDA's advisory committee on pharmacy compounding reviewed BPC-157 and TB-500, and the FDA proposed "
+            f"not to allow them.{N('legal-6')} {b.hhs_sentence('BPC-157 or TB-500')}{N('legal-13')} "
+            'Our guide <a href="/learn/is-bpc-157-legal/">Is BPC-157 legal?</a> explains both.</p>') if review else ""
     body = f"""
 <h2>Which injectable peptides are sold for hair?</h2>
 <p>The hair vials we see at research-use shops are {listed}. They come as a powder in a vial, meant to be mixed with water and injected. The label says they are for research, not for people.</p>
@@ -1102,7 +1133,9 @@ def g_bpc_tb(b, f, N):
              + (f"For each, {db_sentence(b, 'bpc-157', N)} " if same else ""))
     bs, ts = status_words(b, "bpc-157", N, plain=True), status_words(b, "tb-500", N, plain=True)
     short += (
-             f"In July 2026 the FDA proposed not to let pharmacies use either one.{N('legal-6')} For BPC-157 we found three small "
+             f"In July 2026 the FDA proposed not to let pharmacies use either one.{N('legal-6')} "
+             f"On 30 Oct 2026 HHS said it does not intend to act against licensed pharmacies that compound either one under 10 conditions; "
+             f"neither is FDA approved.{N('legal-13')} For BPC-157 we found three small "
              f"studies in people, rated very low in certainty; for TB-500 the FDA found no human data.{N('pm-poolton')}{N('fda-bulk-risks')}")
     rec = next(g for g in b.ALL_GOALS if g["slug"] == "recovery")
     uses = "".join(f"<li><strong>{p['name']}</strong>: {p['does']}</li>" for p in rec["peptides"])
@@ -1122,7 +1155,7 @@ def g_bpc_tb(b, f, N):
 <li><strong>BPC-157</strong>: {bs or "not approved for any use." + N('drugsfda-hair')}</li>
 <li><strong>TB-500</strong>: {ts or "not approved for any use." + N('drugsfda-hair')}</li>
 </ul>
-<p>On 23 and 24 July 2026 the FDA's Pharmacy Compounding Advisory Committee reviewed both, and the FDA proposed not to allow pharmacies to use them to make medicines.{N('legal-6')} The FDA says both may set off an immune reaction when given some ways.{N('fda-bulk-risks')} Our guide <a href="/learn/is-bpc-157-legal/">Is BPC-157 legal?</a> explains the review.</p>
+<p>On 23 and 24 July 2026 the FDA's Pharmacy Compounding Advisory Committee reviewed both, and the FDA proposed not to allow pharmacies to use them to make medicines.{N('legal-6')} {b.hhs_sentence('BPC-157 or TB-500')}{N('legal-13')} The FDA says both may set off an immune reaction when given some ways.{N('fda-bulk-risks')} Our guide <a href="/learn/is-bpc-157-legal/">Is BPC-157 legal?</a> explains the review and the policy.</p>
 
 <h2>What do the studies show?</h2>
 <p>For BPC-157, most of the research is in animals. A 2026 review found three studies in people, with 30 people in all: two looked back at patients treated for knee pain or a bladder condition, and one tested its safety in two people. The reviewers rated the evidence very low in certainty.{N('pm-poolton')}</p>
@@ -1150,7 +1183,7 @@ def g_bpc_tb(b, f, N):
 <p>A warning letter is the FDA's formal notice, not a court ruling.{N('fda-letters')} Our guide on <a href="/learn/what-an-fda-warning-letter-means/">what an FDA warning letter means</a> explains what follows one.</p>
 
 <h2>So which is better?</h2>
-<p>Neither has the evidence in people to answer that. Both are not approved, both were reviewed by the FDA in July 2026, and both have little or no human data. A lower price per mg does not make one a better choice.</p>
+<p>Neither has the evidence in people to answer that. Both are not approved, both were reviewed by the FDA in July 2026, both are covered by the HHS policy of 30 Oct 2026, and both have little or no human data. A lower price per mg does not make one a better choice.</p>
 <p>None of this is medical advice. A doctor or physical therapist can tell you what helps your injury.</p>"""
     nxt = (("/recovery/", "Compare recovery options"), ("/learn/is-bpc-157-legal/", "Is BPC-157 legal? guide"))
     return short, body, nxt
@@ -1171,9 +1204,9 @@ def g_legal(b, f, N):
     count = (f"Of the {sum(kinds.values())} substances we track, {kinds['approved']} are FDA approved, {kinds['cosmetic']} are cosmetics "
              f"and {kinds['not']} are not approved for any use.{N('db-peptides')} " if kinds else "")
     short = count + ("An FDA-approved peptide medicine is legal on a prescription.{0} A pharmacy may make some "
-             "peptides for a patient under the FDA's compounding rules.{1} Cosmetic peptides are legal to sell without approval.{2} "
+             "peptides for a patient under the FDA's compounding rules, and six under an HHS policy of 30 Oct 2026.{4} Cosmetic peptides are legal to sell without approval.{2} "
              "Research-use peptides are not approved for use in people.{3}").format(N('fda-approval'), N('fda-503a'), N('legal-5'),
-                                                                                  N('drugsfda-hair'))
+                                                                                  N('drugsfda-hair'), N('legal-13'))
     short += (f" The FDA warning letters we track went to the companies selling peptides, not to people who bought them.{N('db-letters')}"
               if f["letters"] else "")
     body = f"""
@@ -1205,13 +1238,13 @@ def g_legal(b, f, N):
 <ul>
 <li><span class="chip chip-ok">FDA approved</span> an FDA-approved product with this substance exists. It may be approved for one use and not for another.</li>
 <li><span class="chip chip-warn">Pharmacy-made</span> pharmacies may make it while the FDA reviews it; there is no approved product.</li>
-<li><span class="chip chip-neutral">Not approved</span> no approved product, and the FDA has not allowed pharmacies to use it, or its nomination was withdrawn.</li>
+<li><span class="chip chip-neutral">Not approved</span> no approved product. The FDA has not allowed pharmacies to use it, or its nomination was withdrawn; for six peptides, an HHS policy of 30 Oct 2026 lets licensed pharmacies compound them under conditions.{N('legal-13')}</li>
 <li><span class="chip chip-info">Cosmetic</span> sold as a cosmetic; no approval is needed.</li>
 </ul>
 <p>Each status on our legal table and our peptide pages comes with its source and the date we first saw it. Our <a href="/#legal">Is it legal today?</a> table and our <a href="/peptides/">peptides A to Z</a> show every one.</p>
 
 <h2>Can a status change?</h2>
-<p>Yes. The FDA can add a substance to a list, move it between categories or approve a new product. In July 2026 its compounding advisory committee reviewed BPC-157, TB-500, MOTS-c and epitalon, and the FDA proposed not to allow them.{N('legal-6')} We check the FDA's pages and change our chips when the FDA publishes a decision.</p>
+<p>Yes. The FDA can add a substance to a list, move it between categories or approve a new product. In July 2026 its compounding advisory committee reviewed BPC-157, TB-500, MOTS-c and epitalon, and the FDA proposed not to allow them.{N('legal-6')} {b.hhs_sentence('BPC-157, TB-500, MOTS-c, Epitalon, KPV or Semax')}{N('legal-13')} We check the FDA's pages and change our chips when the FDA publishes a decision.</p>
 <p>None of this is legal or medical advice.</p>"""
     nxt = (("/peptides/", "See every peptide's status"), ("/learn/is-bpc-157-legal/", "Is BPC-157 legal? guide"))
     return short, body, nxt
@@ -1417,7 +1450,7 @@ def g_joints(b, f, N):
 <h2>What is their FDA status?</h2>
 <p>Neither is FDA approved for any use.{N('drugsfda-hair')} From our database:</p>
 {f"<ul>{stat}</ul>" if stat else ""}
-<p>In July 2026 the FDA's advisory committee on pharmacy compounding reviewed both, and the FDA proposed not to let pharmacies use them.{N('legal-6')}</p>
+<p>In July 2026 the FDA's advisory committee on pharmacy compounding reviewed both, and the FDA proposed not to let pharmacies use them.{N('legal-6')} {b.hhs_sentence('BPC-157 or TB-500')}{N('legal-13')}</p>
 
 <h2>What do the studies in people show?</h2>
 <p>For BPC-157, a 2026 review searched four databases for any study in people. It found three, with 30 people in all:{N('pm-poolton')}</p>
@@ -1504,7 +1537,8 @@ def g_libido(b, f, N):
 def g_longevity(b, f, N):
     nad = b.db_status("nad-plus")
     short = (f"Epitalon and MOTS-c are not FDA approved for any use.{N('drugsfda-hair')} In July 2026 the FDA proposed not to let "
-             f"pharmacies use either one.{N('legal-6')} The studies in people are thin: for Epitalon, small old studies on sleep "
+             f"pharmacies use either one.{N('legal-6')} On 30 Oct 2026 HHS said it does not intend to act against licensed pharmacies "
+             f"that compound either one under 10 conditions; neither is FDA approved.{N('legal-13')} The studies in people are thin: for Epitalon, small old studies on sleep "
              f"hormone levels; for MOTS-c, the FDA found no human data.{N('pm-korkushko')}{N('fda-bulk-risks')} NAD+ is not a peptide but "
              f"a coenzyme the body makes, and a 2026 review found no trial with health outcomes for NAD+ shots or drips.{N('pm-covarrubias')}{N('pm-gallagher')}")
     ep, mo = db_sentence(b, "epitalon", N), db_sentence(b, "mots-c", N)
@@ -1527,7 +1561,7 @@ def g_longevity(b, f, N):
 <li><strong>Epitalon</strong>: not approved for any use.{N('drugsfda-hair')}{f" Our database records that {ep}" if ep else ""}</li>
 <li><strong>MOTS-c</strong>: not approved for any use.{N('drugsfda-hair')}{f" Our database records that {mo}" if mo else ""}</li>
 </ul>
-<p>On 23 and 24 July 2026 the FDA's Pharmacy Compounding Advisory Committee reviewed both, with BPC-157 and TB-500, and the FDA proposed not to allow pharmacies to use them.{N('legal-6')}</p>
+<p>On 23 and 24 July 2026 the FDA's Pharmacy Compounding Advisory Committee reviewed both, with BPC-157 and TB-500, and the FDA proposed not to allow pharmacies to use them.{N('legal-6')} {b.hhs_sentence('Epitalon or MOTS-c')}{N('legal-13')}</p>
 {nad_st}
 
 <h2>What studies exist in people?</h2>
@@ -1636,7 +1670,8 @@ def g_503a(b, f, N):
     short = ("A 503A pharmacy is an ordinary state-licensed pharmacy that makes medicines for one patient at a time, on a "
              f"prescription.{N('fda-503a')} It may use a raw ingredient only if the law allows it, for example from the FDA's 503A bulks "
              f"list; while the FDA reviews nominated ingredients, it sorts them into three categories, and only category 1 may be used, "
-             f"under conditions.{N('fda-503a')} A compounded medicine is never FDA approved.{N('fda-compounding')}")
+             f"under conditions.{N('fda-503a')} Since 30 Oct 2026 an HHS policy also covers six peptides, BPC-157 among them.{N('legal-13')} "
+             f"A compounded medicine is never FDA approved.{N('fda-compounding')}")
     # the lists after the short answer, so its footnotes read in order; the 503A categories cite the FDA's list, the others its risk page
     lists = [("Category 1", names("fda_503a_category", "category_1"), "fda-503a-list"),
              ("Category 2", names("fda_503a_category", "category_2"), "fda-503a-list"),
@@ -1672,8 +1707,11 @@ def g_503a(b, f, N):
 
 <h2>What do "category 1" and "nomination withdrawn" mean for a buyer?</h2>
 <p><strong>Category 1</strong> means a pharmacy may make a medicine with the ingredient for a patient with a prescription, under the FDA's conditions, while the review goes on.{N('fda-503a')} It does not mean the FDA approved it or found that it works.{N('fda-compounding')}</p>
-<p><strong>Nomination withdrawn</strong> means the request to add the substance to the list was withdrawn, so it is not in any of the three categories on that request. The FDA's page on risky substances names several peptides in that group, such as BPC-157 and TB-500, with the safety concerns it found.{N('fda-bulk-risks')} A pharmacy cannot rely on the category 1 policy for them.</p>
+<p><strong>Nomination withdrawn</strong> means the request to add the substance to the list was withdrawn, so it is not in any of the three categories on that request. The FDA's page on risky substances names several peptides in that group, such as BPC-157 and TB-500, with the safety concerns it found.{N('fda-bulk-risks')} A pharmacy cannot rely on the category 1 policy for them; for six of these peptides the HHS policy below applies instead.{N('legal-13')}</p>
 <p>Neither status says anything about research-use vials: those are not compounded medicines and are not approved for use in people.{N('drugsfda-hair')}</p>
+
+<h2>What changed for six peptides on 30 Oct 2026?</h2>
+{hhs_block(b, N)}
 
 <h2>What are the rules for GLP-1 copies now?</h2>
 <p>While semaglutide and tirzepatide were in short supply, pharmacies could make copies of them. Both are now off the FDA's drug shortage list.{N('fda-glp1-supply')}</p>
@@ -1861,7 +1899,7 @@ def g_bpc_price(b, f, N):
     short = ((rng + " " if rng else "")
              + "Price per mg is the price of a vial divided by the amount of peptide the shop says is in it; it says nothing about "
              "what is really in the vial. "
-             + (f"BPC-157 is not FDA approved: {st} " if st else "BPC-157 is not FDA approved for any use. ")
+             + (f"BPC-157 is not FDA approved: {st} " if st else f"BPC-157 is not FDA approved for any use. {b.hhs_sentence('it')}{N('legal-13')} ")
              + (("No FDA warning letter we track names it." if not letters else "One FDA warning letter we track names it." if letters == 1
                  else f"{letters} FDA warning letters we track name it.") + N('db-letters') if letters is not None else ""))
     coa = sum(bool(r.get("has_coa")) for r in win)
