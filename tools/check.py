@@ -1014,8 +1014,12 @@ def check_parts(P):
                     errs.append(f"{name}: nav link {href}: no id {frag} on that page")
     # Header cards (pages/every-page.md, Every page, Header; owner task 3 Nov 2026): every panel is a card, never a full-width
     # strip (no container class, no width:100%); the count sentence under "Start here" matches the build.
-    sellers = len([d for d in (DIST / "sellers").iterdir() if (d / "index.html").exists()]) if (DIST / "sellers").exists() else 0
-    peps = len([d for d in (DIST / "peptides").iterdir() if (d / "index.html").exists()]) if (DIST / "peptides").exists() else 0
+    def pages_in(section):
+        # a redirect page (an old address, data/redirects.json) is not one of the section's pages
+        root = DIST / section
+        return len([d for d in root.iterdir() if (d / "index.html").exists()
+                    and 'http-equiv="refresh"' not in (d / "index.html").read_text(encoding="utf-8")]) if root.exists() else 0
+    sellers, peps = pages_in("sellers"), pages_in("peptides")
     lp = DIST / "fda-warning-letters" / "index.html"
     letters = len(re.findall(r"<tr[ >]", re.search(r'id="letters-table".*?<tbody>(.*?)</tbody>', lp.read_text(encoding="utf-8"), re.S).group(1))) if lp.exists() else 0
     for name in P:
