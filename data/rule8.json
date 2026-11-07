@@ -1,0 +1,159 @@
+{
+  "rule": "CLAUDE.md rule 8: a page with impressions in Search Console keeps its URL, title and H1; only additions. build.py keeps these titles; tools/check.py fails a built title or H1 that differs.",
+  "source": "Google Search Console, property sc-domain:peptidechooser.com, pages report, last 3 months, read by the owner's assistant 7 Nov 2026 ~17:58 CET (owner task in .handoff/next.md, 7 Nov 2026, 18:00)",
+  "titles_read": "https://peptidechooser.com, the live pages, 7 Nov 2026",
+  "pages": {
+    "/sellers/": {
+      "title": "Peptide sellers and their checks | Peptide Chooser",
+      "h1": "Peptide sellers we track"
+    },
+    "/sellers/curetonix/": {
+      "title": "Curetonix review: prices, lab reports, FDA letters",
+      "h1": "Curetonix review"
+    },
+    "/sellers/rocky-mountain-compounds/": {
+      "title": "Rocky Mountain Compounds review: prices and lab reports",
+      "h1": "Rocky Mountain Compounds review"
+    },
+    "/sellers/shedrx/": {
+      "title": "ShedRx review: plans, prices and checks | Peptide Chooser",
+      "h1": "ShedRx review"
+    },
+    "/sellers/american-peptide-research/": {
+      "title": "American Peptide Research review: prices and lab reports",
+      "h1": "American Peptide Research review"
+    },
+    "/sellers/ivim-health/": {
+      "title": "Ivím Health review: plans, prices and checks",
+      "h1": "Ivím Health review"
+    },
+    "/sellers/direct-meds/": {
+      "title": "Direct Meds review: plans, prices and checks",
+      "h1": "Direct Meds review"
+    },
+    "/sellers/lost-coast-aminos/": {
+      "title": "Lost Coast Aminos review: prices, lab reports, FDA letters",
+      "h1": "Lost Coast Aminos review"
+    },
+    "/sellers/sesame-sesame-care/": {
+      "title": "Sesame review: plans, prices and checks | Peptide Chooser",
+      "h1": "Sesame review"
+    },
+    "/sellers/value-research-labs/": {
+      "title": "Value Research Labs review: prices, lab reports, FDA letters",
+      "h1": "Value Research Labs review"
+    },
+    "/sellers/southern-aminos/": {
+      "title": "Southern Aminos review: prices, lab reports, FDA letters",
+      "h1": "Southern Aminos review"
+    },
+    "/sellers/go-alpha-labs-alphalabs-peptides/": {
+      "title": "Go Alpha Labs review: prices, lab reports, FDA letters",
+      "h1": "Go Alpha Labs review"
+    },
+    "/sellers/paramount-peptides/": {
+      "title": "Paramount Peptides review: prices, lab reports, FDA letters",
+      "h1": "Paramount Peptides review"
+    },
+    "/sellers/pure-peptides-purepeptides-bio/": {
+      "title": "Pure Peptides review: prices, lab reports, FDA letters",
+      "h1": "Pure Peptides review"
+    },
+    "/sellers/medvinci-research/": {
+      "title": "Medvinci Research review: prices, lab reports, FDA letters",
+      "h1": "Medvinci Research review"
+    },
+    "/sellers/silverstone-labs-co/": {
+      "title": "Silverstone Labs review: prices, lab reports, FDA letters",
+      "h1": "Silverstone Labs review"
+    },
+    "/sellers/almighty-peptides/": {
+      "title": "Almighty Peptides review: prices, lab reports, FDA letters",
+      "h1": "Almighty Peptides review"
+    },
+    "/sellers/idun-peptides/": {
+      "title": "IDUN Peptides review: prices, lab reports, FDA letters",
+      "h1": "IDUN Peptides review"
+    },
+    "/sellers/strut-health-strut-health-llc/": {
+      "title": "Strut Health review: plans, prices and checks",
+      "h1": "Strut Health review"
+    },
+    "/sellers/wellmedr-wellmedr-llc/": {
+      "title": "WellMedr review: plans, prices and checks | Peptide Chooser",
+      "h1": "WellMedr review"
+    },
+    "/sellers/iron-aminos/": {
+      "title": "Iron Aminos review: prices, lab reports, FDA letters",
+      "h1": "Iron Aminos review"
+    },
+    "/sellers/qi-supplements/": {
+      "title": "Qi Supplements review: prices, lab reports, FDA letters",
+      "h1": "Qi Supplements review"
+    },
+    "/sellers/northline-labs/": {
+      "title": "Northline Labs review: prices, lab reports, FDA letters",
+      "h1": "Northline Labs review"
+    },
+    "/sellers/enhanced-chems/": {
+      "title": "Enhanced Chems review: prices, lab reports, FDA letters",
+      "h1": "Enhanced Chems review"
+    },
+    "/sellers/vortex-research/": {
+      "title": "Vortex Research review: prices, lab reports, FDA letters",
+      "h1": "Vortex Research review"
+    },
+    "/sellers/alloy-alloy-inc/": {
+      "title": "Alloy review: plans, prices and checks | Peptide Chooser",
+      "h1": "Alloy review"
+    },
+    "/sellers/peplogix/": {
+      "title": "PepLogix review: prices, lab reports, FDA letters",
+      "h1": "PepLogix review"
+    },
+    "/sellers/good-life-meds-good-life-meds-llc/": {
+      "title": "Good Life Meds review: plans, prices and checks",
+      "h1": "Good Life Meds review"
+    },
+    "/sellers/maximus-maximus-health-inc/": {
+      "title": "Maximus review: plans, prices and checks | Peptide Chooser",
+      "h1": "Maximus review"
+    },
+    "/sellers/nation-peptides-nation-labs-inc/": {
+      "title": "Nation Peptides review: prices, lab reports, FDA letters",
+      "h1": "Nation Peptides review"
+    },
+    "/sellers/panstellar-core-157/": {
+      "title": "Panstellar review: prices, lab reports, FDA letters",
+      "h1": "Panstellar review"
+    },
+    "/sellers/artemyx-research/": {
+      "title": "Artemyx Research review: prices, lab reports, FDA letters",
+      "h1": "Artemyx Research review"
+    },
+    "/sellers/fifty-410-aspen-aesthetics/": {
+      "title": "Fifty 410 review: plans, prices and checks | Peptide Chooser",
+      "h1": "Fifty 410 review"
+    },
+    "/sellers/infiniwell/": {
+      "title": "InfiniWell review: prices, lab reports, FDA letters",
+      "h1": "InfiniWell review"
+    },
+    "/sellers/apeiron-elementals/": {
+      "title": "Apeiron Elementals review: prices, lab reports, FDA letters",
+      "h1": "Apeiron Elementals review"
+    },
+    "/sellers/fancymeds/": {
+      "title": "FancyMeds review: plans, prices and checks | Peptide Chooser",
+      "h1": "FancyMeds review"
+    },
+    "/sellers/hydro-research-peptides/": {
+      "title": "Hydro Research Peptides review: prices and lab reports",
+      "h1": "Hydro Research Peptides review"
+    },
+    "/sellers/healthletic/": {
+      "title": "Healthletic review: prices, lab reports, FDA letters",
+      "h1": "Healthletic review"
+    }
+  }
+}

@@ -2676,9 +2676,16 @@ def short_answer(r):
     return out
 
 
+# Rule 8 (CLAUDE.md): pages with Search Console impressions keep their live title and H1 (data/rule8.json, owner task 7 Nov 2026).
+RULE8 = json.loads((Path(__file__).parent / "data" / "rule8.json").read_text(encoding="utf-8"))["pages"] if (Path(__file__).parent / "data" / "rule8.json").exists() else {}
+
+
 def seller_title(r):
     """Title (Tier 1): the full pattern, shortened step by step to the 60 characters tools/check.py allows, always ending in
     "| Peptide Chooser" (owner queue block 5, round a, 7 Nov 2026): the middle words shorten, the brand stays."""
+    kept = RULE8.get(f'/sellers/{r["seller_slug"]}/')
+    if kept:
+        return kept["title"]
     name, end = seller_name(r), " | Peptide Chooser"
     if r["seller_slug"] in CLINIC_PROFILES:
         base = re.sub(r"\s*\(.*\)", "", name).strip()
