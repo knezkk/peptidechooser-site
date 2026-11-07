@@ -4,6 +4,11 @@ Newest row first.
 
 | Date | Change | Approved |
 |---|---|---|
+| 7 Nov 2026 | HHS compounding policy of 30 Oct 2026 (owner queue block 4, feat/hhs-legal-status): one wording in `legal.hhs_policy`, used by the legal tables, option rows, peptide and compare pages and the guides; /sources/ group "FDA and HHS"; no new part or colour | Waits for ODOBRENO SEO |
+| 7 Nov 2026 | Tier 1 guard (PR 115): a seller page's data-born meta description passes by rule. | ODOBRENO PRAVILA - Karlo - 5. 11. 2026; ODOBRENO DIZAJN - Karlo - 7. 11. 2026 |
+| 7 Nov 2026 | FAQ part (owner's assistant task, design/faq-block): questions as h3 between hairlines, answers from data; first on one seller page. | ODOBRENO DIZAJN and ODOBRENO SEO - Karlo - 7. 11. 2026 |
+| 5 Nov 2026 | Tools block only with two priced tools (PR 112); Vitals Vault is a clinic with a seller page (PR 110). | ODOBRENO DIZAJN - Karlo - 5. 11. 2026 |
+| 5 Nov 2026 | Option rows, layout D (owner brief, design/option-row-v4): line 1 "<name> · <what it does>", line 2 one status chip and the prescription fact; the sentence, how it is taken and the sources in the opened row; the price only on the button or CTA text; no seller fact on the collapsed row; decision cards follow. | ODOBRENO DIZAJN and ODOBRENO SEO - Karlo - 5. 11. 2026 |
 | 5 Nov 2026 | Clinic tables (owner task, design/clinic-table-states): one row height from 641px, plan names cut with an ellipsis; "Not available in" leaves table rows (clinic page and clinic window keep it); "Your state" filter above clinic tables and in clinic windows. | ODOBRENO DIZAJN and ODOBRENO SEO - Karlo - 5. 11. 2026 |
 | 5 Nov 2026 | Goal photos (owner pick, design/goal-photos): one real photograph per goal on the Home "Compare by goal" cards and the goal page panel, in place of the goal drawings; rule 7 and README "Not allowed" allow stock photos only for these. New part `.goal-photo`, `assets/photos/`, `data/goal_photos.json`. Details: pages/parts.md, Goal photos. | ODOBRENO PRAVILA and ODOBRENO DIZAJN - Karlo - 5. 11. 2026 |
 | 5 Nov 2026 | Real logos, one set (PR 106): icon and wordmark per brand; the tile padding fix moves into the bundle. Book lines from PR 104: drops take the bottle drawing; a tool row has no button. | ODOBRENO DIZAJN - Karlo - 5. 11. 2026 |

@@ -119,7 +119,7 @@
       "peptides": [
         {
           "name": "Finasteride 1 mg",
-          "plain": "A daily pill on prescription that slows hair loss in most men.",
+          "plain": "A daily pill on prescription. It slows hair loss in most men by lowering the hormone that shrinks hair follicles.",
           "status": "FDA approved",
           "chip": "ok",
           "does": "A daily pill. Slows hair loss and regrows some hair in most men; not for women who may become pregnant.",
@@ -127,11 +127,13 @@
           "status_plain": "FDA approved for hair loss. From $10/mo (generic, pharmacy coupon).",
           "price": "hair",
           "substance": "finasteride",
-          "proven_alternative": true
+          "proven_alternative": true,
+          "line_one": "daily pill that slows hair loss",
+          "rx_word": "on prescription"
         },
         {
           "name": "Minoxidil",
-          "plain": "A liquid or foam for the scalp, sold without a prescription.",
+          "plain": "A liquid or foam for the scalp, twice a day, no prescription. Helps regrow hair while you keep using it.",
           "status": "FDA approved",
           "chip": "ok",
           "does": "A liquid or foam you put on the scalp twice a day. Regrows hair for men and women; works while you keep using it.",
@@ -144,11 +146,13 @@
             "checked": "2026-10-30"
           },
           "substance": "minoxidil",
-          "proven_alternative": true
+          "proven_alternative": true,
+          "line_one": "scalp liquid or foam for regrowth",
+          "rx_word": "no prescription"
         },
         {
           "name": "Compounded minoxidil spray",
-          "plain": "A pharmacy-made minoxidil spray sold by an online clinic, not checked by the FDA batch by batch.",
+          "plain": "A minoxidil spray mixed by a pharmacy, prescribed by an online clinic. Not FDA approved.",
           "status": "Not FDA approved; pharmacy-made",
           "chip": "warn",
           "does": "A pharmacy-made minoxidil spray sold by an online clinic. Not checked by the FDA batch by batch.",
@@ -157,21 +161,25 @@
           "plan_kind": "compounded",
           "plan_substances": [
             "minoxidil"
-          ]
+          ],
+          "line_one": "pharmacy-made scalp spray",
+          "rx_word": "on prescription"
         },
         {
           "name": "GHK-Cu copper peptide serum",
-          "plain": "A cosmetic serum for the scalp, backed by lab studies only.",
+          "plain": "A cosmetic serum for the scalp, no prescription. Sold for thinning hair, backed by lab studies only.",
           "status": "Cosmetic, no approval needed",
           "chip": "info",
           "does": "A cosmetic serum for the scalp. Small lab and follicle studies; no large trials in people.",
           "how": "Sold in shops, no prescription.",
           "status_plain": "Cosmetic: legal to sell, nobody checked that it works.",
-          "substance": "ghk-cu"
+          "substance": "ghk-cu",
+          "line_one": "cosmetic scalp serum",
+          "rx_word": "no prescription"
         },
         {
           "name": "Injectable peptides sold for hair",
-          "plain": "BPC-157, GHK-Cu and TB-500 in research-use vials, with no hair evidence in people.",
+          "plain": "BPC-157, GHK-Cu and TB-500 in vials labelled for lab use. Not approved; no evidence in people for hair.",
           "status": "Not approved for any use",
           "chip": "neutral",
           "does": "Vials from research-use shops, meant to be injected. No human evidence for hair.",
@@ -181,7 +189,9 @@
             "bpc-157",
             "ghk-cu",
             "tb-500"
-          ]
+          ],
+          "line_one": "research-use vials",
+          "rx_word": "research use only"
         }
       ],
       "short": "Hair",
@@ -208,43 +218,51 @@
       "peptides": [
         {
           "name": "Tretinoin cream",
-          "plain": "A prescription cream that reduces fine wrinkles over months.",
+          "plain": "A cream you use at night, on prescription. It reduces fine wrinkles over months; can irritate at first.",
           "status": "FDA approved",
           "chip": "ok",
           "does": "A nightly prescription cream. Reduces fine wrinkles and evens skin over months; can irritate at first.",
           "how": "Prescription (dermatologist or online clinic).",
           "status_plain": "FDA approved for fine wrinkles.",
-          "proven_alternative": true
+          "proven_alternative": true,
+          "line_one": "nightly cream for fine wrinkles",
+          "rx_word": "on prescription"
         },
         {
           "name": "GHK-Cu copper peptide",
-          "plain": "A cosmetic cream or serum, tested only in small studies.",
+          "plain": "A cosmetic serum or cream, no prescription. Sold for firmer-looking skin, tested only in small studies.",
           "status": "Cosmetic, no approval needed",
           "chip": "info",
           "does": "A serum or cream. Small studies suggest firmer-looking skin; no large trials.",
           "how": "Shops, no prescription.",
           "status_plain": "Cosmetic.",
-          "substance": "ghk-cu"
+          "substance": "ghk-cu",
+          "line_one": "cosmetic serum or cream",
+          "rx_word": "no prescription"
         },
         {
           "name": "Palmitoyl pentapeptide-4 (Matrixyl)",
-          "plain": "The most common peptide in anti-wrinkle creams, with a modest effect in small studies.",
+          "plain": "The most common peptide in anti-wrinkle creams, no prescription. A modest effect in small studies.",
           "status": "Cosmetic, no approval needed",
           "chip": "info",
           "does": "The most common \"anti-wrinkle peptide\" in creams. Modest effect in small studies.",
           "how": "Shops.",
           "status_plain": "Cosmetic.",
-          "substance": "palmitoyl-pentapeptide-4"
+          "substance": "palmitoyl-pentapeptide-4",
+          "line_one": "wrinkle cream",
+          "rx_word": "no prescription"
         },
         {
           "name": "Acetyl hexapeptide-8 (Argireline)",
-          "plain": "A cosmetic peptide sold as \"Botox in a bottle\" that barely gets through the skin.",
+          "plain": "A cosmetic peptide, no prescription. Sold as \"Botox in a bottle\", but it barely gets through the skin.",
           "status": "Cosmetic, no approval needed",
           "chip": "info",
           "does": "Sold as \"Botox in a bottle\"; barely gets through the skin.",
           "how": "Shops.",
           "status_plain": "Cosmetic.",
-          "substance": "acetyl-hexapeptide-8"
+          "substance": "acetyl-hexapeptide-8",
+          "line_one": "cosmetic cream",
+          "rx_word": "no prescription"
         }
       ],
       "short": "Skin",
@@ -282,7 +300,8 @@
       "peptides": [
         {
           "name": "Semaglutide (Wegovy)",
-          "plain": "A weekly shot on prescription that cuts appetite.",
+          "plan_form": "shot",
+          "plain": "A weekly shot on prescription, for obesity or overweight with a health problem. It cuts appetite.",
           "status": "FDA approved",
           "chip": "ok",
           "does": "A weekly shot that cuts appetite; about 15 % body weight lost on average in trials.",
@@ -291,38 +310,47 @@
           "substance": "semaglutide",
           "src": [
             1
-          ]
+          ],
+          "line_one": "weekly shot for weight loss",
+          "rx_word": "on prescription"
         },
         {
           "name": "Tirzepatide (Zepbound)",
-          "plain": "A weekly shot on prescription, with a larger average loss in trials.",
+          "plan_form": "shot",
+          "plain": "A weekly shot on prescription, for the same use as Wegovy. It had a larger average loss in trials.",
           "status": "FDA approved",
           "chip": "ok",
           "does": "A weekly shot, same idea, larger average loss in trials.",
           "how": "Prescription.",
           "status_plain": "FDA approved for weight management.",
-          "substance": "tirzepatide"
+          "substance": "tirzepatide",
+          "line_one": "weekly shot for weight loss",
+          "rx_word": "on prescription"
         },
         {
           "name": "Compounded semaglutide or tirzepatide",
-          "plain": "Pharmacy-made copies sold by online clinics, often cheaper, not checked by the FDA batch by batch.",
+          "plain": "Shots mixed by a pharmacy, sold by online clinics on prescription, often cheaper. Not FDA approved.",
           "status": "Not FDA approved; pharmacy-made",
           "chip": "warn",
           "does": "Pharmacy-made copies sold by online clinics, often cheaper. Not checked by the FDA batch by batch.",
           "how": "Prescription through the clinic.",
           "status_plain": "Not FDA approved; pharmacy-made.",
           "no_link": "Not FDA approved; we do not link",
-          "plan_kind": "compounded"
+          "plan_kind": "compounded",
+          "line_one": "pharmacy-made shot",
+          "rx_word": "on prescription"
         },
         {
           "name": "Retatrutide",
-          "plain": "A newer shot still in trials, sold online only in research-use vials.",
+          "plain": "A newer shot still in trials, not approved for anyone. Sold online only in research-use vials.",
           "status": "Not approved; still in trials",
           "chip": "neutral",
           "does": "A newer three-hormone shot, still in trials. Sold online only from research-use shops.",
           "how": "Research-use shops, with our checks.",
           "status_plain": "Not approved; in trials.",
-          "substance": "retatrutide"
+          "substance": "retatrutide",
+          "line_one": "experimental shot, still in trials",
+          "rx_word": "research use only"
         }
       ],
       "short": "Weight loss",
@@ -364,7 +392,7 @@
       "peptides": [
         {
           "name": "Tesamorelin (Egrifta)",
-          "plain": "A prescription shot approved only for belly fat in people with HIV.",
+          "plain": "A daily shot on prescription, approved only to reduce belly fat in people with HIV, not for muscle.",
           "status": "FDA approved",
           "chip": "ok",
           "does": "A daily shot approved only to reduce belly fat in people with HIV. Sold off-label by clinics for \"growth hormone\".",
@@ -376,21 +404,25 @@
           "no_link": "Approved for HIV belly fat, not muscle",
           "drawing": "vial-brand",
           "drawing_source": "https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=3d783378-b02d-4f19-99dd-0fc91a042224",
-          "drawing_checked_at": "2026-11-04"
+          "drawing_checked_at": "2026-11-04",
+          "line_one": "daily shot for belly fat in HIV",
+          "rx_word": "on prescription"
         },
         {
           "name": "Sermorelin",
-          "plain": "A growth-hormone-releasing shot made by compounding pharmacies; no approved product is on the market.",
+          "plain": "A pharmacy-mixed shot on prescription that makes the body release growth hormone. No approved product.",
           "status": "No FDA-approved product on the market",
           "chip": "neutral",
           "does": "A growth-hormone-releasing shot from compounding pharmacies; the approved brand was taken off the market years ago.",
           "how": "Prescription through clinics.",
           "status_plain": "No FDA-approved product on the market.",
-          "substance": "sermorelin"
+          "substance": "sermorelin",
+          "line_one": "pharmacy-made growth-hormone shot",
+          "rx_word": "on prescription"
         },
         {
           "name": "CJC-1295 / ipamorelin",
-          "plain": "Growth-hormone-releasing peptides in research-use vials, with no large human trials.",
+          "plain": "Peptides meant to release growth hormone, in research-use vials. Not approved, no large trials in people.",
           "status": "Not approved",
           "chip": "neutral",
           "does": "Growth-hormone-releasing peptides sold by research-use shops and some clinics. No approved product, no large human trials.",
@@ -399,7 +431,9 @@
           "substances": [
             "cjc-1295",
             "ipamorelin"
-          ]
+          ],
+          "line_one": "vials sold for growth hormone",
+          "rx_word": "research use only"
         }
       ],
       "short": "Muscle and hormones",
@@ -415,41 +449,45 @@
       "page": true,
       "title": "BPC-157 and TB-500 for healing, compared | Peptide Chooser",
       "h1": "Peptides for healing and joints, compared with what is approved.",
-      "description": "BPC-157 and TB-500 are sold for injuries and joints, but neither is approved for any use. The evidence, the FDA's July 2026 proposal and what sellers charge.",
-      "short_answer": "Nothing on this page is FDA approved. BPC-157 and TB-500 have animal studies only; in July 2026 an FDA advisory committee reviewed both for pharmacy compounding and the FDA proposed keeping them off the list. Research-use shops sell them anyway; we show their prices and checks and do not link to them.",
+      "description": "BPC-157 and TB-500 are sold for injuries and joints, but neither is approved for any use. The evidence, the HHS policy of Oct 2026 and what sellers charge.",
+      "short_answer": "Nothing on this page is FDA approved. BPC-157 and TB-500 have animal studies only; in July 2026 the FDA proposed keeping both off the pharmacy compounding list, and on 30 Oct 2026 HHS said it does not intend to act against licensed pharmacies that compound them under 10 conditions. Research-use shops sell them anyway; we show their prices and checks and do not link to them.",
       "legal_section": true,
       "map": {
         "x": 61.5,
         "y": 72
       },
       "main_query": "peptides for healing",
-      "intro": "Nothing is approved for injury recovery. In July 2026 an FDA advisory committee reviewed BPC-157 and TB-500 for pharmacy compounding, and the FDA proposed keeping both off the list.",
+      "intro": "Nothing is approved for injury recovery. Since 30 Oct 2026 an HHS policy lets licensed pharmacies compound BPC-157 and TB-500 under conditions; neither is FDA approved.",
       "peptides": [
         {
           "name": "BPC-157",
-          "plain": "The most searched healing peptide, tested in animals only.",
-          "status": "Not approved; FDA proposed excluding it from compounding (Jul 2026)",
+          "plain": "The most searched healing peptide, in vials labelled for lab use. Not approved, tested in animals only.",
+          "status": "{hhs_status}",
           "chip": "neutral",
-          "does": "The most searched \"healing peptide\". Animal studies only; the FDA reviewed it for pharmacy compounding on 23 Jul 2026 and proposed keeping it off the list.",
+          "does": "The most searched \"healing peptide\". Animal studies only. {hhs_does}",
           "how": "Research-use shops only.",
           "status_plain": "Not approved for any use.",
           "substance": "bpc-157",
           "src": [
-            6
-          ]
+            13
+          ],
+          "line_one": "vials sold for healing",
+          "rx_word": "research use only"
         },
         {
           "name": "TB-500",
-          "plain": "A copy of a natural repair protein, sold next to BPC-157 in research-use vials.",
-          "status": "Not approved; FDA proposed excluding it from compounding (Jul 2026)",
+          "plain": "A copy of a natural repair protein, sold next to BPC-157 in vials for lab use. Not approved for any use.",
+          "status": "{hhs_status}",
           "chip": "neutral",
-          "does": "A copy of a natural repair protein, sold alongside BPC-157. Same July 2026 review, same proposal.",
+          "does": "A copy of a natural repair protein, sold alongside BPC-157. {hhs_does}",
           "how": "Research-use shops only.",
           "status_plain": "Not approved for any use.",
           "substance": "tb-500",
           "src": [
-            6
-          ]
+            13
+          ],
+          "line_one": "vials sold for tissue repair",
+          "rx_word": "research use only"
         }
       ],
       "short": "Recovery and joints",
@@ -485,17 +523,19 @@
       "peptides": [
         {
           "name": "Bremelanotide (Vyleesi)",
-          "plain": "A shot taken before sex, approved for low sexual desire in premenopausal women.",
+          "plain": "A shot you take before sex, on prescription. Approved for low sexual desire in premenopausal women.",
           "status": "FDA approved",
           "chip": "ok",
           "does": "A shot you take before sex, approved for low sexual desire in premenopausal women.",
           "how": "Prescription.",
           "status_plain": "FDA approved.",
-          "substance": "bremelanotide"
+          "substance": "bremelanotide",
+          "line_one": "shot for low desire in women",
+          "rx_word": "on prescription"
         },
         {
           "name": "Sildenafil (Viagra)",
-          "plain": "A pill taken before sex, FDA approved for erectile dysfunction.",
+          "plain": "A pill about an hour before sex, on prescription. Helps erections; works only with sexual stimulation.",
           "status": "FDA approved",
           "chip": "ok",
           "does": "A pill taken about an hour before sex. It helps erections and works only with sexual stimulation.",
@@ -504,11 +544,13 @@
           "substance": "sildenafil",
           "src": [
             8
-          ]
+          ],
+          "line_one": "pill before sex for erections",
+          "rx_word": "on prescription"
         },
         {
           "name": "Tadalafil (Cialis)",
-          "plain": "A pill taken before sex or once a day, FDA approved for erectile dysfunction.",
+          "plain": "A pill before sex or once a day, on prescription. Helps erections; works only with sexual stimulation.",
           "status": "FDA approved",
           "chip": "ok",
           "does": "A pill taken before sex, or at a lower dose once a day. It helps erections and works only with sexual stimulation.",
@@ -517,11 +559,13 @@
           "substance": "tadalafil",
           "src": [
             9
-          ]
+          ],
+          "line_one": "pill for erections, before sex or daily",
+          "rx_word": "on prescription"
         },
         {
           "name": "Testosterone (TRT)",
-          "plain": "A gel or shot that replaces a hormone, FDA approved only for men with low testosterone from a medical condition.",
+          "plain": "A gel or shot on prescription. Approved only for men with low testosterone from a medical condition.",
           "status": "FDA approved",
           "chip": "ok",
           "does": "Replaces a hormone the body makes too little of. Not FDA approved for low testosterone without an associated medical condition.",
@@ -530,11 +574,13 @@
           "substance": "testosterone",
           "src": [
             10
-          ]
+          ],
+          "line_one": "gel or shot for low testosterone",
+          "rx_word": "on prescription"
         },
         {
           "name": "Enclomiphene",
-          "plain": "A pill sold by online clinics as a compounded drug, not FDA approved for any use.",
+          "plain": "A pill some online clinics prescribe for low testosterone. Pharmacy-made, not FDA approved for any use.",
           "status": "Not FDA approved; pharmacy-made",
           "chip": "warn",
           "does": "A pill some clinics prescribe for low testosterone. It is not FDA approved for any use, so only pharmacies make it.",
@@ -546,11 +592,13 @@
           ],
           "src": [
             11
-          ]
+          ],
+          "line_one": "pharmacy-made pill for low testosterone",
+          "rx_word": "on prescription"
         },
         {
           "name": "PT-141 from online shops",
-          "plain": "The same molecule as Vyleesi, sold without a prescription in research-use vials.",
+          "plain": "The same molecule as Vyleesi, in vials labelled for lab use, no prescription. Not an approved product.",
           "status": "Not an approved product",
           "chip": "neutral",
           "does": "The same molecule as Vyleesi, sold without a prescription by research-use shops: no dose control, no checks.",
@@ -558,17 +606,21 @@
           "status_plain": "Not an approved product.",
           "substances": [
             "bremelanotide"
-          ]
+          ],
+          "line_one": "same molecule as Vyleesi",
+          "rx_word": "research use only"
         },
         {
           "name": "Melanotan II",
-          "plain": "A tanning peptide also sold for libido, not approved for any use.",
+          "plain": "A tanning peptide also sold for libido, in vials for lab use. Not approved; linked to serious side effects.",
           "status": "Not approved for any use",
           "chip": "neutral",
           "does": "A tanning peptide also sold \"for libido\". Linked to serious side effects; never approved anywhere.",
           "how": "Research-use shops, with our checks.",
           "status_plain": "Not approved for any use.",
-          "substance": "melanotan-2"
+          "substance": "melanotan-2",
+          "line_one": "tanning peptide also sold for libido",
+          "rx_word": "research use only"
         }
       ],
       "short": "Sexual health",
@@ -590,52 +642,58 @@
       "page": true,
       "title": "Peptides for energy and aging, compared | Peptide Chooser",
       "h1": "Peptides for energy and aging, compared with the evidence.",
-      "description": "Epitalon, MOTS-c and NAD+ shots are sold for energy and anti-aging. None is FDA approved; the FDA reviewed two in July 2026. The evidence and the prices.",
-      "short_answer": "Nothing on this page is FDA approved. Epitalon and MOTS-c were reviewed by an FDA advisory committee in July 2026 for pharmacy compounding, and the FDA proposed keeping them off the list. NAD+ is not a peptide at all; clinics sell it as shots and drips without approval. We show prices and checks for the research-use products and do not link to the shops.",
+      "description": "Epitalon, MOTS-c and NAD+ shots are sold for energy and anti-aging. None is FDA approved; HHS changed the rules for two in Oct 2026. The evidence and prices.",
+      "short_answer": "Nothing on this page is FDA approved. In July 2026 the FDA proposed keeping Epitalon and MOTS-c off the pharmacy compounding list; on 30 Oct 2026 HHS said it does not intend to act against licensed pharmacies that compound them under 10 conditions. NAD+ is not a peptide at all; clinics sell it as shots and drips without approval. We show prices and checks for the research-use products and do not link to the shops.",
       "legal_section": true,
       "map": {
         "x": 74,
         "y": 32
       },
       "main_query": "nad injections",
-      "intro": "No peptide is approved for aging or energy. The ones sold for it were reviewed by an FDA advisory committee in July 2026, and the FDA proposed keeping them off the compounding list.",
+      "intro": "No peptide is approved for aging or energy. Since 30 Oct 2026 an HHS policy lets licensed pharmacies compound Epitalon and MOTS-c under conditions; neither is FDA approved.",
       "peptides": [
         {
           "name": "Epitalon",
-          "plain": "A short peptide sold as an anti-aging shot, with thin and old human evidence.",
-          "status": "Not approved; FDA proposed excluding it from compounding (Jul 2026)",
+          "plain": "A short peptide sold as an anti-aging shot, in vials for lab use. Not approved; human evidence is thin.",
+          "status": "{hhs_status}",
           "chip": "neutral",
-          "does": "A four-amino-acid peptide sold as an \"anti-aging\" shot; human evidence is thin and old. Reviewed by the FDA in July 2026; proposed exclusion.",
+          "does": "A four-amino-acid peptide sold as an \"anti-aging\" shot; human evidence is thin and old. {hhs_does}",
           "how": "Research-use shops.",
           "status_plain": "Not approved.",
           "substance": "epitalon",
           "src": [
-            6
-          ]
+            13
+          ],
+          "line_one": "vials sold as an anti-aging shot",
+          "rx_word": "research use only"
         },
         {
           "name": "MOTS-c",
-          "plain": "A peptide sold for energy, tested in animals only.",
-          "status": "Not approved; FDA proposed excluding it from compounding (Jul 2026)",
+          "plain": "A peptide sold for energy, in vials labelled for lab use. Not approved and tested in animals only.",
+          "status": "{hhs_status}",
           "chip": "neutral",
-          "does": "A \"mitochondrial\" peptide sold for energy; animal studies only. Same July 2026 review.",
+          "does": "A \"mitochondrial\" peptide sold for energy; animal studies only. {hhs_does}",
           "how": "Research-use shops.",
           "status_plain": "Not approved.",
           "substance": "mots-c",
           "src": [
-            6
-          ]
+            13
+          ],
+          "line_one": "vials sold for energy",
+          "rx_word": "research use only"
         },
         {
           "name": "NAD+ injections",
-          "plain": "Not a peptide: a vitamin-B3-derived molecule that clinics sell as shots or drips.",
+          "plain": "Not a peptide: a molecule made from vitamin B3, sold by clinics as shots or drips. Not FDA approved.",
           "status": "Not a peptide; compounded, not FDA approved",
           "chip": "warn",
           "does": "Not a peptide: a vitamin-B3-derived molecule sold by clinics as shots or drips for energy.",
           "how": "Clinics and compounding pharmacies.",
           "status_plain": "Not FDA approved.",
           "substance": "nad-plus",
-          "not_peptide": true
+          "not_peptide": true,
+          "line_one": "clinic shots or drips, not a peptide",
+          "rx_word": "at clinics"
         }
       ],
       "short": "Longevity and energy",
@@ -645,8 +703,9 @@
         {
           "seller_slug": "vitals-vault",
           "name": "Vitals Vault",
-          "line": "Blood test panels drawn at a Quest lab; it tests and does not prescribe.",
-          "source": "Vitals Vault, home page, read 4 Nov 2026",
+          "clinic": true,
+          "line": "Blood test panels drawn at a Quest lab, and an online weight-loss plan: {plan}.",
+          "source": "Vitals Vault, home page, read 4 Nov 2026; plan price checked {checked}",
           "url": "https://vitalsvault.com"
         },
         {
@@ -734,36 +793,36 @@
         "peptide": "BPC-157",
         "status": "Not approved",
         "chip": "neutral",
-        "note": "FDA advisory committee reviewed it for compounding on 23 Jul 2026; FDA proposed not to allow it",
-        "src": 6,
+        "note": "{hhs_note}",
+        "src": 13,
         "substances": [
           "bpc-157"
         ],
-        "note_with_db": true
+        "checked": "2026-11-07"
       },
       {
         "peptide": "TB-500",
         "status": "Not approved",
         "chip": "neutral",
-        "note": "same July 2026 review; FDA proposed not to allow it",
-        "src": 6,
+        "note": "{hhs_note}",
+        "src": 13,
         "substances": [
           "tb-500"
         ],
-        "note_with_db": true
+        "checked": "2026-11-07"
       },
       {
         "peptide": "MOTS-c, Epitalon",
         "status": "Not approved",
         "chip": "neutral",
-        "note": "same July 2026 review; FDA proposed not to allow them",
-        "src": 6,
+        "note": "{hhs_note_many}",
+        "src": 13,
         "substances": [
           "mots-c",
           "epitalon"
         ],
-        "note_with_db": true,
-        "note_each": "same July 2026 review; FDA proposed not to allow it"
+        "note_each": "{hhs_note}",
+        "checked": "2026-11-07"
       },
       {
         "peptide": "Retatrutide",
@@ -885,8 +944,59 @@
         "n": 11,
         "text": "Operation Supplement Safety (US Department of Defense), Clomiphene and Enclomiphene, content current as of 12 Jan 2026, read 4 Nov 2026",
         "url": "https://www.opss.org/article/clomiphene-and-enclomiphene-drugs-not-dietary-supplements"
+      },
+      {
+        "n": 12,
+        "text": "Federal Register, HHS, Enforcement Discretion Policy Regarding 503A Compounding Using Certain Peptide Bulk Drug Substances, notice of availability, 91 FR 68526, 30 Oct 2026, read 7 Nov 2026",
+        "url": "https://www.federalregister.gov/documents/2026/10/30/2026-22192/enforcement-discretion-policy-regarding-503a-compounding-using-certain-peptide-bulk-drug-substances"
+      },
+      {
+        "n": 13,
+        "text": "HHS, Enforcement Discretion Policy Regarding 503A Compounding Using Certain Peptide Bulk Drug Substances, with Appendices A and B, read 7 Nov 2026",
+        "url": "https://www.hhs.gov/sites/default/files/hhs-503a-peptide-enforcement-discretion-policy-appendix-b.pdf"
       }
-    ]
+    ],
+    "hhs_policy": {
+      "date": "2026-10-30",
+      "seen": "2026-11-07",
+      "src": 13,
+      "notice_src": 12,
+      "url": "https://www.hhs.gov/sites/default/files/hhs-503a-peptide-enforcement-discretion-policy-appendix-b.pdf",
+      "substances": [
+        "bpc-157",
+        "epitalon",
+        "kpv",
+        "mots-c",
+        "semax",
+        "tb-500"
+      ],
+      "note": "HHS said on 30 Oct 2026 it does not intend to act against licensed pharmacies that compound it for one patient on a prescription, under 10 conditions; that is not FDA approval",
+      "note_many": "HHS said on 30 Oct 2026 it does not intend to act against licensed pharmacies that compound them for one patient on a prescription, under 10 conditions; that is not FDA approval",
+      "meta": "since 30 Oct 2026 HHS allows limited pharmacy compounding under conditions",
+      "status": "Not approved; HHS allows limited pharmacy compounding (Oct 2026)",
+      "sentence": "On 30 Oct 2026 the US Department of Health and Human Services (HHS) said it does not intend to act against licensed pharmacies that compound {what} for one patient on a prescription, under 10 conditions. That is not FDA approval, and research-use vials are still not approved for use in people.",
+      "does": "Covered by the HHS compounding policy of Oct 2026.",
+      "conditions": [
+        "The peptide is on the policy's list (Appendix A).",
+        "It has the identity and route of use the policy describes (Appendix B).",
+        "It comes from a facility registered with the FDA, with a valid certificate of analysis (COA) that meets the FDA's test criteria.",
+        "Its original maker is registered with the FDA and follows good manufacturing practice, and the COA names the factory.",
+        "The pharmacy reports what it makes, serious side effects and quality problems to the FDA (MedWatch) and to the states involved.",
+        "The label says \"This is a compounded drug product. Not for resale.\"",
+        "Each product has one active ingredient from the list.",
+        "A pill or other oral form needs records that it is absorbed well enough in people.",
+        "The only device packed with it is an FDA 510(k)-cleared syringe.",
+        "It meets every other rule of the federal drug law, including clean conditions and a prescription for each patient."
+      ],
+      "routes": {
+        "bpc-157": "under the skin, into a muscle, by mouth or on the skin",
+        "tb-500": "injection under the skin or into a muscle",
+        "epitalon": "injection under the skin or into a muscle, in courses with breaks",
+        "mots-c": "injection under the skin or into a muscle",
+        "kpv": "by mouth or on the skin",
+        "semax": "in the nose"
+      }
+    }
   },
   "creators": {
     "checked": "2026-10-25",

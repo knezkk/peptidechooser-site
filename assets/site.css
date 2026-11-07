@@ -189,20 +189,24 @@ html:not(.motion) .fig3d-layer { transition: none; }
 .flow-solo { --thumb-row: 52px; }
 .flow .opt { display: grid; grid-template-columns: minmax(0, 1fr) var(--cta-width); gap: 4px 16px; align-items: center; padding: 8px 14px; }
 .flow .opt > .opt-more { grid-column: 1; }
-.opt-sum { display: grid; grid-template-columns: var(--thumb-row) 32px minmax(0, 1fr); grid-template-areas: "t m name" "t chip chip" "t plain plain"; align-items: center; gap: 3px 8px; cursor: pointer; list-style: none; min-height: var(--touch); border-radius: var(--radius-control); }
+.opt-sum { display: grid; grid-template-columns: var(--thumb-row) 32px minmax(0, 1fr); align-items: center; gap: 3px 8px; cursor: pointer; list-style: none; min-height: var(--touch); border-radius: var(--radius-control); }
 .opt-sum > .thumb { grid-area: t; --thumb: var(--thumb-row); align-self: start; border-radius: var(--radius-art); }
 .opt-m { grid-area: m; display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: var(--radius-control); background: var(--neutral-tint); transition: background-color var(--motion-quick); }
 .opt-m::before { content: ""; width: 10px; height: 10px; margin-left: -4px; border-right: 2.5px solid var(--ink); border-bottom: 2.5px solid var(--ink); transform: rotate(-45deg); transition: transform var(--motion-quick); }
 .opt-sum:hover .opt-m { background: var(--line-strong); }
 .opt-more[open] .opt-m::before { margin-left: 0; margin-top: -4px; transform: rotate(45deg); }
-.opt-sum .name { grid-area: name; }
+/* Option rows, layout D (pages/parts.md): "<name> · <what it does>", then the status chip and the prescription fact. */
+.opt-sum { grid-template-areas: "t m one" "t m two"; row-gap: 2px; }
+.opt-one { grid-area: one; line-height: 1.35; }
+.opt-sum .opt-one .name { display: inline; }
+.opt-two { grid-area: two; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; font-size: var(--small-size); color: var(--ink-2); }
+.opt-body .opt-plain { color: var(--ink); }
 .nb { white-space: nowrap; }
-.opt-sum .opt-chips { grid-area: chip; display: flex; flex-wrap: wrap; gap: 4px 6px; justify-self: start; }
+.opt-sum .opt-chips { display: flex; flex-wrap: wrap; gap: 4px 6px; }
 .opt-sum::-webkit-details-marker { display: none; }
 .opt-sum .name { font-weight: 700; }
 /* Home v2 (3 Nov 2026): the collapsed row says what the option is in one plain sentence, then its price in bold. */
 .opt-sum .opt-plain { grid-area: plain; font-size: var(--small-size); line-height: 1.45; color: var(--ink-2); }
-.opt-sum .opt-plain strong { color: var(--ink); }
 .opt-instead { margin: 10px 0 0; font-size: var(--small-size); color: var(--ink-2); }
 /* The price and its footnote stay on one line; the goal's online-clinic plan line goes under them (pages.md, Home). */
 .opt-body { padding: 4px 0 6px calc(var(--thumb-row) + 8px); display: grid; gap: 4px; }
@@ -441,7 +445,7 @@ body > .crumbs { width: -moz-available; width: -webkit-fill-available; width: st
   .creators { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (min-width: 900px) {
-  .flow .opt { min-height: 96px; }
+  .flow .opt { min-height: 112px; } /* equal rows (A4): two lines of line 1 and a wrapped line 2 */
   .hero-pair { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0 48px; align-items: start; }
   .hero-pair .what-is { margin: 0; }
   .hero-grid { grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: 48px; align-items: start; }
