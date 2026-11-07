@@ -117,6 +117,7 @@ LEGIT_H2 = re.compile(r"Is [^<>]{1,80} legit\? What we can check")
 LEGIT_CLOSE = "These are the facts we hold; we do not call any seller legit or safe, and we never link to the shop."
 LEGIT_CLOSE_CLINIC = ("These are the facts we hold; we do not call any seller legit or safe. We do not link to the clinic "
                       "until it has a paid link, and we say so when it does.")
+LEGIT_CLOSE_PAID = "These are the facts we hold; we do not call any seller legit or safe."
 
 
 def legit_allowed(name, text, h2s):
@@ -127,7 +128,7 @@ def legit_allowed(name, text, h2s):
     for h in h2s:
         if LEGIT_H2.fullmatch(h.strip()):
             text = text.replace(h.strip(), " ")
-    return text.replace(LEGIT_CLOSE, " ").replace(LEGIT_CLOSE_CLINIC, " ")
+    return text.replace(LEGIT_CLOSE, " ").replace(LEGIT_CLOSE_CLINIC, " ").replace(LEGIT_CLOSE_PAID, " ")
 
 
 def legit_cases():
@@ -893,6 +894,9 @@ def check_parts(P):
             ok = min(1, len(nolink.findall(legend.group(1)))) if legend else 0
         elif re.fullmatch(r"sellers/[^/]+/index\.html", name):
             ok = sum(len(nolink.findall(x)) for x in re.findall(r'<p class="small legit-close">(.*?)</p>', t, re.S))
+            # a clinic with a paid link never says it has none (owner, 5 Nov 2026)
+            if 'class="btn btn-action' in t and "until it has a paid link" in t:
+                errs.append(f"{name}: has a paid link but says 'We do not link to the clinic until it has a paid link'")
         else:
             ok = 0
         if said > ok:
