@@ -7,16 +7,19 @@ import collections
 import json
 import os
 import re
+import subprocess
 import sys
+from datetime import date
 from html import escape, unescape
 from html.parser import HTMLParser
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+import guides  # noqa: E402
 import paid  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
-NO_LISTING_TEXTS = ("Any pharmacy, no prescription", "On prescription; no clinic prices yet",
+NO_LISTING_TEXTS = ("Any pharmacy, no prescription", "at any pharmacy, no prescription", "On prescription; no clinic prices yet",
                     "Sold in creams and serums; no prices checked", "No listings yet")
 DIST = ROOT / "dist"
 SITE = "https://peptidechooser.com"
@@ -213,6 +216,27 @@ def check_seo(P):
     return errs
 
 
+def article_date_errs(name, node):
+    """An Article's dates are the commit history's (owner answer to #96 Q1 A, 5 Nov 2026; pages/learn.md, Schema), never the
+    build date: a date equal to today passes only when the history gives that very date, because a guide's text can change
+    today. Only a guide not committed yet may have none (the deploy builds from commits, so every guide live has them)."""
+    errs = []
+    slug = node.get("mainEntityOfPage", "").rstrip("/").rsplit("/", 1)[-1]
+    want = guides.guide_dates().get(slug)
+    if not node.get("headline") or not node.get("author"):
+        errs.append(f"{name}: Article without headline or author")
+    if want is None:
+        if node.get("datePublished") or node.get("dateModified"):
+            errs.append(f"{name}: Article dates on a guide the commit history does not hold")
+        return errs
+    today = date.today().isoformat()
+    for key, day in zip(("datePublished", "dateModified"), want):
+        got = node.get(key)
+        if got != day:
+            errs.append(f"{name}: Article {key} {got}, the commit history says {day}" + (" (the build date)" if got == today else ""))
+    return errs
+
+
 def check_schema(P):
     errs = []
     for name, p in P.items():
@@ -233,8 +257,8 @@ def check_schema(P):
                             errs.append(f"{name}: breadcrumb to missing {rel}")
                 if t not in ("Organization", "WebSite", "BreadcrumbList", "Article", "ItemList"):
                     errs.append(f"{name}: schema type {t} not in the allowed list (6.3)")
-                if t == "Article" and not all(node.get(k) for k in ("headline", "datePublished", "author")):
-                    errs.append(f"{name}: Article without headline, datePublished or author")
+                if t == "Article":
+                    errs.extend(article_date_errs(name, node))
                 if t == "ItemList" and not node.get("itemListElement"):
                     errs.append(f"{name}: ItemList without items")
         # The type each page needs (owner task 2 Nov 2026): Organization on Home, BreadcrumbList on every inner page,
@@ -384,6 +408,8 @@ def check_paid_plumbing():
         for href in sorted(set(GREEN_HREF.findall(html))):
             if paid.out_dir(href) not in have:
                 errs.append(f"{name}: green button to {href}, which has no redirect page")
+            elif not (DIST / "sellers" / want[paid.out_dir(href)]["seller_slug"] / "index.html").exists():
+                errs.append(f"{name}: green button to {href}, but the seller has no page on the site")
     return errs
 
 
@@ -694,7 +720,7 @@ def check_parts(P):
                 if m and "hidden" not in m.group(1):
                     errs.append(f"{name}: the {cls} block shows without JavaScript")
             subs = {s for a, _ in trs for s in re.findall(r'data-subs="([^"]*)"', a or "")[0:1] for s in s.split()}
-            sel = re.search(r'<select class="input" id="sellers-sub">(.*?)</select>', html, re.S)
+            sel = re.search(r'<select class="input" id="sellers-sub"[^>]*>(.*?)</select>', html, re.S)
             for v in re.findall(r'<option value="([^"]+)"', sel.group(1) if sel else ""):
                 if v not in subs:
                     errs.append(f"{name}: the substance filter offers {v}, which no row carries")
@@ -1078,11 +1104,21 @@ def check_parts(P):
     # A real logo (pages/parts.md, Seller tile): a file in assets/logos/ needs its entry with a source, and shows beside the clinic's H1
     logos = json.loads((ROOT / "data" / "seller_logos.json").read_text(encoding="utf-8"))
     for f in sorted((ROOT / "assets" / "logos").glob("*")) if (ROOT / "assets" / "logos").exists() else []:
-        e = logos.get(f.stem) or {}
+        e = logos.get(f.stem.removesuffix("-wordmark")) or {}
         if not (e.get("logo_source") and e.get("logo_checked_at")):
             errs.append(f"assets/logos/{f.name}: no source and date in data/seller_logos.json")
         if not (DIST / "assets" / "logos" / f.name).exists():
             errs.append(f"assets/logos/{f.name}: not in the build")
+        if not f.stem.endswith("-wordmark") and not (f.parent / f"{f.stem}-wordmark.png").exists() and not (f.parent / f"{f.stem}-wordmark.svg").exists():
+            errs.append(f"assets/logos/{f.name}: no wordmark file for the H1 slot")
+    # The goal photos (pages/parts.md, Goal photos): a file in assets/photos/ needs its entry with photographer, URL, licence and date
+    photos = json.loads((ROOT / "data" / "goal_photos.json").read_text(encoding="utf-8"))
+    for f in sorted((ROOT / "assets" / "photos").glob("*")):
+        e = photos.get(f.stem.removeprefix("goal-").removesuffix("-450")) or {}
+        if not all(e.get(k) for k in ("photographer", "url", "licence", "checked_at")):
+            errs.append(f"assets/photos/{f.name}: no photographer, URL, licence and date in data/goal_photos.json")
+        if not (DIST / "assets" / "photos" / f.name).exists():
+            errs.append(f"assets/photos/{f.name}: not in the build")
     # Tools block (pages/goal.md, Category): a coupon row stays hidden until its seller's data sets the flag; never a research-use shop
     for g in site.get("goals") or []:
         page = DIST / g["slug"] / "index.html"
@@ -1121,11 +1157,45 @@ def seller_domains():
     return {re.sub(r"^www\.", "", h.lower()) for h in hosts if h}
 
 
+MONTHS = {m: i + 1 for i, m in enumerate("Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec".split())}
+DATE_STAMP = re.compile(r"\b(Last updated|Tracked since|First seen(?: by us)?:?|Subscribers as of|As of|[Cc]hecked(?: on)?:?)\s+"
+                        r"(?:(\d{1,2}) )?(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) (20\d\d)\b")
+
+
+def check_dates(site_text):
+    """Rule 4: a date a reader sees as ours ("Checked", "Prices checked", "Last updated", "Tracked since", "First seen", "As of")
+    is a date in data/site.json, so never the build clock or typed. "Last updated" on /privacy/ and /disclosure/ is the date of
+    the commit that changed their text. A source's own stamp ("current as of") is the source's and is not ours to check."""
+    errs = []
+    days = set(re.findall(r"\d{4}-\d{2}-\d{2}", site_text))
+    # a source note in the data can carry its date in words ("checked 2 Nov 2026")
+    days |= {f"{y}-{MONTHS[m]:02d}-{int(d):02d}" for d, m, y in re.findall(r"\b(\d{1,2}) (Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) (20\d\d)\b", site_text)}
+    months = {d[:7] for d in days}
+    commits = set(subprocess.run(["git", "log", "--format=%cs", "--", "build.py", "paid.py"], cwd=ROOT, capture_output=True, text=True).stdout.split())
+    for name, html in page_texts():
+        if name.startswith("out/"):
+            continue
+        text = re.sub(r"<(script|style|head)\b.*?</\1>", " ", html, flags=re.S)
+        text = " ".join(unescape(re.sub(r"<[^>]+>", " ", text)).split())
+        for label, day, mon, year in sorted(set(DATE_STAMP.findall(text))):
+            month = f"{year}-{MONTHS[mon]:02d}"
+            iso = f"{month}-{int(day):02d}" if day else ""
+            if label == "Last updated" and name in ("privacy/index.html", "disclosure/index.html"):
+                ok = iso in commits
+            else:
+                ok = iso in days if day else month in months
+            if not ok:
+                errs.append(f"{name}: \"{label} {(day + ' ') if day else ''}{mon} {year}\" is not a date in the data")
+    return errs
+
+
 def check_data(P):
     # Rulebook 11.8: no number without a date and a source. When the database statuses are in site.json
     # (tools/pull_data.py), every one of them must carry its source link and a date.
     errs = []
-    d = json.loads((ROOT / "data" / "site.json").read_text(encoding="utf-8"))
+    site_text = (ROOT / "data" / "site.json").read_text(encoding="utf-8")
+    errs += check_dates(site_text)
+    d = json.loads(site_text)
     for r in d.get("legal_db") or []:
         name = r.get("substance_slug", "?")
         if not r.get("source_url"):
@@ -1152,6 +1222,67 @@ def check_data(P):
     return errs
 
 
+def check_events(P):
+    """Measurement (pages/every-page.md; owner decision 5 Nov 2026): every button the events script reads carries its data
+    attributes, a window's row count is the window's real count, nothing typed can become a parameter, and the script's one
+    gtag call stands behind the consent gate."""
+    errs = []
+    tag = lambda cls, html: re.findall(rf'<\w+[^>]*class="(?:[^"]* )?{cls}(?: [^"]*)?"[^>]*>', html)
+    texts = page_texts()
+    windows = {n[len("windows/"):-len(".json")]: h for n, h in texts if n.startswith("windows/")}
+    for name, html in texts:
+        for t in tag("btn-action", html):
+            if 'data-ev="paid_link_click"' not in t or "data-ev-seller=" not in t or "data-ev-out_path=" not in t:
+                errs.append(f"{name}: green button without its event attributes: {t[:120]}")
+        for t in tag("btn-wait", html):
+            if "data-ev=" not in t and "data-card=" not in t:
+                errs.append(f"{name}: btn-wait without its event attributes: {t[:120]}")
+        for t in re.findall(r'<a [^>]*class="btn btn-wait[^"]*"[^>]*>\s*See plans', html):
+            if 'data-ev="see_plans_click"' not in t or "data-ev-seller=" not in t:
+                errs.append(f"{name}: See plans without seller: {t[:120]}")
+        for t in tag("sellers-open", html):
+            need = ('data-ev="prices_window_open"', "data-ev-substance=", "data-ev-window_kind=", "data-ev-rows=")
+            if not all(x in t for x in need):
+                errs.append(f"{name}: window button without its event attributes: {t[:120]}")
+                continue
+            key, rows = re.search(r'data-dlg="([^"]+)"', t).group(1), int(re.search(r'data-ev-rows="(\d+)"', t).group(1))
+            inline = re.search(rf'<dialog[^>]*id="{re.escape(key)}".*?</dialog>', html, re.S)
+            win = inline.group(0) if inline else windows.get(key, "")
+            real = sum(b.count("<tr") for b in re.findall(r"<tbody.*?</tbody>", win, re.S))
+            if win and real != rows:
+                errs.append(f"{name}: window {key} says {rows} rows, holds {real}")
+        for t in tag("decide-card", html):
+            if "data-card=" not in t:
+                errs.append(f"{name}: decision card without data-card")
+        for t in tag("pin", html):
+            if "data-goal=" not in t:
+                errs.append(f"{name}: body figure pin without data-goal")
+        for t in tag("goal-item", html):
+            if 'data-ev="goal_pick"' not in t or "data-ev-goal=" not in t:
+                errs.append(f"{name}: goal chooser without its event attributes")
+        for t in tag("legal-check", html):
+            if 'data-ev="legal_check"' not in t:
+                errs.append(f"{name}: the Check form without data-ev")
+        for t in tag("sub-form", html):
+            if 'data-ev="newsletter_submit"' not in t:
+                errs.append(f"{name}: the newsletter form without data-ev")
+        for t in re.findall(r"<input[^>]*data-filter=[^>]*>", html):
+            if 'data-value="text"' not in t:
+                errs.append(f"{name}: a text filter would send what was typed: {t[:120]}")
+        if "gtag('event'" in html:
+            errs.append(f"{name}: a gtag event outside the events script")
+        if 'src="/assets/nav.js"' in html and "<body data-pt=" not in html:
+            errs.append(f"{name}: no page type on <body>")
+    nav = (DIST / "assets" / "nav.js").read_text(encoding="utf-8")
+    gate, calls = nav.find("if(!window.pcGA)return;"), nav.count("gtag(")
+    if gate < 0 or calls != 1 or nav.find("gtag(") < gate:
+        errs.append(f"assets/nav.js: {calls} gtag call(s), the one allowed call must stand behind the consent gate")
+    # allowed: an attribute's value, the length of what was typed, a <select>'s value (a text field carries data-value="text")
+    if re.search(r"\.value\b(?!\.trim\(\)\.length)", re.sub(r"\ba\.value|getAttribute\('data-value'\)\|\|i\.value", "", nav.split("window.pcEv=send")[1])):
+        errs.append("assets/nav.js: the events script reads a typed value")
+    return errs
+
+
 def check_book(P):
     """The book stays split (owner decision, 5 Nov 2026): README.md under 10 KB, no file in design/pages/ over 20 KB, and
     design/pages.md lists every file in design/pages/."""
@@ -1169,7 +1300,7 @@ def check_book(P):
     return errs
 
 
-CHECKS = {"words": check_words, "seo": check_seo, "schema": check_schema, "parts": check_parts, "data": check_data, "book": check_book}
+CHECKS = {"words": check_words, "seo": check_seo, "schema": check_schema, "parts": check_parts, "data": check_data, "book": check_book, "events": check_events}
 
 # Plan names against their form (owner task w2, 3 Nov 2026): a clinic's own plan name can name another form than the
 # plan's `dosage_form` ("Ozempic Pill" for a pen). The site cannot change data, so this only warns, never fails, and the

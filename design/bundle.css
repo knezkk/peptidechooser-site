@@ -631,7 +631,7 @@ p.not-in{margin:4px 0 0}
    a monogram at 35% of the size until the data carries an approved logo; a research-use shop is always grey. */
 .tile{--tile:40px;display:inline-flex;align-items:center;justify-content:center;flex:none;box-sizing:border-box;width:var(--tile);height:var(--tile);border-radius:22%;overflow:hidden;font:800 calc(var(--tile)*.35)/1 var(--font-text);color:var(--white)}
 .tile-24{--tile:24px}.tile-28{--tile:28px}.tile-40{--tile:40px}.tile-72{--tile:72px}
-.tile-logo{background:var(--white);border:1px solid var(--line);padding:12%}
+.tile-logo{background:var(--white);border:1px solid var(--line);padding:calc(var(--tile)*.12)}
 .tile-logo img{width:100%;height:100%;object-fit:contain}
 .tile-shop{background:var(--paper-2);color:var(--ink-2);border:1px solid var(--line)}
 .tile-c1{background:var(--tile-1)}.tile-c2{background:var(--tile-2)}.tile-c3{background:var(--tile-3)}.tile-c4{background:var(--tile-4)}.tile-c5{background:var(--tile-5)}
@@ -650,6 +650,7 @@ p.not-in{margin:4px 0 0}
 .goal-art{flex:none;fill:none;stroke:var(--g,var(--clinic));stroke-width:2.4;stroke-linecap:round}
 .goal-c-hair{--g:var(--goal-hair);--gt:var(--goal-hair-tint)}.goal-c-skin{--g:var(--goal-skin);--gt:var(--goal-skin-tint)}.goal-c-weight-loss{--g:var(--goal-weight-loss);--gt:var(--goal-weight-loss-tint)}.goal-c-muscle{--g:var(--goal-muscle);--gt:var(--goal-muscle-tint)}.goal-c-recovery{--g:var(--goal-recovery);--gt:var(--goal-recovery-tint)}.goal-c-libido{--g:var(--goal-libido);--gt:var(--goal-libido-tint)}.goal-c-longevity{--g:var(--goal-longevity);--gt:var(--goal-longevity-tint)}
 .goal-pic{display:flex;align-items:center;justify-content:center;height:84px;margin-bottom:10px;border-radius:var(--radius-art-s);background:var(--gt)}
+.goal-photo{display:block;width:100%;height:100%;object-fit:cover;border-radius:inherit}
 .goal-panel{display:none}
 @media (min-width:900px){.goal-panel{display:flex;align-items:center;justify-content:center;height:220px;border-radius:var(--radius-art-l);background:var(--gt,var(--paper-2))}}
 @media (max-width:640px){.goal-pic{height:60px}.goal-pic .goal-art{width:34px;height:34px}}

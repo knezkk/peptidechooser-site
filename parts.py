@@ -2,11 +2,16 @@
 drawing and the goal drawing. The drawings live in one sprite, assets/art.svg. Every picture has a fixed box, so nothing shifts
 as it loads, and is hidden from screen readers unless it is the only place a name appears.
 """
+import json
 import re
 import zlib
 from html import escape
+from pathlib import Path
 
 ART = "/assets/art.svg"
+# The goal photos (design/pages/parts.md, Goal photos): one entry per goal, with its source and licence.
+_PHOTOS = Path(__file__).parent / "data" / "goal_photos.json"
+GOAL_PHOTOS = json.loads(_PHOTOS.read_text(encoding="utf-8")) if _PHOTOS.exists() else {}
 # trailing words a monogram skips: Mochi Health -> "Mo", Strut Health -> "St"; Good Life Meds -> "GL"
 GENERIC = {"health", "clinic", "medical", "wellness", "telehealth", "inc", "llc", "co"}
 DRAWINGS = ("pill-bottle", "pen-brand", "foam-bottle", "serum-dropper", "cream-tube", "vial-compounded", "vial-research", "vial-brand")
@@ -74,13 +79,25 @@ def plan_drawing(r):
     a form word in its name; anything else has no drawing."""
     if r.get("product_kind") == "compounded":
         return "vial-compounded"
-    return form_drawing((r.get("dosage_form") or "").replace("_", " ")) or form_drawing(r.get("plan_name"))
+    # Drops are a liquid (design/pages/parts.md, the one mapping); only a plan's own form says so, because "drops" in running text can mean something else.
+    form = (r.get("dosage_form") or "").replace("_", " ").replace("drops", "liquid")
+    return form_drawing(form) or form_drawing(r.get("plan_name"))
 
 
 def plan_picture(r):
     """A plan's drawing; a plan whose data names no form at all keeps the space."""
     key = plan_drawing(r)
     return thumb(key, no_form=not key and not r.get("dosage_form"))
+
+
+def goal_photo(slug, art_size, small=False):
+    """A goal's photo in its panel; decorative, because the goal's name stands beside it. A goal without an entry keeps its drawing.
+    Lazy, so a phone never loads the goal page's panel, which is not drawn there."""
+    e = GOAL_PHOTOS.get(slug)
+    if not e:
+        return goal_art(slug, art_size)
+    src, w, h = (e["file_small"], 450, 300) if small else (e["file"], 900, 600)
+    return f'<img class="goal-photo" src="{escape(src)}" alt="" width="{w}" height="{h}" loading="lazy" decoding="async">'
 
 
 def goal_art(slug, size):

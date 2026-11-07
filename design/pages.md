@@ -16,4 +16,4 @@ One file per page type (split 5 Nov 2026). An older note saying "pages.md, <sect
 - [trust.md](pages/trust.md): Trust pages, Sources `/sources/`, Paid link redirect page `/out/<slug>/`
 - [search.md](pages/search.md): Search `/search/`
 - [windows.md](pages/windows.md): Seller window, Clinic window
-- [parts.md](pages/parts.md): Buttons, Option rows, Pictures, Seller tile, Product drawings, Goal drawings, Logo, Medical cues (figure, chips, price pad)
+- [parts.md](pages/parts.md): Buttons, Option rows, Pictures, Seller tile, Product drawings, Goal drawings, Goal photos, Logo, Medical cues (figure, chips, price pad)

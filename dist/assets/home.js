@@ -1,7 +1,7 @@
 
 (function(){var f=document.querySelector('.legal-check');if(!f)return;
 f.addEventListener('submit',function(e){var S=window.pcSearch;if(!S)return;e.preventDefault();var v=document.getElementById('legal-q').value.trim();
-S.load(function(d){var r=S.find(d,v,20).filter(function(x){return x.type==='Peptide';});location.href=r.length?r[0].url:'/peptides/';});});})();
+S.load(function(d){var r=S.find(d,v,20).filter(function(x){return x.type==='Peptide';});if(window.pcEv)pcEv(f.getAttribute('data-ev'),{substance:r.length?r[0].url.split('/')[2]:'none'});location.href=r.length?r[0].url:'/peptides/';});});})();
 
 
 window.pcFig=function(box,choose){
@@ -41,10 +41,11 @@ if(e.target.closest('.fig3d-back')){out(true);return;}
 var p=e.target.closest('.pin');
 if(cur){if(!p)out(false);return;}
 var best=null,d=Infinity;pins.forEach(function(x){var q=x.getBoundingClientRect(),n=Math.hypot(e.clientX-q.left-q.width/2,e.clientY-q.top-q.height/2);if(n<d){d=n;best=x;}});
-if(best&&d<=Math.max(44,box.offsetHeight*0.2))choose(best.getAttribute('data-goal'));});
+if(best&&d<=Math.max(44,box.offsetHeight*0.2))pinPick(best.getAttribute('data-goal'));});
+function pinPick(k){if(window.pcEv)pcEv('goal_pick',{goal:k});choose(k);}
 function pre(e){var p=e.target.closest&&e.target.closest('.pin');if(p)ensure(p.getAttribute('data-goal'));}
 box.addEventListener('mouseover',pre);box.addEventListener('focusin',pre);
-box.addEventListener('keydown',function(e){if((e.key==='Enter'||e.key===' ')&&e.target.classList.contains('pin')){e.preventDefault();choose(e.target.getAttribute('data-goal'));}});
+box.addEventListener('keydown',function(e){if((e.key==='Enter'||e.key===' ')&&e.target.classList.contains('pin')){e.preventDefault();pinPick(e.target.getAttribute('data-goal'));}});
 document.addEventListener('keydown',function(e){if(e.key==='Escape'&&cur)out(box.contains(document.activeElement));});
 return {go:go,out:out,preload:ensure};};
 
@@ -74,7 +75,7 @@ root.addEventListener('mouseleave',function(){hover(null);});
 root.addEventListener('keydown',function(e){var t=e.target;
 // Arrow keys move to the next or previous chip and choose it (Tab, Enter and Space work as on any button).
 var i=chips.indexOf(t);if(i<0)return;var d={ArrowRight:1,ArrowDown:1,ArrowLeft:-1,ArrowUp:-1}[e.key];if(!d)return;
-e.preventDefault();var n=chips[(i+d+chips.length)%chips.length];n.focus();act(n.getAttribute('data-goal'));});
+e.preventDefault();var n=chips[(i+d+chips.length)%chips.length];n.focus();if(window.pcEv)pcEv('goal_pick',{goal:n.getAttribute('data-goal')});act(n.getAttribute('data-goal'));});
 // /#goals-<slug> (the header's goal menu) chooses that goal on load and when the hash changes.
 function fromHash(){var m=location.hash.match(/^#goals-([a-z0-9-]+)$/);
 if(m&&root.querySelector('.goal-item[data-goal="'+m[1]+'"]')){act(m[1]);root.scrollIntoView();}}
@@ -86,5 +87,5 @@ document.addEventListener('click',function(e){var b=e.target.closest('.sellers-o
 if(d){e.preventDefault();d.showModal();return;}var src=b.getAttribute('data-src');if(!src)return;e.preventDefault();
 fetch(src).then(function(r){return r.json();}).then(function(j){document.querySelector('.sellers-all').insertAdjacentHTML('beforeend',j.html);
 var n=document.getElementById(b.getAttribute('data-dlg'));n.querySelectorAll('tbody > tr').forEach(function(t){t.style.opacity='1';});
-n.showModal();}).catch(function(){location.href=b.href;});return;}
+if(window.pcState)pcState();n.showModal();}).catch(function(){location.href=b.href;});return;}
 var d=e.target.closest('.sellers-dlg');if(d&&e.target===d)d.close();});})();
