@@ -4062,7 +4062,7 @@ def pep_description(slug):
     """110 to 160 characters from the same facts: status, the price, the goal pages, the check date."""
     s, n = pep_status(slug), pep_short(slug)
     # the HHS policy's long note does not fit a description; its short form does (legal.hhs_policy.meta)
-    parts = [f'{n}: {s["label"]}, {HHS["meta"] if HHS and s["sentence"] in (HHS["note"], HHS["note_many"]) else s.get("meta") or s["sentence"]}.']
+    parts = [f'{n}{f" ({NAMES[slug][0]})" if NAMES.get(slug) else ""}: {s["label"]}, {HHS["meta"] if HHS and s["sentence"] in (HHS["note"], HHS["note_many"]) else s.get("meta") or s["sentence"]}.']
     low = pep_low_shop(slug)
     plan = pep_low_plan(slug) if pep_group(s) == "approved" else None
     if low:
@@ -4417,6 +4417,87 @@ def pep_next(slug):
     return f'<div><h2 class="h-sources">What to do next</h2><ul class="next-list">{"".join(links)}</ul></div>' if links else ""
 
 
+# Other names (data/names.json; SEO round c, queue block 9): a substance sold or searched under another name ("PT-141")
+# gets a section and questions on its page, from data; its title and H1 stay (rule 8).
+NAMES = json.loads((ROOT / "data" / "names.json").read_text(encoding="utf-8"))["names"] if (ROOT / "data" / "names.json").exists() else {}
+
+
+def pep_shop_row(slug):
+    """The goal page's research-use row for an approved substance ("PT-141 from online shops"), or None."""
+    return next((p for _, p in pep_goals(slug) if subs_of(p) == [slug] and p.get("rx_word") == "research use only"), None)
+
+
+def pep_alias_facts(slug):
+    """(alias, letters that quote it, letters that name the substance, clinic plans that carry it) or None."""
+    if not NAMES.get(slug):
+        return None
+    alias = NAMES[slug][0]
+    rows = LETTER_SUBS.get(slug, []) if LETTER_SUBS_ON else []
+    quoted = [r for r in rows if alias.lower() in (r.get("first_mention") or "").lower()]
+    plans = [r for r in pep_plans(slug) if alias.lower() in r["plan_name"].lower()]
+    return alias, quoted, rows, plans
+
+
+def pep_alias_section(slug):
+    f = pep_alias_facts(slug)
+    if not f:
+        return ""
+    alias, quoted, rows, plans = f
+    name, brands, shop = pep_short(slug), pep_brands(slug), pep_shop_row(slug)
+    out = [f"{alias} is another name for {name}."]
+    if brands and pep_group(pep_status(slug)) == "approved":
+        out.append(f'The FDA-approved product is {and_list(brands)}, on prescription.')
+    if shop:
+        g = next(g for g, p in pep_goals(slug) if p is shop)
+        out.append(f'<a href="/{g["slug"]}/">{escape(shop["name"])}</a>: {escape(shop["plain"])}')
+    if quoted:
+        out.append(f'{"All " + str(len(rows)) if len(quoted) == len(rows) else f"{len(quoted)} of the {len(rows)}"} FDA warning letter{"s" if len(rows) != 1 else ""} that name {name} call it {alias}.')
+    if plans:
+        out.append(f'{plural(len(plans), "online clinic plan")} we track {"carries" if len(plans) == 1 else "carry"} {alias} in {"its" if len(plans) == 1 else "their"} name.')
+    return f"""
+<section class="section" id="names">
+  <div class="wrap">
+    <div class="sec-hd"><div><h2>{escape(alias)} and {escape(name)}</h2><p>{" ".join(out)}</p></div></div>
+  </div>
+</section>"""
+
+
+def pep_faq_pairs(slug):
+    """The questions on a substance page with another name, answered from its data."""
+    f = pep_alias_facts(slug)
+    if not f:
+        return []
+    alias, quoted, rows, plans = f
+    s, name, brands, shop = pep_status(slug), pep_short(slug), pep_brands(slug), pep_shop_row(slug)
+    approved = pep_group(s) == "approved"
+    pairs = [(f"Is {alias} the same as {name}?",
+              f"Yes. {alias} is another name for {name}"
+              + (f", the molecule in {and_list(brands)}" if brands and approved else "") + "."
+              + (f' {"All " + str(len(rows)) if len(quoted) == len(rows) else f"{len(quoted)} of the {len(rows)}"} FDA warning letter{"s" if len(rows) != 1 else ""} that name it call it {alias}.' if quoted else ""))]
+    status = f'{name} is {s["label"]}' + (f" as {and_list(brands)}" if brands and approved else "") + f': {pep_means(slug)[0].lower()}{pep_means(slug)[1:]}'
+    pairs.append((f"Is {alias} FDA approved?",
+                  status + (f' {escape(shop["name"])}: {escape(shop["plain"])}' if shop else "")))
+    p = pep_plans(slug)
+    if p:
+        r = p[0]
+        what = ("compounded, made by a pharmacy and not FDA approved, even when an approved medicine has the same ingredient"
+                if r.get("product_kind") == "compounded" else "not compounded")
+        pairs.append((f"How much does {alias} cost?",
+                      f'The lowest plan at the online clinics we track is {usd(r["price_monthly"])} a month '
+                      f'({clinic_link(r["seller_slug"], seller_base(r["seller_name"]), True)}, {escape(clean(r["plan_name"]))}), {what}. '
+                      f'Checked {nice_date(r["last_seen"])}.'))
+    rx = pep_rx(slug, s)[0]
+    if approved:
+        pairs.append((f"Do I need a prescription for {alias}?",
+                      f"{rx}: {name} is an FDA-approved medicine." + (" Research-use shops sell it without one; that is not an approved product." if shop else "")))
+    if rows:
+        pairs.append((f"Has the FDA warned sellers of {alias}?",
+                      f'{plural(len(rows), "FDA warning letter")} we track {"names" if len(rows) == 1 else "name"} {name}, the latest on '
+                      f'{nice_date(max(r["letter_date"] for r in rows))}. '
+                      + ("These letters are about sellers and advertising, not about the medicine's approval." if approved else "")))
+    return pairs
+
+
 def pep_page(slug):
     """The substance page in one screen (pages.md, Peptide; owner task 3 Nov 2026, audit 11.3, B14, B15): H1, the author
     line, the status line in plain words, "Where to get it"; then the full table (tbl-compact); then Evidence and Facts
@@ -4437,6 +4518,8 @@ def pep_page(slug):
             + (f'<div class="panel-line pep-block" id="letters">{letters}</div>' if letters else ""))
     blocks = f'<div class="pep-body"><div class="pep-left">{left}</div><div class="pep-right">{pep_facts(slug, s)}{pep_guides(slug)}</div></div>'
     nxt = pep_next(slug)
+    faq = (f'\n<section class="section"><div class="wrap">{faq_block(pep_name(slug) + (f" ({NAMES[slug][0]})" if NAMES.get(slug) else ""), pep_faq_pairs(slug), "faq-h")}</div></section>'
+           if pep_faq_pairs(slug) else "")
     return f"""
 <section class="hero hero-goal seller-pg pep-pg">
   <div class="wrap">
@@ -4452,7 +4535,7 @@ def pep_page(slug):
   </div>
 </section>
 {f'<section class="section pep-sold" id="{sold_id or "sold"}"><div class="wrap">{sold}</div></section>' if sold else ""}
-<section class="section pep-blocks"><div class="wrap">{blocks}</div></section>
+<section class="section pep-blocks"><div class="wrap">{blocks}</div></section>{pep_alias_section(slug)}{faq}
 <section class="section pep-foot">
   <div class="wrap">
     <div class="goal-two">{nxt}
@@ -4606,7 +4689,7 @@ if PEPTIDE_SLUGS:
     for _x in PEP_THIN:
         NOINDEX.add(f"/peptides/{_x}/")
     for _x in PEPTIDE_SLUGS:
-        PAGES.append((f"/peptides/{_x}/", f"peptides/{_x}/index.html", pep_title(_x), pep_description(_x), pep_page(_x), "",
+        PAGES.append((f"/peptides/{_x}/", f"peptides/{_x}/index.html", pep_title(_x), pep_description(_x), pep_page(_x), faq_schema(pep_faq_pairs(_x)),
                       [("/peptides/", "Peptides"), (f"/peptides/{_x}/", pep_short(_x))]))
 
 
@@ -4865,6 +4948,77 @@ def cmp_next(links):
             f'<ul class="next-links">{items}</ul></section>') if items else ""
 
 
+def cmp_brand_table(a, b):
+    """Two FDA-approved substances that both have clinic plans (SEO round c, queue block 9): the approved brands, then the
+    cheapest brand or generic plan and the cheapest compounded plan per form, and how many clinics sell each, from data."""
+    if not (pep_group(pep_status(a)) == pep_group(pep_status(b)) == "approved" and pep_plans(a) and pep_plans(b)):
+        return ""
+    def forms(x, kind):
+        lows = sub_form_lows(x)
+        cell = "".join(f'<span class="cmp-form">{f} from <span class="num">{usd(r["price_monthly"])}/mo</span></span>'
+                       for (k, f), r in sorted(lows.items(), key=lambda i: float(i[1]["price_monthly"])) if k == kind)
+        return cell or "No plan we track"
+    def clinics(x, kind):
+        n = len({r["seller_slug"] for r in pep_plans(x) if ("compounded" if plan_kind(r) == "compounded" else
+                 "brand" if plan_kind(r) in ("brand", "generic") else None) == kind})
+        return f'<span class="num">{n}</span>'
+    na, nb = pep_short(a), pep_short(b)
+    rows = [("Approved brands", *(and_list(pep_brands(x)) or "None listed" for x in (a, b))),
+            ("Brand or generic plans", *(forms(x, "brand") for x in (a, b))),
+            ("Clinics with a brand or generic plan", *(clinics(x, "brand") for x in (a, b))),
+            ("Compounded plans", *(forms(x, "compounded") for x in (a, b))),
+            ("Clinics with a compounded plan", *(clinics(x, "compounded") for x in (a, b)))]
+    heads = [f'<span class="name">{escape(pep_short(x))}</span>' for x in (a, b)]  # the first table links the sides (check-parts)
+    return (f'<section class="cmp-brand" aria-labelledby="brand-h"><h2 id="brand-h">Brand and compounded {escape(na)} and {escape(nb)}</h2>'
+            "<p>A brand or generic plan is an FDA-approved product. A compounded plan is made by a pharmacy and not FDA approved, "
+            "even when an approved medicine has the same ingredient. Prices are the lowest monthly price per form at the online "
+            f"clinics we track, checked {nice_date(max(pep_checked(a), pep_checked(b)))}.</p>"
+            + cmp_table(f"Brand and compounded {na} and {nb}", heads, rows) + "</section>")
+
+
+def cmp_sub_faq_pairs(a, b):
+    """The questions on a substance pair page, answered from its data (SEO round c, queue block 9)."""
+    na, nb = pep_short(a), pep_short(b)
+    ans = cmp_sub_answer(a, b)
+    sa, sb = pep_status(a), pep_status(b)
+    approved = {x: pep_group(pep_status(x)) == "approved" for x in (a, b)}
+    if not any(approved.values()) and sa["sentence"] == sb["sentence"]:
+        st = ans[0] + f' For both, {sa["sentence"]}.'
+    else:
+        st = ans[0] + "".join(f' {pep_short(x)}: {pep_status(x)["sentence"]}.' for x in (a, b) if not approved[x])
+    br = [f"{pep_short(x)}: {and_list(pep_brands(x))}" for x in (a, b) if approved[x] and pep_brands(x)]
+    if br:
+        st += f' Approved brands: {"; ".join(br)}.'
+    st += f" Checked against the FDA lists on {nice_date(max(sa['seen'], sb['seen']))}."
+    pairs = [(f"Is {na} or {nb} FDA approved?", st)]
+    price = [x for x in ans[1:]]
+    # the cheapest compounded plan of a form the table shows, so the answer and the table agree
+    comp = [(pep_short(x), min((r for (k, _), r in sub_form_lows(x).items() if k == "compounded"),
+                               key=lambda r: float(r["price_monthly"]), default=None)) for x in (a, b) if approved[x]]
+    comp = [(n, r) for n, r in comp if r]
+    if len(comp) == 2:
+        price.append(f"Compounded plans, made by a pharmacy and not FDA approved, start at {usd(comp[0][1]['price_monthly'])} a month for "
+                     f"{comp[0][0]} and {usd(comp[1][1]['price_monthly'])} for {comp[1][0]}.")
+    if price:
+        pairs.append((f"Which is cheaper, {na} or {nb}?", " ".join(price)))
+    cnt = {x: len({r["seller_slug"] for r in (pep_plans(x) if approved[x] else pep_shops(x))}) for x in (a, b)}
+    say = lambda x: (f'{plural(cnt[x], "online clinic")} we track {"has" if cnt[x] == 1 else "have"} a plan for {pep_short(x)}' if approved[x] else
+                     f'{plural(cnt[x], "research-use shop" if pep_group(pep_status(x)) == "not" else "shop")} we show {"lists" if cnt[x] == 1 else "list"} {pep_short(x)}')
+    if cnt[a] and cnt[b] and approved[a] == approved[b]:
+        where = f"{say(a)}, and {cnt[b]} {'for' if approved[b] else 'list'} {nb}"
+    else:
+        where = "; ".join(say(x) for x in (a, b) if cnt[x])
+    if where:
+        pairs.append((f"Where can I get {na} or {nb}?", where + ". Each seller's page shows its checks."))
+    if LETTERS_ALL and LETTER_SUBS_ON:
+        la, lb = len(LETTER_SUBS.get(a, [])), len(LETTER_SUBS.get(b, []))
+        pairs.append((f"Do FDA warning letters name {na} or {nb}?",
+                      (f'{plural(la, "FDA warning letter")} we track {"names" if la == 1 else "name"} {na}' if la else f"No FDA warning letter we track names {na}")
+                      + (f', and {lb} {"names" if lb == 1 else "name"} {nb}.' if lb else f", and none names {nb}.")
+                      + (" These letters are about sellers and advertising, not about the medicine's approval." if all(approved.values()) else "")))
+    return pairs
+
+
 def cmp_sub_page(a, b, goals):
     na, nb = pep_short(a), pep_short(b)
     checked = max(pep_checked(a), pep_checked(b))
@@ -4886,10 +5040,14 @@ def cmp_sub_page(a, b, goals):
                    + ([(f"/sellers/#substance={a}", f"Sellers of {na} we track")] if a in sold and PROFILES else []))
     plans = [pep_low_plan(x) if pep_group(pep_status(x)) == "approved" else None for x in (a, b)]
     pre = f'?a=p.{plans[0]["seller_slug"]}.{plans[0]["plan_slug"]}&amp;b=p.{plans[1]["seller_slug"]}.{plans[1]["plan_slug"]}' if all(plans) else ""
+    more = cmp_brand_table(a, b) + faq_block(f"{na} and {nb}", cmp_sub_faq_pairs(a, b), "faq-h")
     body = cmp_body(f"{na} vs {nb}", checked, cmp_sub_answer(a, b), table,
                     [(f"/peptides/{a}/", na), (f"/peptides/{b}/", nb)], pre,
                     "Statuses come from the FDA lists; prices are the lowest we show, per mg at the shops or per month at the online clinics.",
-                    verdict, nxt)
+                    verdict, "")
+    # the brand table and the questions in their own section, then "What to do next" (SEO round c, queue block 9)
+    body += (f'<section class="section" id="more"><div class="wrap">{more}</div></section>\n' if more else "") \
+        + (f'<section class="section"><div class="wrap">{nxt}</div></section>\n' if nxt else "")
     desc = cmp_fit([f"{na} vs {nb}: {cmp_sub_answer(a, b)[0][:-1]}.", *cmp_sub_answer(a, b)[1:2],
                     f'Both on our {goals[0]["name"].lower()} page.', f"Checked {nice_date(checked)}.", "We compare and never sell."])
     return cmp_title(f"{na} vs {nb}", "FDA status and prices"), desc, body
@@ -5069,7 +5227,7 @@ if PEPTIDE_SLUGS and HAS_COMPARE:
         _t, _d, _body = cmp_sub_page(_a, _b, _goals)
         _w = sum(len({r["seller_slug"] for r in pep_shops(x)}) + len(pep_plans(x)) for x in (_a, _b))
         CMP_PAGES.append((cmp_path(_a, _b), f"{pep_short(_a)} vs {pep_short(_b)}", "sub", _w, _a, _b))
-        PAGES.append((cmp_path(_a, _b), cmp_path(_a, _b).strip("/") + "/index.html", _t, _d, _body, "",
+        PAGES.append((cmp_path(_a, _b), cmp_path(_a, _b).strip("/") + "/index.html", _t, _d, _body, faq_schema(cmp_sub_faq_pairs(_a, _b)),
                       [("/compare/", "Compare any two"), (cmp_path(_a, _b), f"{pep_short(_a)} vs {pep_short(_b)}")]))
 if CLINIC_PROFILES and HAS_COMPARE:
     for (_a, _b), _subs in cmp_clinic_pairs().items():

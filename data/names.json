@@ -1,0 +1,7 @@
+{
+  "rule": "Other names a substance is sold or searched under (SEO round c, queue block 9). A name here gets a section and questions on the substance's /peptides/ page; the page's title and H1 stay (rule 8). Counts on the page come from the data: the FDA letters that quote the name, the clinic plans that carry it.",
+  "source": "FDA warning letters of 24 Aug 2026 quote \"PT-141 (Bremelanotide)\" (for example TXP Innovations LLC, Peptide Partners LLC, NuScience Peptides LLC); our /libido/ page: \"PT-141 from online shops\", the same molecule as Vyleesi. Checked 7 Nov 2026.",
+  "names": {
+    "bremelanotide": ["PT-141"]
+  }
+}
