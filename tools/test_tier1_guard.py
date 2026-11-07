@@ -134,6 +134,20 @@ class NewPages(unittest.TestCase):
         live = {"/sellers/alan-meds/": None, "/sellers/gala-health/": None}
         self.assertFalse(self.follows("/sellers/gala-health/", GALA, live))
 
+    def test_run_42391831468_brand_in_brackets(self):
+        # BraveRX, 7 Nov 2026: a medicine no live page names yet, written by the description template
+        p = dict(GALA, description="Gala Health is an online clinic that prescribes Tadalafil (Cialis). 5 plans from $79/mo, "
+                                   "care fee not known. No FDA warning letter. 2 of 4 checks met on 7 Nov 2026.")
+        self.assertTrue(self.follows("/sellers/gala-health/", p))
+
+    def test_template_description_with_another_name_stops(self):
+        p = dict(GALA, description="Zealthy is an online clinic that prescribes Tadalafil (Cialis). No FDA warning letter.")
+        self.assertFalse(self.follows("/sellers/gala-health/", p))
+
+    def test_template_description_with_other_words_stops(self):
+        p = dict(GALA, description="Gala Health is an online clinic that prescribes Tadalafil (Cialis). The best clinic online.")
+        self.assertFalse(self.follows("/sellers/gala-health/", p))
+
     def test_substance_list_and_slots(self):
         live = {"/peptides/alpha/": page("Alpha: FDA status", "Alpha: FDA approved. On our skin page. Approved brand: Scenesse.", "Alpha")}
         new = page("Semaglutide: FDA status", "Semaglutide: FDA approved. On our hair growth and weight loss pages. Approved brand: Scenesse.", "Semaglutide")

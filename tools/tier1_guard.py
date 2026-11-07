@@ -290,7 +290,14 @@ def follows_template(path, page, live, facts):
             titles.add(theirs[0])
             h1s.add(theirs[1])
             said.update(theirs[2])
-    return mine[0] in titles and mine[1] in h1s and all(x in said for x in mine[2])
+    if mine[0] not in titles or mine[1] not in h1s:
+        return False
+    if all(x in said for x in mine[2]):
+        return True
+    # A new seller page's description may name medicines no live page names yet (a brand in brackets, "Tadalafil (Cialis)"):
+    # it passes when every sentence is one of the fixed description sentences and the name is the page's own.
+    slots = description_slots(page["description"]) if section == "sellers" else None
+    return bool(slots and slots[0] in page_names(path, page, facts[0]))
 
 
 def substance_names(pages):
