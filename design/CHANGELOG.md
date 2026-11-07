@@ -4,6 +4,8 @@ Newest row first.
 
 | Date | Change | Approved |
 |---|---|---|
+| 7 Nov 2026 | HHS compounding policy of 30 Oct 2026 (owner queue block 4, feat/hhs-legal-status): one wording in `legal.hhs_policy`, used by the legal tables, option rows, peptide and compare pages and the guides; /sources/ group "FDA and HHS"; no new part or colour | Waits for ODOBRENO SEO |
+| 7 Nov 2026 | Tier 1 guard (PR 115): a seller page's data-born meta description passes by rule. | ODOBRENO PRAVILA - Karlo - 5. 11. 2026; ODOBRENO DIZAJN - Karlo - 7. 11. 2026 |
 | 7 Nov 2026 | FAQ part (owner's assistant task, design/faq-block): questions as h3 between hairlines, answers from data; first on one seller page. | ODOBRENO DIZAJN and ODOBRENO SEO - Karlo - 7. 11. 2026 |
 | 5 Nov 2026 | /menopause/ goal page (owner task w3, feat/menopause): the Category template with four option rows and its own sources; a goal without its own drawing falls back to `paper-2` and the pill bottle; a goal page without a pin stays off Home, the menu, the goals strip and the 404 list (`CHOOSER_GOALS`, `goal_only`, `legal_noun`, `legal_note`) | ODOBRENO DIZAJN - Karlo - 7. 11. 2026 (book lines); ODOBRENO SEO - Karlo - 7. 11. 2026 (title, description, H1, row texts) |
 | 5 Nov 2026 | Tools block only with two priced tools (PR 112); Vitals Vault is a clinic with a seller page (PR 110). | ODOBRENO DIZAJN - Karlo - 5. 11. 2026 |

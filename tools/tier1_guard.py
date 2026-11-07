@@ -6,7 +6,12 @@ the live site. Words stop the deploy; numbers and data-born pages pass and are l
 - a page that differs only in digits, dates, prices or counts (the same words with other numbers) passes;
 - a new page under /sellers/, /compare/ or /peptides/ passes when its title and H1 are ones a live page of that section already
   has and every sentence of its description is one a live page of that section already uses, names, numbers and substances aside;
-- a page that left the build passes when its URL is now a redirect to a page that is built.
+- a page that left the build passes when its URL is now a redirect to a page that is built;
+- a seller page's meta description passes by rule when both the live and the built text are made only of the build's fixed
+  description sentences (build.py, clinic_description) for the same seller, and they differ only in the data slots: the
+  medicine list, the plan count, the price, the care fee, the letter count and the checks-met count, with their dates (owner,
+  5 Nov 2026; ODOBRENO PRAVILA - Karlo - 5. 11. 2026). The comparison blanks those slots in the template, not a word list.
+  A sentence the build does not write that way is hand-written and stops; the title and H1 must still be the same words.
 Anything else stops the deploy, unless the owner approved exactly that new text: under a line with the phrase
 ODOBRENO SEO - Karlo - <date>, in the commit message or in data/tier1-approved.txt, a line "<path> <hash>" as this script prints
 it. The hash is of the new text, so an approval covers that text and nothing later. When in doubt the guard stops: a text it
@@ -168,6 +173,45 @@ def only_numbers(old, new):
     return all(numbers_masked(old[k]) == numbers_masked(new[k]) for k in FIELDS)
 
 
+# The seller description's fixed sentences (build.py, clinic_description), in the order the build writes them. Each holds data
+# slots, blanked to the slot's name; the name in the first sentence must stay the same seller. The build drops facts from the
+# end to fit 160 characters, so a template may lose or gain a later sentence; it never writes one out of order.
+_D = rf"(?:{DATE.pattern})"
+DESCRIPTION_TEMPLATE = (
+    ("clinic", re.compile(r"(?P<name>.+?) is an online clinic(?: that prescribes (?:\d+ medicines|[^.]+?))?\.")),
+    ("plans", re.compile(r"\d+ plans? from \$[\d,.]+/mo, (?:care fee not known|no care fee|plus \$[\d,.]+/mo care)\.")),
+    ("letters", re.compile(rf"(?:No FDA warning letter|\d+ FDA warning letters?, the newest {_D})\.")),
+    ("checks", re.compile(rf"\d+ of \d+ checks met(?: on {_D})?\.")),
+    ("since", re.compile(rf"Tracked since {_D}\.")),
+)
+
+
+def description_slots(text):
+    """(seller name, the template's slots in order) when every sentence is one of the fixed description sentences; else None."""
+    kinds, name, at = [], None, 0
+    for sentence in re.findall(r".+?\.(?=\s+[A-Z0-9]|$)", text):
+        sentence = sentence.strip()
+        for i, (kind, pat) in enumerate(DESCRIPTION_TEMPLATE[at:], at):
+            m = pat.fullmatch(sentence)
+            if m:
+                if kind == "clinic":
+                    name = m.group("name")
+                kinds.append(kind)
+                at = i + 1
+                break
+        else:
+            return None
+    return (name, kinds) if kinds and kinds[0] == "clinic" else None
+
+
+def data_description(path, old, new):
+    """A seller page whose description changed only in the template's data slots, title and H1 the same words."""
+    if section_of(path)[0] != "sellers" or not all(numbers_masked(old[k]) == numbers_masked(new[k]) for k in ("title", "h1")):
+        return False
+    a, b = description_slots(old["description"]), description_slots(new["description"])
+    return bool(a and b and a[0] == b[0])
+
+
 def slugged(name):
     return re.sub(r"[^a-z0-9]+", "-", name.lower().replace("+", " plus ")).strip("-")
 
@@ -246,7 +290,14 @@ def follows_template(path, page, live, facts):
             titles.add(theirs[0])
             h1s.add(theirs[1])
             said.update(theirs[2])
-    return mine[0] in titles and mine[1] in h1s and all(x in said for x in mine[2])
+    if mine[0] not in titles or mine[1] not in h1s:
+        return False
+    if all(x in said for x in mine[2]):
+        return True
+    # A new seller page's description may name medicines no live page names yet (a brand in brackets, "Tadalafil (Cialis)"):
+    # it passes when every sentence is one of the fixed description sentences and the name is the page's own.
+    slots = description_slots(page["description"]) if section == "sellers" else None
+    return bool(slots and slots[0] in page_names(path, page, facts[0]))
 
 
 def substance_names(pages):
@@ -296,7 +347,8 @@ def main():
             passes = "follows its section's template" if follows_template(path, page, live, facts) else None
             changes.append((path, "new page", GONE, page, passes))
         else:
-            changes.append((path, "changed", old, page, "numbers only" if only_numbers(old, page) else None))
+            why = "numbers only" if only_numbers(old, page) else "data slots of the seller description" if data_description(path, old, page) else None
+            changes.append((path, "changed", old, page, why))
     for path in gone:
         old = live_page(path)[1]
         target = redirect_target(path)
