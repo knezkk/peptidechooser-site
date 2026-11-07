@@ -3047,6 +3047,38 @@ def legit_section(r):
 </section>"""
 
 
+# The FAQ part (pages/parts.md, FAQ; owner's assistant task, 7 Nov 2026): first on one seller page as the book's example. Every
+# answer is a sentence the page already holds from data, never a new claim. w3 adds it to other pages.
+FAQ_SELLERS = {"maximus-maximus-health-inc"}  # a clinic with an FDA letter and no paid link: every answer kind shows
+
+
+def faq_block(name, pairs, heading_id):
+    """Questions as h3 with their answers, between hairlines; no accordion, no icon."""
+    if not pairs:
+        return ""
+    items = "".join(f'<div class="faq-item"><h3>{q}</h3><p>{a}</p></div>' for q, a in pairs if a)
+    return (f'\n<section class="seller-sec faq" aria-labelledby="{heading_id}">\n  <h2 id="{heading_id}">Questions about {name}</h2>\n'
+            f'  <div class="faq-list">{items}</div>\n</section>')
+
+
+def seller_faq(r):
+    """A seller's questions, answered from its data (FAQ_SELLERS only, for now)."""
+    if r["seller_slug"] not in FAQ_SELLERS:
+        return ""
+    name, lines, clinic = seller_base(seller_name(r)), check_lines(r), is_clinic(r)
+    states = (CLINIC_STATES.get(r["seller_slug"]) or {}).get("not_in") or []
+    ans = clinic_answer(r) if clinic else short_answer(r)
+    checks = [t for _, t in seller_checks(r)]
+    pairs = [
+        (f"What does {name} {'prescribe' if clinic else 'sell'}?", ans[0]),
+        (f"How much does {name} cost?", ans[1] if clinic and len(ans) > 1 else ""),
+        (f"Has the FDA sent {name} a warning letter?", lines["score_no_fda_letter"]),
+        (f"Does {name} ship to every state?", f"Not to {', '.join(STATES.get(x, x) for x in states)}." if states else f"We have no state limits on file for {name}.") if clinic else ("", ""),
+        (f"How do we check {name}?", f"On {home.num_word(len(checks)).lower()} facts: {', '.join(checks[:-1])} and {checks[-1]}. Each is a yes or no with its date, in the list above."),
+    ]
+    return faq_block(name, [(q, a) for q, a in pairs if q], "faq-h")
+
+
 def seller_action(r):
     """The page's one action on the H1's row (owner task 3 Nov 2026): a clinic compares with another clinic, a shop with
     another shop, on /compare/ (built whenever seller pages are). A clinic with a paid link in the data also gets "Visit <Name>"
@@ -3090,7 +3122,7 @@ def seller_page(r):
   </div>
 </section>
 <div class="wrap seller-body">
-  <div class="seller-main">{clinic_plans_section(r) if clinic else seller_subs_section(r)}{legit_section(r)}{seller_letters_section(r)}</div>
+  <div class="seller-main">{clinic_plans_section(r) if clinic else seller_subs_section(r)}{legit_section(r)}{seller_letters_section(r)}{seller_faq(r)}</div>
   <aside class="seller-side" aria-label="Background check">{check_card(r)}{similar_section(r)}</aside>
 </div>
 """
