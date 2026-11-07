@@ -75,6 +75,6 @@ Everything else is a text link in `action` green. A partner without an affiliate
 - **Chips as lab labels.** Small, 4px corners, factual. At least 24px tall everywhere (the tap minimum, WCAG 2.5.8; owner task w2, 3 Nov 2026): 12px text on a 16px line with 4px above and below; the 11px check marks keep their size with 3px and their 1px border; only the 10px squares of the check bar (decoration, each spoken) are smaller. "Closed by FDA <date>" is a state of `chip-ok` with `chip-link`, drawn only when the data has the close-out letter (pages.md, Letters).
 - **The Checked stamp.** "Checked <date>" in a small `action-text` outline next to "options checked"; everywhere else dates are plain `small` text.
 
-## FAQ (proposal, 7 Nov 2026; waits for ODOBRENO DIZAJN and ODOBRENO SEO)
+## FAQ (7 Nov 2026; ODOBRENO DIZAJN and ODOBRENO SEO - Karlo - 7. 11. 2026)
 
 h2 "Questions about <Name>", then each question as h3 (`ui-size`, 700) with its answer as a paragraph (`ink-2`, 68ch), a `line` hairline above the list and under each item. No accordion, no icon, no number. Every answer is a sentence the page already holds from data. Example: `/sellers/maximus-maximus-health-inc/` (`FAQ_SELLERS`); w3 adds seller, compare and goal pages and the FAQPage schema.
