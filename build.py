@@ -830,7 +830,7 @@ DB_STATUS = {
     ("fda_approval", "approved"): (0, "ok", "FDA approved", "an FDA-approved product exists"),
     # the HHS policy of 30 Oct 2026 is newer than the FDA's lists for the six peptides it names, so it wins over them
     ("hhs_503a_interim", "listed"): (0.5, "neutral", "Not approved", HHS.get("note", "")),
-    # the database's own value for the same policy (data agent, 7 Nov 2026): the same words as the hand rows
+    # the database carries the policy as "enforcement_discretion" (7 Nov 2026); the same fact, so the same words (owner: the HHS text stays)
     ("hhs_503a_interim", "enforcement_discretion"): (0.5, "neutral", "Not approved", HHS.get("note", "")),
     ("fda_cat2_safety", "category_2"): (1, "neutral", "Not approved", "on the FDA list of substances that may be unsafe to compound"),
     ("fda_503a_category", "category_2"): (2, "neutral", "Not approved", "the FDA found safety concerns; pharmacies may not compound it"),
