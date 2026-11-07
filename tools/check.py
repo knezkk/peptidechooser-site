@@ -255,7 +255,17 @@ def check_schema(P):
                         target = DIST / rel.strip("/")
                         if rel != "/" and not (target / "index.html").exists():
                             errs.append(f"{name}: breadcrumb to missing {rel}")
-                if t not in ("Organization", "WebSite", "BreadcrumbList", "Article", "ItemList"):
+                if t == "FAQPage":
+                    # owner queue block 5, round a (7 Nov 2026): only questions the page shows, each with an answer
+                    qs = node.get("mainEntity") or []
+                    if not qs:
+                        errs.append(f"{name}: FAQPage without questions")
+                    for q in qs:
+                        if not (q.get("acceptedAnswer") or {}).get("text"):
+                            errs.append(f"{name}: FAQPage question without an answer: {q.get('name')}")
+                        elif (q.get("name") or "") not in [" ".join(t.split()) for tag, t in p.h if tag == "h3"]:
+                            errs.append(f"{name}: FAQPage question not shown on the page: {q.get('name')}")
+                if t not in ("Organization", "WebSite", "BreadcrumbList", "Article", "ItemList", "FAQPage"):
                     errs.append(f"{name}: schema type {t} not in the allowed list (6.3)")
                 if t == "Article":
                     errs.extend(article_date_errs(name, node))

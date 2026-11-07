@@ -2677,21 +2677,18 @@ def short_answer(r):
 
 
 def seller_title(r):
-    """Title (Tier 1): the full pattern, shortened step by step to the 60 characters tools/check.py allows."""
-    name = seller_name(r)
+    """Title (Tier 1): the full pattern, shortened step by step to the 60 characters tools/check.py allows, always ending in
+    "| Peptide Chooser" (owner queue block 5, round a, 7 Nov 2026): the middle words shorten, the brand stays."""
+    name, end = seller_name(r), " | Peptide Chooser"
     if r["seller_slug"] in CLINIC_PROFILES:
         base = re.sub(r"\s*\(.*\)", "", name).strip()
-        for t in (f"{name} review: plans, prices and checks | Peptide Chooser", f"{base} review: plans, prices and checks | Peptide Chooser",
-                  f"{base} review: plans, prices and checks", f"{base} review | Peptide Chooser"):
-            if len(t) <= 60:
-                return t
-        return f"{base} review"
-    for t in (f"{name} review: prices, lab reports, FDA letters | Peptide Chooser",
-              f"{name} review: prices, lab reports, FDA letters",
-              f"{name} review: prices and lab reports", f"{name} review | Peptide Chooser", f"{name} review"):
-        if len(t) <= 60:
-            return t
-    return t
+        tries = [f"{n} review{w}{end}" for n in dict.fromkeys((name, base))
+                 for w in (": plans, prices and checks", ": plans, prices, checks", ": plans and prices", "")]
+        last = f"{base} review"
+    else:
+        tries = [f"{name} review{w}{end}" for w in (": prices, lab reports, FDA letters", ": prices, lab reports", ": lab reports", "")]
+        last = f"{name} review"
+    return next((t for t in tries if len(t) <= 60), last)
 
 
 def clinic_description(r):
@@ -3045,9 +3042,19 @@ def legit_section(r):
 </section>"""
 
 
-# The FAQ part (pages/parts.md, FAQ; owner's assistant task, 7 Nov 2026): first on one seller page as the book's example. Every
-# answer is a sentence the page already holds from data, never a new claim. w3 adds it to other pages.
-FAQ_SELLERS = {"maximus-maximus-health-inc"}  # a clinic with an FDA letter and no paid link: every answer kind shows
+# The FAQ part (pages/parts.md, FAQ; owner's assistant task, 7 Nov 2026): first on one seller page as the book's example, then
+# on every seller page with its FAQPage schema (owner queue block 5, round a, 7 Nov 2026). Every answer is a sentence the page
+# already holds from data, never a new claim.
+
+
+def faq_schema(pairs):
+    """FAQPage JSON-LD with the same questions and answers the page shows, tags stripped."""
+    plain = lambda x: re.sub(r"\s+", " ", unescape(re.sub(r"<[^>]+>", "", x))).strip()
+    els = [{"@type": "Question", "name": plain(q), "acceptedAnswer": {"@type": "Answer", "text": plain(a)}} for q, a in pairs if q and a]
+    if not els:
+        return ""
+    return ('<script type="application/ld+json">'
+            + json.dumps({"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": els}, ensure_ascii=False) + "</script>")
 
 
 def faq_block(name, pairs, heading_id):
@@ -3059,10 +3066,8 @@ def faq_block(name, pairs, heading_id):
             f'  <div class="faq-list">{items}</div>\n</section>')
 
 
-def seller_faq(r):
-    """A seller's questions, answered from its data (FAQ_SELLERS only, for now)."""
-    if r["seller_slug"] not in FAQ_SELLERS:
-        return ""
+def seller_faq_pairs(r):
+    """A seller's questions, answered from its data."""
     name, lines, clinic = seller_base(seller_name(r)), check_lines(r), is_clinic(r)
     states = (CLINIC_STATES.get(r["seller_slug"]) or {}).get("not_in") or []
     ans = clinic_answer(r) if clinic else short_answer(r)
@@ -3074,7 +3079,12 @@ def seller_faq(r):
         (f"Does {name} ship to every state?", f"Not to {', '.join(STATES.get(x, x) for x in states)}." if states else f"We have no state limits on file for {name}.") if clinic else ("", ""),
         (f"How do we check {name}?", f"On {home.num_word(len(checks)).lower()} facts: {', '.join(checks[:-1])} and {checks[-1]}. Each is a yes or no with its date, in the list above."),
     ]
-    return faq_block(name, [(q, a) for q, a in pairs if q], "faq-h")
+    return name, [(q, a) for q, a in pairs if q and a]
+
+
+def seller_faq(r):
+    name, pairs = seller_faq_pairs(r)
+    return faq_block(name, pairs, "faq-h")
 
 
 def seller_action(r):
@@ -3423,7 +3433,8 @@ if PROFILES:
                   [("/sellers/", "Sellers")]))
     for _r in sorted(PROFILES.values(), key=lambda x: x["seller_slug"]):
         PAGES.append((f"/sellers/{_r['seller_slug']}/", f"sellers/{_r['seller_slug']}/index.html", seller_title(_r),
-                      legit_description(clinic_description(_r) if _r["seller_slug"] in CLINIC_PROFILES else seller_description(_r), _r), seller_page(_r), "",
+                      legit_description(clinic_description(_r) if _r["seller_slug"] in CLINIC_PROFILES else seller_description(_r), _r), seller_page(_r),
+                      faq_schema(seller_faq_pairs(_r)[1]),
                       [("/sellers/", "Sellers"), (f"/sellers/{_r['seller_slug']}/", seller_name(_r))]))
 
 
