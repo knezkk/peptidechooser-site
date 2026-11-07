@@ -16,7 +16,7 @@ What every page carries, and the rules for all of them. Index: [`design/pages.md
   - **Closing the menu:** on phones one Escape closes the whole menu, not only its open category, and so does a tap anywhere outside it.
   - **Tap targets:** every control is 44px tall (layout.md, Touch).
 - **Jump row** (owner task 3 Nov 2026; bundle.css, Jump row): under the H1 of a long page, "Jump to" and one text link per section of the page, phones only (under 640px).
-  - /sources/: its groups (FDA, MedlinePlus, PubMed studies, Price pages, State registries, Our own database; the groups the page has).
+  - /sources/: its groups (FDA, or "FDA and HHS" while the HHS policy is on the site, MedlinePlus, PubMed studies, Price pages, State registries, Our own database; the groups the page has).
   - Letters page: "The letters" and "Get new letters by email".
 
 ## Page anatomy
