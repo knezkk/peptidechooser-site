@@ -102,7 +102,7 @@ def goal_photo(slug, art_size, small=False):
 
 def goal_art(slug, size):
     """A goal's line drawing, in the goal's own colour (goal-<slug>, on the panel around it)."""
-    if slug not in GOALS:
-        return ""
+    # A goal with no drawing of its own in the book (/menopause/) shows the existing pill bottle on the neutral panel.
+    ref = f"goal-{slug}" if slug in GOALS else "pill-bottle"
     return (f'<svg class="goal-art" width="{size}" height="{size}" viewBox="0 0 56 56" aria-hidden="true">'
-            f'<use href="{ART}#goal-{slug}"/></svg>')
+            f'<use href="{ART}#{ref}"/></svg>')
