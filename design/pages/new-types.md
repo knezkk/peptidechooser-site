@@ -1,6 +1,6 @@
 # Templates for the new page types
 
-Index: [`design/pages.md`](../pages.md). Owner queue block 6, step 3A (8 Nov 2026; waits for ODOBRENO DIZAJN; every title, description and H1 pattern below is a proposal that waits for ODOBRENO SEO). Page types, parents and Google rules: `docs/site-map-rules-2026-11-08.md`, section 1. Shared parts: breadcrumb, filter look, lab mark and price history in [nav-parts.md](nav-parts.md); everything else is already in this book.
+Index: [`design/pages.md`](../pages.md). Owner queue block 6, step 3A (8 Nov 2026; ODOBRENO DIZAJN - Karlo - 8. 11. 2026 - PR #142; every title, description and H1 pattern below is a proposal that waits for ODOBRENO SEO). Page types, parents and Google rules: `docs/site-map-rules-2026-11-08.md`, section 1. Shared parts: breadcrumb, filter look, lab mark and price history in [nav-parts.md](nav-parts.md); everything else is already in this book.
 
 Rules for all five:
 - **Made only when it passes** its Google rule; a live page that later fails is noindexed, never deleted. They go to Google in steps of 20, 200, then all, each step in its own sitemap file (site map rules, section 1).

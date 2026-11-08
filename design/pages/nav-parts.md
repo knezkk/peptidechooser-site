@@ -1,6 +1,6 @@
 # Navigation and data parts for the new page types
 
-Index: [`design/pages.md`](../pages.md). Owner queue block 6, steps 3 and 3A (8 Nov 2026; waits for ODOBRENO DIZAJN). Every page type in `docs/site-map-rules-2026-11-08.md` is built from these parts and the parts already in this book; nothing here adds a colour, a font or a radius.
+Index: [`design/pages.md`](../pages.md). Owner queue block 6, steps 3 and 3A (8 Nov 2026; ODOBRENO DIZAJN - Karlo - 8. 11. 2026 - PR #142). Every page type in `docs/site-map-rules-2026-11-08.md` is built from these parts and the parts already in this book; nothing here adds a colour, a font or a radius.
 
 ## Breadcrumb (every page except Home; site map rules 4.1)
 

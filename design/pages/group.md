@@ -1,6 +1,6 @@
 # Group pages and goal subpages
 
-Index: [`design/pages.md`](../pages.md). Owner queue block 6, step 3a (8 Nov 2026; waits for ODOBRENO DIZAJN; every visible word, title and H1 waits for ODOBRENO SEO). Page types and Google rules: `docs/site-map-rules-2026-11-08.md`, section 1. Breadcrumb and filter look: [nav-parts.md](nav-parts.md).
+Index: [`design/pages.md`](../pages.md). Owner queue block 6, step 3a (8 Nov 2026; ODOBRENO DIZAJN - Karlo - 8. 11. 2026 - PR #142; every visible word, title and H1 waits for ODOBRENO SEO). Page types and Google rules: `docs/site-map-rules-2026-11-08.md`, section 1. Breadcrumb and filter look: [nav-parts.md](nav-parts.md).
 
 ## Group page `/<group>/`
 
