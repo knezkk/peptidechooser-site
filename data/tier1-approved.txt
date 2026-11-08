@@ -115,3 +115,5 @@ ODOBRENO SEO - Karlo - 8. 11. 2026 - PR #135 (w2 fix b51aad7: Vyleesi no clinic 
 ODOBRENO SEO - Karlo - 8. 11. 2026 - PR #136
 /learn/best-peptides-for-weight-loss/ c614db4d045e
 /learn/ 15f1e3a1633e
+
+ODOBRENO SEO - Karlo - 8. 11. 2026 - PR #140 (first sentence of /peptides/bremelanotide/: "Bremelanotide (PT-141) is one molecule under two names (see below).")
