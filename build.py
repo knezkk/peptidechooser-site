@@ -2671,7 +2671,10 @@ def decide_cards(g):
                                          f'<strong>From {money(low)} a {"bottle" if what == "serum" else "product"}</strong>, {plural(n, "shop")}',
                                          f'<span class="pick-act">{sellers_button(cos, False, f"Compare {plural(n, what)}", "btn-wait")}</span>', parts.thumb("serum-dropper")))
     else:
-        ru = next((p for p in g["peptides"] if has_window(p) and window_kind(p) == "research"), None)
+        # a row sold only for research use first: sermorelin has a shop window too, but clinics prescribe it (owner answer
+        # 9 Nov 2026, /muscle/), so the card names it only when no research-use-only row has a window
+        rus = [p for p in g["peptides"] if has_window(p) and window_kind(p) == "research"]
+        ru = next((p for p in rus if p.get("rx_word") == "research use only"), rus[0] if rus else None)
         if ru:
             low, n = window_low(ru)
             if low is not None:
