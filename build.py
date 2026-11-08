@@ -1621,6 +1621,12 @@ def rail():
                  f'<ul class="opts">{"".join(rows)}</ul>{approved_instead(g)}{link}')
         # Home lists no sources: a footnote opens its line on /sources/, which carries the same ids (owner answer Q3 a, 3 Nov 2026)
         inner = inner.replace('href="#src-', 'href="/sources/#src-')
+        # A goal's own sources that /sources/ does not carry (/menopause/'s goal_only rows) open on the goal's page,
+        # which keeps the same ids (design/pages/goal.md, Footnotes per page).
+        legal_ids = {s["n"] for s in LEGAL["sources"]}
+        for s in g.get("sources", []) if g.get("page") else []:
+            if s["n"] not in legal_ids:
+                inner = inner.replace(f'href="/sources/#src-{s["n"]}"', f'href="/{slug}/#src-{s["n"]}"')
         # Only the first goal's options are in the page; the others load from /windows/goal-<slug>.json when chosen
         # (Home under 60 KB, Home v2, 3 Nov 2026). Without JavaScript only the first goal shows, as before.
         if i:
