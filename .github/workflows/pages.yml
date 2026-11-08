@@ -78,3 +78,30 @@ jobs:
     steps:
       - id: deployment
         uses: actions/deploy-pages@v4
+  # The new host, Cloudflare Pages (owner queue block 5, step 4A). The same checked build goes to the Cloudflare project too;
+  # it skips until the owner adds the CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID secrets, and a failure here never stops
+  # GitHub Pages, which keeps serving peptidechooser.com until the switch.
+  deploy-cloudflare:
+    needs: check-and-build
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    permissions:
+      contents: read
+      deployments: write
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+    steps:
+      - uses: actions/download-artifact@v4
+        if: env.CLOUDFLARE_API_TOKEN != ''
+        with: { name: github-pages, path: "${{ runner.temp }}/site" }
+      - name: unpack the checked build
+        if: env.CLOUDFLARE_API_TOKEN != ''
+        run: mkdir -p dist && tar -xf "$RUNNER_TEMP/site/artifact.tar" -C dist && ls dist/_redirects dist/_headers dist/index.html
+      - uses: cloudflare/wrangler-action@v3
+        if: env.CLOUDFLARE_API_TOKEN != ''
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy dist --project-name=peptidechooser --branch=main
