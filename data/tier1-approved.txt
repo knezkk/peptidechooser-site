@@ -107,3 +107,5 @@ ODOBRENO SEO - Karlo - 7. 11. 2026 - PR #129
 /peptides/bremelanotide/ 4aba14df9d32
 
 ODOBRENO SEO - Karlo - 8. 11. 2026 - PR #130
+ODOBRENO SEO - Karlo - 8. 11. 2026
+/peptides/cjc-1295/ 05e091641c00
