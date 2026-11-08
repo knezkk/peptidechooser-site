@@ -1,0 +1,292 @@
+{
+  "rule": "Draft pages (owner queue block 14, wave B, 8 Nov 2026). Nothing here is built unless PC_DRAFTS=1 (build.py, tools/pull_data.py), so a merge publishes nothing. A goal goes live by moving it into site.json after the owner's ODOBRENO SEO for its title, H1, description and texts. Facts come only from the data and the sources listed with each entry.",
+  "goals": [
+    {
+      "slug": "growth-hormone",
+      "clinic_table": {
+        "substances": [
+          "sermorelin"
+        ]
+      },
+      "guide": "best-peptides-for-muscle-growth",
+      "name": "Growth hormone",
+      "label": "Growth hormone",
+      "page": true,
+      "title": "Growth hormone peptides: what is approved | Peptide Chooser",
+      "h1": "Growth hormone peptides, compared with the approved medicines.",
+      "description": "Sermorelin, ipamorelin, CJC-1295, tesamorelin and IGF-1 LR3: what each is, which is FDA approved and for what, and what clinics and shops charge.",
+      "short_answer": "Growth hormone itself (somatropin) is FDA approved, mainly for children and adults with growth hormone deficiency. Tesamorelin (Egrifta) is approved only to reduce belly fat in adults with HIV and lipodystrophy. Sermorelin's approved product left the market years ago; online clinics prescribe pharmacy-made versions. CJC-1295, ipamorelin and IGF-1 LR3 are research-use products with no approved version; we show their prices and checks and do not link to the shops.",
+      "legal_section": true,
+      "main_query": "growth hormone peptides",
+      "intro": "Growth hormone itself is FDA approved for growth hormone deficiency. The peptides sold to raise it are pharmacy-made or research-use, and none is approved for that.",
+      "peptides": [
+        {
+          "name": "Growth hormone (somatropin)",
+          "plain": "Lab-made human growth hormone, a shot on prescription. FDA approved mainly for growth hormone deficiency.",
+          "status": "FDA approved",
+          "chip": "ok",
+          "does": "Approved for children who do not grow because of growth hormone deficiency or some other conditions, and for adults with growth hormone deficiency. Not approved for healthy adults who want more muscle or energy.",
+          "how": "Prescription.",
+          "status_plain": "FDA approved, mainly for growth hormone deficiency.",
+          "substance": "somatropin",
+          "src": [
+            201
+          ],
+          "line_one": "approved growth hormone shot",
+          "rx_word": "on prescription"
+        },
+        {
+          "name": "Tesamorelin (Egrifta)",
+          "plain": "A daily shot on prescription, approved only to reduce belly fat in people with HIV, not for muscle.",
+          "status": "FDA approved",
+          "chip": "ok",
+          "does": "A daily shot approved only to reduce belly fat in people with HIV. Sold off-label by clinics for \"growth hormone\".",
+          "how": "Prescription.",
+          "status_plain": "FDA approved for HIV-related belly fat only.",
+          "substance": "tesamorelin",
+          "src": [
+            202
+          ],
+          "top_pick": false,
+          "top_pick_why": "Approved only for HIV-related belly fat, not for raising growth hormone (owner, 31 Oct 2026, on /muscle/).",
+          "no_link": "Approved for HIV belly fat only",
+          "drawing": "vial-brand",
+          "drawing_source": "https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=3d783378-b02d-4f19-99dd-0fc91a042224",
+          "drawing_checked_at": "2026-11-04",
+          "line_one": "daily shot for belly fat in HIV",
+          "rx_word": "on prescription"
+        },
+        {
+          "name": "CJC-1295",
+          "plain": "A peptide meant to make the body release growth hormone, in research-use vials. Not approved.",
+          "status": "Not approved",
+          "chip": "neutral",
+          "does": "A long-acting copy of the hormone that tells the body to release growth hormone. In two trials in healthy adults it raised growth hormone and IGF-I; the trials did not measure muscle or strength.",
+          "how": "Research-use shops, with our checks.",
+          "status_plain": "Not approved for any use.",
+          "substance": "cjc-1295",
+          "src": [
+            203
+          ],
+          "line_one": "vials sold to raise growth hormone",
+          "rx_word": "research use only"
+        },
+        {
+          "name": "Ipamorelin",
+          "plain": "A peptide meant to make the body release growth hormone, in research-use vials. Not approved.",
+          "status": "Not approved",
+          "chip": "neutral",
+          "does": "Acts on a different receptor than CJC-1295, with the same aim. Its one larger trial in people, 117 patients after bowel surgery, found it did no better than a placebo. The FDA lists safety concerns for it.",
+          "how": "Research-use shops, with our checks.",
+          "status_plain": "Not approved for any use.",
+          "substance": "ipamorelin",
+          "src": [
+            204,
+            205,
+            206
+          ],
+          "line_one": "vials sold to raise growth hormone",
+          "rx_word": "research use only"
+        },
+        {
+          "name": "IGF-1 LR3",
+          "plain": "Sold as a form of IGF-1, in research-use vials. Drugs@FDA lists no product with it.",
+          "status": "Not approved",
+          "chip": "neutral",
+          "does": "Sold for growth by research-use shops. The approved IGF-1 medicine is a different product, mecasermin (Increlex).",
+          "how": "Research-use shops.",
+          "status_plain": "Not approved for any use.",
+          "substance": "igf-1-lr3",
+          "src": [
+            207
+          ],
+          "line_one": "vials sold as IGF-1",
+          "rx_word": "research use only"
+        },
+        {
+          "name": "Sermorelin",
+          "plain": "A pharmacy-mixed shot on prescription that makes the body release growth hormone. No approved product.",
+          "status": "No FDA-approved product on the market",
+          "chip": "neutral",
+          "does": "A growth-hormone-releasing shot from compounding pharmacies; the approved brand was taken off the market years ago.",
+          "how": "Prescription through clinics.",
+          "status_plain": "No FDA-approved product on the market.",
+          "substance": "sermorelin",
+          "line_one": "pharmacy-made growth-hormone shot",
+          "rx_word": "on prescription"
+        }
+      ],
+      "short": "Growth hormone",
+      "panel_title": "Growth hormone peptides",
+      "for": "For raising growth hormone: what is approved and for whom, and what the sold peptides are.",
+      "sources": [
+        {
+          "n": 201,
+          "text": "FDA drug label for Genotropin (somatropin), Indications and Usage, through openFDA, effective 4 Aug 2026",
+          "url": "https://api.fda.gov/drug/label.json?search=openfda.brand_name:%22GENOTROPIN%22"
+        },
+        {
+          "n": 202,
+          "text": "FDA drug label for Egrifta SV (tesamorelin), Indications and Usage, through openFDA, effective 29 Jul 2026",
+          "url": "https://api.fda.gov/drug/label.json?search=openfda.brand_name:%22EGRIFTA%22"
+        },
+        {
+          "n": 203,
+          "text": "Teichman SL et al., Prolonged stimulation of growth hormone and IGF-I secretion by CJC-1295 in healthy adults, J Clin Endocrinol Metab 91(3), 2006, PubMed 16352683",
+          "url": "https://pubmed.ncbi.nlm.nih.gov/16352683/"
+        },
+        {
+          "n": 204,
+          "text": "Raun K et al., Ipamorelin, the first selective growth hormone secretagogue, Eur J Endocrinol 139(5), 1998, PubMed 9849822",
+          "url": "https://pubmed.ncbi.nlm.nih.gov/9849822/"
+        },
+        {
+          "n": 205,
+          "text": "Beck DE et al., Randomized, controlled, proof-of-concept study of ipamorelin for postoperative ileus, Int J Colorectal Dis 29(12), 2014, PubMed 25331030",
+          "url": "https://pubmed.ncbi.nlm.nih.gov/25331030/"
+        },
+        {
+          "n": 206,
+          "text": "FDA, Certain Bulk Drug Substances for Use in Compounding that May Present Significant Safety Risks, current as of 22 Apr 2026",
+          "url": "https://www.fda.gov/drugs/human-drug-compounding/certain-bulk-drug-substances-use-compounding-may-present-significant-safety-risks"
+        },
+        {
+          "n": 207,
+          "text": "Drugs@FDA through openFDA: no product with IGF-1 LR3; mecasermin (Increlex) approved 30 Aug 2005, searched 9 Nov 2026",
+          "url": "https://api.fda.gov/drug/drugsfda.json?search=products.active_ingredients.name:MECASERMIN"
+        }
+      ]
+    },
+    {
+      "slug": "sleep",
+      "name": "Sleep",
+      "label": "Sleep",
+      "page": true,
+      "title": "Peptides for sleep: DSIP and the evidence | Peptide Chooser",
+      "h1": "Peptides for sleep, compared with the evidence.",
+      "description": "DSIP is the peptide sold for sleep. It is not FDA approved, and its trials in people are small and old. What it is, its status, and what shops charge.",
+      "short_answer": "DSIP (delta sleep-inducing peptide) is the peptide sold for sleep; it is not FDA approved, and its trials in people are small and from the 1980s. Its nomination for pharmacy compounding was withdrawn, and the FDA says it lacks the safety information to know whether it would cause harm.",
+      "legal_section": true,
+      "main_query": "peptides for sleep",
+      "intro": "DSIP, the peptide sold for sleep, is not FDA approved, and its trials in people are small and old.",
+      "peptides": [
+        {
+          "name": "DSIP",
+          "plain": "Delta sleep-inducing peptide, sold for sleep in research-use vials. Not approved; small, old trials in people.",
+          "status": "Not approved",
+          "chip": "neutral",
+          "does": "In a 1987 study, 14 adults with chronic insomnia slept better on 7 nights of DSIP shots than on placebo nights; we found no larger or newer trial. The FDA says it lacks the safety information to know whether it would cause harm.",
+          "how": "Research-use shops.",
+          "status_plain": "Not approved for any use.",
+          "substance": "dsip",
+          "src": [
+            221,
+            222
+          ],
+          "line_one": "vials sold for sleep",
+          "rx_word": "research use only"
+        }
+      ],
+      "short": "Sleep",
+      "panel_title": "Peptides for sleep",
+      "for": "For trouble sleeping: what the peptide sold for it is, and what its trials in people showed.",
+      "sources": [
+        {
+          "n": 221,
+          "text": "Schneider-Helmert D, Effects of delta-sleep-inducing peptide on 24-hour sleep-wake behaviour in severe chronic insomnia, Eur Neurol 27(2), 1987, PubMed 3622582",
+          "url": "https://pubmed.ncbi.nlm.nih.gov/3622582/"
+        },
+        {
+          "n": 222,
+          "text": "FDA, Certain Bulk Drug Substances for Use in Compounding that May Present Significant Safety Risks (emideltide, DSIP), current as of 22 Apr 2026",
+          "url": "https://www.fda.gov/drugs/human-drug-compounding/certain-bulk-drug-substances-use-compounding-may-present-significant-safety-risks"
+        }
+      ]
+    },
+    {
+      "slug": "energy",
+      "clinic_table": {
+        "substances": [
+          "nad-plus",
+          "sermorelin",
+          "mots-c"
+        ]
+      },
+      "guide": "longevity-peptides-epitalon-mots-c-nad",
+      "name": "Energy",
+      "label": "Energy",
+      "page": true,
+      "title": "Peptides for energy: MOTS-c and NAD+ | Peptide Chooser",
+      "h1": "Peptides for energy: what is sold, and what the evidence shows.",
+      "description": "MOTS-c, NAD+ and sermorelin are sold for energy. None is FDA approved for it. What each one is, the evidence in people, and what clinics and shops charge.",
+      "short_answer": "No peptide is FDA approved for energy. MOTS-c has been tested in animals only; since 30 Oct 2026 an HHS policy lets licensed pharmacies compound it under conditions, which is not FDA approval. NAD+ is not a peptide at all; clinics sell it as shots and drips without approval. Sermorelin's approved product left the market years ago; online clinics prescribe pharmacy-made versions.",
+      "legal_section": true,
+      "main_query": "peptides for energy",
+      "intro": "No peptide is approved for energy. MOTS-c is tested in animals only, NAD+ is not a peptide, and sermorelin has no approved product on the market.",
+      "peptides": [
+        {
+          "name": "MOTS-c",
+          "plain": "A peptide sold for energy, in vials labelled for lab use. Not approved and tested in animals only.",
+          "status": "{hhs_status}",
+          "chip": "neutral",
+          "does": "A \"mitochondrial\" peptide sold for energy; animal studies only. {hhs_does}",
+          "how": "Research-use shops.",
+          "status_plain": "Not approved.",
+          "substance": "mots-c",
+          "src": [
+            13
+          ],
+          "line_one": "vials sold for energy",
+          "rx_word": "research use only"
+        },
+        {
+          "name": "NAD+ injections",
+          "plain": "Not a peptide: a molecule made from vitamin B3, sold by clinics as shots or drips. Not FDA approved.",
+          "status": "Not a peptide; compounded, not FDA approved",
+          "chip": "warn",
+          "does": "Not a peptide: a vitamin-B3-derived molecule sold by clinics as shots or drips for energy.",
+          "how": "Clinics and compounding pharmacies.",
+          "status_plain": "Not FDA approved.",
+          "substance": "nad-plus",
+          "not_peptide": true,
+          "line_one": "clinic shots or drips, not a peptide",
+          "rx_word": "at clinics"
+        },
+        {
+          "name": "Sermorelin",
+          "plain": "A pharmacy-mixed shot on prescription that makes the body release growth hormone. No approved product.",
+          "status": "No FDA-approved product on the market",
+          "chip": "neutral",
+          "does": "A growth-hormone-releasing shot from compounding pharmacies; the approved brand was taken off the market years ago.",
+          "how": "Prescription through clinics.",
+          "status_plain": "No FDA-approved product on the market.",
+          "substance": "sermorelin",
+          "line_one": "pharmacy-made growth-hormone shot",
+          "rx_word": "on prescription"
+        }
+      ],
+      "short": "Energy",
+      "panel_title": "Energy peptides",
+      "for": "For more energy: what is sold, what is not even a peptide, and what the evidence says."
+    }
+  ],
+  "legal_rows": [
+    {
+      "peptide": "IGF-1 LR3",
+      "status": "Not approved",
+      "chip": "neutral",
+      "note": "no approved product; the approved IGF-1 medicine is mecasermin (Increlex), a different product",
+      "src": 14,
+      "substances": [
+        "igf-1-lr3"
+      ]
+    }
+  ],
+  "legal_sources": [
+    {
+      "n": 14,
+      "text": "Drugs@FDA through openFDA: no product with IGF-1 LR3; mecasermin (Increlex) approved 30 Aug 2005, searched 9 Nov 2026",
+      "url": "https://api.fda.gov/drug/drugsfda.json?search=products.active_ingredients.name:MECASERMIN"
+    }
+  ]
+}

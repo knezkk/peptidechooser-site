@@ -120,9 +120,14 @@ def pull_paid():
 
 def substances(d):
     """The substances the site shows: every option's `substance` or `substances` and every legal row's `substances`."""
-    out = {p["substance"] for g in d["goals"] for p in g.get("peptides", []) if p.get("substance")}
-    out |= {s for g in d["goals"] for p in g.get("peptides", []) for s in p.get("substances", [])}
-    return out | {s for r in d["legal"]["rows"] for s in r.get("substances", [])}
+    goals, rows = list(d["goals"]), list(d["legal"]["rows"])
+    # draft pages (data/drafts.json, owner queue block 14): their substances only when the build shows drafts (PC_DRAFTS=1)
+    if os.environ.get("PC_DRAFTS") and (ROOT / "data" / "drafts.json").exists():
+        dr = json.loads((ROOT / "data" / "drafts.json").read_text(encoding="utf-8"))
+        goals, rows = goals + dr.get("goals", []), rows + dr.get("legal_rows", [])
+    out = {p["substance"] for g in goals for p in g.get("peptides", []) if p.get("substance")}
+    out |= {s for g in goals for p in g.get("peptides", []) for s in p.get("substances", [])}
+    return out | {s for r in rows for s in r.get("substances", [])}
 
 
 # Cosmetic product forms (products.product_form): a cosmetic option's window lists only these (build.py COSMETIC_FORMS)

@@ -27,6 +27,13 @@ AUTHOR = "Peptide Chooser editorial team"
 
 # SITE_JSON points at another data file (a local preview with database rows); the deploy always reads data/site.json.
 DATA = json.loads(Path(os.environ.get("SITE_JSON") or ROOT / "data" / "site.json").read_text(encoding="utf-8"))
+# Draft pages (owner queue block 14, wave B, 8 Nov 2026): goals, legal rows and their sources in data/drafts.json join the
+# data only when PC_DRAFTS=1, so a merge publishes nothing; going live moves an entry into site.json after ODOBRENO SEO.
+if os.environ.get("PC_DRAFTS") and (ROOT / "data" / "drafts.json").exists():
+    _drafts = json.loads((ROOT / "data" / "drafts.json").read_text(encoding="utf-8"))
+    DATA["goals"] += _drafts.get("goals", [])
+    DATA["legal"]["rows"] += _drafts.get("legal_rows", [])
+    DATA["legal"]["sources"] += _drafts.get("legal_sources", [])
 # The HHS compounding policy of 30 Oct 2026 is worded once, in legal.hhs_policy (owner queue block 4, 7 Nov 2026): every
 # {hhs_<key>} in the data is that entry's text, so no page types its own version.
 HHS = DATA["legal"].get("hhs_policy") or {}
@@ -2276,7 +2283,7 @@ def category_page(g):
 
 # Questions on a goal page (SEO round c, group 2, queue block 9): the searches "peptides for skin", "best peptides for
 # muscle growth" and the like, answered from the goal's approved texts and its option rows; no new claim.
-GOAL_FAQ = {"skin", "muscle", "weight-loss", "hair"}
+GOAL_FAQ = {"skin", "muscle", "weight-loss", "hair", "growth-hormone", "sleep", "energy"}  # the last three: drafts
 
 
 def goal_price_word(g, p):
