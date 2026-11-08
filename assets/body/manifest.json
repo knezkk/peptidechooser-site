@@ -30,6 +30,26 @@
   "longevity": {
    "z": 1,
    "v": 0.5
+  },
+  "growth-hormone": {
+   "z": 3.6,
+   "v": 0.125
+  },
+  "sleep": {
+   "z": 3.6,
+   "v": 0.125
+  },
+  "testosterone": {
+   "z": 1.7,
+   "v": 0.46
+  },
+  "energy": {
+   "z": 1,
+   "v": 0.5
+  },
+  "menopause": {
+   "z": 1.7,
+   "v": 0.46
   }
  },
  "pins": {},
@@ -63,6 +83,26 @@
     "recovery": [
      0.6343,
      0.6941
+    ],
+    "growth-hormone": [
+     0.5,
+     0.1399
+    ],
+    "sleep": [
+     0.5,
+     0.0752
+    ],
+    "testosterone": [
+     0.577,
+     0.4422
+    ],
+    "energy": [
+     0.4133,
+     0.2689
+    ],
+    "menopause": [
+     0.423,
+     0.4422
     ]
    }
   }
@@ -82,6 +122,15 @@
   "neutral-clay/recovery-glow.webp": 11434,
   "neutral-clay/libido.webp": 30196,
   "neutral-clay/libido-glow.webp": 9870,
-  "neutral-clay/longevity-glow.webp": 19058
+  "neutral-clay/longevity-glow.webp": 19058,
+  "neutral-clay/growth-hormone.webp": 12500,
+  "neutral-clay/growth-hormone-glow.webp": 12786,
+  "neutral-clay/sleep.webp": 12500,
+  "neutral-clay/sleep-glow.webp": 8090,
+  "neutral-clay/testosterone.webp": 30196,
+  "neutral-clay/testosterone-glow.webp": 7748,
+  "neutral-clay/energy-glow.webp": 5070,
+  "neutral-clay/menopause.webp": 30196,
+  "neutral-clay/menopause-glow.webp": 7748
  }
 }

@@ -314,6 +314,12 @@ function regions(V, J, top, floorY) {
       both('upperarm01', n => cap(p, J[n].head, J[n].head, H * .022, H * .026))),
     libido: p => oval(p, 0, .515, .08, .055, .6) * armless(p, J),
     longevity: p => Math.max(.2, oval(p, 0, .72, .075, .075, .6) * armless(p, J)),
+    // The five goals of 8 Nov 2026 (design/pages/goal.md, Pins on the body figure).
+    'growth-hormone': p => cap(p, J['neck02'].head, J['neck03'].tail, H * .02, H * .018),
+    sleep: p => oval(p, 0, (J['eye.L'].head[1] - floorY) / H, .05, .016, .5),
+    testosterone: p => oval(p, 0, .555, .075, .04, .5) * armless(p, J),
+    energy: p => armless(p, J) * oval(p, 0, .735, .085, .05, .45),
+    menopause: p => oval(p, 0, .555, .075, .04, .5) * armless(p, J),
   };
 }
 const armless = (p, J) => (Math.abs(p[0]) < Math.abs(J['upperarm01.L'].head[0]) * 1.02 ? 1 : 0);

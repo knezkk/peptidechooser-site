@@ -15,7 +15,8 @@ GOAL_PHOTOS = json.loads(_PHOTOS.read_text(encoding="utf-8")) if _PHOTOS.exists(
 # trailing words a monogram skips: Mochi Health -> "Mo", Strut Health -> "St"; Good Life Meds -> "GL"
 GENERIC = {"health", "clinic", "medical", "wellness", "telehealth", "inc", "llc", "co"}
 DRAWINGS = ("pill-bottle", "pen-brand", "foam-bottle", "serum-dropper", "cream-tube", "vial-compounded", "vial-research", "vial-brand")
-GOALS = ("hair", "skin", "weight-loss", "muscle", "recovery", "libido", "longevity")
+GOALS = ("hair", "skin", "weight-loss", "muscle", "recovery", "libido", "longevity",
+         "growth-hormone", "sleep", "testosterone", "energy", "menopause")
 
 
 def monogram(name):
@@ -102,7 +103,7 @@ def goal_photo(slug, art_size, small=False):
 
 def goal_art(slug, size):
     """A goal's line drawing, in the goal's own colour (goal-<slug>, on the panel around it)."""
-    # A goal with no drawing of its own in the book (/menopause/) shows the existing pill bottle on the neutral panel.
+    # A goal with no drawing of its own in assets/art.svg shows the existing pill bottle on the neutral panel.
     ref = f"goal-{slug}" if slug in GOALS else "pill-bottle"
     return (f'<svg class="goal-art" width="{size}" height="{size}" viewBox="0 0 56 56" aria-hidden="true">'
             f'<use href="{ART}#{ref}"/></svg>')
