@@ -644,6 +644,26 @@ def row_sub(g, r):
     return next(iter(sorted(plan_subs(r) & listed)), r.get("substance_slug") or "")
 
 
+def goal_list(g):
+    """Every medicine a goal names: its clinic_plans or clinic_table substances, its options' substances and plan_substances."""
+    out = set((g.get("clinic_plans") or {}).get("substances") or []) | set((g.get("clinic_table") or {}).get("substances") or [])
+    for x in g.get("peptides") or []:
+        out |= set([x["substance"]] if x.get("substance") else []) | set(x.get("plan_substances") or [])
+    return out
+
+
+def on_goal(g, r, subs):
+    """A plan on a goal row or table: it covers one of `subs`, and a plan covering several medicines only when its main
+    medicine is on the goal's list (owner answer Q2 A, 8 Nov 2026: no hair solution with progesterone on /menopause/)."""
+    return on_sub(r, subs) and (len(plan_subs(r)) < 2 or r.get("substance_slug") in goal_list(g))
+
+
+def no_lead(r):
+    """A plan covering several medicines that is not the brand medicine or its generic: it never leads a substance page or
+    names its price (owner answer Q1 A, 8 Nov 2026); it stays in the table with its note."""
+    return len(plan_subs(r)) > 1 and r.get("product_kind") not in ("branded", "oral_branded", "generic")
+
+
 def covers_note(r):
     """ "Plan covers N medicines" under the price of a plan that covers more than one (decision 0d, owner 8 Nov 2026)."""
     n = len(plan_subs(r))
@@ -665,7 +685,7 @@ for _p in PLANS:
 
 def cheapest_plan(g):
     subs = {p["substance"] for p in g["peptides"] if p.get("substance")}
-    found = [r for r in PLANS if on_sub(r, subs) and r.get("price_monthly") is not None
+    found = [r for r in PLANS if on_goal(g, r, subs) and r.get("price_monthly") is not None
              and r.get("product_kind") != "compounded"]
     return min(found, key=lambda r: (float(r["price_monthly"]), r["seller_name"])) if found else None
 
@@ -709,7 +729,7 @@ def clinic_plans(g):
     if not cp:
         return []
     rows = [r for r in PLANS if r.get("price_monthly") is not None
-            and on_sub(r, cp["substances"])]
+            and on_goal(g, r, cp["substances"])]
     return sorted(rows, key=lambda r: (float(r["price_monthly"]), r["seller_name"], r["plan_name"]))
 
 
@@ -719,7 +739,7 @@ def goal_plans(g):
     if g.get("clinic_plans"):
         return clinic_plans(g)
     subs = {s for p in g["peptides"] for s in ([p["substance"]] if p.get("substance") else [])}
-    return sorted((r for r in PLANS if on_sub(r, subs) and r.get("price_monthly") is not None),
+    return sorted((r for r in PLANS if on_goal(g, r, subs) and r.get("price_monthly") is not None),
                   key=lambda r: (float(r["price_monthly"]), r["seller_name"], r["plan_name"]))
 
 
@@ -779,13 +799,13 @@ def row_plan(g, p):
     substance gets its substance's cheapest plan that is not compounded (Home v2, 3 Nov 2026: minoxidil at Keeps).
     None for other rows."""
     if p.get("plan_kind") == "compounded" and not g.get("clinic_plans"):
-        found = [r for r in PLANS if on_sub(r, compounded_subs(g, p)) and r.get("price_monthly") is not None
+        found = [r for r in PLANS if on_goal(g, r, compounded_subs(g, p)) and r.get("price_monthly") is not None
                  and r.get("product_kind") == "compounded"]
         return min(found, key=lambda r: (float(r["price_monthly"]), r["seller_name"])) if found else None
     if not g.get("clinic_plans"):
         if not (p.get("substance") and p["status"].startswith("FDA approved")):
             return None
-        found = [r for r in PLANS if row_fits(p, r) and r.get("price_monthly") is not None
+        found = [r for r in PLANS if row_fits(p, r) and on_goal(g, r, plan_subs(r)) and r.get("price_monthly") is not None
                  and r.get("product_kind") != "compounded" and plan_fits(p, r) and form_fits(p, r)]
         best = min(found, key=lambda r: (float(r["price_monthly"]), r["seller_name"])) if found else None
         plan = GOAL_PLANS.get(g["slug"])
@@ -1401,10 +1421,10 @@ def option_plans(g, p):
     priced = [r for r in PLANS if r.get("price_monthly") is not None]
     if p.get("plan_kind") == "compounded":
         subs = compounded_subs(g, p)
-        return [r for r in priced if on_sub(r, subs) and r.get("product_kind") == "compounded"]
+        return [r for r in priced if on_goal(g, r, subs) and r.get("product_kind") == "compounded"]
     if not (p.get("substance") and approved_row(p)):
         return []
-    return [r for r in priced if r.get("product_kind") in BRAND_KINDS and row_fits(p, r) and not other_use(g, r)
+    return [r for r in priced if r.get("product_kind") in BRAND_KINDS and row_fits(p, r) and on_goal(g, r, plan_subs(r)) and not other_use(g, r)
             and plan_fits(p, r) and form_fits(p, r, strict=False)]
 
 
@@ -1551,7 +1571,7 @@ def plan_clinics(g, p, rp):
     """How many clinics have a plan like the row's: the same substances, compounded or not as the row's plan."""
     comp = rp.get("product_kind") == "compounded"
     subs = compounded_subs(g, p) if p.get("plan_kind") == "compounded" else {rp["substance_slug"]}
-    return len({r["seller_slug"] for r in PLANS if on_sub(r, subs) and r.get("price_monthly") is not None
+    return len({r["seller_slug"] for r in PLANS if on_goal(g, r, subs) and r.get("price_monthly") is not None
                 and (r.get("product_kind") == "compounded") == comp})
 
 
@@ -2514,7 +2534,7 @@ def table_plans(g):
     """The plans a goal's clinic table lists: its `clinic_plans`, else the plans of its `clinic_table` substances (hair,
     libido, longevity, muscle; owner task 4 Nov 2026: a clinic shows on the goal its plans belong to, from data, no brand named)."""
     subs = (g.get("clinic_table") or {}).get("substances") or []
-    return clinic_plans(g) or sorted((r for r in PLANS if on_sub(r, subs) and r.get("price_monthly") is not None),
+    return clinic_plans(g) or sorted((r for r in PLANS if on_goal(g, r, subs) and r.get("price_monthly") is not None),
                                      key=lambda r: (float(r["price_monthly"]), r["seller_name"], r["plan_name"]))
 
 
@@ -4502,7 +4522,9 @@ def pep_where(slug):
     lines, first, foot = [], None, ""
     if grp == "approved":
         plans = [r for r in pep_plans(slug) if r["seller_slug"] in PROFILES]
-        plans = sorted(plans, key=lambda r: (r.get("product_kind") == "compounded", float(r["price_monthly"]), r["seller_name"]))[:3]
+        # a plan covering several medicines leads only when it is the brand medicine or its generic (owner answer Q1 A,
+        # 8 Nov 2026: Oak's "GLP-1 Treatments" never leads /peptides/tirzepatide/); it stays in the table with its note
+        plans = sorted(plans, key=lambda r: (no_lead(r), r.get("product_kind") == "compounded", float(r["price_monthly"]), r["seller_name"]))[:3]
         named = set()
         for r in plans:
             kind = '<span class="chip chip-warn">Compounded</span>' if r.get("product_kind") == "compounded" else ""
@@ -4510,7 +4532,7 @@ def pep_where(slug):
                          f'<span class="sub">{explain_brand(r["plan_name"], named)}{kind}</span></span>'
                          f'<span class="where-price"><span class="num">{usd(r["price_monthly"])}/mo</span>{plan_letter(r)}</span>'
                          f'{clinic_button(r["seller_slug"], "See plans", plan=r)}</li>')
-        first = plans[0] if plans else None
+        first = plans[0] if plans and not no_lead(plans[0]) else None
         # the pair pages are built after the substance pages: cmp_links_in fills the marker (or drops it)
         foot = f"<!--pair-foot:{slug}-->"
     else:
@@ -4612,7 +4634,7 @@ def pep_faq_pairs(slug):
     status = f'{name} is {s["label"]}' + (f" as {and_list(brands)}" if brands and approved else "") + f': {pep_means(slug)[0].lower()}{pep_means(slug)[1:]}'
     pairs.append((f"Is {alias} FDA approved?",
                   status + (f' {escape(shop["name"])}: {escape(shop["plain"])}' if shop else "")))
-    p = pep_plans(slug)
+    p = [r for r in pep_plans(slug) if not no_lead(r)]
     if p:
         r = p[0]
         what = ("compounded, made by a pharmacy and not FDA approved, even when an approved medicine has the same ingredient"

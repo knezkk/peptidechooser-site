@@ -174,7 +174,7 @@ def goal_price(b, g):
     plans = b.clinic_plans(g) if g.get("clinic_plans") else []
     if not plans:
         subs = {p["substance"] for p in g["peptides"] if p.get("substance")}
-        found = [r for r in b.PLANS if b.on_sub(r, subs) and r.get("price_monthly") is not None]
+        found = [r for r in b.PLANS if b.on_goal(g, r, subs) and r.get("price_monthly") is not None]
         plans = sorted(found, key=lambda r: (r.get("product_kind") == "compounded", float(r["price_monthly"]), r["seller_name"]))
     if plans:
         p = min(plans, key=lambda r: (float(r["price_monthly"]), r["seller_name"])) if g.get("clinic_plans") else plans[0]
