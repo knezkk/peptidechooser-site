@@ -54,6 +54,16 @@
   --goal-libido-tint: #fbe7ef;
   --goal-longevity: #7a5a00;
   --goal-longevity-tint: #fff3c4;
+  --goal-growth-hormone: #5b3fa8;
+  --goal-growth-hormone-tint: #efeafb;
+  --goal-sleep: #2f3f8f;
+  --goal-sleep-tint: #e8ebf8;
+  --goal-testosterone: #445a6f;
+  --goal-testosterone-tint: #e8eef3;
+  --goal-energy: #5c6b00;
+  --goal-energy-tint: #f1f5d8;
+  --goal-menopause: #7d3c78;
+  --goal-menopause-tint: #f6e8f5;
   --font-display: "Public Sans", "Helvetica Neue", Arial, sans-serif;
   --font-text: "Public Sans", "Helvetica Neue", Arial, sans-serif;
   --font-brand: "Public Sans", "Helvetica Neue", Arial, sans-serif;
