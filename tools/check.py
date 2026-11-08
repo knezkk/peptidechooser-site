@@ -1290,6 +1290,14 @@ def check_events(P):
         for t in tag("btn-action", html):
             if 'data-ev="paid_link_click"' not in t or "data-ev-seller=" not in t or "data-ev-out_path=" not in t:
                 errs.append(f"{name}: green button without its event attributes: {t[:120]}")
+        # owner task 20 (8 Nov 2026): every /out/ link carries what paid_link_click reads, its partner the link's own slug
+        for t in re.findall(r'<a [^>]*href="/out/[^"]*"[^>]*>', html):
+            slug = re.search(r'href="/out/([^/"]+)/?"', t)
+            place = re.search(r'data-ev-placement="([^"]+)"', t)
+            if ('data-ev="paid_link_click"' not in t or not slug or f'data-ev-partner="{slug.group(1)}"' not in t
+                    or not place or place.group(1) not in ("option row", "clinic table", "window", "seller page", "decision card")
+                    or 'rel="sponsored"' not in t):
+                errs.append(f"{name}: /out/ link without partner, placement or rel=sponsored: {t[:160]}")
         for t in tag("btn-wait", html):
             if "data-ev=" not in t and "data-card=" not in t:
                 errs.append(f"{name}: btn-wait without its event attributes: {t[:120]}")
@@ -1336,6 +1344,8 @@ def check_events(P):
     # allowed: an attribute's value, the length of what was typed, a <select>'s value (a text field carries data-value="text")
     if re.search(r"\.value\b(?!\.trim\(\)\.length)", re.sub(r"\ba\.value|getAttribute\('data-value'\)\|\|i\.value", "", nav.split("window.pcEv=send")[1])):
         errs.append("assets/nav.js: the events script reads a typed value")
+    if "n==='paid_link_click'){o.transport_type='beacon'" not in nav:
+        errs.append("assets/nav.js: paid_link_click is not sent by beacon, so the /out/ redirect can drop it")
     return errs
 
 

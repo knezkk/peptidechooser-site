@@ -228,7 +228,8 @@ if(a&&/(^|\.)fda\.gov$/.test(a.hostname))send('outbound_fda',{letter:letter(a)})
 if(c&&t.closest('a,button')&&!t.closest('.ref'))send('decision_card_click',{card:c.getAttribute('data-card')});
 if(r){var k=r.querySelector('.chip');send('search',{query_length:typed(r.closest('#hs-list')?'#hs-q':'#sp-q'),result_type:k?k.textContent.toLowerCase():'other'});}
 if(f&&!(f.classList.contains('seg-b')&&f.getAttribute('aria-pressed')==='true'))send('filter_change',{filter:f.getAttribute('data-filter'),value:f.getAttribute('data-value')});
-if(el&&el.tagName!=='FORM'&&el.getAttribute('aria-pressed')!=='true')send(el.getAttribute('data-ev'),own(el));
+if(el&&el.tagName!=='FORM'&&el.getAttribute('aria-pressed')!=='true'){var o=own(el),n=el.getAttribute('data-ev');
+if(n==='paid_link_click'){o.transport_type='beacon';if(c)o.placement='decision card';}send(n,o);}
 }catch(x){}},true);
 document.addEventListener('change',function(e){try{var i=e.target;if(i&&i.getAttribute&&i.getAttribute('data-filter')&&i.tagName!=='BUTTON')send('filter_change',{filter:i.getAttribute('data-filter'),value:i.getAttribute('data-value')||i.value});}catch(x){}},true);
 document.addEventListener('submit',function(e){try{var f=e.target;if(f.matches('.head-search,#sp-form')){var n=f.querySelector('input').value.trim().length;if(n)send('search',{query_length:n,result_type:'page'});}
@@ -791,8 +792,15 @@ def paid_href(seller_slug, paid):
     return paid if paid.startswith("/out/") else f"/out/{seller_slug}/"
 
 
-def paid_ev(seller_slug, paid):
-    return ev("paid_link_click", seller=seller_slug, out_path=paid_href(seller_slug, paid))
+PLACEMENTS = ("option row", "clinic table", "window", "seller page", "decision card")
+
+
+def paid_ev(seller_slug, paid, placement):
+    """`paid_link_click` (owner task 20, 8 Nov 2026): `partner` is the /out/ slug, `placement` where the button sits; `page_type`
+    comes from <body data-pt>. nav.js sends it by beacon, so it leaves before /out/ redirects."""
+    assert placement in PLACEMENTS, placement
+    out = paid_href(seller_slug, paid)
+    return ev("paid_link_click", seller=seller_slug, partner=out.strip("/").split("/")[1], placement=placement, out_path=out)
 
 
 def plans_ev(seller_slug, plan=None):
@@ -1028,7 +1036,7 @@ def not_in_line(slug, tag="span"):
     return f'<{tag} class="not-in">Not available in: {", ".join(states)}</{tag}>' if states else ""
 
 
-def clinic_button(seller_slug, label, small="Our clinic page", plan=None, paid_ok=True, in_table=False):
+def clinic_button(seller_slug, label, small="Our clinic page", plan=None, paid_ok=True, in_table=False, placement="clinic table"):
     """A clinic's one action (Home v2, 3 Nov 2026), on clinic_row_act's rule (owner answer Q1 a and decision C8, 3 Nov
     2026): btn-action "Visit <Name> ..." through /out/<seller>/ with "Paid link" under it only when the data carries the
     clinic's paid link (`paid_url` on the plan row, else on its profile; none yet; site.paid_links applies the paid link
@@ -1040,7 +1048,7 @@ def clinic_button(seller_slug, label, small="Our clinic page", plan=None, paid_o
     paid = (plan or {}).get("paid_url") or r.get("paid_url")
     if paid_ok and paid:
         tail = label.split(" · ", 1)[1] if " · " in label else ""
-        return (f'<span class="pick-act"><a class="btn btn-action btn-sm" href="{paid_href(seller_slug, paid)}"{paid_ev(seller_slug, paid)} rel="sponsored">'
+        return (f'<span class="pick-act"><a class="btn btn-action btn-sm" href="{paid_href(seller_slug, paid)}"{paid_ev(seller_slug, paid, placement)} rel="sponsored">'
                 f'Visit {seller_base(r["seller_name"])}{" · " + tail if tail else ""}'
                 + ('<span class="paid">Paid link</span></a></span>' if in_table else '</a><span class="paid">Paid link</span></span>'))
     return (f'<span class="pick-act"><a class="btn btn-wait btn-sm" href="/sellers/{seller_slug}/"{plans_ev(seller_slug, plan)}>{label}</a>'
@@ -1376,7 +1384,7 @@ def clinic_window(g, p):
                    f'<td data-l="Per month"><span class="num">{usd(r["price_monthly"])}</span>{plan_letter(r)}{seller_closed_chip(r["seller_slug"])}</td>'
                    f'<td data-l="Care fee">{"not known" if fee is None else "none" if float(fee) == 0 else usd(fee) + "/mo, included"}</td>'
                    f'<td data-l="Checks">{checks}</td>'
-                   f'<td class="act">{clinic_row_act(r)}</td></tr>')
+                   f'<td class="act">{clinic_row_act(r, "window")}</td></tr>')
     newest = max(r["last_seen"] for r in rows)
     who = "Sellers" if otc else "Clinics"
     return f"""<dialog class="sellers-dlg clinic-dlg" id="{key}" aria-labelledby="{key}-h"><div class="dlg-in" data-state-root>
@@ -2331,13 +2339,13 @@ def explain_brand(plan_name, seen):
     return f"{first} ({name}){plan_name[len(first):]}"
 
 
-def clinic_row_act(r):
+def clinic_row_act(r, placement="clinic table"):
     """A clinic plan's button, every kind (owner answer Q1 a, 3 Nov 2026; for compounded plans owner decision C8, 3 Nov 2026, labelled compounded): btn-action "Visit <Name>" with "Paid link"
     only when the data carries the clinic's paid link, on the plan row or its profile (the paid link rule, pages.md, Buttons;
     owner decision 4 Nov 2026); otherwise btn-wait "See plans" to our clinic page."""
     name, paid = seller_base(r["seller_name"]), r.get("paid_url") or PROFILES.get(r["seller_slug"], {}).get("paid_url")
     if paid:
-        return (f'<span class="pick-act"><a class="btn btn-action btn-sm" href="{paid_href(r["seller_slug"], paid)}"{paid_ev(r["seller_slug"], paid)} rel="sponsored">Visit {name}'
+        return (f'<span class="pick-act"><a class="btn btn-action btn-sm" href="{paid_href(r["seller_slug"], paid)}"{paid_ev(r["seller_slug"], paid, placement)} rel="sponsored">Visit {name}'
                 '<span class="paid">Paid link</span></a></span>')
     if r["seller_slug"] not in PROFILES:
         return ""
@@ -2408,7 +2416,7 @@ def tools_block(g, first_n):
                 continue
             line = line.format(plan=f'{plan["plan_name"]} at {usd(plan["price_monthly"])} a month')
             source = source.format(checked=nice_date(plan["observed_at"]))
-            act = clinic_button(slug, "See plans", plan=plan)
+            act = clinic_button(slug, "See plans", plan=plan, placement="option row")
         n = first_n + len(srcs)
         url = t.get("url")
         where = f': <a href="{url}" rel="nofollow">{url}</a>' if url and "fda.gov" in url else f": {url}" if url else ""
@@ -3331,7 +3339,7 @@ def seller_action(r):
                    if plans else "")
         if not r.get("paid_url"):
             return compare
-        return (f'<div class="seller-pair">{compare}<span class="pick-act"><a class="btn btn-action" href="{paid_href(r["seller_slug"], r["paid_url"])}"{paid_ev(r["seller_slug"], r["paid_url"])} rel="sponsored">'
+        return (f'<div class="seller-pair">{compare}<span class="pick-act"><a class="btn btn-action" href="{paid_href(r["seller_slug"], r["paid_url"])}"{paid_ev(r["seller_slug"], r["paid_url"], "seller page")} rel="sponsored">'
                 f'Visit {seller_base(seller_name(r))}</a><span class="paid">Paid link</span></span></div>')
     return f'<a class="btn btn-ink" href="/compare/?a=s.{r["seller_slug"]}"{ev("compare_pick", kind="seller")}>Compare with another shop</a>'
 
