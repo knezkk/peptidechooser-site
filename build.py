@@ -1321,16 +1321,18 @@ SELLER_WINDOWS = {window_key(p): seller_window(p) for g in ALL_GOALS for p in g[
 
 def option_plans(g, p):
     """The rows of an option's clinic window (pages.md, Clinic window; owner decision 4 Nov 2026): every priced plan of the
-    option's substance at any clinic, brand and compounded, leaving out a brand approved for another use on this goal
-    (Ozempic on weight loss); the compounded row, the compounded plans of the goal's approved substances. A research-use or
-    cosmetic row has none: its window lists shops, and a window never mixes the two."""
+    option's substance at any clinic that is not compounded, leaving out a brand approved for another use on this goal
+    (Ozempic on weight loss); the compounded row, the compounded plans of the goal's approved substances. A compounded plan
+    never stands under an FDA-approved card (owner task 21, 8 Nov 2026: HealthRX's compounded PT-141 sold as "Vyleesi from
+    $170" on /libido/). A research-use or cosmetic row has none: its window lists shops, and a window never mixes the two."""
     priced = [r for r in PLANS if r.get("price_monthly") is not None]
     if p.get("plan_kind") == "compounded":
         subs = compounded_subs(g, p)
         return [r for r in priced if r["substance_slug"] in subs and r.get("product_kind") == "compounded"]
     if not (p.get("substance") and approved_row(p)):
         return []
-    return [r for r in priced if row_fits(p, r) and not other_use(g, r) and plan_fits(p, r) and form_fits(p, r, strict=False)]
+    return [r for r in priced if r.get("product_kind") != "compounded" and row_fits(p, r) and not other_use(g, r)
+            and plan_fits(p, r) and form_fits(p, r, strict=False)]
 
 
 def clinic_key(g, p):
