@@ -137,6 +137,14 @@ def live_paths():
     status, xml = fetch(LIVE + "/sitemap.xml")
     if status != 200:
         return None
+    if "<sitemapindex" in xml:  # one file per page type since task 23 (8 Nov 2026): read each
+        parts = []
+        for loc in re.findall(r"<loc>([^<]+)</loc>", xml):
+            status, child = fetch(re.sub(r"^https?://[^/]+", LIVE, loc))
+            if status != 200:
+                return None
+            parts.append(child)
+        xml = "".join(parts)
     return {re.sub(r"^https?://[^/]+", "", u) or "/" for u in re.findall(r"<loc>([^<]+)</loc>", xml)}
 
 
