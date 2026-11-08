@@ -32,6 +32,8 @@ DATA = json.loads(Path(os.environ.get("SITE_JSON") or ROOT / "data" / "site.json
 if os.environ.get("PC_DRAFTS") and (ROOT / "data" / "drafts.json").exists():
     _drafts = json.loads((ROOT / "data" / "drafts.json").read_text(encoding="utf-8"))
     DATA["goals"] += _drafts.get("goals", [])
+    for _g in DATA["goals"]:  # proposed changes to a live goal (block 14: /longevity/ without "energy"), drafts only
+        _g.update(_drafts.get("goal_changes", {}).get(_g["slug"], {}))
     DATA["legal"]["rows"] += _drafts.get("legal_rows", [])
     DATA["legal"]["sources"] += _drafts.get("legal_sources", [])
 # The HHS compounding policy of 30 Oct 2026 is worded once, in legal.hhs_policy (owner queue block 4, 7 Nov 2026): every
@@ -5571,6 +5573,11 @@ def what_next(g):
     plans and shops among the goal's substances, and /sellers/ filtered to the goal's substance with the most sellers."""
     subs = {x for p in g["peptides"] for x in subs_of(p)}
     links = []
+    # the twin goal page of an overlap, with its own search words (site map rules 6; block 14: /energy/ and /longevity/),
+    # only when that page is in this build
+    tw = g.get("pair") or {}
+    if tw.get("slug") and built(f'/{tw["slug"]}/'):
+        links.append(f'<li><a href="/{tw["slug"]}/">{escape(tw["text"])}</a></li>')
     gd = next((x for x in guides.GUIDES if x["slug"] == g.get("guide")), None)
     if gd:
         links.append(f'<li><a href="/learn/{gd["slug"]}/">Read the guide: {gd["title"]}</a></li>')

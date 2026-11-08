@@ -1,5 +1,5 @@
 {
-  "rule": "Draft pages (owner queue block 14, wave B, 8 Nov 2026). Nothing here is built unless PC_DRAFTS=1 (build.py, tools/pull_data.py), so a merge publishes nothing. A goal goes live by moving it into site.json after the owner's ODOBRENO SEO for its title, H1, description and texts. Facts come only from the data and the sources listed with each entry.",
+  "rule": "Draft pages (owner queue block 14, wave B, 8 Nov 2026). Nothing here is built unless PC_DRAFTS=1 (build.py, tools/pull_data.py), so a merge publishes nothing. A goal goes live by moving it into site.json after the owner's ODOBRENO SEO for its title, H1, description and texts. Facts come only from the data and the sources listed with each entry. goal_changes: proposed changes to a live goal, applied only with PC_DRAFTS=1 (block 14, owner answer 9 Nov 2026: /longevity/ about longevity and aging only, /energy/ the main page for energy).",
   "goals": [
     {
       "slug": "growth-hormone",
@@ -267,7 +267,11 @@
       ],
       "short": "Energy",
       "panel_title": "Energy peptides",
-      "for": "For more energy: what is sold, what is not even a peptide, and what the evidence says."
+      "for": "For more energy: what is sold, what is not even a peptide, and what the evidence says.",
+      "pair": {
+        "slug": "longevity",
+        "text": "Longevity peptides: Epitalon, MOTS-c and NAD+ for aging"
+      }
     }
   ],
   "legal_rows": [
@@ -288,5 +292,20 @@
       "text": "Drugs@FDA through openFDA: no product with IGF-1 LR3; mecasermin (Increlex) approved 30 Aug 2005, searched 9 Nov 2026",
       "url": "https://api.fda.gov/drug/drugsfda.json?search=products.active_ingredients.name:MECASERMIN"
     }
-  ]
+  ],
+  "goal_changes": {
+    "longevity": {
+      "name": "Longevity and aging",
+      "label": "Longevity and aging",
+      "short": "Longevity and aging",
+      "title": "Peptides for longevity and aging, compared | Peptide Chooser",
+      "h1": "Peptides for longevity and aging, compared with the evidence.",
+      "description": "Epitalon, MOTS-c and NAD+ shots are sold as anti-aging. None is FDA approved; HHS changed the rules for two in Oct 2026. The evidence and prices.",
+      "panel_title": "Aging and longevity",
+      "pair": {
+        "slug": "energy",
+        "text": "Peptides for energy: MOTS-c and NAD+"
+      }
+    }
+  }
 }
