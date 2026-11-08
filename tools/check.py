@@ -1542,7 +1542,53 @@ def check_rules33(P):
     return errs
 
 
-CHECKS = {"words": check_words, "seo": check_seo, "schema": check_schema, "parts": check_parts, "data": check_data, "book": check_book, "events": check_events, "logic": check_logic, "rules33": check_rules33}
+# Site map rules (owner, ODOBRENO PRAVILA - Karlo - 8. 11. 2026; docs/site-map-rules-2026-11-08.md, section 3). The mechanical
+# address rules, for NEW addresses. A live address that breaks one is listed in data/live-addresses.txt and stays allowed;
+# the ones on the move list (section 8) stay there until task 4C moves them.
+ADDRESS_RX = re.compile(r"^/(?:[a-z0-9]+(?:-[a-z0-9]+)*/)*$")
+STALE_WORDS = ("best", "cheapest", "latest")
+RESERVED = {"peptides", "sellers", "compare", "learn", "labs", "tools", "fda-warning-letters", "search", "out", "about",
+            "how-we-rate", "sources", "contact", "corrections", "disclosure", "privacy", "assets", "og", "windows"}
+
+
+def live_addresses():
+    f = ROOT / "data" / "live-addresses.txt"
+    return {x.split()[0] for x in f.read_text(encoding="utf-8").splitlines() if x.strip() and not x.startswith("#")}
+
+
+def address_errs(path):
+    errs = []
+    if not ADDRESS_RX.match(path):
+        errs.append("only lowercase letters, numbers and hyphens, with a trailing slash")
+    parts = [x for x in path.strip("/").split("/") if x]
+    if len(parts) > 3:
+        errs.append(f"{len(parts)} levels below home, at most 3")
+    for slug in parts:
+        if re.search(r"(?:^|-)(?:19|20)\d\d(?:-|$)", slug):
+            errs.append(f"'{slug}' holds a year")
+        for w in STALE_WORDS:
+            if w in slug.split("-"):
+                errs.append(f"'{slug}' holds the word '{w}', which goes stale")
+    return errs
+
+
+def check_addresses(P):
+    """Every new address follows the site map's address rules 1, 4, 5 and 6 (owner, 8 Nov 2026)."""
+    errs, live = [], live_addresses()
+    for name in P:
+        path = page_path(name)
+        if name == "404.html" or path.startswith("/out/") or path in live:
+            continue
+        errs += [f"{path}: {e} (site map rules, section 3)" for e in address_errs(path)]
+    src = Path(os.environ["SITE_JSON"]) if os.environ.get("SITE_JSON") else ROOT / "data" / "site.json"
+    d = json.loads(src.read_text(encoding="utf-8"))
+    for g in (d.get("goals") or []) + (d.get("groups") or []):
+        if g["slug"] in RESERVED:
+            errs.append(f"goal or group '{g['slug']}' takes a list or trust page name (site map rules, section 3.6)")
+    return errs
+
+
+CHECKS = {"words": check_words, "seo": check_seo, "schema": check_schema, "parts": check_parts, "data": check_data, "book": check_book, "events": check_events, "logic": check_logic, "rules33": check_rules33, "addresses": check_addresses}
 
 # Plan names against their form (owner task w2, 3 Nov 2026): a clinic's own plan name can name another form than the
 # plan's `dosage_form` ("Ozempic Pill" for a pen). The site cannot change data, so this only warns, never fails, and the

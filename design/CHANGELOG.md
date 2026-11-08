@@ -4,6 +4,7 @@ Newest row first.
 
 | Date | Change | Approved |
 |---|---|---|
+| 8 Nov 2026 | Site map rules (owner queue block 4, rules/site-map-2026-11-08): pages.md names the five new page types from the site map (brand, seller offer, lab, company FDA letters, tool), which need a template here before they are built (task 3A). No new part or look. | ODOBRENO PRAVILA - Karlo - 8. 11. 2026 |
 | 8 Nov 2026 | FAQ part on guides (w3 request, round c): a guide may carry questions as h3 with FAQPage schema, the same part as seller pages, before "What to do next" under the guide's own prose h2 (pages/learn.md, Guide; pages/parts.md, FAQ, now naming every page type that uses it). No guide carries questions yet; their texts need ODOBRENO SEO. | ODOBRENO DIZAJN - Karlo - 8. 11. 2026 - FAQ part on guides |
 | 7 Nov 2026 | Data agent task 33 rules (owner queue block 19 w2, PR 127): the company check reads "Found in a state registry" (book wording follows); on compare pages under 640px the check chips wrap (`white-space:normal`, `max-width:100%`) so the longer label never scrolls sideways at 320px; the /hair/ scalp-serum rule stays as written (owner answer A). | ODOBRENO SEO - Karlo - 7. 11. 2026 - PR #127 |
 | 7 Nov 2026 | SEO pass, round a2 (owner queue block 7, feat/seo-seller-text): the legit section on every seller page gains data-born paragraphs (pages/seller.md), seller pages from a median of about 340 to about 600 words; the seller's Organization JSON-LD without url. No new part or look. | Waits for ODOBRENO SEO |

@@ -1,0 +1,8 @@
+# Live addresses that break a site map address rule (docs/site-map-rules-2026-11-08.md, section 3) and stay allowed
+# (owner, ODOBRENO PRAVILA - Karlo - 8. 11. 2026). tools/check.py (check-addresses) checks every other address.
+# Only addresses live on 8 Nov 2026 belong here; a new page is fixed, never added.
+/learn/best-peptides-for-muscle-growth/ live
+/learn/best-peptides-for-weight-loss/ live
+/learn/cheapest-bpc-157-per-mg/ live
+# Move list (section 8): allowed until task 4C moves it, then this line goes.
+/learn/fda-warning-letters-peptides-2026/ move-list
