@@ -25,6 +25,7 @@ Without SITE_DATABASE_URL it exits 0 and changes nothing, so a local build never
 The address comes from the environment, or else from a `.env` file in the worktree (never committed).
 """
 import json
+import re
 import os
 import sys
 from datetime import date, datetime
@@ -97,6 +98,41 @@ def add_paid_links(d):
             r["paid_url"] = paid[r["seller_slug"]]
 
 
+def add_cosmetic_links(products):
+    """A supplement shop's paid link belongs to one cosmetic product (decision D6a, owner decision 0a = B, 8 Nov 2026): the
+    product row with that `product_id` gets `paid_url`, the /out/ path from site.paid_links (allowed_on 'cosmetic'), one link
+    per product row, for /skin/ and /topical/. keep_products always keeps such a row. The view applies the paid link rule."""
+    if not has_view("paid_links") or not products or "product_id" not in products[0]:
+        return
+    links = {r["cosmetic_product_id"]: r["out_path"] for r in rows(
+        "select cosmetic_product_id, out_path from site.paid_links where allowed_on = 'cosmetic' "
+        "and cosmetic_product_id is not null order by active_from")}
+    for r in products:
+        if r.get("product_id") in links:
+            r["paid_url"] = links[r["product_id"]]
+    print(f"pull_data: {sum(1 for r in products if r.get('paid_url'))} cosmetic products with a paid link")
+
+
+def move_sellers(x, redirects):
+    """Task 4C (owner task 23, 8 Nov 2026): every `seller_slug` and every /sellers/<old>/ in the data takes the seller's new
+    page slug, so site.json, paid.json, the build and the checks all speak of the new address (build.py does the same for
+    the repo data and writes the 301s). The seller_redirects rows themselves keep both slugs."""
+    moves = {r["old_slug"]: r["new_slug"] for r in redirects if r.get("old_slug") and r.get("new_slug")}
+    if not moves:
+        return x
+    def walk(v, key=None):
+        if isinstance(v, dict):
+            return {k: (w if k in ("old_slug", "new_slug") else walk(w, k)) for k, w in v.items()}
+        if isinstance(v, list):
+            return [walk(w) for w in v]
+        if isinstance(v, str) and key == "seller_slug":
+            return moves.get(v, v)
+        if isinstance(v, str) and "/sellers/" in v:
+            return re.sub(r"/sellers/([a-z0-9-]+)/", lambda m: f"/sellers/{moves.get(m.group(1), m.group(1))}/", v)
+        return v
+    return walk(x)
+
+
 def pull_paid():
     """site.paid_redirects and site.seller_copy_rules (peptide-data task 13) into data/paid.json, the only data file that
     holds tracking addresses (paid.py). Until both views exist the file stays as it is and the build uses the fixture.
@@ -159,7 +195,8 @@ def keep_products(all_rows, subs, n=10):
             for r in sorted((r for r in all_rows if r["substance_slug"] == slug and (r.get("form") in COSMETIC_FORMS) == cosmetic), key=key):
                 best.setdefault(r["seller_slug"], r)
             out += sorted(best.values(), key=key)[:n]
-    return out
+    # a cosmetic product with its own paid link stays, so its link reaches the page (add_cosmetic_links)
+    return out + [r for r in all_rows if r.get("paid_url") and r["substance_slug"] in subs and not any(r is x for x in out)]
 
 
 def letters_rows(n=8):
@@ -240,12 +277,15 @@ def main():
         "select seller_slug, seller_name, plan_slug, plan_name, product_kind, dosage_form, substance_slug, "
         "pharmacy_partner, price_monthly, price_first_month, membership_fee_monthly, consult_fee, "
         "commitment_months, observed_at, last_seen, pricing_url, fda_letter_count, last_fda_letter_date"
-        # spec 0023 (task 22, 8 Nov 2026): a per-order price, read once the data side has migrated it
-        f"{optional_columns('plan_prices', 'price_per_order', 'order_quantity', 'order_supply_days', 'fee_per_order')} "
+        # spec 0023 (task 22, 8 Nov 2026): a per-order price, read once the data side has migrated it; substance_slugs: every
+        # medicine a plan covers (decision 0d, owner 8 Nov 2026)
+        f"{optional_columns('plan_prices', 'price_per_order', 'order_quantity', 'order_supply_days', 'fee_per_order', 'substance_slugs')} "
         "from site.plan_prices order by seller_slug, plan_slug")
     products = rows(
         "select seller_slug, seller_name, seller_status, product_name, variant_title, product_url, substance_slug, is_blend, "
-        "amount_mg, form, price_usd, price_per_mg, price_observed_at, first_seen, last_seen, has_coa, coa_count from site.products")
+        "amount_mg, form, price_usd, price_per_mg, price_observed_at, first_seen, last_seen, has_coa, coa_count"
+        f"{optional_columns('products', 'product_id')} from site.products")
+    add_cosmetic_links(products)
     d["products"] = keep_products(products, substances(d))
     used = {r["seller_slug"] for r in d["products"]}
     sellers = rows(
@@ -275,6 +315,10 @@ def main():
         f"legal_checked_on, legal_check_outcome{optional_columns('seller_profile', 'sells_lab_tests')} "
         "from site.seller_profile order by seller_slug")
     add_paid_links(d)
+    # task 4C prep (owner task 23, 8 Nov 2026; peptide-data spec 0024): old and new seller page slugs, empty until the
+    # owner runs the 4C-day script; [] while the view is missing
+    d["seller_redirects"] = (rows("select old_slug, new_slug from site.seller_redirects order by old_slug")
+                             if has_view("seller_redirects") else [])
     # excluded states per clinic (pages.md, Clinic rows); while the view is missing build.py reads data/clinic_states.json
     d["seller_states"] = rows("select * from site.seller_states order by seller_slug") if has_view("seller_states") else []
     pull_paid()
@@ -291,6 +335,10 @@ def main():
         "select letter_reference, letter_url, letter_date, substance_slug, substance_name, first_mention "
         "from site.letter_substances order by letter_date desc, substance_slug")
     d["pulled_at"] = datetime.utcnow().isoformat(timespec="seconds") + "Z"
+    d = move_sellers(d, d["seller_redirects"])
+    if PAID.exists() and d["seller_redirects"]:
+        PAID.write_text(json.dumps(move_sellers(json.loads(PAID.read_text(encoding="utf-8")), d["seller_redirects"]),
+                                   indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     DATA.write_text(json.dumps(d, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     print(f"pull_data: {len(d['legal_db'])} status rows, {len(d['approved_db'])} approvals, {len(d['plans'])} plans, "
           f"{len(d['products'])} of {len(products)} listings, {len(d['sellers'])} of {len(sellers)} sellers, "
