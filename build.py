@@ -105,6 +105,12 @@ b.hidden=true;});})();
 </script>""" if GA4_ID else ""
 
 
+def slash_break(text):
+    """A plan name like "Quad (Sildenafil/Tadalafil/Vardenafil)" may break after each slash, so a phone never scrolls sideways
+    (check-layout, 8 Nov 2026: DudeMeds, RxSpan MD and Follicle Fuel plans). Only between text, never inside a tag."""
+    return re.sub(r"(?<=[^\s<])/(?=[^\s>])", "/<wbr>", text)
+
+
 def ev(name, **params):
     """The data attributes the events script reads (pages/every-page.md, Measurement): slugs and numbers only."""
     return f' data-ev="{name}"' + "".join(f' data-ev-{k}="{escape(str(v))}"' for k, v in params.items() if v not in (None, ""))
@@ -1327,19 +1333,24 @@ COSMETIC_LATER = "Sold as a cosmetic; no prices checked."
 SELLER_WINDOWS = {window_key(p): seller_window(p) for g in ALL_GOALS for p in g["peptides"] if has_window(p)}
 
 
+# The plans that may stand under an FDA-approved card (owner task 21, 8 Nov 2026: "only plans of the brand medicine").
+BRAND_KINDS = ("branded", "oral_branded", "generic")
+
+
 def option_plans(g, p):
     """The rows of an option's clinic window (pages.md, Clinic window; owner decision 4 Nov 2026): every priced plan of the
-    option's substance at any clinic that is not compounded, leaving out a brand approved for another use on this goal
+    option's substance at any clinic that is the brand medicine or its generic (BRAND_KINDS), leaving out a brand approved for another use on this goal
     (Ozempic on weight loss); the compounded row, the compounded plans of the goal's approved substances. A compounded plan
     never stands under an FDA-approved card (owner task 21, 8 Nov 2026: HealthRX's compounded PT-141 sold as "Vyleesi from
-    $170" on /libido/). A research-use or cosmetic row has none: its window lists shops, and a window never mixes the two."""
+    $170" on /libido/), and neither does a plan of unknown kind ("other": RxSpan MD's PT-141 injection as Vyleesi, 8 Nov
+    2026). A research-use or cosmetic row has none: its window lists shops, and a window never mixes the two."""
     priced = [r for r in PLANS if r.get("price_monthly") is not None]
     if p.get("plan_kind") == "compounded":
         subs = compounded_subs(g, p)
         return [r for r in priced if r["substance_slug"] in subs and r.get("product_kind") == "compounded"]
     if not (p.get("substance") and approved_row(p)):
         return []
-    return [r for r in priced if r.get("product_kind") != "compounded" and row_fits(p, r) and not other_use(g, r)
+    return [r for r in priced if r.get("product_kind") in BRAND_KINDS and row_fits(p, r) and not other_use(g, r)
             and plan_fits(p, r) and form_fits(p, r, strict=False)]
 
 
@@ -2423,7 +2434,7 @@ def clinic_section(g, rows):
         # on phones the first CLINICS_FIRST rows show until "Show all N" (owner answer Q2 a, 2 Nov 2026; bundle.css, Clinic table)
         more = ' class="more"' if i >= CLINICS_FIRST else ""
         plan = explain_brand(r["plan_name"], named)
-        trs.append(f'<tr{more} data-s="{r["substance_slug"]}"{state_attrs(r["seller_slug"])}><td>{clinic_link(r["seller_slug"], seller_base(r["seller_name"]))}</td><td data-l="Plan"><span class="plan-cut" title="{escape(strip_tags(plan))}">{plan}</span></td>'
+        trs.append(f'<tr{more} data-s="{r["substance_slug"]}"{state_attrs(r["seller_slug"])}><td>{clinic_link(r["seller_slug"], seller_base(r["seller_name"]))}</td><td data-l="Plan"><span class="plan-cut" title="{escape(strip_tags(plan))}">{slash_break(plan)}</span></td>'
                    f'<td>{plan_chip(g, r)}</td>'
                    f'<td data-l="Per month"><span class="num">{usd(r["price_monthly"])}</span>{plan_letter(r)}{f"<span class=sub>{care}</span>" if care else ""}</td>'
                    # every row: the letter chip by the price, no FDA letter column, "See plans" to our clinic page (owner answers
@@ -2536,7 +2547,7 @@ def goal_clinic_section(g, rows):
         more = ' class="more"' if i >= CLINICS_FIRST else ""
         plan = explain_brand(r["plan_name"], named)
         trs.append(f'<tr{more} data-s="{r["substance_slug"]}"{state_attrs(r["seller_slug"])} data-k="{kind}" data-f="{plan_form(r)}" data-l="{1 if (r.get("fda_letter_count") or 0) else 0}">'
-                   f'<td><span class="cell-pic">{parts.plan_picture(r)}<span class="name plan-cut" title="{escape(strip_tags(plan))}">{plan}</span></span></td>'
+                   f'<td><span class="cell-pic">{parts.plan_picture(r)}<span class="name plan-cut" title="{escape(strip_tags(plan))}">{slash_break(plan)}</span></span></td>'
                    f'<td data-l="What it is">{plan_chip(g, r)}</td>'
                    f'<td data-l="Per month"><span class="num">{usd(r["price_monthly"])}</span>{plan_letter(r)}{f"<span class=sub>{care}</span>" if care else ""}</td>'
                    f'<td data-l="Clinic"><span class="cell-pic">{parts.tile(r["seller_slug"], seller_base(r["seller_name"]), 28, seller=PROFILES.get(r["seller_slug"]))}{clinic_link(r["seller_slug"], seller_base(r["seller_name"]), True)}</span></td>'
@@ -3174,7 +3185,7 @@ def clinic_plans_section(r):
                      if other else '<span class="sub">no medication named</span>' if not p["substance_slug"]
                      else '<span class="sub">form not stated</span>' if not p.get("dosage_form") else '<span class="sub">no other clinic</span>')
         fee = p.get("membership_fee_monthly")
-        trs.append(f'<tr><td><span class="cell-pic">{parts.plan_picture(p)}<span class="name">{clean(p["plan_name"])}</span></span></td><td data-l="What it is">{plan_chip(plan_goal(p), p)}</td>'
+        trs.append(f'<tr><td><span class="cell-pic">{parts.plan_picture(p)}<span class="name">{slash_break(clean(p["plan_name"]))}</span></span></td><td data-l="What it is">{plan_chip(plan_goal(p), p)}</td>'
                    f'<td class="num" data-l="Per month">{usd(p["price_monthly"])}</td>'
                    f'<td data-l="Care fee">{"not known" if fee is None else "none" if float(fee) == 0 else usd(fee) + "/mo, included"}</td>'
                    f'<td data-l="Cheapest elsewhere">{elsewhere}</td></tr>')
@@ -4037,9 +4048,9 @@ def pep_plans(slug):
 
 
 def pep_low_plan(slug):
-    """The cheapest plan that is not compounded: a pharmacy-made copy is not the approved product (the goal pages' rule,
-    owner 31 Oct 2026). None without one."""
-    return next((r for r in pep_plans(slug) if r.get("product_kind") != "compounded"), None)
+    """The cheapest plan of the brand medicine or its generic: a pharmacy-made copy, or a plan of unknown kind, is not the
+    approved product (the goal pages' rule, owner 31 Oct 2026; task 21, 8 Nov 2026). None without one."""
+    return next((r for r in pep_plans(slug) if r.get("product_kind") in BRAND_KINDS), None)
 
 
 def pep_forms(slug):

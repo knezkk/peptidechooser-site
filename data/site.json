@@ -597,6 +597,22 @@
           "rx_word": "on prescription"
         },
         {
+          "name": "Compounded tadalafil and PT-141",
+          "plain": "Tadalafil mixes and PT-141 made by a pharmacy, sold by online clinics on prescription. Not FDA approved.",
+          "status": "Not FDA approved; pharmacy-made",
+          "chip": "warn",
+          "does": "Pharmacy-made versions sold by online clinics, some mixed with other medicines. Not checked by the FDA batch by batch.",
+          "how": "Prescription through the clinic.",
+          "status_plain": "Not FDA approved; pharmacy-made.",
+          "plan_kind": "compounded",
+          "plan_substances": [
+            "tadalafil",
+            "bremelanotide"
+          ],
+          "line_one": "pharmacy-made, from online clinics",
+          "rx_word": "on prescription"
+        },
+        {
           "name": "PT-141 from online shops",
           "plain": "The same molecule as Vyleesi, in vials labelled for lab use, no prescription. Not an approved product.",
           "status": "Not an approved product",
