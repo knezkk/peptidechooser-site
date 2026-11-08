@@ -4614,7 +4614,7 @@ def pep_page(slug):
         <h1>{escape(pep_name(slug))}</h1>
         {author_line(pep_checked(slug))}
         {status}
-        <p class="intro">{" ".join(pep_answer(slug, first)[1:])}</p>
+        <p class="intro">{" ".join(([f'{escape(pep_name(slug))} ({escape(NAMES[slug][0])}) is one molecule under two names (<a href="#names">see below</a>).'] if pep_alias_facts(slug) else []) + pep_answer(slug, first)[1:])}</p>
       </div>
       {where}
     </div>
