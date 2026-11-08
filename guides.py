@@ -136,6 +136,11 @@ GUIDES = [
      "h1": "Peptide sellers by the numbers: lab reports, FDA letters, companies.",
      "desc": "How many of the peptide shops we track meet each of our five checks, how the scores are spread, and how many online clinics have an FDA warning letter.",
      "line": "How many shops meet each check, how scores spread, and clinic letters."},
+    # round c of the SEO pass (owner, 8 Nov 2026: "1: a", the proposal of 8 Nov; text waits for ODOBRENO SEO)
+    {"slug": "best-peptides-for-weight-loss", "title": "Best peptides for weight loss: what is FDA approved",
+     "h1": "Best peptides for weight loss: approved, compounded and research-use.",
+     "desc": "Semaglutide and tirzepatide are FDA-approved peptides for weight loss. Compounded versions and retatrutide, with clinic prices and FDA status.",
+     "line": "The approved shots, the compounded copies and retatrutide: trials, status, prices."},
 ]
 # Home's card shows the first six with "All guides" under them (owner task 2 Nov 2026: the first six when space is tight)
 HOME_CARD = 6
@@ -151,7 +156,8 @@ TOPIC = {"is-bpc-157-legal": "legal", "are-peptides-safe": "legal", "how-to-read
          "what-is-a-503a-pharmacy": "buying", "how-to-check-a-peptide-seller": "buying",
          "fda-warning-letters-peptides-2026": "data", "cheapest-bpc-157-per-mg": "data",
          "peptide-seller-checks-by-the-numbers": "data", "ozempic-vs-wegovy-price": "glp1", "finasteride-vs-minoxidil": "hair",
-         "what-research-use-only-means": "legal"}
+         "what-research-use-only-means": "legal",
+         "best-peptides-for-weight-loss": "glp1"}
 RELATED_MAX = 5
 
 LEARN_TITLE = "Peptide guides in plain words | Peptide Chooser"
@@ -251,6 +257,12 @@ SOURCES = {
                    "Int J Mol Sci 19(7), 2018, PubMed 29986520", "https://pubmed.ncbi.nlm.nih.gov/29986520/"),
     "pm-najafi": ("Najafi N et al., A systematic review of the mechanisms and therapeutic applications of GHK-Cu in topical microneedle "
                   "delivery, Arch Intern Med Res 9(3), 2026, PubMed 42787770", "https://pubmed.ncbi.nlm.nih.gov/42787770/"),
+    "pm-wilding": ("Wilding JPH et al., Once-weekly semaglutide in adults with overweight or obesity (STEP 1), N Engl J Med 384(11), "
+                   "2021, PubMed 33567185", "https://pubmed.ncbi.nlm.nih.gov/33567185/"),
+    "pm-jastreboff-22": ("Jastreboff AM et al., Tirzepatide once weekly for the treatment of obesity (SURMOUNT-1), N Engl J Med 387(3), "
+                         "2022, PubMed 35658024", "https://pubmed.ncbi.nlm.nih.gov/35658024/"),
+    "pm-jastreboff-23": ("Jastreboff AM et al., Triple-hormone-receptor agonist retatrutide for obesity, a phase 2 trial, N Engl J Med "
+                         "389(6), 2023, PubMed 37366315", "https://pubmed.ncbi.nlm.nih.gov/37366315/"),
     # guides 23 to 28
     "pm-olsen": ("Olsen EA et al., A randomized clinical trial of 5% topical minoxidil versus 2% topical minoxidil and placebo in the "
                  "treatment of androgenetic alopecia in men, J Am Acad Dermatol 47(3), 2002, PubMed 12196747",
@@ -2180,6 +2192,87 @@ def g_by_numbers(b, f, N):
     return short, body, nxt
 
 
+def g_wl(b, f, N):
+    """Best peptides for weight loss (round c, 8 Nov 2026): the approved shots, the compounded copies and retatrutide, with
+    the trials in people (PubMed), the labels, and the cheapest plan of each kind at the clinics we track."""
+    wl = next(g for g in b.ALL_GOALS if g["slug"] == "weight-loss")
+    plan = lambda key: (f"{b.usd(f[key]['price_monthly'])} a month at {b.seller_base(f[key]['seller_name'])} "
+                        f"({f[key]['plan_name']}){N('plan-' + key)}" if f[key] else "")
+    clinics = len({r["seller_slug"] for r in f["sema_all"] + f["tirz_all"]})
+    reta_shops = len({r["seller_slug"] for r in b.seller_rows("retatrutide")})
+    reta_st = b.pep_status("retatrutide")
+    reta_word = (f"Its status in our database: {reta_st['label'].lower()} ({reta_st['sentence']})" if reta_st
+                 else "It is not approved")
+    short = (f"Both are peptides, sold on prescription.{N('label-wegovy')}{N('label-zepbound')} "
+             f"Compounded copies are not FDA approved,{N('fda-compounding')} and retatrutide is still in trials and sold "
+             f"only by research-use shops.{N('db-peptides')}")
+    opts = "".join(f"<li><strong>{p['name']}</strong>: {p['status']}. {p['does']}</li>" for p in wl["peptides"])
+    # called inside the body, so their footnotes number in reading order
+    def costs():
+        return [x for x in (
+            f"Wegovy (semaglutide) from {plan('brand_sema')}" if f["brand_sema"] else "",
+            f"Zepbound (tirzepatide) from {plan('brand_tirz')}" if f["brand_tirz"] else "",
+            f"compounded semaglutide from {plan('comp_sema')}" if f["comp_sema"] else "",
+            f"compounded tirzepatide from {plan('comp_tirz')}" if f["comp_tirz"] else "") if x]
+
+    def cost_p():
+        c = costs()
+        return (f"<p>The cheapest plan of each kind at the {clinics} online clinics we track with semaglutide or tirzepatide plans: {and_list(c)}.</p>"
+                if c else "<p>We show clinic prices once the clinic plans are in our database.</p>")
+
+    def reta_buy():
+        return ((f"{reta_shops} research-use shop{'s' if reta_shops != 1 else ''} we track list{'s' if reta_shops == 1 else ''} it."
+                 f"{N('db-sellers')} ") if reta_shops else "") + low_shop_words(b, "retatrutide", N)
+    body = f"""
+<h2>Which peptides are used for weight loss?</h2>
+<p>Semaglutide and tirzepatide are peptides: short chains of amino acids that act like gut hormones. Semaglutide acts on the GLP-1 receptor;{N('label-ozempic')} tirzepatide acts on two, the GIP and GLP-1 receptors.{N('label-mounjaro')} Our <a href="/weight-loss/">weight loss page</a> lists the options people ask about:</p>
+<ul>{opts}</ul>
+
+<h2>Which are FDA approved?</h2>
+<ul>
+<li><strong>Wegovy</strong> (semaglutide): to reduce excess body weight and keep it off in adults with obesity, or with overweight and a weight-related condition.{N('label-wegovy')}</li>
+<li><strong>Zepbound</strong> (tirzepatide): for the same groups, and to treat moderate to severe sleep apnea in adults with obesity.{N('label-zepbound')}</li>
+</ul>
+<p>Ozempic (semaglutide) and Mounjaro (tirzepatide) are the same medicines approved for type 2 diabetes, not for weight loss.{N('label-ozempic')}{N('label-mounjaro')} Compounded copies and retatrutide are not FDA approved.</p>
+
+<h2>How much weight did people lose in the trials?</h2>
+<p>In the STEP 1 trial, 1,961 adults with obesity or overweight took weekly semaglutide or a placebo for 68 weeks, with diet and exercise advice. Those on semaglutide lost 14.9% of their body weight on average, against 2.4% on placebo. Nausea and diarrhea were the most common side effects.{N('pm-wilding')}</p>
+<p>In the SURMOUNT-1 trial, 2,539 adults took weekly tirzepatide or a placebo for 72 weeks. Average weight loss was 15.0% to 20.9% depending on the dose group, against 3.1% on placebo. The most common side effects were in the gut, mostly while the dose was being raised.{N('pm-jastreboff-22')}</p>
+<p>The two trials were run separately, in different people, so their numbers are not a head-to-head comparison.</p>
+
+<h2>What about compounded semaglutide and tirzepatide?</h2>
+<p>A compounded version is a copy made by a pharmacy for a patient with a prescription. The FDA does not check its safety, effectiveness or quality before it is sold.{N('fda-compounding')} Pharmacies could make copies while the medicines were in short supply; the FDA says both shortages are over.{N('fda-glp1-supply')} Online clinics still sell compounded plans.</p>
+<p>The FDA warns that some sellers use salt forms (semaglutide sodium or acetate), which are different ingredients from the one in the approved medicine.{N('fda-glp1-concerns')} Our guides on <a href="/learn/compounded-semaglutide-price/">compounded semaglutide prices</a> and <a href="/learn/compounded-vs-brand-glp-1/">compounded vs brand GLP-1</a> go further.</p>
+
+<h2>What is retatrutide, and can you buy it?</h2>
+<p>Retatrutide acts on three receptors: GIP, GLP-1 and glucagon. In a phase 2 trial, 338 adults with obesity or overweight took it or a placebo weekly for 48 weeks; average weight loss was 8.7% to 24.2% depending on the dose group, against 2.1% on placebo.{N('pm-jastreboff-23')}</p>
+<p>{reta_word}.{N('db-peptides')} {reta_buy()} A research-use vial is labeled not for use in people, and it is not an approved medicine. Our guide on <a href="/learn/what-research-use-only-means/">what research use only means</a> explains the label.</p>
+
+<h2>What do they cost?</h2>
+{cost_p()}
+<p>Prices are the clinics' published monthly prices. Some add a care fee; our <a href="/weight-loss/">weight loss page</a> lists every plan with its care fee and each clinic's FDA warning letters.</p>
+
+<h2>So what are the best peptides for weight loss?</h2>
+<p>On the evidence in people and FDA approval, semaglutide (Wegovy) and tirzepatide (Zepbound). Both had large average weight loss against a placebo in long trials, and both are approved for weight management. Retatrutide had large losses in one phase 2 trial, but it is not approved, and what research-use shops sell is labeled not for use in people.</p>
+<p>None of this is medical advice. Your prescriber can tell you which medicine and which dose fit you.</p>"""
+    nxt = (("/weight-loss/", "Compare clinic prices"), ("/learn/compounded-vs-brand-glp-1/", "Compounded vs brand guide"))
+    best = ("Semaglutide (Wegovy) and tirzepatide (Zepbound): both are FDA approved for weight management, and both had large "
+            "average weight loss against a placebo in long trials.")
+    faq = ("weight loss peptides", [
+        ("What is the best peptide for weight loss?", best + " Retatrutide is not approved and is still in trials."),
+        ("Are weight loss peptides FDA approved?",
+         "Wegovy (semaglutide) and Zepbound (tirzepatide) are FDA approved for weight management. Compounded copies and retatrutide are not."),
+        ("How much weight do people lose on semaglutide and tirzepatide?",
+         "In the STEP 1 trial, people on semaglutide lost 14.9% of their body weight on average over 68 weeks, against 2.4% on placebo. "
+         "In the SURMOUNT-1 trial, people on tirzepatide lost 15.0% to 20.9% over 72 weeks, against 3.1% on placebo."),
+        ("How much do weight loss peptides cost?",
+         (f"At the {clinics} online clinics we track with semaglutide or tirzepatide plans: {re.sub(r'<[^>]+>', '', re.sub(r'<sup.*?</sup>', '', and_list(costs())))}." if costs() else "")),
+        ("Is retatrutide FDA approved?",
+         f"No. {reta_word}. It is sold online only as a research-use vial."),
+    ])
+    return short, body, nxt, faq
+
+
 TEXTS = {"is-bpc-157-legal": g_bpc, "are-peptides-safe": g_safe, "how-to-read-a-coa": g_coa,
          "compounded-vs-brand-glp-1": g_glp1, "what-an-fda-warning-letter-means": g_letter,
          "peptides-for-hair-loss-what-works": g_hair, "best-peptides-for-hair-growth": g_best,
@@ -2192,7 +2285,8 @@ TEXTS = {"is-bpc-157-legal": g_bpc, "are-peptides-safe": g_safe, "how-to-read-a-
          "what-is-a-503a-pharmacy": g_503a, "how-to-check-a-peptide-seller": g_self_check,
          "fda-warning-letters-peptides-2026": g_letters_year, "cheapest-bpc-157-per-mg": g_bpc_price,
          "ozempic-vs-wegovy-price": g_oz_weg, "finasteride-vs-minoxidil": g_fin_minox,
-         "what-research-use-only-means": g_ruo, "peptide-seller-checks-by-the-numbers": g_by_numbers}
+         "what-research-use-only-means": g_ruo, "peptide-seller-checks-by-the-numbers": g_by_numbers,
+         "best-peptides-for-weight-loss": g_wl}
 
 
 GUIDE_DATES = {}
@@ -2281,6 +2375,10 @@ def lead(b, f, N, slug):
         return f"Compounded semaglutide {x[0]}{x[1]}, checked {nice(x[2])}." if x else ""
     if slug == "semaglutide-vs-tirzepatide-price":
         return two("Semaglutide", low(f["sema_all"]), "tirzepatide", low(f["tirz_all"]))
+    if slug == "best-peptides-for-weight-loss":  # the two approved brands, from their clinic plans (not Ozempic or Mounjaro)
+        by = lambda w: [r for r in b.PLANS if w in (r.get("plan_name") or "")]
+        x = two("Wegovy", low(by("Wegovy")), "Zepbound", low(by("Zepbound")))
+        return f"FDA approved for weight loss: {x}" if x else ""
     if slug == "ozempic-vs-wegovy-price":
         by = lambda w: [r for r in b.PLANS if w in (r.get("plan_name") or "")]
         return two("Ozempic", low(by("Ozempic")), "Wegovy", low(by("Wegovy")))
