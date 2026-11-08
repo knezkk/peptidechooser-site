@@ -728,7 +728,28 @@ def g_hair(b, f, N):
 </ul>
 <p>None of this is medical advice. A doctor or dermatologist can tell you which option fits your hair loss.</p>"""
     nxt = (("/hair/", "Compare hair options"), (b.LETTERS_URL, "See FDA warning letters"))
-    return short, body, nxt
+    cost = plain(generic + (f" The cheapest finasteride plan at the online clinics we track is {plan_words(b, fp, '')}." if fp else ""))
+    faq = ("peptides for hair loss", [
+        ("Do peptides work for hair loss?",
+         "No peptide is FDA approved for hair loss. Copper peptide serums are cosmetics with lab and follicle studies behind them, "
+         "not large trials in people, and we found no human evidence for hair from the injectable peptides sold for it."),
+        ("Which hair loss treatments are FDA approved?",
+         "Two, and neither is a peptide: finasteride 1 mg, a daily pill on prescription, and minoxidil, a liquid or foam you put "
+         "on the scalp, sold without a prescription."),
+        ("Does GHK-Cu grow hair?",
+         "The evidence for hair comes from lab work: a 2007 study tested AHK-Cu, a close relative of GHK-Cu, on human hair "
+         "follicles kept alive in a dish. We found no large trial in people."),
+        ("Are injectable peptides for hair FDA approved?",
+         "No. Research-use shops sell vials of BPC-157, TB-500 and injectable GHK-Cu, and some market them for hair. None is "
+         "approved for any use, and we found no studies in people that show these injections grow hair."),
+        ("How much does finasteride cost?", cost),
+    ])
+    return short, body, nxt, faq
+
+
+def plain(x):
+    """A sentence for an FAQ answer and its schema: no footnotes, no tags."""
+    return re.sub(r"<[^>]+>", "", re.sub(r"<sup.*?</sup>", "", x)).strip()
 
 
 pkey = lambda r: f"plan-{r['seller_slug']}-{r['plan_slug']}"  # a clinic plan's source key (known_sources)
@@ -1035,7 +1056,25 @@ def g_sema_price(b, f, N):
 <p>It has also had reports from people given compounded semaglutide in doses beyond the approved label. Most pharmacies do not have to report side effects to the FDA, so the FDA says these are likely under-reported.{N('fda-glp1-concerns')}</p>
 <p>None of this is medical advice. Your prescriber can tell you which medicine and which dose fit you.</p>"""
     nxt = (("/weight-loss/", "Compare clinic prices"), ("/learn/compounded-vs-brand-glp-1/", "Compounded vs brand guide"))
-    return short, body, nxt
+    # questions (pages/learn.md, Guide, Questions; round c, owner 8 Nov 2026): sentences the guide already holds
+    price = plain(lead(b, f, N, "compounded-semaglutide-price") + " " + (short.split(". Compounded semaglutide is")[0] + "." if comp else ""))
+    faq = ("compounded semaglutide", [
+        ("What is compounded semaglutide?",
+         "A copy of semaglutide, the medicine in Wegovy, made by a pharmacy for a patient with a prescription. It is not FDA approved: "
+         "the FDA does not check a compounded medicine's safety, effectiveness or quality before it is sold."),
+        ("How much does compounded semaglutide cost?", price.strip() if comp else ""),
+        ("Is compounded semaglutide FDA approved?",
+         "No. Compounded semaglutide is a pharmacy-made copy, not FDA approved, and the FDA does not check its safety, effectiveness "
+         "or quality before it is sold."),
+        ("Can pharmacies still make compounded semaglutide?",
+         "Semaglutide is no longer on the FDA's drug shortage list, and for state-licensed pharmacies the time the FDA allowed for "
+         "copies ended on 22 April 2025. Online clinics still sell compounded plans."),
+        ("What has the FDA warned about?",
+         "Dosing errors with compounded semaglutide injections, some of them needing a hospital stay, and versions made from salt "
+         "forms such as semaglutide sodium and semaglutide acetate, which the FDA says are different ingredients from the one in "
+         "the approved drugs."),
+    ])
+    return short, body, nxt, faq
 
 
 def glp1_words(b, r):
@@ -1123,7 +1162,22 @@ def g_muscle(b, f, N):
 <p>On the evidence in people, none. The peptides sold for muscle raise hormone levels in short trials or were tested for other problems, and the FDA lists safety concerns for two of them. The approved growth hormone medicines are for medical conditions.</p>
 <p>None of this is medical advice. A doctor can tell you what fits your goal.</p>"""
     nxt = (("/muscle/", "Compare muscle options"), ("/learn/are-peptides-safe/", "Are peptides safe? guide"))
-    return short, body, nxt
+    faq = ("peptides for muscle growth", [
+        ("What are the best peptides for muscle growth?",
+         "On the evidence in people, none. The peptides sold for muscle raise hormone levels in short trials or were tested for "
+         "other problems, and the FDA lists safety concerns for two of them."),
+        ("Is any peptide FDA approved for building muscle?",
+         f"No. Tesamorelin ({eg or 'Egrifta'}) is approved to reduce belly fat in adults with HIV and lipodystrophy, and growth "
+         "hormone itself (somatropin) mainly for growth hormone deficiency."),
+        ("Do CJC-1295 and ipamorelin build muscle?",
+         "We found no trial in people that shows CJC-1295, ipamorelin or sermorelin builds muscle. In two trials in healthy adults, "
+         "CJC-1295 raised growth hormone and IGF-I; the trials did not measure muscle or strength."),
+        ("What has the FDA said about CJC-1295 and ipamorelin?",
+         "The FDA lists serious side effects linked to CJC-1295, including a faster heart rate, and says the data in people are "
+         "limited. For ipamorelin, it says a published study found serious side effects, including a death, when it was given "
+         "into a vein for gut problems."),
+    ])
+    return short, body, nxt, faq
 
 
 def g_bpc_tb(b, f, N):
@@ -2338,17 +2392,26 @@ def next_links(b, g, skip):
     return f'<ul class="next-links">{lis}</ul>' if out else ""
 
 
+FAQ = {}  # slug -> the pairs guide_body drew, for the page's FAQPage schema
+
+
 def guide_body(b, g):
     f = facts(b)
     N = Notes(known_sources(b, f))
     first = lead(b, f, N, g["slug"])  # cited first, so its footnote is number 1
-    short, body, (ink, line) = TEXTS[g["slug"]](b, f, N)
+    res = TEXTS[g["slug"]](b, f, N)
+    short, body, (ink, line) = res[:3]
+    # a guide's text may return a fourth item, (name, [(question, answer), ...]): the FAQ part before "What to do next",
+    # with FAQPage schema holding the same pairs (pages/learn.md, Guide; ODOBRENO DIZAJN - Karlo - 8. 11. 2026)
+    name, pairs = res[3] if len(res) > 3 else ("", [])
+    FAQ[g["slug"]] = [(q, a) for q, a in pairs if q and a]
+    faq = b.faq_block(name, FAQ[g["slug"]], "faq-h", "faq") if FAQ[g["slug"]] else ""
     return f"""
 <article class="page guide"><div class="wrap prose">
 <h1>{g["h1"]}</h1>
 <p class="small meta"><a href="/about/">{b.AUTHOR}</a>. Checked {nice(checked(b))}.</p>
 <section class="short-answer" aria-labelledby="short-h"><h2 id="short-h">Short answer</h2><p>{(first + " ") if first else ""}{short}</p></section>
-{body}
+{body}{faq}
 <h2>What to do next</h2>
 <div class="btn-row"><a class="btn btn-ink" href="{ink[0]}">{ink[1]}</a><a class="btn btn-line" href="{line[0]}">{line[1]}</a></div>
 {next_links(b, g, (ink[0], line[0]))}
@@ -2404,7 +2467,7 @@ def pages(b):
     out = []
     for g in GUIDES:
         path = f"/learn/{g['slug']}/"
-        out.append((path, f"learn/{g['slug']}/index.html", g["title"], g["desc"], guide_body(b, g), article_schema(b, g),
+        out.append((path, f"learn/{g['slug']}/index.html", g["title"], g["desc"], guide_body(b, g), article_schema(b, g) + b.faq_schema(FAQ.get(g["slug"], [])),
                     [("/learn/", "Learn"), (path, g["title"])]))
     mins = {g["slug"]: read_min(row[4]) for g, row in zip(GUIDES, out)}
     bodies = [(p[0], p[4]) for p in b.PAGES] + [(p[0], p[4]) for p in out]

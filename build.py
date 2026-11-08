@@ -228,7 +228,8 @@ if(a&&/(^|\.)fda\.gov$/.test(a.hostname))send('outbound_fda',{letter:letter(a)})
 if(c&&t.closest('a,button')&&!t.closest('.ref'))send('decision_card_click',{card:c.getAttribute('data-card')});
 if(r){var k=r.querySelector('.chip');send('search',{query_length:typed(r.closest('#hs-list')?'#hs-q':'#sp-q'),result_type:k?k.textContent.toLowerCase():'other'});}
 if(f&&!(f.classList.contains('seg-b')&&f.getAttribute('aria-pressed')==='true'))send('filter_change',{filter:f.getAttribute('data-filter'),value:f.getAttribute('data-value')});
-if(el&&el.tagName!=='FORM'&&el.getAttribute('aria-pressed')!=='true')send(el.getAttribute('data-ev'),own(el));
+if(el&&el.tagName!=='FORM'&&el.getAttribute('aria-pressed')!=='true'){var o=own(el),n=el.getAttribute('data-ev');
+if(n==='paid_link_click'){o.transport_type='beacon';if(c)o.placement='decision card';}send(n,o);}
 }catch(x){}},true);
 document.addEventListener('change',function(e){try{var i=e.target;if(i&&i.getAttribute&&i.getAttribute('data-filter')&&i.tagName!=='BUTTON')send('filter_change',{filter:i.getAttribute('data-filter'),value:i.getAttribute('data-value')||i.value});}catch(x){}},true);
 document.addEventListener('submit',function(e){try{var f=e.target;if(f.matches('.head-search,#sp-form')){var n=f.querySelector('input').value.trim().length;if(n)send('search',{query_length:n,result_type:'page'});}
@@ -791,8 +792,15 @@ def paid_href(seller_slug, paid):
     return paid if paid.startswith("/out/") else f"/out/{seller_slug}/"
 
 
-def paid_ev(seller_slug, paid):
-    return ev("paid_link_click", seller=seller_slug, out_path=paid_href(seller_slug, paid))
+PLACEMENTS = ("option row", "clinic table", "window", "seller page", "decision card")
+
+
+def paid_ev(seller_slug, paid, placement):
+    """`paid_link_click` (owner task 20, 8 Nov 2026): `partner` is the /out/ slug, `placement` where the button sits; `page_type`
+    comes from <body data-pt>. nav.js sends it by beacon, so it leaves before /out/ redirects."""
+    assert placement in PLACEMENTS, placement
+    out = paid_href(seller_slug, paid)
+    return ev("paid_link_click", seller=seller_slug, partner=out.strip("/").split("/")[1], placement=placement, out_path=out)
 
 
 def plans_ev(seller_slug, plan=None):
@@ -1028,7 +1036,7 @@ def not_in_line(slug, tag="span"):
     return f'<{tag} class="not-in">Not available in: {", ".join(states)}</{tag}>' if states else ""
 
 
-def clinic_button(seller_slug, label, small="Our clinic page", plan=None, paid_ok=True, in_table=False):
+def clinic_button(seller_slug, label, small="Our clinic page", plan=None, paid_ok=True, in_table=False, placement="clinic table"):
     """A clinic's one action (Home v2, 3 Nov 2026), on clinic_row_act's rule (owner answer Q1 a and decision C8, 3 Nov
     2026): btn-action "Visit <Name> ..." through /out/<seller>/ with "Paid link" under it only when the data carries the
     clinic's paid link (`paid_url` on the plan row, else on its profile; none yet; site.paid_links applies the paid link
@@ -1040,7 +1048,7 @@ def clinic_button(seller_slug, label, small="Our clinic page", plan=None, paid_o
     paid = (plan or {}).get("paid_url") or r.get("paid_url")
     if paid_ok and paid:
         tail = label.split(" · ", 1)[1] if " · " in label else ""
-        return (f'<span class="pick-act"><a class="btn btn-action btn-sm" href="{paid_href(seller_slug, paid)}"{paid_ev(seller_slug, paid)} rel="sponsored">'
+        return (f'<span class="pick-act"><a class="btn btn-action btn-sm" href="{paid_href(seller_slug, paid)}"{paid_ev(seller_slug, paid, placement)} rel="sponsored">'
                 f'Visit {seller_base(r["seller_name"])}{" · " + tail if tail else ""}'
                 + ('<span class="paid">Paid link</span></a></span>' if in_table else '</a><span class="paid">Paid link</span></span>'))
     return (f'<span class="pick-act"><a class="btn btn-wait btn-sm" href="/sellers/{seller_slug}/"{plans_ev(seller_slug, plan)}>{label}</a>'
@@ -1378,7 +1386,7 @@ def clinic_window(g, p):
                    f'<td data-l="Per month"><span class="num">{usd(r["price_monthly"])}</span>{plan_letter(r)}{seller_closed_chip(r["seller_slug"])}</td>'
                    f'<td data-l="Care fee">{"not known" if fee is None else "none" if float(fee) == 0 else usd(fee) + "/mo, included"}</td>'
                    f'<td data-l="Checks">{checks}</td>'
-                   f'<td class="act">{clinic_row_act(r)}</td></tr>')
+                   f'<td class="act">{clinic_row_act(r, "window")}</td></tr>')
     newest = max(r["last_seen"] for r in rows)
     who = "Sellers" if otc else "Clinics"
     return f"""<dialog class="sellers-dlg clinic-dlg" id="{key}" aria-labelledby="{key}-h"><div class="dlg-in" data-state-root>
@@ -2192,7 +2200,7 @@ PRIVACY = f"""
 <ul>
 <li><strong>Email you send us.</strong> If you contact us, we receive your email address and whatever you include in your message. We use it only to reply.</li>
 <li><strong>Server logs.</strong> Our hosting provider (GitHub Pages) may record technical data such as IP address, browser type and the pages requested, for security and to operate the service. We do not use this data to identify you.</li>
-<li><strong>Analytics, only if you accept.</strong> We use Google Analytics 4 to count visits and see which pages people find useful. It runs only after you press "Accept" on the cookie notice. If you press "Reject", no analytics cookie is set and nothing is sent to Google. Google processes this data under its own <a href="https://policies.google.com/privacy" rel="nofollow noopener">privacy policy</a>. We do not use advertising trackers, and we do not sell or share visitor data.</li>
+<li><strong>Analytics, only if you accept.</strong> We use Google Analytics 4 to count visits and see which pages people find useful. It also counts which buttons people click, including clicks on our paid links, and never which words you type in our search. It runs only after you press "Accept" on the cookie notice. If you press "Reject", no analytics cookie is set and nothing is sent to Google. Google Analytics keeps this data for 14 months, then deletes it. Google processes this data under its own <a href="https://policies.google.com/privacy" rel="nofollow noopener">privacy policy</a>. We do not use advertising trackers, and we do not sell or share visitor data.</li>
 {PRIVACY_NEWSLETTER}</ul>
 <h2>Cookies</h2>
 <p>The site sets one small value in your browser to remember your cookie choice. Google Analytics sets its own cookies (named _ga and similar) only after you accept. You can change your mind by clearing the site's data in your browser; the notice will then appear again.</p>
@@ -2248,6 +2256,62 @@ def page_footnotes(body):
 
 def category_page(g):
     return page_footnotes(category_body(g))
+
+
+# Questions on a goal page (SEO round c, group 2, queue block 9): the searches "peptides for skin", "best peptides for
+# muscle growth" and the like, answered from the goal's approved texts and its option rows; no new claim.
+GOAL_FAQ = {"skin", "muscle", "weight-loss", "hair"}
+
+
+def goal_price_word(g, p):
+    """The row's own price words in plain text: its cost line ("From $10/mo (generic, pharmacy coupon). Online clinics from
+    $50/mo (Winona)."), else its button ("From $0.10/mg · 16 shops" -> "from $0.10/mg at 16 shops"), or ""."""
+    plain = lambda t: " ".join(unescape(re.sub(r"<[^>]+>", " ", re.sub(r"<sup>.*?</sup>", "", t, flags=re.S))).split())
+    pad, rp = opt_price(p, g["slug"]), row_plan(g, p)
+    cost = plain(price_sentence(p, pad) + (" " + plan_line(g, "plan-in", rp) if rp else ""))
+    cost = re.sub(r"\s+([).,])", r"\1", re.sub(r"\(\s+", "(", cost)).strip()
+    cost = re.sub(r"\) FDA letter (\d{1,2} \w{3} \d{4})", r", FDA warning letter \1)", cost)
+    if re.search(r"\$\d", cost):
+        return cost.rstrip(".")
+    t = re.sub(r'<span class="paid[^"]*">.*?</span>', "", opt_action(g, p, rp, False, pad), flags=re.S)
+    t = plain(t).replace("Buy from", "from").replace(" · ", " at ").replace("From", "from").rstrip(".")
+    t = re.sub(r" at (\d+ (?:products|creams|serums))", r" across \1", t)
+    return t if re.search(r"\$\d", t) else ""
+
+
+def goal_faq_pairs(g):
+    if g["slug"] not in GOAL_FAQ or not g.get("main_query"):
+        return []
+    mq, opts = g["main_query"], g["peptides"]
+    first = re.split(r"(?<=\.)\s", g["short_answer"], 1)[0]
+    pairs = [(f"What are the best {mq}?",
+              f"{first} The options on this page: " + "; ".join(f'{p["name"]}, {p["line_one"]}' for p in opts) + ".")]
+    groups = {}
+    for p in opts:
+        groups.setdefault(p["status"], []).append(p["name"])
+    pairs.append((f"Are {mq} FDA approved?",
+                  " ".join(f"{st}: {and_list(ns)}." for st, ns in groups.items())
+                  + (' Each status has its source under "Is it legal today?".' if g.get("legal_section") else "")))
+    prices = [(p["name"], goal_price_word(g, p)) for p in opts]
+    prices = [(n, w) for n, w in prices if re.search(r"\$\d", w)]
+    if prices:
+        pairs.append((f"How much do {mq} cost?",
+                      " ".join(f"{n}: {w[0].lower() + w[1:]}." for n, w in prices) + f" Prices checked {nice_date(GOAL_CHECKED)}."))
+    rx = {}
+    for p in opts:
+        rx.setdefault(p["rx_word"], []).append(p["name"])
+    pairs.append((f"Do I need a prescription for {mq}?",
+                  " ".join(f"{w[0].upper() + w[1:]}: {and_list(ns)}." for w, ns in rx.items())))
+    return pairs
+
+
+def goal_faq(g):
+    pairs = goal_faq_pairs(g)
+    return f'<section class="section goal-sec" id="faq"><div class="wrap">{faq_block(mq_cap(g), pairs, "faq-h")}</div></section>' if pairs else ""
+
+
+def mq_cap(g):
+    return g["main_query"]
 
 
 # Like with like (owner UX audit A26, 3 Nov 2026: a pair compared a pill with an injection): a plan's form from its
@@ -2333,13 +2397,13 @@ def explain_brand(plan_name, seen):
     return f"{first} ({name}){plan_name[len(first):]}"
 
 
-def clinic_row_act(r):
+def clinic_row_act(r, placement="clinic table"):
     """A clinic plan's button, every kind (owner answer Q1 a, 3 Nov 2026; for compounded plans owner decision C8, 3 Nov 2026, labelled compounded): btn-action "Visit <Name>" with "Paid link"
     only when the data carries the clinic's paid link, on the plan row or its profile (the paid link rule, pages.md, Buttons;
     owner decision 4 Nov 2026); otherwise btn-wait "See plans" to our clinic page."""
     name, paid = seller_base(r["seller_name"]), r.get("paid_url") or PROFILES.get(r["seller_slug"], {}).get("paid_url")
     if paid:
-        return (f'<span class="pick-act"><a class="btn btn-action btn-sm" href="{paid_href(r["seller_slug"], paid)}"{paid_ev(r["seller_slug"], paid)} rel="sponsored">Visit {name}'
+        return (f'<span class="pick-act"><a class="btn btn-action btn-sm" href="{paid_href(r["seller_slug"], paid)}"{paid_ev(r["seller_slug"], paid, placement)} rel="sponsored">Visit {name}'
                 '<span class="paid">Paid link</span></a></span>')
     if r["seller_slug"] not in PROFILES:
         return ""
@@ -2410,7 +2474,7 @@ def tools_block(g, first_n):
                 continue
             line = line.format(plan=f'{plan["plan_name"]} at {usd(plan["price_monthly"])} a month')
             source = source.format(checked=nice_date(plan["observed_at"]))
-            act = clinic_button(slug, "See plans", plan=plan)
+            act = clinic_button(slug, "See plans", plan=plan, placement="option row")
         n = first_n + len(srcs)
         url = t.get("url")
         where = f': <a href="{url}" rel="nofollow">{url}</a>' if url and "fda.gov" in url else f": {url}" if url else ""
@@ -2669,7 +2733,7 @@ def category_body(g):
       <div class="flow-compare"><div class="step-panel"><p class="goal-for">{g["for"]}</p><ul class="opts">{opt_html}</ul>{instead}</div></div>
     </div>
   </div>
-</section>{goal_clinic_section(g, plans)}{tools_html}{legal_html}
+</section>{goal_clinic_section(g, plans)}{tools_html}{legal_html}{goal_faq(g)}
 <!--next:{g["slug"]}-->
 {sources_html}
 <div class="wrap sellers-all">{windows}</div>
@@ -3292,12 +3356,13 @@ def faq_schema(pairs):
             + json.dumps({"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": els}, ensure_ascii=False) + "</script>")
 
 
-def faq_block(name, pairs, heading_id):
-    """Questions as h3 with their answers, between hairlines; no accordion, no icon."""
+def faq_block(name, pairs, heading_id, cls="seller-sec faq"):
+    """Questions as h3 with their answers, between hairlines; no accordion, no icon. A guide passes cls="faq", so its h2
+    is the guide's own prose h2 (pages/learn.md, Guide)."""
     if not pairs:
         return ""
     items = "".join(f'<div class="faq-item"><h3>{q}</h3><p>{a}</p></div>' for q, a in pairs if a)
-    return (f'\n<section class="seller-sec faq" aria-labelledby="{heading_id}">\n  <h2 id="{heading_id}">Questions about {name}</h2>\n'
+    return (f'\n<section class="{cls}" aria-labelledby="{heading_id}">\n  <h2 id="{heading_id}">Questions about {name}</h2>\n'
             f'  <div class="faq-list">{items}</div>\n</section>')
 
 
@@ -3333,7 +3398,7 @@ def seller_action(r):
                    if plans else "")
         if not r.get("paid_url"):
             return compare
-        return (f'<div class="seller-pair">{compare}<span class="pick-act"><a class="btn btn-action" href="{paid_href(r["seller_slug"], r["paid_url"])}"{paid_ev(r["seller_slug"], r["paid_url"])} rel="sponsored">'
+        return (f'<div class="seller-pair">{compare}<span class="pick-act"><a class="btn btn-action" href="{paid_href(r["seller_slug"], r["paid_url"])}"{paid_ev(r["seller_slug"], r["paid_url"], "seller page")} rel="sponsored">'
                 f'Visit {seller_base(seller_name(r))}</a><span class="paid">Paid link</span></span></div>')
     return f'<a class="btn btn-ink" href="/compare/?a=s.{r["seller_slug"]}"{ev("compare_pick", kind="seller")}>Compare with another shop</a>'
 
@@ -3654,7 +3719,7 @@ if LETTERS_ALL:
 for _g in ALL_GOALS:
     if _g.get("page"):
         PAGES.append((f"/{_g['slug']}/", f"{_g['slug']}/index.html", _g["title"], _g["description"],
-                      category_page(_g), "", [(f"/{_g['slug']}/", _g["name"])]))
+                      category_page(_g), faq_schema(goal_faq_pairs(_g)), [(f"/{_g['slug']}/", _g["name"])]))
 
 if PROFILES:
     PAGES.append(("/sellers/", "sellers/index.html", "Peptide sellers and their checks | Peptide Chooser",
@@ -4082,7 +4147,10 @@ def pep_description(slug):
     parts.append("We compare and never sell.")
     out = parts[0]
     for x in parts[1:]:
-        if len(out) + 1 + len(x) <= 160:
+        # the date is measured at its widest ("30 Sep 2026"), so a short date never adds the sentence
+        # and a long one never drops it: the words of the description stay the same from day to day
+        fit = len("Checked 30 Sep 2026.") if x.startswith("Checked ") else len(x)
+        if len(out) + 1 + fit <= 160:
             out += " " + x
     return out
 
