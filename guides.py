@@ -2195,7 +2195,6 @@ def g_by_numbers(b, f, N):
 def g_wl(b, f, N):
     """Best peptides for weight loss (round c, 8 Nov 2026): the approved shots, the compounded copies and retatrutide, with
     the trials in people (PubMed), the labels, and the cheapest plan of each kind at the clinics we track."""
-    wl = next(g for g in b.ALL_GOALS if g["slug"] == "weight-loss")
     plan = lambda key: (f"{b.usd(f[key]['price_monthly'])} a month at {b.seller_base(f[key]['seller_name'])} "
                         f"({f[key]['plan_name']}){N('plan-' + key)}" if f[key] else "")
     clinics = len({r["seller_slug"] for r in f["sema_all"] + f["tirz_all"]})
@@ -2203,10 +2202,19 @@ def g_wl(b, f, N):
     reta_st = b.pep_status("retatrutide")
     reta_word = (f"Its status in our database: {reta_st['label'].lower()} ({reta_st['sentence']})" if reta_st
                  else "It is not approved")
-    short = (f"Both are peptides, sold on prescription.{N('label-wegovy')}{N('label-zepbound')} "
+    short = (f"Semaglutide (Wegovy) and tirzepatide (Zepbound) are both peptides, sold on prescription.{N('label-wegovy')}{N('label-zepbound')} "
              f"Compounded copies are not FDA approved,{N('fda-compounding')} and retatrutide is still in trials and sold "
              f"only by research-use shops.{N('db-peptides')}")
-    opts = "".join(f"<li><strong>{p['name']}</strong>: {p['status']}. {p['does']}</li>" for p in wl["peptides"])
+    # our own rows, not the goal page's: Wegovy is also sold as a pill at some clinics, so "a weekly shot" alone would not fit
+    pills = sorted((r for r in b.PLANS if "Wegovy Pill" in (r.get("plan_name") or "") and r.get("price_monthly") is not None),
+                   key=lambda r: (float(r["price_monthly"]), r["seller_name"]))
+    pill = len({r["seller_slug"] for r in pills})
+    opts = (f"<li><strong>Semaglutide (Wegovy)</strong>: FDA approved. A weekly shot{N('label-wegovy')}"
+            + (f", and at {b.plural(pill, 'clinic')} we track also a pill (Wegovy Pill){N(pkey(pills[0]))}" if pill else "") + ".</li>"
+            f"<li><strong>Tirzepatide (Zepbound)</strong>: FDA approved. A weekly shot.{N('label-zepbound')}</li>"
+            "<li><strong>Compounded semaglutide or tirzepatide</strong>: not FDA approved. Pharmacy-made copies, sold by online "
+            "clinics on prescription.</li>"
+            "<li><strong>Retatrutide</strong>: not approved, still in trials. Sold online only by research-use shops.</li>")
     # called inside the body, so their footnotes number in reading order
     def costs():
         return [x for x in (
@@ -2218,7 +2226,7 @@ def g_wl(b, f, N):
     def cost_p():
         c = costs()
         return (f"<p>The cheapest plan of each kind at the {clinics} online clinics we track with semaglutide or tirzepatide plans: {and_list(c)}.</p>"
-                if c else "<p>We show clinic prices once the clinic plans are in our database.</p>")
+                if c else "")  # no placeholder in public (rule 4): without plans the sentence is left out
 
     def reta_buy():
         return ((f"{reta_shops} research-use shop{'s' if reta_shops != 1 else ''} we track list{'s' if reta_shops == 1 else ''} it."
