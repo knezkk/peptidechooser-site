@@ -109,3 +109,7 @@ ODOBRENO SEO - Karlo - 7. 11. 2026 - PR #129
 ODOBRENO SEO - Karlo - 8. 11. 2026 - PR #130
 ODOBRENO SEO - Karlo - 8. 11. 2026
 /peptides/cjc-1295/ 05e091641c00
+
+ODOBRENO SEO - Karlo - 8. 11. 2026 - PR #136
+/learn/best-peptides-for-weight-loss/ c614db4d045e
+/learn/ 15f1e3a1633e
