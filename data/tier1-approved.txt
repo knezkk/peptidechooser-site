@@ -118,4 +118,6 @@ ODOBRENO SEO - Karlo - 8. 11. 2026 - PR #136
 
 ODOBRENO SEO - Karlo - 8. 11. 2026 - PR #140 (first sentence of /peptides/bremelanotide/: "Bremelanotide (PT-141) is one molecule under two names (see below).")
 
+ODOBRENO SEO - Karlo - 9. 11. 2026 - PR #144 (task 23 with Q1 A and Q2 A: "Plan covers N medicines", plan counts, cheapest lines on /hair/, /libido/ and the substance pages; table in the run report, no title, description or H1 change)
+
 ODOBRENO SEO - Karlo - 9. 11. 2026 - PR #149 (/muscle/ "No prescription" card: CJC-1295 / ipamorelin instead of sermorelin)
