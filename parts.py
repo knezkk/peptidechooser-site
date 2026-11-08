@@ -59,7 +59,7 @@ def thumb(key, no_form=False):
 def form_drawing(text):
     """A form word in any text -> its drawing, or ""."""
     t = (text or "").lower()
-    if re.search(r"\b(pill|pills|tablet|tablets|capsule|capsules|oral)\b", t):
+    if re.search(r"\b(pill|pills|tablet|tablets|capsule|capsules|oral|odt)\b", t):
         return "pill-bottle"
     if re.search(r"\b(pen|pens|kwikpen|autoinjector|shot|shots)\b", t):
         return "pen-brand"

@@ -1459,7 +1459,7 @@ def check_rules33(P):
     d = json.loads((ROOT / "data" / "site.json").read_text(encoding="utf-8"))
     plans = d.get("plans") or []
     text = lambda h: " ".join(unescape(re.sub(r"<[^>]+>", " ", h)).split())
-    # owner task 21 (8 Nov 2026): an FDA-approved card's window and button count no compounded plan
+    # owner task 21 (8 Nov 2026): an FDA-approved card's window and button count only plans of the brand medicine or its generic
     by_plan = {(x["seller_slug"], " ".join((x["plan_name"] or "").split())): x for x in plans}
     wins = {}
     for f in sorted((DIST / "windows").glob("clinics-*.json")):
@@ -1469,8 +1469,8 @@ def check_rules33(P):
         for slug, row in re.findall(r'<tr data-clinic="([^"]+)"[^>]*>(.*?)</tr>', html, re.S):
             pn = re.search(r'<td data-l="Plan">(.*?)</td>', row, re.S)
             x = by_plan.get((slug, text(pn.group(1)) if pn else ""))
-            if (x and x.get("product_kind") == "compounded") or re.search(r'<td data-l="What it is">[^<]*<span class="chip[^"]*">Compounded', row):
-                errs.append(f"windows/{f.name}: an FDA-approved card's window lists the compounded plan {slug} '{text(pn.group(1)) if pn else '?'}'")
+            if (x and x.get("product_kind") not in ("branded", "oral_branded", "generic")) or re.search(r'<td data-l="What it is">[^<]*<span class="chip[^"]*">Compounded', row):
+                errs.append(f"windows/{f.name}: an FDA-approved card's window lists the plan {slug} of kind {x.get('product_kind') if x else 'compounded'} '{text(pn.group(1)) if pn else '?'}'")
             price = re.search(r'<td data-l="Per month"><span class="num">([^<]+)</span>', row)
             rows.append((slug, price and price.group(1)))
         wins[f.stem] = rows
