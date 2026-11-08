@@ -3290,12 +3290,13 @@ def faq_schema(pairs):
             + json.dumps({"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": els}, ensure_ascii=False) + "</script>")
 
 
-def faq_block(name, pairs, heading_id):
-    """Questions as h3 with their answers, between hairlines; no accordion, no icon."""
+def faq_block(name, pairs, heading_id, cls="seller-sec faq"):
+    """Questions as h3 with their answers, between hairlines; no accordion, no icon. A guide passes cls="faq", so its h2
+    is the guide's own prose h2 (pages/learn.md, Guide)."""
     if not pairs:
         return ""
     items = "".join(f'<div class="faq-item"><h3>{q}</h3><p>{a}</p></div>' for q, a in pairs if a)
-    return (f'\n<section class="seller-sec faq" aria-labelledby="{heading_id}">\n  <h2 id="{heading_id}">Questions about {name}</h2>\n'
+    return (f'\n<section class="{cls}" aria-labelledby="{heading_id}">\n  <h2 id="{heading_id}">Questions about {name}</h2>\n'
             f'  <div class="faq-list">{items}</div>\n</section>')
 
 
