@@ -1,0 +1,3 @@
+# Cloudflare Pages only: keep the project's pages.dev address out of Google.
+https://:project.pages.dev/*
+  X-Robots-Tag: noindex
