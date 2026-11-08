@@ -470,6 +470,9 @@ def g_bpc(b, f, N):
 <h2>What changed on 30 Oct 2026?</h2>
 {hhs_block(b, N, "bpc-157")}
 
+<h2>Can you get BPC-157 on a prescription?</h2>
+{rx_block(b, N)}
+
 <h2>What did the FDA review in July 2026?</h2>
 <p>On 23 and 24 July 2026 the FDA's Pharmacy Compounding Advisory Committee, a panel of outside experts, reviewed BPC-157 together with TB-500, MOTS-c and epitalon. The question was whether pharmacies may use these substances to make medicines for patients on a prescription. The FDA proposed not to allow it.{N('legal-6')}</p>
 <p>A committee advises; the FDA decides. A proposal is a step, not the last word. We keep the status on our <a href="/#legal">Is it legal today?</a> table and change this page when the FDA publishes what it decided.</p>
@@ -520,7 +523,7 @@ def g_safe(b, f, N):
 {aes}
 <p><strong>Cosmetic peptides</strong> are judged as cosmetics: they must be safe to use on skin as labelled, but nobody has to prove that they do what the jar says.{N('legal-5')}</p>
 <p><strong>Research-use peptides</strong> have the least. Most have animal or cell studies only, and nobody has checked what is in a given vial. For BPC-157, the FDA says it found little or no safety information for use in people.{N('fda-bulk-risks')}</p>
-
+{hhs_safe(b, N)}
 <h2>What does a lab report (COA) show?</h2>
 <p>A certificate of analysis, or COA, is a lab report for one batch. It can show how pure the powder is and whether it is the peptide on the label. It cannot show that the peptide is safe or that it works in people, and it says nothing about the next batch.</p>
 <p>Read more in our guide on <a href="/learn/how-to-read-a-coa/">how to read a peptide COA</a>.</p>
@@ -789,6 +792,64 @@ def hhs_block(b, N, slug=None):
             f"<p>The ten conditions, in short:{N('legal-13')}</p><ol>{conds}</ol>"
             f"<p>HHS says it may revisit the policy if a safety or quality problem shows up, and the FDA may later propose adding some "
             f"or all of these peptides to the 503A list through rulemaking.{N('legal-12')}</p>")
+
+
+def rx_plans(b, slug):
+    """The clinic plans we track for a substance that is not an approved drug, cheapest first (build.pep_clinic_plans)."""
+    return b.pep_clinic_plans(slug) if b.PEPTIDE_SLUGS and slug in b.PEPTIDE_SLUGS else []
+
+
+def rx_block(b, N):
+    """"Can you get BPC-157 on a prescription?" (owner queue block 13, wave A, 8 Nov 2026): who may make it under the HHS
+    policy, then the clinic plans we track from data; without a plan the sentence about plans is left out."""
+    plans = rx_plans(b, "bpc-157")
+    if not b.HHS:
+        return ""
+    out = (f"<p>Only from a licensed pharmacy that makes it for one patient on a prescription, under the ten conditions above: "
+           f"that is what HHS said it does not intend to act against.{N('legal-13')} It is then a pharmacy-made medicine, not an "
+           f"FDA-approved one.</p>")
+    if plans:
+        r = plans[0]
+        out += (f"<p>Of the online clinics we track, {spelled(len({x['seller_slug'] for x in plans})).lower()} "
+                f"list{'s' if len({x['seller_slug'] for x in plans}) == 1 else ''} a BPC-157 plan"
+                f"{'' if len(plans) == 1 else ', the cheapest'}: {plan_words(b, r, N(pkey(r)))}. "
+                f'Our <a href="/peptides/bpc-157/">BPC-157 page</a> lists {"it" if len(plans) == 1 else "them"} next to the research-use shops.</p>')
+    return out
+
+
+def hhs_list(b, N):
+    """The six peptides of the HHS policy, each with its route and the clinic plans we track (owner queue block 13)."""
+    h = b.HHS
+    if not h:
+        return ""
+    items = []
+    for slug in [x for x in h["substances"] if h["routes"].get(x)]:
+        n = len(rx_plans(b, slug))
+        try:  # a substance the data cannot name drops out (rule 4: a missing fact drops its line)
+            nm = b.substance_name(slug)
+        except ValueError:
+            continue
+        link = f'<a href="/peptides/{slug}/">{nm}</a>' if b.PEPTIDE_SLUGS and slug in b.PEPTIDE_SLUGS else nm
+        items.append(f"<li>{link}: {h['routes'][slug]}"
+                     + (f"; {n} online clinic plan{'s' if n != 1 else ''} we track" if n else "") + "</li>")
+    if not items:
+        return ""
+    return (f"<p>{spelled(len(items))}, under the HHS policy of 30 Oct 2026: HHS does not intend to act against a licensed pharmacy that makes them "
+            f"for one patient on a prescription, under 10 conditions, by the routes the policy names:{N('legal-13')}</p><ul>{''.join(items)}</ul>"
+            f"<p>Each one is still not FDA approved. Our page on each peptide shows the clinic plans we track.</p>")
+
+
+def hhs_safe(b, N):
+    """"Does the HHS policy of 30 Oct 2026 make these peptides safe?" for the safety guide (owner queue block 13): what the
+    policy allows, what its conditions check, and that none of them is a trial in people. From legal.hhs_policy."""
+    if not b.HHS:
+        return ""
+    return (f"\n<h2>Does the HHS policy of 30 Oct 2026 make these peptides safe?</h2>\n"
+            f"<p>No. {b.hhs_sentence('BPC-157, TB-500, Epitalon, MOTS-c, KPV or Semax')}{N('legal-13')}</p>"
+            f"<p>Its ten conditions are about quality and reporting: the raw ingredient must come from a maker registered with the FDA, "
+            f"with a lab report (COA) that meets the FDA's test criteria, and the pharmacy must report serious side effects and quality "
+            f"problems to the FDA.{N('legal-13')} None of the ten is a trial in people, so the policy adds no safety data of its own. "
+            f'Our guide <a href="/learn/is-bpc-157-legal/">Is BPC-157 legal?</a> lists all ten.</p>\n')
 
 
 def status_words(b, slug, N, plain=False):
@@ -1294,6 +1355,9 @@ def g_legal(b, f, N):
 <li><strong>Category 3</strong>: too little information was sent to review it.</li>
 </ul>
 <p>The FDA's page on substances that may be risky to compound also names peptides whose nomination was withdrawn, such as BPC-157.{N('fda-bulk-risks')} Outsourcing facilities work under a different section, 503B, with their own list.{N('fda-glp1-supply')}</p>
+
+<h2>Which peptides may a pharmacy make on prescription today?</h2>
+{hhs_list(b, N)}
 
 <h2>What does "research use only" mean for a buyer?</h2>
 <p>It is a label the seller puts on the product: it says the product is for lab research, not for people. It does not make the product approved, checked or safe to use.{N('fda-approval')} It also does not tell you what is in the vial; only a lab report from an outside lab can, and only for one batch. Our guide on <a href="/learn/how-to-read-a-coa/">how to read a COA</a> explains what to look for.</p>
