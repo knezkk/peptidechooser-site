@@ -599,6 +599,11 @@ OPT_REF = {id(p): (len(LEGAL["sources"]) + len(LIVE_GOALS) + i + 1, f"opt-{i + 1
 # the day we last saw that price. A goal with no plan row shows nothing (owner, 31 Oct 2026). Compounded plans are left
 # out: the line sits under an FDA-approved option, and a pharmacy-made copy is not that product (owner, 31 Oct 2026).
 PLANS = DATA.get("plans") or []
+# A per-order plan (peptide-data spec 0023: price_per_order, no monthly price) never shows as monthly (owner's assistant,
+# task 22, 8 Nov 2026): until the book has a "per order" line it stays out of every "from $X/mo", count, sort, Cheapest
+# card and clinic table. It is kept apart for that later design task.
+PER_ORDER_PLANS = [r for r in PLANS if r.get("price_per_order") is not None]
+PLANS = [r for r in PLANS if r.get("price_per_order") is None]
 # A plan's monthly figure includes its monthly membership or care fee when the data has one (data agent's task 33, owner
 # 7 Nov 2026: Ivim stores the medication, $65, and the membership, $74.99, apart; the reader pays $139.99). The medicine's
 # own price stays in price_medicine; the care fee is shown as included, never added twice.
