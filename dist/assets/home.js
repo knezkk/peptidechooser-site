@@ -1,20 +1,4 @@
 
-(function(){var f=document.querySelector('.where-filter'),tb=document.getElementById('where-table');if(!f||!tb||!window.fetch)return;
-var sb=document.getElementById('where-sub'),mn=document.getElementById('where-min'),q=document.getElementById('where-q'),n=document.getElementById('where-n'),
-all=document.getElementById('where-all'),segs=[].slice.call(f.querySelectorAll('.seg-b')),rows=null,FIRST=8;
-function type(){var on=segs.filter(function(x){return x.getAttribute('aria-pressed')==='true';})[0];return on?on.getAttribute('data-type'):'';}
-function draw(){var s=q.value.trim().toLowerCase(),u=sb.value,k=parseInt(mn.value,10),t=type(),hit=rows.filter(function(r){
-return(!s||r.n.indexOf(s)>=0)&&(!u||r.u.indexOf(u)>=0)&&r.s>=k&&(!t||r.t===t);});
-tb.tBodies[0].innerHTML=hit.slice(0,FIRST).map(function(r){return r.h;}).join('');
-[].forEach.call(tb.tBodies[0].rows,function(r){r.style.opacity=1;});
-n.textContent=hit.length?'Showing '+Math.min(FIRST,hit.length)+' of '+hit.length+' that match · online clinics first, then by checks':'No seller matches. Try fewer filters.';
-var h=[];if(u)h.push('substance='+u);if(k)h.push('min='+k);if(t)h.push('type='+t);if(s)h.push('q='+encodeURIComponent(s));
-all.href='/sellers/'+(h.length?'#'+h.join('&'):'');}
-function ch(){if(rows)return draw();fetch('/sellers/home.json').then(function(r){return r.json();}).then(function(d){rows=d;draw();});}
-f.hidden=false;[sb,mn].forEach(function(x){x.addEventListener('change',ch);});q.addEventListener('input',ch);
-segs.forEach(function(x){x.addEventListener('click',function(){segs.forEach(function(y){y.setAttribute('aria-pressed',y===x?'true':'false');});ch();});});})();
-
-
 (function(){var f=document.querySelector('.legal-check');if(!f)return;
 f.addEventListener('submit',function(e){var S=window.pcSearch;if(!S)return;e.preventDefault();var v=document.getElementById('legal-q').value.trim();
 S.load(function(d){var r=S.find(d,v,20).filter(function(x){return x.type==='Peptide';});if(window.pcEv)pcEv(f.getAttribute('data-ev'),{substance:r.length?r[0].url.split('/')[2]:'none'});location.href=r.length?r[0].url:'/peptides/';});});})();
