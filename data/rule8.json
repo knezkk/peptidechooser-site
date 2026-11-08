@@ -154,6 +154,43 @@
     "/sellers/healthletic/": {
       "title": "Healthletic review: prices, lab reports, FDA letters",
       "h1": "Healthletic review"
+    },
+    "/compare/shedrx-vs-zappy-health/": {
+      "title": "ShedRx vs Zappy Health: prices, care fees and checks",
+      "h1": "ShedRx vs Zappy Health"
+    },
+    "/compare/mots-c-vs-nad-plus/": {
+      "title": "MOTS-c vs NAD+: FDA status and prices | Peptide Chooser",
+      "h1": "MOTS-c vs NAD+"
+    },
+    "/compare/alloy-vs-mochi-health/": {
+      "title": "Alloy vs Mochi Health: prices, care fees and checks",
+      "h1": "Alloy vs Mochi Health"
+    },
+    "/compare/direct-meds-vs-fancymeds/": {
+      "title": "Direct Meds vs FancyMeds: prices, care fees and checks",
+      "h1": "Direct Meds vs FancyMeds"
+    },
+    "/compare/fancymeds-vs-good-life-meds/": {
+      "title": "FancyMeds vs Good Life Meds: prices, care fees and checks",
+      "h1": "FancyMeds vs Good Life Meds"
+    },
+    "/compare/fifty-410-vs-mochi-health/": {
+      "title": "Fifty 410 vs Mochi Health: prices, care fees and checks",
+      "h1": "Fifty 410 vs Mochi Health"
+    },
+    "/compare/alloy-vs-fancymeds/": {
+      "title": "Alloy vs FancyMeds: prices, care fees and checks",
+      "h1": "Alloy vs FancyMeds"
+    },
+    "/compare/shedrx-vs-zealthy/": {
+      "title": "ShedRx vs Zealthy: prices, care fees and checks",
+      "h1": "ShedRx vs Zealthy"
+    },
+    "/peptides/bremelanotide/": {
+      "title": "Bremelanotide: FDA status, prices and where it is sold",
+      "h1": "Bremelanotide"
     }
-  }
+  },
+  "added": "Compare pages and /peptides/bremelanotide/ with impressions (Search Console, last 3 months, read by the owner's assistant 7 Nov 2026; owner task in chat, 7 Nov 2026); titles and H1s read from the live pages the same day."
 }
