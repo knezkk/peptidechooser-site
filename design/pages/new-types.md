@@ -65,3 +65,9 @@ A price calculator with a measured search: price per mg and price per month only
 - **Never** an input or an answer in mg per dose, per day or per kg, and never the word "dose" (`tools/check.py`).
 - **/tools/**: the list page, one line per tool (name, one sentence), linked from the goal pages' Tools section.
 - **Schema:** BreadcrumbList; WebApplication (name, applicationCategory "FinanceApplication", isAccessibleForFree) only.
+
+## Round 3 fixes (owner answer a, 8 Nov 2026, after the round 2 shots and audit; ODOBRENO DIZAJN - Karlo - 9. 11. 2026 - PR #143)
+
+- **Seller offer:** its plan table drops the Clinic column (one seller) and the plan name leads the row; the band is headed "<Substance> plans" with "The plans on this clinic's price page, cheapest first."; the list of other sellers is headed "Other clinics for <substance>" (or "Other shops for <substance>"), never "Where to get it", which belongs to the substance page.
+- **Brand and seller offer:** the clinic table's `paper-2` band sits straight under the first screen, with the band's own padding only (no section padding around it).
+- **Tool:** the H1 is the hero H1 of the other templates (the `hero` section), not a larger display size.
