@@ -4136,7 +4136,10 @@ def pep_description(slug):
     parts.append("We compare and never sell.")
     out = parts[0]
     for x in parts[1:]:
-        if len(out) + 1 + len(x) <= 160:
+        # the date is measured at its widest ("30 Sep 2026"), so a short date never adds the sentence
+        # and a long one never drops it: the words of the description stay the same from day to day
+        fit = len("Checked 30 Sep 2026.") if x.startswith("Checked ") else len(x)
+        if len(out) + 1 + fit <= 160:
             out += " " + x
     return out
 
