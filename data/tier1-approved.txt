@@ -116,4 +116,6 @@ ODOBRENO SEO - Karlo - 8. 11. 2026 - PR #136
 /learn/best-peptides-for-weight-loss/ c614db4d045e
 /learn/ 15f1e3a1633e
 
+ODOBRENO SEO - Karlo - 8. 11. 2026 - PR #140 (first sentence of /peptides/bremelanotide/: "Bremelanotide (PT-141) is one molecule under two names (see below).")
+
 ODOBRENO SEO - Karlo - 8. 11. 2026 - PR #145 part 1 (additions on /learn/are-peptides-safe/, /learn/are-peptides-legal-in-the-us/, /learn/is-bpc-157-legal/ and the substance pages with clinic plans or the HHS policy; texts in the PR. Part 2, /learn/peptides-vs-steroids/, is not approved: draft until task 4C)
