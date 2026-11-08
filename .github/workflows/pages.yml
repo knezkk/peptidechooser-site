@@ -29,13 +29,14 @@ jobs:
           if [ -n "$SITE_DATABASE_URL" ]; then pip install -q "psycopg[binary]==3.2.3"; fi
           python3 tools/pull_data.py
       # the pages already live, so a comparison pair that is live stays (owner answer Q2 a, 3 Nov 2026)
+      # since the sitemap index (task 23): every file of it, flat, and the live page dates, so an unchanged page keeps its date
       - name: fetch the live sitemap
-        run: curl -sf https://peptidechooser.com/sitemap.xml -o "$RUNNER_TEMP/live-sitemap.xml" || true
+        run: python3 tools/live_sitemap.py "$RUNNER_TEMP"
       - run: python3 build.py
-        env: { LIVE_SITEMAP: "${{ runner.temp }}/live-sitemap.xml" }
+        env: { LIVE_SITEMAP: "${{ runner.temp }}/live-sitemap.xml", LIVE_LASTMOD: "${{ runner.temp }}/live-lastmod.json" }
       # a page born from new data gets its share image here (owner answer Q1 a, 3 Nov 2026), then the site is rebuilt
       - name: draw missing share images
-        env: { LIVE_SITEMAP: "${{ runner.temp }}/live-sitemap.xml" }
+        env: { LIVE_SITEMAP: "${{ runner.temp }}/live-sitemap.xml", LIVE_LASTMOD: "${{ runner.temp }}/live-lastmod.json" }
         run: |
           if [ "$(python3 tools/og.py --missing --count)" != "0" ]; then
             pip install -q playwright==1.49.1
