@@ -31,6 +31,12 @@ const VIEWS = {
   recovery: { z: 1.5, v: .42 },
   libido: { z: 1.7, v: .46 },
   longevity: { z: 1, v: .5 },
+  // Two goals in one region share the figure's zoom onto it (design/pages/goal.md, Pins on the body figure).
+  'growth-hormone': { z: 3.6, v: .125 },
+  sleep: { z: 3.6, v: .125 },
+  testosterone: { z: 1.7, v: .46 },
+  energy: { z: 1, v: .5 },
+  menopause: { z: 1.7, v: .46 },
 };
 // Pins: a point on the body per goal. World position, projected to the box by the page's own camera below.
 const pinsFor = (m) => {
@@ -43,6 +49,11 @@ const pinsFor = (m) => {
     'weight-loss': [0, y(.61), m.cz + 1],
     libido: [0, y(.5), m.cz + 1],
     recovery: [J['lowerleg01.L'].head[0], J['lowerleg01.L'].head[1], m.cz + .5],
+    'growth-hormone': [0, J['neck02'].head[1], m.cz + .5],
+    sleep: [0, J['eye.L'].head[1], m.cz + 1],
+    testosterone: [H * .04, y(.555), m.cz + 1],
+    energy: [-H * .045, y(.735), m.cz + 1],
+    menopause: [-H * .04, y(.555), m.cz + 1],
   };
 };
 
