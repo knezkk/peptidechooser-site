@@ -2338,17 +2338,26 @@ def next_links(b, g, skip):
     return f'<ul class="next-links">{lis}</ul>' if out else ""
 
 
+FAQ = {}  # slug -> the pairs guide_body drew, for the page's FAQPage schema
+
+
 def guide_body(b, g):
     f = facts(b)
     N = Notes(known_sources(b, f))
     first = lead(b, f, N, g["slug"])  # cited first, so its footnote is number 1
-    short, body, (ink, line) = TEXTS[g["slug"]](b, f, N)
+    res = TEXTS[g["slug"]](b, f, N)
+    short, body, (ink, line) = res[:3]
+    # a guide's text may return a fourth item, (name, [(question, answer), ...]): the FAQ part before "What to do next",
+    # with FAQPage schema holding the same pairs (pages/learn.md, Guide; ODOBRENO DIZAJN - Karlo - 8. 11. 2026)
+    name, pairs = res[3] if len(res) > 3 else ("", [])
+    FAQ[g["slug"]] = [(q, a) for q, a in pairs if q and a]
+    faq = b.faq_block(name, FAQ[g["slug"]], "faq-h", "faq") if FAQ[g["slug"]] else ""
     return f"""
 <article class="page guide"><div class="wrap prose">
 <h1>{g["h1"]}</h1>
 <p class="small meta"><a href="/about/">{b.AUTHOR}</a>. Checked {nice(checked(b))}.</p>
 <section class="short-answer" aria-labelledby="short-h"><h2 id="short-h">Short answer</h2><p>{(first + " ") if first else ""}{short}</p></section>
-{body}
+{body}{faq}
 <h2>What to do next</h2>
 <div class="btn-row"><a class="btn btn-ink" href="{ink[0]}">{ink[1]}</a><a class="btn btn-line" href="{line[0]}">{line[1]}</a></div>
 {next_links(b, g, (ink[0], line[0]))}
@@ -2404,7 +2413,7 @@ def pages(b):
     out = []
     for g in GUIDES:
         path = f"/learn/{g['slug']}/"
-        out.append((path, f"learn/{g['slug']}/index.html", g["title"], g["desc"], guide_body(b, g), article_schema(b, g),
+        out.append((path, f"learn/{g['slug']}/index.html", g["title"], g["desc"], guide_body(b, g), article_schema(b, g) + b.faq_schema(FAQ.get(g["slug"], [])),
                     [("/learn/", "Learn"), (path, g["title"])]))
     mins = {g["slug"]: read_min(row[4]) for g, row in zip(GUIDES, out)}
     bodies = [(p[0], p[4]) for p in b.PAGES] + [(p[0], p[4]) for p in out]
