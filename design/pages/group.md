@@ -38,3 +38,8 @@ A narrower search inside a goal that shares fewer than 3 of the Google top 10 wi
 - **On the goal page:** a "Narrower questions" line under the options: the goal's indexable subpages as text links between hairlines (the What to do next part), only when one exists.
 - **Not on Home, not in the By goal menu:** a subpage is reached from its goal page, search and the sitemap; the goal stays the one entry.
 - **Schema:** BreadcrumbList; FAQPage only with the Questions part.
+
+## Round 3 fixes (owner answer a, 8 Nov 2026; waits for ODOBRENO DIZAJN)
+
+- **Not a peptide:** in a group's substance table (and on /fda-approved/ first), a substance that is not a peptide (today finasteride, minoxidil and orforglipron, from a peptide flag in the data, w2) stays in the table with a `chip-neutral` "Not a peptide" right after its name, so the page never calls it a peptide (the architecture plan).
+- **Goal subpage:** the first screen's right column is the goal's own panel (`goal-panel goal-c-<goal>` with the goal's photo, or its drawing until a photo is chosen), never an empty tint.

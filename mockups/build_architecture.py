@@ -24,12 +24,17 @@ BANNER = ('<div class="wrap"><p class="small" style="margin:8px 0 0">Local templ
           'Real data; title, H1 and prose are samples for ODOBRENO SEO.</p></div>')
 
 
+NOT_A_PEPTIDE = {"finasteride", "minoxidil", "orforglipron"}  # sample until the data carries a peptide flag (w2)
+
+
 def az_rows(slugs):
     out = []
     for x in sorted(slugs, key=lambda s: b.pep_name(s).lower()):
         s = b.pep_status(x)
         name = escape(b.pep_name(x))
         cell = f'<a class="name" href="/peptides/{x}/">{name}</a>' if f"/peptides/{x}/" not in b.NOINDEX else f'<span class="name">{name}</span>'
+        if x in NOT_A_PEPTIDE:
+            cell += ' <span class="chip chip-neutral">Not a peptide</span>'
         out.append(f'<tr><td>{cell}</td><td data-l="Status"><span class="chip chip-{s["chip"]}">{s["label"]}</span></td>'
                    f'<td data-l="What it means">{b.pep_means(x)}</td><td class="num" data-l="Lowest price">{b.pep_low(x)}</td></tr>')
     return "".join(out)
@@ -47,7 +52,16 @@ def facts_pad(items, checked):
             f'<p><span class="stamp">Checked {b.nice_date(checked)}</span></p></aside>')
 
 
-def where_list(rows, lede):
+def one_seller(html):
+    """An offer page shows one seller: its clinic table drops the Clinic column and the plan name leads the row."""
+    import re
+    html = html.replace('<th scope="col">Clinic</th>', "", 1)
+    html = re.sub(r'<td><a class="name" href="/sellers/[^"]+/">[^<]*</a></td>', "", html)
+    html = re.sub(r"<h2>Online clinic prices</h2><p>[^<]*</p>", "<h2>Semaglutide plans</h2><p>The plans on this clinic's price page, cheapest first.</p>", html, count=1)
+    return html.replace('class="tbl tbl-cards', 'class="tbl tbl-compact tbl-cards', 1)
+
+
+def where_list(rows, lede, head="Where to get it"):
     lines, named = [], set()
     for r in rows:
         kind = '<span class="chip chip-warn">Compounded</span>' if r.get("product_kind") == "compounded" else ""
@@ -55,7 +69,7 @@ def where_list(rows, lede):
                      f'<span class="sub">{b.explain_brand(r["plan_name"], named)}{kind}</span></span>'
                      f'<span class="where-price"><span class="num">{b.usd(r["price_monthly"])}/mo</span>{b.plan_letter(r)}</span>'
                      f'{b.clinic_button(r["seller_slug"], "See plans", plan=r)}</li>')
-    return (f'<div class="panel-line pep-where" id="where"><h2>Where to get it</h2><p class="small">{lede}</p>'
+    return (f'<div class="panel-line pep-where" id="where"><h2>{head}</h2><p class="small">{lede}</p>'
             f'<ul class="where-list">{"".join(lines)}</ul></div>')
 
 
@@ -121,7 +135,7 @@ def subpage():
 <section class="hero hero-goal"><div class="wrap"><div class="pep-first">
   <div><h1>New weight loss drugs</h1>{b.author_line(checked)}
   <p class="intro">The newest weight loss medicines: tirzepatide is approved, orforglipron and retatrutide are the next ones. Here is what each is, its FDA status, and what the approved one costs at online clinics.</p></div>
-  <div class="goal-panel" style="background:var(--goal-weight-loss-tint);border-radius:var(--radius-panel);min-height:220px"></div>
+  <div class="goal-panel goal-c-weight-loss">{b.parts.goal_photo("weight-loss", 120)}</div>
 </div></div></section>
 <section class="section"><div class="wrap"><h2>Is it legal today?</h2>{az_table([s for s in slugs if s in b.PEPTIDE_SLUGS], "New weight loss drugs and their FDA status")}</div></section>
 <section class="band-2"><div class="wrap">{table}</div></section>
@@ -143,8 +157,7 @@ def brand():
   <p class="intro">Wegovy is Novo Nordisk's semaglutide for weight loss, as a weekly pen or a daily pill. The lowest plan we track is {b.usd(low["price_monthly"])}/mo at {escape(b.seller_base(low["seller_name"]))}, checked {b.nice_date(low["last_seen"][:10])}.</p></div>
   {where_list(rows[:3], "The cheapest Wegovy plans at the online clinics we track.")}
 </div></div></section>
-<section class="section pep-sold"><div class="wrap">{b.clinic_section(g, rows).replace('class="tbl tbl-cards', 'class="tbl tbl-compact tbl-cards', 1)}
-<p class="small"><a href="/peptides/semaglutide/">Compounded semaglutide and other forms</a></p></div></section>
+{b.clinic_section(g, rows).replace('class="tbl tbl-cards', 'class="tbl tbl-compact tbl-cards', 1).replace('</table></div>', '</table></div><p class="small"><a href="/peptides/semaglutide/">Compounded semaglutide and other forms</a></p>', 1)}
 {foot(['<a href="/weight-loss/">Compare every option for weight loss</a>', '<a href="/peptides/semaglutide/">Semaglutide</a>'], [f'Drugs@FDA, semaglutide, {b.nice_date(s["seen"])}', "Clinic price pages, each with its check date."])}"""
     return "peptides/semaglutide/wegovy", "Wegovy (semaglutide)", body, [("/peptides/", "Peptides"), ("/peptides/semaglutide/", "Semaglutide"), ("", "Wegovy")]
 
@@ -174,9 +187,9 @@ def offer():
 </div></div></div>
 <p class="intro seller-answer">{escape(name)} lists {len(rows)} semaglutide plans on its price page; the lowest is {b.usd(rows[0]["price_monthly"])}/mo ({escape(rows[0]["plan_name"])}), checked {b.nice_date(rows[0]["last_seen"][:10])}.</p>
 </div></section>
-<section class="section pep-sold"><div class="wrap">{b.clinic_section(g, rows).replace('class="tbl tbl-cards', 'class="tbl tbl-compact tbl-cards', 1)}</div></section>
+{one_seller(b.clinic_section(g, rows))}
 <div class="wrap seller-body">
-  <div class="seller-main"><section class="seller-sec">{where_list(three, "The three cheapest other clinics for semaglutide.")}</section></div>
+  <div class="seller-main"><section class="seller-sec">{where_list(three, "The three cheapest other clinics for semaglutide.", "Other clinics for semaglutide")}</section></div>
   <aside class="seller-side" aria-label="Background check">{b.check_card(r)}</aside>
 </div>
 {foot([f'<a href="/sellers/{slug}/">{escape(name)} review</a>', '<a href="/peptides/semaglutide/">Semaglutide</a>', '<a href="/sellers/#substance=semaglutide">Every seller of semaglutide</a>'], [f"{escape(name)} price page, checked {b.nice_date(rows[0]['last_seen'][:10])}."])}"""
@@ -213,7 +226,7 @@ def tool():
                if ex else "")
     body = f"""
 {BANNER}
-<section class="section"><div class="wrap">
+<section class="hero hero-goal"><div class="wrap">
   <h1>Peptide price per mg calculator</h1>
   {b.author_line(b.DATA_CHECKED)}
   <div class="panel-line" style="display:grid;gap:24px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr))">
