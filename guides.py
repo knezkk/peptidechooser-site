@@ -2196,7 +2196,7 @@ def g_wl(b, f, N):
     """Best peptides for weight loss (round c, 8 Nov 2026): the approved shots, the compounded copies and retatrutide, with
     the trials in people (PubMed), the labels, and the cheapest plan of each kind at the clinics we track."""
     plan = lambda key: (f"{b.usd(f[key]['price_monthly'])} a month at {b.seller_base(f[key]['seller_name'])} "
-                        f"({f[key]['plan_name']}){N('plan-' + key)}" if f[key] else "")
+                        f"({f[key]['plan_name']}){N(pkey(f[key]))}" if f[key] else "")  # the plan's own key, so a plan the lead cites is one source
     clinics = len({r["seller_slug"] for r in f["sema_all"] + f["tirz_all"]})
     reta_shops = len({r["seller_slug"] for r in b.seller_rows("retatrutide")})
     reta_st = b.pep_status("retatrutide")
