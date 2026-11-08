@@ -2,6 +2,8 @@
 
 What goes on each page type, top to bottom, and which button sits where. A page is built only from the parts listed for its type. A new part is added to this book first.
 
+New page types from the site map (`docs/site-map-rules-2026-11-08.md`, owner 8 Nov 2026): brand `/peptides/<substance>/<brand>/`, seller offer `/sellers/<seller>/<substance>/`, lab `/labs/<lab>/`, company FDA letters `/fda-warning-letters/<company>/` and tool `/tools/<tool>/` have no template yet. None is built until its file is in this book (ODOBRENO DIZAJN, task 3A).
+
 One file per page type (split 5 Nov 2026). An older note saying "pages.md, <section>" means that section in one of these:
 
 - [every-page.md](pages/every-page.md): Every page (header, footer, cookie notice, header search, jump row), Page anatomy, Schema.org, Rules that apply to every page, 404

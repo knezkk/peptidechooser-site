@@ -6,7 +6,7 @@ Static comparison site for the US peptide market: peptides next to FDA-approved 
 
 - `build.py` renders every page from `data/site.json` into `dist/`. No framework, no build step beyond Python 3.
 - `design/` is the working copy of the Master 1 design book (`README.md` principles and rules, `CHANGELOG.md` every change, `tokens.json`, `bundle.css` components, `layout.md` margins and breakpoints, `pages.md` the index of `pages/<page>.md`, what goes on each page and which button where). `assets/site.css` holds layout only and uses tokens; `assets/tokens.css` is generated.
-- `tools/check.py` (words, seo, schema, parts, data, book) and `tools/check_layout.js` (no sideways scroll at 320 to 2560 px) gate every deploy (`.github/workflows/pages.yml`). `tools/og.py` draws share images. `tools/pull_data.py` fills `site.json` from the peptide-data database when `SITE_DATABASE_URL` is set.
+- `tools/check.py` (words, seo, schema, parts, data, book, addresses and more) and `tools/check_layout.js` (no sideways scroll at 320 to 2560 px) gate every deploy (`.github/workflows/pages.yml`). `tools/og.py` draws share images. `tools/pull_data.py` fills `site.json` from the peptide-data database when `SITE_DATABASE_URL` is set.
 
 ```bash
 python3 build.py && python3 tools/check.py && node tools/check_layout.js   # before every commit
@@ -24,6 +24,33 @@ python3 -m http.server 8765 -d dist                                         # lo
 6. **One pair of actions per page**: `btn-ink` for our action, `btn-action` (green) only for a paid outbound link through `/out/<name>/` with `rel="sponsored"` and "Paid link" under it. Research-use sellers get no link.
 7. **Not an AI look.** No gradient washes, no left-border cards, no emoji, no stock photos except the goal photos (`design/pages/parts.md`), no icons in buttons, no rounded-everything, no uppercase labels. Borders and the yellow `mark` make hierarchy. Medical cues allowed: the ℞ price pad, the body figure, lab-label chips, the "Checked <date>" stamp. Never a fake prescription, lab report or letter.
 8. **Protect pages that rank.** A page with impressions in Search Console keeps its URL, title and H1; only additions.
+
+## Site map rules (8 Nov 2026)
+
+Owner, ODOBRENO PRAVILA - Karlo - 8. 11. 2026. The full rules are in `docs/site-map-rules-2026-11-08.md`: the 12 page types with address, parent and Google rule (section 1), links incl. `rel="sponsored"` on every `/out/` link (4), data changes (5), the main page for each overlap (6), what the site never builds (7) and the 36-address move list (8). Every agent places and names every new page by them. `tools/check.py` (check-addresses) enforces the mechanical address rules on new addresses; live addresses that break one are listed in `data/live-addresses.txt`, and nothing new is added there.
+
+### 2. Where a new page goes
+Before question 1: does a live page already target this search? Two searches are the same when they share 3 or more of the Google top 10. If a live page owns it, add a section to that page. A page Google already shows keeps its address, title and H1.
+
+1. Compares two things? Two named sellers, substances or brands side by side from data with no written verdict: /compare/{a}-vs-{b}/, names in alphabetical order, the reverse never made. A broad comparison (peptides vs steroids) or one with a written verdict is a guide. If a guide owns the pair, no comparison is made.
+2. One seller, or one seller's offer of one substance? /sellers/{seller}/ or /sellers/{seller}/{substance}/. Blends never get an offer page.
+3. One substance or one of its brands? /peptides/{substance}/ or /peptides/{substance}/{brand}/. A question about one substance with its own measured search that the substance page's format does not match (legal?, price per mg, use for one goal) is a guide with the substance name in its title; it links to the substance page and counts as one of its 6 signals. A brand with several substances gets its parent once, kept in the database: the substance whose page is indexed; if several or none, the first alphabetically that has a page.
+4. One lab, or one company's FDA letters? /labs/{lab}/ or /fda-warning-letters/{company}/.
+5. A goal people search for? /{goal}/; a narrower search inside a goal is /{goal}/{topic}/.
+6. A group of substances by approval, route or class? /{group}/.
+7. A price calculator? /tools/{tool}/, never dosing.
+8. None of these? A guide at /learn/{guide}/.
+
+### 3. Address rules (every new page)
+1. Lowercase letters, numbers and hyphens, with a trailing slash.
+2. Each thing has one slug from the database. Once live, a slug never changes; a new name goes into the database as an alias. Only exception: the 36 addresses in section 8, moved once before wave A.
+3. A seller's slug is the brand people search for, not the legal company name.
+4. No year, date or amount, no word that goes stale ("best", "cheapest", "latest"). One allowed fixed word: "new" in /weight-loss/new-drugs/.
+5. No address deeper than three levels below home.
+6. A goal or group never takes a list or trust page name: peptides, sellers, compare, learn, labs, tools, fda-warning-letters, search, out, about, how-we-rate, sources, contact, corrections, disclosure, privacy, or any folder name the site's code publishes.
+7. Filters on list pages never create an indexable address.
+8. A new page type needs a template in the design book first (ODOBRENO DIZAJN).
+
 
 ## Hand-off with the owner's assistant
 
