@@ -650,6 +650,8 @@ p.not-in{margin:4px 0 0}
 /* Goal drawing: clinic blue on clinic-tint */
 .goal-art{flex:none;fill:none;stroke:var(--g,var(--clinic));stroke-width:2.4;stroke-linecap:round}
 .goal-c-hair{--g:var(--goal-hair);--gt:var(--goal-hair-tint)}.goal-c-skin{--g:var(--goal-skin);--gt:var(--goal-skin-tint)}.goal-c-weight-loss{--g:var(--goal-weight-loss);--gt:var(--goal-weight-loss-tint)}.goal-c-muscle{--g:var(--goal-muscle);--gt:var(--goal-muscle-tint)}.goal-c-recovery{--g:var(--goal-recovery);--gt:var(--goal-recovery-tint)}.goal-c-libido{--g:var(--goal-libido);--gt:var(--goal-libido-tint)}.goal-c-longevity{--g:var(--goal-longevity);--gt:var(--goal-longevity-tint)}
+/* The five new goals (owner, ODOBRENO DIZAJN - Karlo - 8. 11. 2026 - w4 crteži novih ciljeva; w4 block 6): the same pair of tokens as the seven. */
+.goal-c-growth-hormone{--g:var(--goal-growth-hormone);--gt:var(--goal-growth-hormone-tint)}.goal-c-sleep{--g:var(--goal-sleep);--gt:var(--goal-sleep-tint)}.goal-c-testosterone{--g:var(--goal-testosterone);--gt:var(--goal-testosterone-tint)}.goal-c-energy{--g:var(--goal-energy);--gt:var(--goal-energy-tint)}.goal-c-menopause{--g:var(--goal-menopause);--gt:var(--goal-menopause-tint)}
 .goal-pic{display:flex;align-items:center;justify-content:center;height:84px;margin-bottom:10px;border-radius:var(--radius-art-s);background:var(--gt)}
 .goal-photo{display:block;width:100%;height:100%;object-fit:cover;border-radius:inherit}
 .goal-panel{display:none}
