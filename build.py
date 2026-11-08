@@ -5499,6 +5499,12 @@ def main():
     paid.write_out_pages(DIST, {slug: seller_base(r["seller_name"]) for slug, r in PROFILES.items()})
     (DIST / "CNAME").write_text("peptidechooser.com\n")
     (DIST / ".nojekyll").write_text("")
+    # Cloudflare Pages, the new host (owner queue block 5, step 4A); GitHub Pages serves both as plain files and ignores them.
+    # _redirects stays empty until task 4C moves the 36 addresses; the project's own *.pages.dev address never competes
+    # with peptidechooser.com in Google.
+    (DIST / "_redirects").write_text("# Server redirects on Cloudflare Pages (301). Empty until task 4C (site map rules, section 8).\n")
+    (DIST / "_headers").write_text("# Cloudflare Pages only: keep the project's pages.dev address out of Google.\n"
+                                   "https://:project.pages.dev/*\n  X-Robots-Tag: noindex\n")
     (DIST / "robots.txt").write_text(f"User-agent: *\nAllow: /\nDisallow: /out/\nSitemap: {SITE}/sitemap.xml\n")
     (DIST / "llms.txt").write_text(
         "# Peptide Chooser\n\n> An independent US comparison site: peptide products next to FDA-approved alternatives, "
