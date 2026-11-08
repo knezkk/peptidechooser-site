@@ -4407,6 +4407,105 @@ def shop_checks(r):
     return f'<span class="num">{sc}</span> of {len(SCORE_CHECKS)} checks' if sc is not None else "not checked yet"
 
 
+# Owner task 24 (9 Nov 2026; peptide-data spec 0025): the lab mark and the price history (design/pages/nav-parts.md,
+# peptide.md "Substance page parts for the new types") are drawn only with PC_ARCH_DATA=1; without it nothing visible
+# changes. Each reads its view from site.json and is left out while the view is empty.
+ARCH = os.environ.get("PC_ARCH_DATA") == "1"
+COA_REPORTS = DATA.get("coa_reports") or []
+PRICE_HISTORY = DATA.get("price_history") or []
+PLAN_PRICE_HISTORY = DATA.get("plan_price_history") or []
+# a substance the data marks as no peptide (substance_status.is_peptide; finasteride, minoxidil, orforglipron, NAD+):
+# the "Not a peptide" chip of the group and /fda-approved/ tables (group.md) reads this set, never a typed list
+NOT_PEPTIDES = {r["substance_slug"] for r in DATA.get("legal_db") or [] if r.get("is_peptide") is False}
+HIST_MIN_POINTS, HIST_MIN_DAYS = 3, 60
+
+
+def not_peptide_chip(slug):
+    return '<span class="chip chip-neutral">Not a peptide</span>' if ARCH and slug in NOT_PEPTIDES else ""
+
+
+def month_year(iso):
+    return date.fromisoformat(str(iso)[:10]).strftime("%b %Y")
+
+
+def lab_mark(r):
+    """The lab mark (nav-parts.md): "Lab report · <Lab> · <Mon YYYY>", the newest report we hold for this listing; nothing
+    for a listing without one or for a clinic. A lab with an indexed page would link it; none is built yet, so the chip
+    names the report's source in its title (never a link to a shop)."""
+    if not ARCH or r.get("product_id") is None or is_clinic(PROFILES.get(r["seller_slug"]) or SELLERS.get(r["seller_slug"]) or {}):
+        return ""
+    found = [c for c in COA_REPORTS if c.get("product_id") == r["product_id"] and c["seller_slug"] == r["seller_slug"] and c.get("coa_date")]
+    if not found:
+        return ""
+    c = max(found, key=lambda c: c["coa_date"])
+    text = " · ".join(x for x in ("Lab report", c.get("lab_name") or "", month_year(c["coa_date"])) if x)
+    return f' <span class="chip chip-lab" title="Source: {escape(c.get("source_url") or "")}">{escape(text)}</span>'
+
+
+def hist_series(slug):
+    """(points, what): the price history the substance page draws, or ([], ""). An approved medicine: the cheapest plan that
+    is not compounded (brand or generic, pep_low_plan), per month with its care fee; otherwise the size with the lowest price
+    per mg at the shops shown. Only with HIST_MIN_POINTS checks over HIST_MIN_DAYS days."""
+    s = pep_status(slug)
+    if pep_group(s) == "approved":
+        p = pep_low_plan(slug)
+        if not p:
+            return [], ""
+        pts = [(r["observed_on"], round(float(r["price_monthly"]) + float(r.get("membership_fee_monthly") or 0), 2))
+               for r in PLAN_PRICE_HISTORY if r["seller_slug"] == p["seller_slug"] and r["plan_slug"] == p["plan_slug"]]
+        what = f'{seller_base(p["seller_name"])}\'s {clean(p["plan_name"])} per month', "/mo"
+    else:
+        low = pep_low_shop(slug)
+        if not low or low.get("variant_id") is None:
+            return [], ""
+        pts = [(r["observed_on"], float(r["price_per_mg"])) for r in PRICE_HISTORY
+               if r.get("variant_id") == low["variant_id"] and r.get("price_per_mg") is not None]
+        name = seller_base(clean(SELLERS.get(low["seller_slug"], {}).get("seller_name") or low["seller_name"]))
+        what = f"lowest per mg at {name}", "/mg"
+    pts = sorted(pts)
+    if len(pts) < HIST_MIN_POINTS or (date.fromisoformat(pts[-1][0][:10]) - date.fromisoformat(pts[0][0][:10])).days < HIST_MIN_DAYS:
+        return [], ""
+    return pts, what
+
+
+def price_history(slug):
+    """"Price over time" (nav-parts.md): a step line on white, three hairlines with their prices, months along the bottom,
+    the newest point as a dot with its label, and the same points as a table under it. "" without enough points."""
+    if not ARCH:
+        return ""
+    pts, what = hist_series(slug)
+    if not pts:
+        return ""
+    label, unit = what
+    fmt = (lambda v: f"{per_mg(v)}/mg") if unit == "/mg" else (lambda v: f"{usd(v)}/mo")
+    d0, d1 = date.fromisoformat(pts[0][0][:10]), date.fromisoformat(pts[-1][0][:10])
+    lo, hi = min(v for _, v in pts), max(v for _, v in pts)
+    W, H, L, R, T, B = 640, 160, 64, 112, 12, 24
+    x = lambda d: L + (date.fromisoformat(d[:10]) - d0).days / max((d1 - d0).days, 1) * (W - L - R)
+    y = lambda v: T + (1 - ((v - lo) / (hi - lo) if hi > lo else .5)) * (H - T - B)
+    path = f"M{x(pts[0][0]):.1f},{y(pts[0][1]):.1f}"
+    for (d, v), (_, prev) in zip(pts[1:], pts):
+        path += f" H{x(d):.1f} V{y(v):.1f}"
+    lines = "".join(f'<line class="ph-hair" x1="{L}" x2="{W - R}" y1="{y(v):.1f}" y2="{y(v):.1f}"/>'
+                    f'<text class="ph-label" x="{L - 8}" y="{y(v) + 4:.1f}" text-anchor="end">{fmt(v)}</text>'
+                    for v in sorted({lo, round((lo + hi) / 2, 2), hi}))
+    months, m = [], date(d0.year, d0.month, 1)
+    while m <= d1:
+        if m >= d0:
+            months.append(f'<text class="ph-label" x="{x(m.isoformat()):.1f}" y="{H - 4}" text-anchor="middle">{m.strftime("%b")}</text>')
+        m = date(m.year + (m.month == 12), m.month % 12 + 1, 1)
+    last_d, last_v = pts[-1]
+    aria = f"Price over time: {fmt(pts[0][1])} on {nice_date(pts[0][0][:10])}, {fmt(last_v)} on {nice_date(last_d[:10])}."
+    svg = (f'<svg class="price-hist" viewBox="0 0 {W} {H}" width="100%" role="img" aria-label="{escape(aria)}">'
+           f'{lines}{"".join(months)}<path class="ph-step" d="{path}"/>'
+           f'<circle class="ph-dot" cx="{x(last_d):.1f}" cy="{y(last_v):.1f}" r="3"/>'
+           f'<text class="ph-now" x="{x(last_d) + 8:.1f}" y="{y(last_v) + 4:.1f}">{fmt(last_v)}, {nice_date(last_d[:10])}</text></svg>')
+    rows_ = "".join(f'<tr><td>{nice_date(d[:10])}</td><td class="num">{fmt(v)}</td></tr>' for d, v in pts)
+    return (f'<h3>Price over time</h3><p class="small">{escape(label[0].upper() + label[1:])}. Checked {nice_date(pts[0][0][:10])} to {nice_date(last_d[:10])}.</p>'
+            f'{svg}<details><summary>Prices as a table</summary><div class="tbl-wrap"><table class="tbl tbl-compact">'
+            f'<thead><tr><th scope="col">Date</th><th scope="col">Price</th></tr></thead><tbody>{rows_}</tbody></table></div></details>')
+
+
 def pep_shops_section(slug):
     rows = sorted(pep_shops(slug), key=shop_rank)  # the same order as "Where to get it": best-checked first
     if not rows:
@@ -4421,7 +4520,7 @@ def pep_shops_section(slug):
         seen = r.get("price_observed_at") or r.get("last_seen") or ""
         newest = max(newest, seen)
         trs.append(f'<tr><td>{name}</td><td class="num" data-l="Size">{size}</td><td class="num" data-l="Price">{price}</td>'
-                   f'<td class="num" data-l="Per mg">{ppm}</td><td data-l="Checks">{shop_checks(r)}</td></tr>')
+                   f'<td class="num" data-l="Per mg">{ppm}</td><td data-l="Checks">{shop_checks(r)}{lab_mark(r)}</td></tr>')
     return f"""
 <section class="section" id="sold">
   <div class="wrap">
@@ -4677,7 +4776,9 @@ def pep_page(slug):
     lt_id, letters = unwrap(pep_letters_section(slug))
     sold_id, sold = unwrap(pep_plans_section(slug) if pep_group(s) == "approved" else pep_shops_section(slug))
     sold = sold.replace('class="tbl tbl-cards', 'class="tbl tbl-compact tbl-cards', 1)
+    hist = price_history(slug)
     left = ((f'<div class="panel-line pep-block" id="evidence">{evidence}</div>' if evidence else "")
+            + (f'<div class="panel-line pep-block" id="history">{hist}</div>' if hist else "")
             + (f'<div class="panel-line pep-block" id="letters">{letters}</div>' if letters else ""))
     blocks = f'<div class="pep-body"><div class="pep-left">{left}</div><div class="pep-right">{pep_facts(slug, s)}{pep_guides(slug)}</div></div>'
     nxt = pep_next(slug)
