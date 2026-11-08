@@ -234,7 +234,9 @@ def main():
     d["plans"] = rows(
         "select seller_slug, seller_name, plan_slug, plan_name, product_kind, dosage_form, substance_slug, "
         "pharmacy_partner, price_monthly, price_first_month, membership_fee_monthly, consult_fee, "
-        "commitment_months, observed_at, last_seen, pricing_url, fda_letter_count, last_fda_letter_date "
+        "commitment_months, observed_at, last_seen, pricing_url, fda_letter_count, last_fda_letter_date"
+        # spec 0023 (task 22, 8 Nov 2026): a per-order price, read once the data side has migrated it
+        f"{optional_columns('plan_prices', 'price_per_order', 'order_quantity', 'order_supply_days', 'fee_per_order')} "
         "from site.plan_prices order by seller_slug, plan_slug")
     products = rows(
         "select seller_slug, seller_name, seller_status, product_name, variant_title, product_url, substance_slug, is_blend, "

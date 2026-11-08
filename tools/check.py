@@ -1521,6 +1521,24 @@ def check_rules33(P):
                 errs.append(f"windows/{f.name}: '{text(pn)}' is not named for hair or scalp")
     if "hair/index.html" in P and "/windows/cosmetics-" in (DIST / "hair" / "index.html").read_text(encoding="utf-8"):
         errs.append("hair/index.html: opens a cosmetic window that is not limited to scalp products")
+    # 5. task 22 (8 Nov 2026): no page shows a per-order plan (spec 0023) with "/mo", and no "$<its price per order>/mo"
+    per_order = [x for x in plans if x.get("price_per_order") is not None]
+    if per_order:
+        usd = lambda v: f"${float(v):,.0f}" if float(v) == int(float(v)) else f"${float(v):,.2f}"
+        pages = [(n, (DIST / n).read_text(encoding="utf-8")) for n in P]
+        pages += [(f"windows/{f.name}", json.loads(f.read_text(encoding="utf-8")).get("html", ""))
+                  for f in sorted((DIST / "windows").glob("*.json"))] if (DIST / "windows").exists() else []
+        for name, html in pages:
+            blocks = re.findall(r"<(?:tr|li|p|a)\b[^>]*>.*?</(?:tr|li|p|a)>", html, re.S)
+            for x in per_order:
+                pn = " ".join((x["plan_name"] or "").split())
+                for b in blocks:
+                    t = text(b)
+                    mine = x["seller_slug"] in b or name.startswith(f"sellers/{x['seller_slug']}/")
+                    if pn and mine and pn in t and "/mo" in t:
+                        errs.append(f"{name}: the per-order plan {x['seller_slug']} '{pn}' is shown with '/mo'")
+                if f"sellers/{x['seller_slug']}/" in name and f"{usd(x['price_per_order'])}/mo" in text(html):
+                    errs.append(f"{name}: '{usd(x['price_per_order'])}/mo' is the per-order price of '{pn}'")
     return errs
 
 
