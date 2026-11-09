@@ -3468,7 +3468,9 @@ def seller_faq_pairs(r):
     checks = [t for _, t in seller_checks(r)]
     pairs = [
         (f"What does {name} {'prescribe' if clinic else 'sell'}?", ans[0]),
-        (f"How much does {name} cost?", ans[1] if clinic and len(ans) > 1 else ""),
+        # the price sentence only: a clinic with no monthly plan (Rx Peps Direct, per-order prices, task 26) has none, and the
+        # next sentence of its answer is not a price
+        (f"How much does {name} cost?", ans[1] if clinic and clinic_plan_rows(r) and len(ans) > 1 else ""),
         (f"Has the FDA sent {name} a warning letter?", lines["score_no_fda_letter"]),
         (f"Does {name} ship to every state?", f"Not to {', '.join(STATES.get(x, x) for x in states)}." if states else f"We have no state limits on file for {name}.") if clinic else ("", ""),
         (f"How do we check {name}?", f"On {home.num_word(len(checks)).lower()} facts: {', '.join(checks[:-1])} and {checks[-1]}. Each is a yes or no with its date, in the list above."),
@@ -4248,6 +4250,10 @@ def pep_description(slug):
                     - {n.split()[0].title()})
     if brands and pep_group(s) == "approved":
         parts.append(f'Approved brand{"s" if len(brands) > 1 else ""}: {", ".join(brands[:3])}.')
+    # too short for the 110-character rule (vardenafil, task 26, 9 Nov 2026: no goal page, no brand or generic plan): the clinic
+    # table's own count line, a fact the page shows
+    if len(" ".join(parts + ["Checked 30 Sep 2026.", "We compare and never sell."])) < 110 and pep_plans(slug):
+        parts.append(f'{plural(len(pep_plans(slug)), "plan")} at the online clinics we track.')
     parts.append(f"Checked {nice_date(pep_checked(slug))}.")
     parts.append("We compare and never sell.")
     out = parts[0]
