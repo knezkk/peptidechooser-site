@@ -1055,6 +1055,36 @@ PRODUCTS = DATA.get("products") or []
 SELLERS = {r["seller_slug"]: r for r in DATA.get("sellers") or []}
 # Seller pages (pages.md, Seller): one per seller in site.seller_profile, through tools/pull_data.py
 PROFILES = {r["seller_slug"]: r for r in DATA.get("seller_profiles") or []}
+
+
+def _live_seller_pages():
+    """The seller pages already published: the live sitemap the deploy fetches into LIVE_SITEMAP, else the last build's own
+    sitemap files (read before dist is cleared)."""
+    f = os.environ.get("LIVE_SITEMAP")
+    files = [Path(f)] if f and Path(f).is_file() else [DIST / "sitemap.xml"] + sorted(DIST.glob("sitemap-*.xml"))
+    text = "".join(x.read_text(encoding="utf-8") for x in files if x.is_file())
+    return set(re.findall(re.escape(SITE) + r"/sellers/([a-z0-9-]+)/</loc>", text))
+
+
+# A seller that leaves the data keeps its page (site map rule 5.1, no page is deleted; owner task 25, 9 Nov 2026): when its
+# page is live and data/redirects.json sends it nowhere, the page is built from its last profile, from data/seller_archive.json
+# or the live /seller-archive.json the deploy fetches into LIVE_SELLER_ARCHIVE. It has no Visit button, no /out/ link and no
+# compare button, says it left our data, and stays in the sitemap. Every build publishes the profiles it holds there.
+_moved = json.loads((ROOT / "data" / "redirects.json").read_text(encoding="utf-8")) if (ROOT / "data" / "redirects.json").exists() else {}
+_moved |= {f"/sellers/{r['old_slug']}/": f"/sellers/{r['new_slug']}/" for r in DATA.get("seller_redirects") or []}  # 4C moves
+SELLER_ARCHIVE = {}
+for _f in (os.environ.get("LIVE_SELLER_ARCHIVE"), ROOT / "data" / "seller_archive.json"):
+    if _f and Path(_f).is_file():
+        try:
+            SELLER_ARCHIVE.update(json.loads(Path(_f).read_text(encoding="utf-8")).get("sellers") or {})
+        except ValueError:
+            pass
+GONE = {}
+if PROFILES:
+    _live = _live_seller_pages()
+    GONE = {k: {**v, "gone": True, "paid_url": None} for k, v in SELLER_ARCHIVE.items()
+            if k not in PROFILES and k in _live and f"/sellers/{k}/" not in _moved}
+    PROFILES.update(GONE)
 # A tool (pages.md, Category, Tools) does not prescribe: no seller page, not counted as a clinic. A shop stays a shop. An entry
 # with `clinic` prescribes too (Vitals Vault, owner answer to #104 Q1 A): it keeps its seller page and counts as a clinic.
 TOOL_PROFILES = {t["seller_slug"]: PROFILES.pop(t["seller_slug"]) for g in DATA.get("goals") or [] for t in g.get("tools") or []
@@ -3486,6 +3516,8 @@ def seller_action(r):
     another shop, on /compare/ (built whenever seller pages are). A clinic with a paid link in the data also gets "Visit <Name>"
     with "Paid link" under it, the same size beside it: the one pair of actions (pages.md, Seller, Top block; owner answer
     Q1 b, 4 Nov 2026)."""
+    if r.get("gone"):
+        return ""
     if r["seller_slug"] in CLINIC_PROFILES:
         plans = clinic_plan_rows(r)
         compare = (f'<a class="btn btn-ink" href="/compare/?a=p.{r["seller_slug"]}.{plans[0]["plan_slug"]}"{ev("compare_pick", kind="plan")}>Compare with another clinic</a>'
@@ -3500,6 +3532,9 @@ def seller_action(r):
 def seller_page(r):
     clinic = r["seller_slug"] in CLINIC_PROFILES
     answer = " ".join(clinic_answer(r) if clinic else short_answer(r))
+    if r.get("gone"):  # proposal for the owner's ODOBRENO SEO (task 25): what is true for a closed and a gated seller alike
+        answer = (f'No longer in our data: the facts below are from {nice_date(r["archived_on"])}, the last day we tracked '
+                  f'{seller_base(seller_name(r))}. ' + answer)
     checked = max((r.get("price_updated_at") or "")[:10], (r.get("score_checked_on") or "")[:10], (r.get("first_seen") or "")[:10])
     on = prices_checked(r)
     meta = " · ".join(x for x in ("Prices, checks and what we found",
@@ -5789,6 +5824,11 @@ def main():
                 (DIST / "windows" / f"{clinic_key(g, p)}.json").write_text(json.dumps({"html": clinic_window(g, p)}), encoding="utf-8")
     (DIST / "search-index.json").write_text(json.dumps(search_index(), ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
     write_sitemaps()
+    # every profile the site holds, so a seller that leaves the data later keeps its page (GONE, owner task 25)
+    (DIST / "seller-archive.json").write_text(json.dumps({"sellers": {k: {kk: vv for kk, vv in v.items() if kk not in ("gone", "paid_url")}
+                                                                      | {"archived_on": v.get("archived_on") or DATA_CHECKED[:10]}
+                                                                      for k, v in sorted(PROFILES.items())}},
+                                                         ensure_ascii=False, separators=(",", ":")) + "\n", encoding="utf-8")
     (DIST / "pages.json").write_text(json.dumps([{"path": p[0], "title": p[2]} for p in PAGES] + [{"path": "/404", "title": "Page not found | Peptide Chooser"}]))
     print("built", len(PAGES) + 1, "pages")
     if PEPTIDE_SLUGS:

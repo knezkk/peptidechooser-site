@@ -3,6 +3,7 @@
 python3 tools/live_sitemap.py <dir> writes:
   <dir>/live-sitemap.xml  every live <url> in one urlset: sitemap.xml itself, or, since the sitemap index, each of its files
   <dir>/live-lastmod.json the live dist/lastmod.json (each page's visible-text fingerprint and the date it last changed)
+  <dir>/live-seller-archive.json the live seller profiles, so a seller that leaves the data keeps its page
 build.py reads them through LIVE_SITEMAP and LIVE_LASTMOD. A file it cannot read is left out; this never fails the deploy.
 """
 import re
@@ -47,6 +48,10 @@ def main(folder):
         print(f"live_sitemap: {len(urls)} live pages")
     else:
         print("live_sitemap: the live sitemap could not be read")
+    archive = get(LIVE + "/seller-archive.json")  # task 25: the profiles a departed seller's page is kept from
+    if archive and archive.lstrip().startswith("{"):
+        (folder / "live-seller-archive.json").write_text(archive, encoding="utf-8")
+        print("live_sitemap: live seller profiles read")
     marks = get(LIVE + "/lastmod.json")
     if marks and marks.lstrip().startswith("{"):
         (folder / "live-lastmod.json").write_text(marks, encoding="utf-8")

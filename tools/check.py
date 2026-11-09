@@ -1621,6 +1621,27 @@ def check_arch(P):
     return errs
 
 
+def check_kept_sellers(P):
+    """Owner task 25 (9 Nov 2026), site map rule 5.1: no seller page in the last live sitemap (LIVE_SITEMAP, the deploy's
+    copy) disappears without a redirect in data/redirects.json (or a 4C move in site.seller_redirects); a kept page of a
+    seller that left the data has no /out/ link."""
+    errs, f = [], os.environ.get("LIVE_SITEMAP")
+    d = json.loads((ROOT / "data" / "site.json").read_text(encoding="utf-8"))
+    if not (f and Path(f).is_file() and d.get("seller_profiles")):
+        return errs  # the repo data builds no seller page; the deploy's real data is what this guards
+    moved = json.loads((ROOT / "data" / "redirects.json").read_text(encoding="utf-8"))
+    moved |= {f"/sellers/{r['old_slug']}/": f"/sellers/{r['new_slug']}/" for r in d.get("seller_redirects") or []}
+    for slug in sorted(set(re.findall(re.escape(SITE) + r"/sellers/([a-z0-9-]+)/</loc>", Path(f).read_text(encoding="utf-8")))):
+        if f"/sellers/{slug}/" not in moved and not (DIST / "sellers" / slug / "index.html").exists():
+            errs.append(f"sellers/{slug}/: live but not built and no redirect in data/redirects.json (site map rule 5.1)")
+    archive = json.loads((DIST / "seller-archive.json").read_text(encoding="utf-8")).get("sellers", {}) if (DIST / "seller-archive.json").exists() else {}
+    for slug in archive:
+        name = f"sellers/{slug}/index.html"
+        if name in P and "No longer in our data" in (DIST / name).read_text(encoding="utf-8") and 'href="/out/' in (DIST / name).read_text(encoding="utf-8"):
+            errs.append(f"{name}: a seller that left the data still has a paid link")
+    return errs
+
+
 def live_addresses():
     f = ROOT / "data" / "live-addresses.txt"
     return {x.split()[0] for x in f.read_text(encoding="utf-8").splitlines() if x.strip() and not x.startswith("#")}
@@ -1658,7 +1679,7 @@ def check_addresses(P):
     return errs
 
 
-CHECKS = {"words": check_words, "seo": check_seo, "schema": check_schema, "parts": check_parts, "data": check_data, "book": check_book, "events": check_events, "logic": check_logic, "rules33": check_rules33, "addresses": check_addresses, "arch": check_arch}
+CHECKS = {"words": check_words, "seo": check_seo, "schema": check_schema, "parts": check_parts, "data": check_data, "book": check_book, "events": check_events, "logic": check_logic, "rules33": check_rules33, "addresses": check_addresses, "arch": check_arch, "kept-sellers": check_kept_sellers}
 
 # Plan names against their form (owner task w2, 3 Nov 2026): a clinic's own plan name can name another form than the
 # plan's `dosage_form` ("Ozempic Pill" for a pen). The site cannot change data, so this only warns, never fails, and the
