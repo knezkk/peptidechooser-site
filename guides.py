@@ -142,7 +142,17 @@ GUIDES = [
      "h1": "Best peptides for weight loss: approved, compounded and research-use.",
      "desc": "Semaglutide and tirzepatide are FDA-approved peptides for weight loss. Compounded versions and retatrutide, with clinic prices and FDA status.",
      "line": "The approved shots, the compounded copies and retatrutide: trials, status, prices."},
+    # owner queue block 13 (wave A, 8 Nov 2026): a draft until the address move (task 4C) is live; "draft" keeps it out of
+    # every build unless PC_DRAFTS=1 is set, so merging this file publishes nothing. Going live: drop "draft" after the
+    # owner's ODOBRENO SEO for its title, H1, description and text.
+    {"slug": "peptides-vs-steroids", "title": "Peptides vs steroids: what each is and what is legal",
+     "h1": "Peptides vs steroids: what each one is, and what the law says.",
+     "desc": "Anabolic steroids are man-made testosterone; the peptides sold for muscle act on growth hormone. FDA status, evidence in people and the risks of each.",
+     "line": "Steroids and muscle peptides side by side: what they are, status, evidence, risks.",
+     "draft": True},
 ]
+if not os.environ.get("PC_DRAFTS"):
+    GUIDES = [g for g in GUIDES if not g.get("draft")]
 # Group pages in the guide layout (design/pages/group.md, Group page, Guide layout; owner queue block 15, 9 Nov 2026): built
 # by the guide template at their own address, with the group's substance table after the short answer. Drafts only: they
 # join the build with PC_DRAFTS=1 and go live after the owner's ODOBRENO SEO.
@@ -179,7 +189,8 @@ TOPIC = {"is-bpc-157-legal": "legal", "are-peptides-safe": "legal", "how-to-read
          "fda-warning-letters-peptides-2026": "data", "cheapest-bpc-157-per-mg": "data",
          "peptide-seller-checks-by-the-numbers": "data", "ozempic-vs-wegovy-price": "glp1", "finasteride-vs-minoxidil": "hair",
          "what-research-use-only-means": "legal",
-         "best-peptides-for-weight-loss": "glp1", "fda-approved": "legal", "prescription": "buying"}
+         "best-peptides-for-weight-loss": "glp1", "peptides-vs-steroids": "body", "fda-approved": "legal",
+         "prescription": "buying"}
 RELATED_MAX = 5
 
 LEARN_TITLE = "Peptide guides in plain words | Peptide Chooser"
@@ -204,6 +215,9 @@ SOURCES = {
                         "https://www.fda.gov/drugs/human-drug-compounding/compounding-and-fda-questions-and-answers"),
     "fda-glp1-concerns": ("FDA, FDA's Concerns with Unapproved GLP-1 Drugs Used for Weight Loss, current as of 1 Oct 2026",
                           "https://www.fda.gov/drugs/postmarket-drug-safety-information-patients-and-providers/fdas-concerns-unapproved-glp-1-drugs-used-weight-loss"),
+    "medline-steroids": ("MedlinePlus, Anabolic Steroids", "https://medlineplus.gov/anabolicsteroids.html"),
+    "fda-bodybuilding": ("FDA, Caution: Bodybuilding Products Can Be Risky, current as of 20 Sep 2024",
+                         "https://www.fda.gov/consumers/consumer-updates/caution-bodybuilding-products-can-be-risky"),
     "fda-glp1-supply": ("FDA, FDA clarifies policies for compounders as national GLP-1 supply begins to stabilize",
                         "https://www.fda.gov/drugs/drug-alerts-and-statements/fda-clarifies-policies-compounders-national-glp-1-supply-begins-stabilize"),
     "fda-bulk-risks": ("FDA, Certain Bulk Drug Substances for Use in Compounding that May Present Significant Safety Risks, current as of 22 Apr 2026",
@@ -492,6 +506,9 @@ def g_bpc(b, f, N):
 <h2>What changed on 30 Oct 2026?</h2>
 {hhs_block(b, N, "bpc-157")}
 
+<h2>Can you get BPC-157 on a prescription?</h2>
+{rx_block(b, N)}
+
 <h2>What did the FDA review in July 2026?</h2>
 <p>On 23 and 24 July 2026 the FDA's Pharmacy Compounding Advisory Committee, a panel of outside experts, reviewed BPC-157 together with TB-500, MOTS-c and epitalon. The question was whether pharmacies may use these substances to make medicines for patients on a prescription. The FDA proposed not to allow it.{N('legal-6')}</p>
 <p>A committee advises; the FDA decides. A proposal is a step, not the last word. We keep the status on our <a href="/#legal">Is it legal today?</a> table and change this page when the FDA publishes what it decided.</p>
@@ -542,7 +559,7 @@ def g_safe(b, f, N):
 {aes}
 <p><strong>Cosmetic peptides</strong> are judged as cosmetics: they must be safe to use on skin as labelled, but nobody has to prove that they do what the jar says.{N('legal-5')}</p>
 <p><strong>Research-use peptides</strong> have the least. Most have animal or cell studies only, and nobody has checked what is in a given vial. For BPC-157, the FDA says it found little or no safety information for use in people.{N('fda-bulk-risks')}</p>
-
+{hhs_safe(b, N)}
 <h2>What does a lab report (COA) show?</h2>
 <p>A certificate of analysis, or COA, is a lab report for one batch. It can show how pure the powder is and whether it is the peptide on the label. It cannot show that the peptide is safe or that it works in people, and it says nothing about the next batch.</p>
 <p>Read more in our guide on <a href="/learn/how-to-read-a-coa/">how to read a peptide COA</a>.</p>
@@ -811,6 +828,64 @@ def hhs_block(b, N, slug=None):
             f"<p>The ten conditions, in short:{N('legal-13')}</p><ol>{conds}</ol>"
             f"<p>HHS says it may revisit the policy if a safety or quality problem shows up, and the FDA may later propose adding some "
             f"or all of these peptides to the 503A list through rulemaking.{N('legal-12')}</p>")
+
+
+def rx_plans(b, slug):
+    """The clinic plans we track for a substance that is not an approved drug, cheapest first (build.pep_clinic_plans)."""
+    return b.pep_clinic_plans(slug) if b.PEPTIDE_SLUGS and slug in b.PEPTIDE_SLUGS else []
+
+
+def rx_block(b, N):
+    """"Can you get BPC-157 on a prescription?" (owner queue block 13, wave A, 8 Nov 2026): who may make it under the HHS
+    policy, then the clinic plans we track from data; without a plan the sentence about plans is left out."""
+    plans = rx_plans(b, "bpc-157")
+    if not b.HHS:
+        return ""
+    out = (f"<p>Only from a licensed pharmacy that makes it for one patient on a prescription, under the ten conditions above: "
+           f"that is what HHS said it does not intend to act against.{N('legal-13')} It is then a pharmacy-made medicine, not an "
+           f"FDA-approved one.</p>")
+    if plans:
+        r = plans[0]
+        out += (f"<p>Of the online clinics we track, {spelled(len({x['seller_slug'] for x in plans})).lower()} "
+                f"list{'s' if len({x['seller_slug'] for x in plans}) == 1 else ''} a BPC-157 plan"
+                f"{'' if len(plans) == 1 else ', the cheapest'}: {plan_words(b, r, N(pkey(r)))}. "
+                f'Our <a href="/peptides/bpc-157/">BPC-157 page</a> lists {"it" if len(plans) == 1 else "them"} next to the research-use shops.</p>')
+    return out
+
+
+def hhs_list(b, N):
+    """The six peptides of the HHS policy, each with its route and the clinic plans we track (owner queue block 13)."""
+    h = b.HHS
+    if not h:
+        return ""
+    items = []
+    for slug in [x for x in h["substances"] if h["routes"].get(x)]:
+        n = len(rx_plans(b, slug))
+        try:  # a substance the data cannot name drops out (rule 4: a missing fact drops its line)
+            nm = b.substance_name(slug)
+        except ValueError:
+            continue
+        link = f'<a href="/peptides/{slug}/">{nm}</a>' if b.PEPTIDE_SLUGS and slug in b.PEPTIDE_SLUGS else nm
+        items.append(f"<li>{link}: {h['routes'][slug]}"
+                     + (f"; {n} online clinic plan{'s' if n != 1 else ''} we track" if n else "") + "</li>")
+    if not items:
+        return ""
+    return (f"<p>{spelled(len(items))}, under the HHS policy of 30 Oct 2026: HHS does not intend to act against a licensed pharmacy that makes them "
+            f"for one patient on a prescription, under 10 conditions, by the routes the policy names:{N('legal-13')}</p><ul>{''.join(items)}</ul>"
+            f"<p>Each one is still not FDA approved. Our page on each peptide shows the clinic plans we track.</p>")
+
+
+def hhs_safe(b, N):
+    """"Does the HHS policy of 30 Oct 2026 make these peptides safe?" for the safety guide (owner queue block 13): what the
+    policy allows, what its conditions check, and that none of them is a trial in people. From legal.hhs_policy."""
+    if not b.HHS:
+        return ""
+    return (f"\n<h2>Does the HHS policy of 30 Oct 2026 make these peptides safe?</h2>\n"
+            f"<p>No. {b.hhs_sentence('BPC-157, TB-500, Epitalon, MOTS-c, KPV or Semax')}{N('legal-13')}</p>"
+            f"<p>Its ten conditions are about quality and reporting: the raw ingredient must come from a maker registered with the FDA, "
+            f"with a lab report (COA) that meets the FDA's test criteria, and the pharmacy must report serious side effects and quality "
+            f"problems to the FDA.{N('legal-13')} None of the ten is a trial in people, so the policy adds no safety data of its own. "
+            f'Our guide <a href="/learn/is-bpc-157-legal/">Is BPC-157 legal?</a> lists all ten.</p>\n')
 
 
 def status_words(b, slug, N, plain=False):
@@ -1327,6 +1402,57 @@ def g_prescription(b, f, N):
     return short, body, nxt, faq
 
 
+def g_steroids(b, f, N):
+    """Peptides vs steroids (owner queue block 13, wave A, 8 Nov 2026; a draft until task 4C): what each is, FDA status,
+    the law, the evidence in people and the risks. Sources: MedlinePlus, fda.gov, PubMed and our database; no doses."""
+    eg, ge = brands(b, "tesamorelin"), brands(b, "somatropin")
+    short = (f"Anabolic steroids are man-made versions of testosterone. Doctors prescribe them for some medical problems, and "
+             f"using them without a prescription is not legal.{N('medline-steroids')} The peptides sold for muscle, such as "
+             f"CJC-1295 and ipamorelin, are research-use products that make the body release more growth hormone; none is FDA "
+             f"approved for building muscle.{N('legal-7')} We found no trial in people that shows any of them builds muscle.")
+    ipa, cjc = db_sentence(b, "ipamorelin", N), db_sentence(b, "cjc-1295", N)
+    body = f"""
+<h2>What is the difference between a peptide and a steroid?</h2>
+<p>They are different kinds of substance. Anabolic steroids are man-made versions of testosterone, the main sex hormone in men, which helps build muscle.{N('medline-steroids')}</p>
+<p>A peptide is a short chain of amino acids. The peptides sold for muscle work on a different signal: they make the body release more growth hormone. CJC-1295 is a long-acting copy of the hormone that tells the body to release it,{N('pm-teichman')} and ipamorelin acts on a different receptor with the same aim.{N('pm-raun')}</p>
+
+<h2>Which of them are FDA approved?</h2>
+<p><strong>Steroids:</strong> doctors prescribe anabolic steroids for some hormone problems in men, for delayed puberty and for muscle loss from some diseases.{N('medline-steroids')} Testosterone is FDA approved only for men with low testosterone from a medical condition, on prescription after blood tests.{N('legal-10')} Our <a href="/libido/">sexual health page</a> lists it.</p>
+<p><strong>Peptides:</strong> no peptide is FDA approved for building muscle. Tesamorelin{f" ({eg})" if eg else ""} is approved to reduce belly fat in adults with HIV and lipodystrophy, and growth hormone itself (somatropin{f", sold as {ge}" if ge else ""}) mainly for growth hormone deficiency.{N('label-egrifta')}{N('label-genotropin')} Drugs@FDA lists no approved product for CJC-1295 or ipamorelin.{N('legal-7')}</p>
+
+<h2>Is it legal to buy them?</h2>
+<p><strong>Steroids:</strong> using them in a way a provider did not prescribe, without a prescription, is not legal, MedlinePlus says.{N('medline-steroids')} The FDA has found bodybuilding products sold online and in stores as "dietary supplements" that illegally contain steroids or steroid-like substances.{N('fda-bodybuilding')}</p>
+<p><strong>Peptides:</strong> shops sell CJC-1295 and ipamorelin as research-use vials, labelled for lab research and not for people. That label does not make them approved or checked.{N('fda-approval')}{f" For ipamorelin our database records: {ipa}" if ipa else ""}{f" For CJC-1295: {cjc}" if cjc else ""} Our guide <a href="/learn/are-peptides-legal-in-the-us/">Are peptides legal in the US?</a> explains each kind.</p>
+
+<h2>What has been tested in people?</h2>
+<p>For steroids, MedlinePlus lists the medical uses above, under a provider's care.{N('medline-steroids')}</p>
+<p>For the muscle peptides, hormone levels, not muscle. In two placebo-controlled trials in healthy adults, CJC-1295 raised growth hormone and IGF-I; the trials did not measure muscle or strength.{N('pm-teichman')} Ipamorelin's one larger trial in people was in 117 patients after bowel surgery, where it did no better than a placebo.{N('pm-beck')}</p>
+
+<h2>What are the risks of each?</h2>
+<p><strong>Steroids:</strong> misuse, above all over a long time, is linked to acne, high blood pressure, changes in cholesterol, heart problems including heart attack, liver disease including cancer, kidney damage, and mood changes such as aggression. In men it can shrink the testicles and lower sperm count; in women it can deepen the voice and change the menstrual cycle. Steroids can also lead to addiction, with withdrawal symptoms such as depression.{N('medline-steroids')} The FDA has reports of serious liver injury linked to bodybuilding products with steroids or steroid-like substances.{N('fda-bodybuilding')}</p>
+<p><strong>Peptides:</strong> the FDA lists serious side effects linked to CJC-1295, including a faster heart rate, and says the data in people are limited. For ipamorelin it says a published study found serious side effects, including a death, when it was given into a vein for gut problems.{N('fda-bulk-risks')} Nobody checks what is in a research-use vial; a lab report covers one batch. Our guide on <a href="/learn/how-to-read-a-coa/">how to read a COA</a> shows what to look for.</p>
+
+<h2>So which should you choose?</h2>
+<p>Neither has evidence in people that it builds muscle safely in healthy adults: steroid misuse is linked to the health problems above, and the muscle peptides have no muscle trial in people. If you think your testosterone is low, a doctor can test it and decide whether you have a condition they treat.</p>
+<p>None of this is medical advice. Our <a href="/muscle/">muscle page</a> puts the options side by side with their status.</p>"""
+    nxt = (("/muscle/", "Compare muscle options"), ("/learn/best-peptides-for-muscle-growth/", "Best peptides for muscle growth guide"))
+    faq = ("peptides vs steroids", [
+        ("What is the difference between peptides and steroids?",
+         "Anabolic steroids are man-made versions of testosterone. The peptides sold for muscle are short chains of amino acids "
+         "that make the body release more growth hormone."),
+        ("Are steroids legal?",
+         "Doctors prescribe anabolic steroids for some medical problems. Using them without a prescription is not legal, "
+         "MedlinePlus says."),
+        ("Is any peptide FDA approved for building muscle?",
+         "No. Drugs@FDA lists no approved product for CJC-1295 or ipamorelin, and the approved growth hormone medicines are for "
+         "medical conditions."),
+        ("Are peptides safer than steroids?",
+         "Neither has evidence in people that it builds muscle safely in healthy adults. Steroid misuse is linked to heart, liver "
+         "and kidney problems; the FDA lists serious side effects linked to CJC-1295 and ipamorelin."),
+    ])
+    return short, body, nxt, faq
+
+
 def g_bpc_tb(b, f, N):
     sb_, st_ = b.db_status("bpc-157"), b.db_status("tb-500")
     same = sb_ and st_ and sb_["sentence"] == st_["sentence"]
@@ -1429,6 +1555,9 @@ def g_legal(b, f, N):
 <li><strong>Category 3</strong>: too little information was sent to review it.</li>
 </ul>
 <p>The FDA's page on substances that may be risky to compound also names peptides whose nomination was withdrawn, such as BPC-157.{N('fda-bulk-risks')} Outsourcing facilities work under a different section, 503B, with their own list.{N('fda-glp1-supply')}</p>
+
+<h2>Which peptides may a pharmacy make on prescription today?</h2>
+{hhs_list(b, N)}
 
 <h2>What does "research use only" mean for a buyer?</h2>
 <p>It is a label the seller puts on the product: it says the product is for lab research, not for people. It does not make the product approved, checked or safe to use.{N('fda-approval')} It also does not tell you what is in the vial; only a lab report from an outside lab can, and only for one batch. Our guide on <a href="/learn/how-to-read-a-coa/">how to read a COA</a> explains what to look for.</p>
@@ -2483,7 +2612,8 @@ TEXTS = {"is-bpc-157-legal": g_bpc, "are-peptides-safe": g_safe, "how-to-read-a-
          "fda-warning-letters-peptides-2026": g_letters_year, "cheapest-bpc-157-per-mg": g_bpc_price,
          "ozempic-vs-wegovy-price": g_oz_weg, "finasteride-vs-minoxidil": g_fin_minox,
          "what-research-use-only-means": g_ruo, "peptide-seller-checks-by-the-numbers": g_by_numbers,
-         "best-peptides-for-weight-loss": g_wl, "fda-approved": g_fda_approved, "prescription": g_prescription}
+         "best-peptides-for-weight-loss": g_wl, "peptides-vs-steroids": g_steroids,
+         "fda-approved": g_fda_approved, "prescription": g_prescription}
 
 
 GUIDE_DATES = {}

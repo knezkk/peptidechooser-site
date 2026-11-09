@@ -2556,7 +2556,7 @@ def clinic_section(g, rows):
     return f"""
 <section class="band-2" id="clinics" data-state-root>
   <div class="wrap">
-    <div class="sec-hd"><div><h2>Online clinic prices</h2><p>{len(rows)} plans at the online clinics we track, cheapest first.</p></div></div>
+    <div class="sec-hd"><div><h2>Online clinic prices</h2><p>{plural(len(rows), "plan")} at the online clinics we track, cheapest first.</p></div></div>
     <div class="clinic-filter">{state_filter()}</div>{STATE_N}
     <div class="tbl-wrap"><table class="tbl tbl-cards tbl-clinics">
       <thead><tr><th scope="col">Clinic</th><th scope="col">Plan</th><th scope="col">What it is</th><th scope="col">Per month</th><th scope="col"><span class="vh">Action</span></th></tr></thead>
@@ -4165,6 +4165,11 @@ def pep_plans(slug):
                   key=lambda r: (float(r["price_monthly"]), r["seller_name"], r["plan_name"]))
 
 
+def pep_clinic_plans(slug):
+    """The clinic plans of a substance that is not an approved drug, at clinics with a page of ours, cheapest first."""
+    return [r for r in pep_plans(slug) if r["seller_slug"] in PROFILES] if pep_group(pep_status(slug)) == "not" else []
+
+
 def pep_low_plan(slug):
     """The cheapest plan of the brand medicine or its generic: a pharmacy-made copy, or a plan of unknown kind, is not the
     approved product (the goal pages' rule, owner 31 Oct 2026; task 21, 8 Nov 2026). None without one."""
@@ -4191,7 +4196,7 @@ def pep_rx(slug, s):
         return ("No, sold over the counter", "Over the counter") if otc else ("Yes", "Prescription")
     if group == "cosmetic":
         return "No, sold as a cosmetic", ""
-    if s["label"] == "Pharmacy-made":
+    if s["label"] == "Pharmacy-made" or pep_clinic_plans(slug):  # online clinics prescribe it (owner queue block 13)
         return "Yes, when a pharmacy compounds it", "Prescription"
     return "Not applicable: not approved for use in people", "Research-use"
 
@@ -4218,6 +4223,12 @@ def pep_answer(slug, first=None):
         links = [f'<a href="/{g["slug"]}/">{g["name"].lower()}</a>' for g in gs]
         joined = links[0] if len(links) == 1 else ", ".join(links[:-1]) + " and " + links[-1]
         out.append(f'Our {joined} page{"s list" if len(links) > 1 else " lists"} it.')
+    cp = pep_clinic_plans(slug)
+    if cp:  # clinics first, as in "Where to get it" (design/pages/peptide.md, PR #142)
+        r = cp[0]
+        out.append(f'The cheapest online clinic plan we track is {usd(r["price_monthly"])}/mo '
+                   f'({clinic_link(r["seller_slug"], seller_base(r["seller_name"]), True)}, {clean(r["plan_name"])}), checked '
+                   f'{nice_date(r["last_seen"])}; it is not an FDA-approved product.')
     low = first if first is not None and pep_group(s) != "approved" and first.get("price_per_mg") is not None else (pep_low_shop(slug) if first is None else None)
     if low:
         n = len({r["seller_slug"] for r in pep_shops(slug)})
@@ -4579,6 +4590,26 @@ def pep_where(slug):
         first = plans[0] if plans and not no_lead(plans[0]) else None
         # the pair pages are built after the substance pages: cmp_links_in fills the marker (or drops it)
         foot = f"<!--pair-foot:{slug}-->"
+    elif grp == "not" and pep_clinic_plans(slug):
+        # a substance that is not an approved drug but is prescribed by clinics (sermorelin; design/pages/peptide.md, "Clinics
+        # on a substance that is not an approved drug", ODOBRENO DIZAJN - Karlo - 8. 11. 2026 - PR #142): the three cheapest
+        # clinic plans with their kind chip and the table button, then one line to the shops table; no shop is listed here
+        named = set()
+        for r in pep_clinic_plans(slug)[:3]:
+            chip, label = kind_chip(r)
+            lines.append(f'<li><span class="where-who">{clinic_link(r["seller_slug"], seller_base(r["seller_name"]))}'
+                         f'<span class="sub">{explain_brand(r["plan_name"], named)}<span class="chip chip-{chip}">{label}</span></span></span>'
+                         f'<span class="where-price"><span class="num">{usd(r["price_monthly"])}/mo</span>{plan_letter(r)}</span>'
+                         f'{clinic_button(r["seller_slug"], "See plans", plan=r)}</li>')
+        shops = sorted(pep_shops(slug), key=shop_rank)
+        first = shops[0] if shops else None  # the intro's shop sentence keeps naming the best-checked shop
+        if shops:
+            # the book's "we do not link to them" is a phrase tools/check.py keeps to set places (owner decision C1)
+            foot = (f'<p class="small">Also sold by <a href="#shops">{plural(len(shops), "research-use shop")}</a>, '
+                    f'listed below with no link to them.</p>')
+        return (f'<div class="panel-line pep-where" id="where"><h2>Where to get it</h2><p class="small">The cheapest plans at '
+                f'the online clinics we track. None is an FDA-approved product.</p>'
+                f'<ul class="where-list">{"".join(lines)}</ul>{foot}</div>'), first
     else:
         kind = "cosmetic" if grp == "cosmetic" else "research"
         rows = sorted(seller_rows(slug, kind), key=shop_rank)[:3]
@@ -4663,6 +4694,80 @@ def pep_alias_section(slug):
 </section>"""
 
 
+ORAL_FORMS = {"tablet", "odt", "capsule", "troche", "drops"}  # plan dosage forms taken by mouth
+
+
+def pep_pill_section(slug):
+    """"<Name> as a pill" (owner queue block 13, wave A, 8 Nov 2026; the site map keeps "oral semaglutide" on the substance
+    page): for an approved substance that Drugs@FDA lists both by injection and by mouth, the brands approved by mouth with
+    their first approval date and Drugs@FDA link, the clinic plans for the approved pill, and the compounded plans taken by
+    mouth, which are not approved. Nothing without both routes in the data."""
+    rows = [a for a in APPROVED_DB if a["substance_slug"] == slug and a.get("brand_name") and a.get("approval_date")]
+    oral = [a for a in rows if (a.get("route") or "").upper() == "ORAL"]
+    shot = any(any(w in (a.get("route") or "").upper() for w in ("SUBCUTANEOUS", "INTRAMUSCULAR", "INTRAVENOUS")) for a in rows)
+    if not oral or not shot or pep_group(pep_status(slug)) != "approved":
+        return ""
+    first = {}  # each brand's first approval by mouth; brands under one approval are named together
+    for a in sorted(oral, key=lambda a: (str(a["approval_date"]), a["application_no"])):
+        first.setdefault(brand_base(a["brand_name"]), a)
+    apps = {}
+    for b, a in first.items():
+        apps.setdefault(a["application_no"], (a, []))[1].append(b)
+    daf = "https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo="
+    brands = and_list([f'{" and ".join(bs)} ({"one approval, " if len(bs) > 1 else ""}<a href="{daf}{re.sub(r"[^0-9]", "", a["application_no"])}" rel="nofollow">Drugs@FDA</a>, '
+                       f'{nice_date(str(a["approval_date"])[:10])})' for a, bs in apps.values()])
+    name = pep_short(slug)
+    out = [f"{name} is also FDA approved as a pill, taken by mouth. Drugs@FDA lists it by mouth as {brands}."]
+    pills = [r for r in pep_plans(slug) if r.get("product_kind") == "oral_branded"]
+    if pills:
+        by = {}
+        for r in pills:
+            by.setdefault(clean(r["plan_name"]), []).append(r)
+        parts = [f'{p} from {usd(min(float(r["price_monthly"]) for r in rs))}/mo at {plural(len({r["seller_slug"] for r in rs}), "clinic")}'
+                 for p, rs in sorted(by.items(), key=lambda kv: (-len(kv[1]), kv[0]))]
+        out.append(f'At the online clinics we track: {and_list(parts)}, checked {nice_date(max(r["last_seen"] for r in pills))}. '
+                   f'They are in the <a href="#sold">clinic table</a> above.')
+    comp = [r for r in pep_plans(slug) if r.get("product_kind") == "compounded" and (r.get("dosage_form") or "") in ORAL_FORMS]
+    if comp:
+        out.append(f'{plural(len(comp), "compounded plan")} we track {"is" if len(comp) == 1 else "are"} also taken by mouth; '
+                   f'{"it is" if len(comp) == 1 else "they are"} pharmacy-made, not FDA approved.')
+    return f"""
+<section class="section" id="pill">
+  <div class="wrap">
+    <div class="sec-hd"><div><h2>{escape(name)} as a pill</h2><p>{" ".join(out)}</p></div></div>
+  </div>
+</section>"""
+
+
+def pep_hhs_section(slug):
+    """"<Name> on prescription" (owner queue block 13, wave A, 8 Nov 2026): for a peptide under the HHS policy of 30 Oct
+    2026, the policy in one sentence, its routes for this peptide, the clinic plans we track, and the guide that lists the
+    ten conditions; all from legal.hhs_policy, the database's status row and the plans. Built like the PT-141 section."""
+    if not HHS or slug not in (HHS.get("substances") or []):
+        return ""
+    name = pep_short(slug)
+    row = next((r for r in pep_status_rows(slug) if r["regime"] == "hhs_503a_interim"), None)
+    url = (row or {}).get("source_url") or HHS["url"]
+    out = [f'{hhs_sentence(name)} <a href="{escape(url)}" rel="nofollow">{source_word(url)}</a>']
+    if HHS.get("routes", {}).get(slug):
+        out.append(f'For {name} it covers these routes: {HHS["routes"][slug]}.')
+    plans = pep_clinic_plans(slug)
+    if plans:
+        r = plans[0]
+        out.append(f'{plural(len(plans), "online clinic plan")} we track {"carries" if len(plans) == 1 else "carry"} it'
+                   f'{"" if len(plans) == 1 else ", the cheapest"} at {usd(r["price_monthly"])}/mo '
+                   f'({clinic_link(r["seller_slug"], seller_base(r["seller_name"]), True)}), checked {nice_date(r["last_seen"])}.')
+    else:
+        out.append("No online clinic plan we track carries it yet.")
+    out.append('Our guide <a href="/learn/is-bpc-157-legal/">Is BPC-157 legal?</a> lists the ten conditions.')
+    return f"""
+<section class="section" id="prescription">
+  <div class="wrap">
+    <div class="sec-hd"><div><h2>{escape(name)} on prescription</h2><p>{" ".join(out)}</p></div></div>
+  </div>
+</section>"""
+
+
 def pep_faq_pairs(slug):
     """The questions on a substance page with another name, answered from its data."""
     f = pep_alias_facts(slug)
@@ -4713,8 +4818,12 @@ def pep_page(slug):
     where, first = pep_where(slug)
     ev_id, evidence = unwrap(pep_evidence(slug, src))
     lt_id, letters = unwrap(pep_letters_section(slug))
-    sold_id, sold = unwrap(pep_plans_section(slug) if pep_group(s) == "approved" else pep_shops_section(slug))
+    clin = bool(pep_clinic_plans(slug))
+    sold_id, sold = unwrap(pep_plans_section(slug) if pep_group(s) == "approved" or clin else pep_shops_section(slug))
     sold = sold.replace('class="tbl tbl-cards', 'class="tbl tbl-compact tbl-cards', 1)
+    # clinics and shops are never mixed in one table (every-page.md): the shops get their own section under the clinics
+    _, shops = unwrap(pep_shops_section(slug)) if clin else ("", "")
+    shops = shops.replace('class="tbl tbl-cards', 'class="tbl tbl-compact tbl-cards', 1).replace("<h2>Where it is sold</h2>", "<h2>Research-use shops</h2>", 1)
     left = ((f'<div class="panel-line pep-block" id="evidence">{evidence}</div>' if evidence else "")
             + (f'<div class="panel-line pep-block" id="letters">{letters}</div>' if letters else ""))
     blocks = f'<div class="pep-body"><div class="pep-left">{left}</div><div class="pep-right">{pep_facts(slug, s)}{pep_guides(slug)}</div></div>'
@@ -4735,8 +4844,8 @@ def pep_page(slug):
     </div>
   </div>
 </section>
-{f'<section class="section pep-sold" id="{sold_id or "sold"}"><div class="wrap">{sold}</div></section>' if sold else ""}
-<section class="section pep-blocks"><div class="wrap">{blocks}</div></section>{pep_alias_section(slug)}{faq}
+{f'<section class="section pep-sold" id="{sold_id or "sold"}"><div class="wrap">{sold}</div></section>' if sold else ""}{f'<section class="section pep-sold" id="shops"><div class="wrap">{shops}</div></section>' if shops else ""}
+<section class="section pep-blocks"><div class="wrap">{blocks}</div></section>{pep_pill_section(slug)}{pep_hhs_section(slug)}{pep_alias_section(slug)}{faq}
 <section class="section pep-foot">
   <div class="wrap">
     <div class="goal-two">{nxt}
