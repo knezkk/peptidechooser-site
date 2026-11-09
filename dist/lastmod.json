@@ -1,182 +1,198 @@
 {
 "/": {
 "d": "2026-10-30",
-"h": "f1d32778975ba8a0"
+"h": "44db22645edc8e0d"
 },
 "/about/": {
 "d": "2026-10-30",
-"h": "ac1de52d7f26ef07"
+"h": "77627032a76d086d"
 },
 "/contact/": {
 "d": "2026-10-30",
-"h": "f4627793522a17ef"
+"h": "8ba8c568add83fd0"
 },
 "/corrections/": {
 "d": "2026-10-30",
-"h": "d366fe966ea6baf2"
+"h": "47da44122c63537f"
 },
 "/disclosure/": {
 "d": "2026-10-30",
-"h": "2b1502565729be9b"
+"h": "82baf2e8aeaf21a1"
+},
+"/fda-approved/": {
+"d": "2026-10-30",
+"h": "2729d3b19c977aad"
 },
 "/hair/": {
 "d": "2026-10-30",
-"h": "3bec010a7f12fb10"
+"h": "625bc32f491cdf0a"
 },
 "/how-we-rate/": {
 "d": "2026-10-30",
-"h": "2bb993df3cd5d5dc"
+"h": "1e6b2f62c4f50244"
 },
 "/learn/": {
 "d": "2026-10-30",
-"h": "b4f814d5b8aa6de1"
+"h": "29b4d7b58a974773"
 },
 "/learn/are-peptides-legal-in-the-us/": {
 "d": "2026-10-30",
-"h": "552ed5166c82e904"
+"h": "c01842910f344000"
 },
 "/learn/are-peptides-safe/": {
 "d": "2026-10-30",
-"h": "5080dea4f56d5c7a"
+"h": "c568e485c5976d6c"
 },
 "/learn/best-peptides-for-muscle-growth/": {
 "d": "2026-10-30",
-"h": "a47778a244af6f93"
+"h": "4dca65c85a5c3d62"
 },
 "/learn/best-peptides-for-weight-loss/": {
 "d": "2026-10-30",
-"h": "c20efcff053af4e2"
+"h": "4cff9c46ac4eca5a"
 },
 "/learn/bpc-157-vs-tb-500/": {
 "d": "2026-10-30",
-"h": "5f53cc4526bcb144"
+"h": "3e7d881677ea57fd"
 },
 "/learn/cheapest-bpc-157-per-mg/": {
 "d": "2026-10-30",
-"h": "3ec374c2ae6dc38b"
+"h": "82882ddf4e279d07"
 },
 "/learn/compounded-semaglutide-price/": {
 "d": "2026-10-30",
-"h": "1712667c8c97c189"
+"h": "dd4912ea0be2a1dd"
 },
 "/learn/compounded-vs-brand-glp-1/": {
 "d": "2026-10-30",
-"h": "2171203def2485b5"
+"h": "549bb81b8a6ada53"
 },
 "/learn/fda-warning-letters-peptides/": {
 "d": "2026-10-30",
-"h": "3b0553090341d9ae"
+"h": "a2f1cb3e98f2e191"
 },
 "/learn/finasteride-vs-minoxidil/": {
 "d": "2026-10-30",
-"h": "8bbf74925b8184d6"
+"h": "51dfc1a97bc4bc28"
 },
 "/learn/ghk-cu-for-hair/": {
 "d": "2026-10-30",
-"h": "37feb26a116b9b1d"
+"h": "256e47e19f30eb9a"
 },
 "/learn/how-to-check-a-peptide-seller/": {
 "d": "2026-10-30",
-"h": "97a89c3bc24d7dbc"
+"h": "8b7f396ea2db5fb5"
 },
 "/learn/how-to-read-a-coa/": {
 "d": "2026-10-30",
-"h": "2f91b550818f4611"
+"h": "711287365115a495"
 },
 "/learn/injectable-peptides-for-hair-growth/": {
 "d": "2026-10-30",
-"h": "4d29637c2044fced"
+"h": "a4a55fd4dbe700b6"
 },
 "/learn/is-bpc-157-legal/": {
 "d": "2026-10-30",
-"h": "ccc4cab3044520fc"
+"h": "843748f2da157f12"
 },
 "/learn/longevity-peptides-epitalon-mots-c-nad/": {
 "d": "2026-10-30",
-"h": "8a2f6faaf39380e7"
+"h": "fed6c36d02f41cdd"
 },
 "/learn/online-clinic-vs-research-shop/": {
 "d": "2026-10-30",
-"h": "4dff1c6ea869415f"
+"h": "4be2e7ff1b617821"
 },
 "/learn/ozempic-vs-wegovy-price/": {
 "d": "2026-10-30",
-"h": "52d0bf54cff7f55b"
+"h": "cb20bb83138487a0"
 },
 "/learn/peptide-seller-checks-by-the-numbers/": {
 "d": "2026-10-30",
-"h": "e77a4ad51524aee5"
+"h": "8f66f3c1a46e2927"
 },
 "/learn/peptides-for-hair-loss-what-works/": {
 "d": "2026-10-30",
-"h": "1a056407ab228455"
+"h": "dda824291ade6e7b"
 },
 "/learn/peptides-for-libido-what-is-approved/": {
 "d": "2026-10-30",
-"h": "ac5f1bdd809830c3"
+"h": "3caf3eabad0ff43e"
 },
 "/learn/peptides-for-recovery-and-joints/": {
 "d": "2026-10-30",
-"h": "085da3927fcf70a3"
+"h": "d64cc4d581a162fa"
 },
 "/learn/peptides-for-skin-what-works/": {
 "d": "2026-10-30",
-"h": "b8c7c9c3ddd3c4c7"
+"h": "d9970a74d7fbe387"
+},
+"/learn/peptides-vs-steroids/": {
+"d": "2026-10-30",
+"h": "1bb2a1efc95189db"
 },
 "/learn/semaglutide-vs-tirzepatide-price/": {
 "d": "2026-10-30",
-"h": "03c5a2044e7e2f27"
+"h": "fac64276afdcb3f0"
 },
 "/learn/what-an-fda-warning-letter-means/": {
 "d": "2026-10-30",
-"h": "b4e55a4f9b36ba2c"
+"h": "15f2740c3a866616"
 },
 "/learn/what-is-a-503a-pharmacy/": {
 "d": "2026-10-30",
-"h": "45be90a39f6d7041"
+"h": "3398e91af4ce3482"
 },
 "/learn/what-research-use-only-means/": {
 "d": "2026-10-30",
-"h": "82fdae4c75d1ed90"
+"h": "b808f70254ad3d60"
 },
 "/libido/": {
 "d": "2026-10-30",
-"h": "d11618656f593a83"
+"h": "1fb0e9d5676e8c77"
 },
 "/longevity/": {
 "d": "2026-10-30",
-"h": "9cb135bae506f178"
+"h": "ccd29e791b4895f0"
 },
 "/menopause/": {
 "d": "2026-10-30",
-"h": "fd19eafa5f71e98c"
+"h": "b299131dd0f9b818"
 },
 "/muscle/": {
 "d": "2026-10-30",
-"h": "d0689caf42613a39"
+"h": "89f849cc9ed08ced"
 },
 "/peptides/": {
 "d": "2026-10-30",
-"h": "1396b31431a21ba8"
+"h": "4171ca807cbd7066"
+},
+"/prescription/": {
+"d": "2026-10-30",
+"h": "a8367840955e06c7"
 },
 "/privacy/": {
 "d": "2026-10-30",
-"h": "de29325e23137366"
+"h": "482737c706bc9c7b"
 },
 "/recovery/": {
 "d": "2026-10-30",
-"h": "86296be950a22307"
+"h": "c61f4e03d43810f1"
 },
 "/skin/": {
 "d": "2026-10-30",
-"h": "9d6291fb1e40facd"
+"h": "25454b839cbd4e26"
 },
 "/sources/": {
 "d": "2026-10-30",
-"h": "8f651a782dd5c3f7"
+"h": "478129824c02f186"
 },
 "/weight-loss/": {
 "d": "2026-10-30",
-"h": "96b4435576d66742"
+"h": "d0592b451685502b"
+},
+"/weight-loss/pills/": {
+"d": "2026-10-30",
+"h": "7e67110a455bf3d5"
 }
 }

@@ -872,6 +872,156 @@
       ]
     }
   ],
+  "subpages": [
+    {
+      "slug": "weight-loss-pills",
+      "parent": "weight-loss",
+      "path": "/weight-loss/pills/",
+      "panel": "weight-loss",
+      "link": "GLP-1 pills: the Wegovy pill and Foundayo",
+      "name": "GLP-1 pills",
+      "label": "GLP-1 pills",
+      "short": "GLP-1 pills",
+      "page": true,
+      "title": "GLP-1 pills for weight loss, compared | Peptide Chooser",
+      "h1": "GLP-1 pills for weight loss, compared with what clinics charge.",
+      "description": "The Wegovy pill and Foundayo (orforglipron) are FDA-approved pills for weight loss. Compounded tablets are not. What each one is, and clinic prices.",
+      "short_answer": "Two pills are FDA approved for weight loss: Wegovy taken by mouth (semaglutide) and Foundayo (orforglipron), which is not a peptide. Ozempic and Rybelsus tablets are semaglutide approved for type 2 diabetes, not for weight loss. Online clinics also sell compounded semaglutide tablets, made by pharmacies and not FDA approved.",
+      "legal_section": true,
+      "main_query": "glp-1 pills",
+      "intro": "Two pills are FDA approved for weight loss. Ozempic and Rybelsus tablets are for type 2 diabetes, and compounded tablets are not approved.",
+      "clinic_plans": {
+        "substances": [
+          "semaglutide",
+          "orforglipron"
+        ],
+        "oral": true,
+        "other_use": {
+          "Ozempic": "diabetes",
+          "Rybelsus": "diabetes"
+        }
+      },
+      "guide": "best-peptides-for-weight-loss",
+      "for": "For losing weight with a pill instead of a shot: the approved pills, what they cost, and the copies sold online.",
+      "panel_title": "GLP-1 pills",
+      "peptides": [
+        {
+          "name": "Wegovy pill (semaglutide)",
+          "plain": "A daily pill on prescription: Wegovy, semaglutide's weight-management brand, taken by mouth.",
+          "status": "FDA approved",
+          "chip": "ok",
+          "does": "In a 64-week trial in adults with obesity or overweight, people lost 13.6% of body weight on the pill, against 2.2% on placebo.",
+          "how": "Prescription.",
+          "status_plain": "FDA approved for weight management.",
+          "substance": "semaglutide",
+          "plan_form": "pill",
+          "plan_name_match": "wegovy",
+          "src": [
+            311,
+            312,
+            313
+          ],
+          "line_one": "daily pill for weight loss",
+          "rx_word": "on prescription"
+        },
+        {
+          "name": "Foundayo (orforglipron)",
+          "plain": "A daily pill on prescription for adults with obesity, or overweight with a weight-related health problem. Not a peptide.",
+          "status": "FDA approved",
+          "chip": "ok",
+          "does": "In a 72-week trial in 3,127 adults with obesity, people lost 7.5% to 11.2% of body weight, by dose, against 2.1% on placebo.",
+          "how": "Prescription.",
+          "status_plain": "FDA approved for weight management.",
+          "substance": "orforglipron",
+          "plan_form": "pill",
+          "src": [
+            301,
+            302
+          ],
+          "line_one": "daily pill for weight loss, not a peptide",
+          "rx_word": "on prescription"
+        },
+        {
+          "name": "Ozempic or Rybelsus tablets",
+          "plain": "Semaglutide tablets on prescription, approved for type 2 diabetes, not for weight loss.",
+          "status": "FDA approved",
+          "chip": "ok",
+          "does": "Approved to improve blood sugar in adults with type 2 diabetes, and to lower the risk of heart attack, stroke and heart death in those at high risk.",
+          "how": "Prescription.",
+          "status_plain": "FDA approved for type 2 diabetes, not for weight loss.",
+          "substance": "semaglutide",
+          "plan_form": "pill",
+          "plan_name_match": "ozempic|rybelsus",
+          "src": [
+            314
+          ],
+          "top_pick": false,
+          "top_pick_why": "Approved for type 2 diabetes, not for weight loss.",
+          "line_one": "diabetes pill, not for weight loss",
+          "rx_word": "on prescription",
+          "other_use_ok": true,
+          "key": "semaglutide-diabetes"
+        },
+        {
+          "name": "Compounded semaglutide tablets",
+          "plain": "Semaglutide tablets mixed by a pharmacy, sold by online clinics on prescription. Not FDA approved.",
+          "status": "Not FDA approved; pharmacy-made",
+          "chip": "warn",
+          "does": "Pharmacy-made copies. The FDA does not check their safety, effectiveness or quality before they are sold.",
+          "how": "Prescription through the clinic.",
+          "status_plain": "Not FDA approved; pharmacy-made.",
+          "plan_kind": "compounded",
+          "plan_substances": [
+            "semaglutide"
+          ],
+          "plan_form": "pill",
+          "src": [
+            315
+          ],
+          "no_link": "Not FDA approved",
+          "line_one": "pharmacy-made tablets",
+          "rx_word": "on prescription"
+        }
+      ],
+      "sources": [
+        {
+          "n": 301,
+          "text": "FDA drug label for Foundayo (orforglipron), Indications and Usage, through openFDA, effective 29 Jul 2026",
+          "url": "https://api.fda.gov/drug/label.json?search=openfda.brand_name:%22FOUNDAYO%22"
+        },
+        {
+          "n": 302,
+          "text": "Wharton S et al., Orforglipron, an Oral Small-Molecule GLP-1 Receptor Agonist for Obesity Treatment (ATTAIN-1), N Engl J Med 393(18), 2025, PubMed 40960239",
+          "url": "https://pubmed.ncbi.nlm.nih.gov/40960239/"
+        },
+        {
+          "n": 311,
+          "text": "Drugs@FDA, Wegovy by mouth (NDA 218316), approved 22 Dec 2025",
+          "url": "https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm?event=overview.process&ApplNo=218316"
+        },
+        {
+          "n": 312,
+          "text": "FDA label on DailyMed, Wegovy (semaglutide), Indications and Usage, set id f5e548d0-cc79-4c34-a3f5-e20a5b8b6564, read 9 Nov 2026",
+          "url": "https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=f5e548d0-cc79-4c34-a3f5-e20a5b8b6564"
+        },
+        {
+          "n": 313,
+          "text": "Wharton S et al., Oral Semaglutide at a Dose of 25 mg in Adults with Overweight or Obesity (OASIS 4), N Engl J Med 393(11), 2025, PubMed 40934115",
+          "url": "https://pubmed.ncbi.nlm.nih.gov/40934115/"
+        },
+        {
+          "n": 314,
+          "text": "FDA drug label for Rybelsus and Ozempic tablets (semaglutide), Indications and Usage, through openFDA, effective 30 Jan 2026",
+          "url": "https://api.fda.gov/drug/label.json?search=openfda.brand_name:%22RYBELSUS%22"
+        },
+        {
+          "n": 315,
+          "text": "FDA, Compounding and the FDA: Questions and Answers",
+          "url": "https://www.fda.gov/drugs/human-drug-compounding/compounding-and-fda-questions-and-answers"
+        }
+      ]
+    }
+  ],
   "legal": {
     "checked": "2026-10-30",
     "rows": [

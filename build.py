@@ -42,7 +42,7 @@ if os.environ.get("PC_DRAFTS") and (ROOT / "data" / "drafts.json").exists():
             _g["sources"] = _g.get("sources", []) + _add["sources"]
     DATA["legal"]["rows"] += _drafts.get("legal_rows", [])
     DATA["legal"]["sources"] += _drafts.get("legal_sources", [])
-    DATA["subpages"] = _drafts.get("subpages", [])
+    DATA["subpages"] = (DATA.get("subpages") or []) + _drafts.get("subpages", [])
 # The HHS compounding policy of 30 Oct 2026 is worded once, in legal.hhs_policy (owner queue block 4, 7 Nov 2026): every
 # {hhs_<key>} in the data is that entry's text, so no page types its own version.
 HHS = DATA["legal"].get("hhs_policy") or {}
@@ -622,7 +622,7 @@ def item_list_schema(name, items):
 
 
 ALL_GOALS = DATA["goals"]
-# Goal subpages /<goal>/<topic>/ (design/pages/group.md, Goal subpage; drafts only, owner queue block 15): a goal-like entry
+# Goal subpages /<goal>/<topic>/ (design/pages/group.md, Goal subpage; owner queue block 15; live ones in site.json, drafts in drafts.json): a goal-like entry
 # with its own options, `parent`, `path` and `panel` (the parent goal's colour panel). Not in ALL_GOALS: a subpage is never
 # on Home, in the menu, in the goals strip or in the legal tables; it is reached from its goal page.
 SUBPAGES = DATA.get("subpages") or []
@@ -853,7 +853,7 @@ def row_plan(g, p):
 # Plans shown on a row or a price pad that are not a goal's GOAL_PLANS plan get their own source after the plan sources.
 plan_key = lambda r: f'{r["seller_slug"]}-{r["plan_slug"]}'
 EXTRA_PLANS = {}
-for _g in ALL_GOALS + SUBPAGES:  # SUBPAGES is empty unless drafts are built
+for _g in ALL_GOALS + SUBPAGES:
     _rows = goal_plans(_g)
     for _r in [row_plan(_g, _p) for _p in _g["peptides"]] + _rows[:1]:
         if _r and _r is not GOAL_PLANS.get(_g["slug"]):
@@ -3933,7 +3933,7 @@ for _g in ALL_GOALS:
         PAGES.append((f"/{_g['slug']}/", f"{_g['slug']}/index.html", _g["title"], _g["description"],
                       category_page(_g), faq_schema(goal_faq_pairs(_g)), [(f"/{_g['slug']}/", _g["name"])]))
 
-for _g in SUBPAGES:  # drafts only (PC_DRAFTS=1)
+for _g in SUBPAGES:  # live ones from site.json, drafts with PC_DRAFTS=1
     _p = next(x for x in ALL_GOALS if x["slug"] == _g["parent"])
     PAGES.append((_g["path"], _g["path"].strip("/") + "/index.html", _g["title"], _g["description"], category_page(_g),
                   faq_schema(goal_faq_pairs(_g)), [(f"/{_p['slug']}/", _p["name"]), (_g["path"], _g["name"])]))
@@ -6042,7 +6042,7 @@ def main():
     (DIST / "windows").mkdir(exist_ok=True)
     for key, html in SELLER_WINDOWS.items():
         (DIST / "windows" / f"{key}.json").write_text(json.dumps({"html": html}), encoding="utf-8")
-    for g in ALL_GOALS + SUBPAGES:  # SUBPAGES only with drafts
+    for g in ALL_GOALS + SUBPAGES:
         for p in g["peptides"]:
             if option_plans(g, p):
                 (DIST / "windows" / f"{clinic_key(g, p)}.json").write_text(json.dumps({"html": clinic_window(g, p)}), encoding="utf-8")
