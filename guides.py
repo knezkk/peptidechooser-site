@@ -8,6 +8,7 @@ build.py imports this module and calls pages(build) once its own helpers exist.
 """
 import ast
 import json
+import os
 import re
 import subprocess
 from collections import Counter
@@ -142,6 +143,27 @@ GUIDES = [
      "desc": "Semaglutide and tirzepatide are FDA-approved peptides for weight loss. Compounded versions and retatrutide, with clinic prices and FDA status.",
      "line": "The approved shots, the compounded copies and retatrutide: trials, status, prices."},
 ]
+# Group pages in the guide layout (design/pages/group.md, Group page, Guide layout; owner queue block 15, 9 Nov 2026): built
+# by the guide template at their own address, with the group's substance table after the short answer. Drafts only: they
+# join the build with PC_DRAFTS=1 and go live after the owner's ODOBRENO SEO.
+GROUPS = [
+    {"slug": "fda-approved", "path": "/fda-approved/", "crumb": "FDA approved peptides",
+     "title": "FDA approved peptides: the full list | Peptide Chooser",
+     "h1": "FDA approved peptides: every one on our list, with its status.",
+     "desc": "Every FDA-approved peptide we track, with its brands, its source and clinic prices. Approved medicines that are not peptides are marked as such.",
+     "line": "Every approved peptide we track, and the approved medicines that are not peptides."},
+    {"slug": "prescription", "path": "/prescription/", "crumb": "Prescription peptides",
+     "title": "Prescription and compounded peptides | Peptide Chooser",
+     "h1": "Prescription peptides: what a pharmacy may make, and who sells it.",
+     "desc": "Compounded peptides are made by a pharmacy on a prescription and are not FDA approved. Which peptides that covers, the HHS policy, and clinic prices.",
+     "line": "Peptides a pharmacy makes on prescription: the HHS policy and clinic prices."},
+] if os.environ.get("PC_DRAFTS") else []
+
+
+def rx_group_line():
+    """The 503A guide's link to /prescription/ (group.md: both link to each other), only when the group page is built."""
+    return (' Our <a href="/prescription/">prescription peptides</a> page lists the ones a pharmacy may make today, with '
+            'the online clinics that sell them.') if any(g["slug"] == "prescription" for g in GROUPS) else ""
 # Home's card shows the first six with "All guides" under them (owner task 2 Nov 2026: the first six when space is tight)
 HOME_CARD = 6
 # The related strip: guides on the same topic first, then the rest, at most RELATED_MAX (pages.md, Guide)
@@ -157,7 +179,7 @@ TOPIC = {"is-bpc-157-legal": "legal", "are-peptides-safe": "legal", "how-to-read
          "fda-warning-letters-peptides-2026": "data", "cheapest-bpc-157-per-mg": "data",
          "peptide-seller-checks-by-the-numbers": "data", "ozempic-vs-wegovy-price": "glp1", "finasteride-vs-minoxidil": "hair",
          "what-research-use-only-means": "legal",
-         "best-peptides-for-weight-loss": "glp1"}
+         "best-peptides-for-weight-loss": "glp1", "fda-approved": "legal", "prescription": "buying"}
 RELATED_MAX = 5
 
 LEARN_TITLE = "Peptide guides in plain words | Peptide Chooser"
@@ -1192,6 +1214,119 @@ def g_muscle(b, f, N):
     return short, body, nxt, faq
 
 
+def approved_slugs(b):
+    return [x for x in b.PEPTIDE_SLUGS if b.pep_group(b.pep_status(x)) == "approved"]
+
+
+def rx_slugs(b):
+    """The /prescription/ group: substances that are not approved and that a pharmacy may make (the "Pharmacy-made"
+    status), that the HHS policy covers, or that the online clinics we track sell on prescription."""
+    hhs = set((b.HHS or {}).get("substances") or [])
+    clinic = {r["substance_slug"] for r in b.PLANS if r.get("price_monthly") is not None}
+    return [x for x in b.PEPTIDE_SLUGS if b.pep_group(b.pep_status(x)) == "not"
+            and (b.pep_status(x)["label"] == "Pharmacy-made" or x in hhs or x in clinic)]
+
+
+def g_fda_approved(b, f, N):
+    """/fda-approved/ (group page, guide layout; owner queue block 15): the approved substances from our database, those
+    that are not peptides marked, what approval means, and where they are sold. No paid link (rule 4.5)."""
+    slugs = approved_slugs(b)
+    nonpep = [b.pep_name(x) for x in slugs if b.not_peptide(x)]
+    short = (f"An FDA-approved medicine is one whose maker sent the FDA its trial data, and the FDA found that the benefits "
+             f"outweigh the known risks for a stated use.{N('fda-approval')} Of the substances we track, "
+             f"{spelled(len(slugs)).lower()} have an approved product listed in Drugs@FDA"
+             + (f"; {and_list(nonpep)} among them {'is' if len(nonpep) == 1 else 'are'} not {'a peptide' if len(nonpep) == 1 else 'peptides'}" if nonpep else "")
+             + f".{N('db-peptides')}")
+    table, rows = b.group_table(slugs, "FDA-approved substances we track")
+    eg = brands(b, "tesamorelin")
+    # the goal pages that show it: an option row, or the clinic prices (orforglipron on /weight-loss/)
+    on = lambda x: list({g["slug"]: g for g in [g for g, _ in b.pep_goals(x)] + [
+        g for g in b.ALL_GOALS if g.get("page") and x in ((g.get("clinic_plans") or g.get("clinic_table") or {}).get("substances") or [])]}.values())
+    goals = lambda x: and_list([f'<a href="/{g["slug"]}/">{g["name"].lower()}</a>' for g in on(x)])
+    why = "".join(f"<li>{b.pep_name(x)}: on our {goals(x)} page.</li>" for x in slugs if b.not_peptide(x) and on(x))
+    plans = [r for r in b.PLANS if r["substance_slug"] in slugs and r.get("price_monthly") is not None
+             and r.get("product_kind") in ("branded", "oral_branded", "generic")]
+    low = min(plans, key=lambda r: (float(r["price_monthly"]), r["seller_name"])) if plans else None
+    sold = lambda: (f"<p>{b.plural(len(plans), 'plan')} at {b.plural(len({r['seller_slug'] for r in plans}), 'online clinic')} we track "
+                    f"carry the brand or generic medicine of one of them; the cheapest is {plan_words(b, low, N(pkey(low)))}.</p>") if low else ""
+    notpep = (f"""
+<h2>Why are some medicines on this list not peptides?</h2>
+<p>{and_list(nonpep)} {"is" if len(nonpep) == 1 else "are"} FDA approved, but our database marks {"it" if len(nonpep) == 1 else "them"} as not a peptide.{N('db-peptides')} They are on this list because our goal pages compare them with the peptides sold for the same goal:</p>
+<ul>{why}</ul>
+""" if nonpep else "")
+    body = f"""
+<h2>Which peptides are FDA approved?</h2>
+<p>Each name opens its page, with its source, its brands and where it is sold.</p>
+{table}
+
+<h2>What does FDA approved mean?</h2>
+<p>Approval is for a product and a stated use, not for a substance in general.{N('fda-approval')} Tesamorelin{f" ({eg})" if eg else ""}, for example, is approved only to reduce belly fat in adults with HIV and lipodystrophy.{N('label-egrifta')}</p>
+<p>A compounded copy of an approved medicine is not FDA approved, even with the same ingredient, and the FDA does not check its safety, effectiveness or quality before it is sold.{N('fda-compounding')}</p>
+{notpep}
+<h2>Where are they sold?</h2>
+<p>On prescription, from a doctor or an online clinic, unless a goal page sells one over the counter.</p>
+{sold()}
+<p>We show prices and checks; a goal page compares each medicine with the other options for the same goal.</p>
+
+<h2>What is not on this list?</h2>
+<p>Pharmacy-made copies and research-use peptides. Our <a href="/prescription/">prescription peptides</a> page lists the ones a pharmacy may make, and <a href="/learn/are-peptides-legal-in-the-us/">Are peptides legal in the US?</a> explains every kind.</p>"""
+    nxt = (("/peptides/", "See every peptide's status"), ("/learn/are-peptides-legal-in-the-us/", "Are peptides legal? guide"))
+    faq = ("FDA approved peptides", [
+        ("Which peptides are FDA approved?",
+         f"Of the substances we track, {spelled(len(slugs)).lower()} have an approved product in Drugs@FDA: {and_list([b.pep_name(x) for x in slugs])}."),
+        ("Is every FDA-approved medicine on this list a peptide?",
+         f"No. {and_list(nonpep)} {'is' if len(nonpep) == 1 else 'are'} FDA approved but not {'a peptide' if len(nonpep) == 1 else 'peptides'}." if nonpep else ""),
+        ("Is a compounded copy of an approved peptide FDA approved?",
+         "No. A compounded copy is not FDA approved, even with the same ingredient, and the FDA does not check its safety, "
+         "effectiveness or quality before it is sold."),
+    ])
+    return short, body, nxt, faq
+
+
+def g_prescription(b, f, N):
+    """/prescription/ (group page, guide layout; owner queue block 15): what a compounded peptide is, the substances a pharmacy
+    may make today from our database, the HHS policy, and the online clinics that sell them. No paid link (rule 4.5)."""
+    slugs = rx_slugs(b)
+    short = (f"A compounded peptide is made by a pharmacy for one patient on a prescription. It is not FDA approved, and the "
+             f"FDA does not check its safety, effectiveness or quality before it is sold.{N('fda-compounding')} "
+             f"{b.hhs_sentence('BPC-157, TB-500, Epitalon, MOTS-c, KPV or Semax')}{N('legal-13')}")
+    table, rows = b.group_table(slugs, "Peptides a pharmacy may make on prescription")
+    plans = [r for r in b.PLANS if r["substance_slug"] in rows and r.get("price_monthly") is not None]
+    low = min(plans, key=lambda r: (float(r["price_monthly"]), r["seller_name"])) if plans else None
+    sold = lambda: (f"<p>{b.plural(len(plans), 'plan')} at {b.plural(len({r['seller_slug'] for r in plans}), 'online clinic')} we track "
+                    f"carry one of them; the cheapest is {plan_words(b, low, N(pkey(low)))}.</p>") if low else ""
+    body = f"""
+<h2>Which peptides may a pharmacy make on prescription?</h2>
+<p>The substances below have a pharmacy-made status in our database, are covered by the HHS policy, or are sold on prescription by the online clinics we track. None is FDA approved.{N('db-peptides')}</p>
+{table}
+
+<h2>What is a compounded peptide?</h2>
+<p>A medicine a pharmacy mixes itself for a patient with a prescription. Large pharmacies registered as outsourcing facilities must follow federal manufacturing rules and the FDA inspects them; regular pharmacies are mainly overseen by state boards of pharmacy.{N('fda-compounding')}</p>
+<p>Our guide <a href="/learn/what-is-a-503a-pharmacy/">What is a 503A pharmacy?</a> explains which ingredients a pharmacy may use.</p>
+
+<h2>What did HHS change on 30 Oct 2026?</h2>
+{hhs_block(b, N)}
+
+<h2>Who sells them?</h2>
+{sold()}
+<p>Each substance's page shows where it is sold. Research-use shops sell some of the same peptides in vials labelled for lab use; those are not compounded medicines and are not approved for use in people.</p>
+
+<h2>Is a compounded copy of an approved medicine the same?</h2>
+<p>No. A compounded copy is not FDA approved, even with the same ingredient.{N('fda-compounding')} For pharmacy-made semaglutide and tirzepatide, the FDA has counted 990 reports of side effects linked to compounded semaglutide and more than 730 linked to compounded tirzepatide, as of 31 May 2026, and says these numbers are likely too low.{N('fda-glp1-concerns')} Our <a href="/fda-approved/">FDA approved peptides</a> page lists the approved medicines.</p>"""
+    nxt = (("/learn/what-is-a-503a-pharmacy/", "What is a 503A pharmacy?"), ("/fda-approved/", "FDA approved peptides"))
+    faq = ("prescription peptides", [
+        ("What is a compounded peptide?",
+         "A peptide a pharmacy makes for one patient on a prescription. It is not FDA approved, and the FDA does not check its "
+         "safety, effectiveness or quality before it is sold."),
+        ("Which peptides may a pharmacy make on prescription?",
+         f"From our database: {and_list([b.pep_name(x) for x in rows])}. None is FDA approved." if rows else ""),
+        ("Can I get BPC-157 on prescription?",
+         "Since 30 Oct 2026 HHS says it does not intend to act against licensed pharmacies that compound BPC-157 for one patient "
+         "on a prescription, under 10 conditions. That is not FDA approval."),
+    ])
+    return short, body, nxt, faq
+
+
 def g_bpc_tb(b, f, N):
     sb_, st_ = b.db_status("bpc-157"), b.db_status("tb-500")
     same = sb_ and st_ and sb_["sentence"] == st_["sentence"]
@@ -1769,7 +1904,7 @@ def g_503a(b, f, N):
 <p>From our database, which reads the FDA's lists:</p>
 <ul>{where}</ul>
 {routes}
-<p>Each peptide's page on our site shows the status that applies and the FDA page behind it.</p>
+<p>Each peptide's page on our site shows the status that applies and the FDA page behind it.{rx_group_line()}</p>
 
 <h2>What do "category 1" and "nomination withdrawn" mean for a buyer?</h2>
 <p><strong>Category 1</strong> means a pharmacy may make a medicine with the ingredient for a patient with a prescription, under the FDA's conditions, while the review goes on.{N('fda-503a')} It does not mean the FDA approved it or found that it works.{N('fda-compounding')}</p>
@@ -2348,7 +2483,7 @@ TEXTS = {"is-bpc-157-legal": g_bpc, "are-peptides-safe": g_safe, "how-to-read-a-
          "fda-warning-letters-peptides-2026": g_letters_year, "cheapest-bpc-157-per-mg": g_bpc_price,
          "ozempic-vs-wegovy-price": g_oz_weg, "finasteride-vs-minoxidil": g_fin_minox,
          "what-research-use-only-means": g_ruo, "peptide-seller-checks-by-the-numbers": g_by_numbers,
-         "best-peptides-for-weight-loss": g_wl}
+         "best-peptides-for-weight-loss": g_wl, "fda-approved": g_fda_approved, "prescription": g_prescription}
 
 
 GUIDE_DATES = {}
@@ -2389,7 +2524,7 @@ def guide_dates():
 
 
 def article_schema(b, g):
-    url = f"{b.SITE}/learn/{g['slug']}/"
+    url = f"{b.SITE}{g.get('path') or '/learn/' + g['slug'] + '/'}"
     dates = guide_dates().get(g["slug"])
     org = {"@type": "Organization", "name": "Peptide Chooser", "url": b.SITE + "/"}
     return ('<script type="application/ld+json">' + json.dumps({
@@ -2580,4 +2715,7 @@ def pages(b):
     inbound = {g["slug"]: sum(1 for path, body in bodies if path != f"/learn/{g['slug']}/" and f'href="/learn/{g["slug"]}/"' in body)
                for g in GUIDES}
     start = sorted(GUIDES, key=lambda g: (-inbound[g["slug"]], GUIDES.index(g)))[:START_HERE]
+    for g in GROUPS:  # group pages in the guide layout: their own address and breadcrumb (Home / <Group>)
+        out.append((g["path"], g["path"].strip("/") + "/index.html", g["title"], g["desc"], guide_body(b, g),
+                    article_schema(b, g) + b.faq_schema(FAQ.get(g["slug"], [])), [(g["path"], g["crumb"])]))
     return [("/learn/", "learn/index.html", LEARN_TITLE, LEARN_DESC.format(n=spelled(len(GUIDES))), learn_body(b, mins, start), "", [("/learn/", "Learn")])] + out
