@@ -1594,8 +1594,15 @@ def check_arch(P):
     for old, new in moves.items():
         if f"/sellers/{old}/ /sellers/{new}/ 301" not in red:
             errs.append(f"_redirects: no 301 from /sellers/{old}/ to /sellers/{new}/")
-        if (DIST / "sellers" / old).exists():
-            errs.append(f"sellers/{old}/: the old address of a moved seller is still built")
+        # the old address holds only the fallback page: noindex, a meta refresh and the canonical of the new address (queue
+        # block 29, 9 Nov 2026: tools/tier1_guard.py reads the move from it)
+        f = DIST / "sellers" / old / "index.html"
+        html = f.read_text(encoding="utf-8") if f.exists() else ""
+        if not re.search(rf'http-equiv="refresh" content="0; url=/sellers/{re.escape(new)}/"', html) or 'content="noindex"' not in html \
+                or f'rel="canonical" href="{SITE}/sellers/{new}/"' not in html:
+            errs.append(f"sellers/{old}/: no fallback page that moves to /sellers/{new}/ (a page, or nothing, at the old address)")
+        if f.exists() and any(p.name != "index.html" for p in (DIST / "sellers" / old).rglob("*")):
+            errs.append(f"sellers/{old}/: the old address of a moved seller still has pages under it")
         if f"/sellers/{old}/<" in sm:
             errs.append(f"sitemap: the old address /sellers/{old}/ is listed")
         for name, html in tables:

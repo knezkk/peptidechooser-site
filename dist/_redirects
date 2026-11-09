@@ -1,1 +1,4 @@
-# Server redirects on Cloudflare Pages (301). Empty until task 4C (site map rules, section 8).
+# Server redirects on Cloudflare Pages (301), task 4C (site map rules, section 8).
+/learn/best-peptides-for-hair-growth/ /learn/peptides-for-hair-loss-what-works/ 301
+/learn/fda-warning-letters-peptides-2026/ /learn/fda-warning-letters-peptides/ 301
+/learn/how-we-check-sellers/ /how-we-rate/ 301

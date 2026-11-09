@@ -5987,7 +5987,11 @@ def main():
     # an old path to its new one; GitHub Pages has no server redirects, so each old path gets a page with a meta refresh,
     # the canonical of the new page and noindex. Never a path the build already has. A redirect to a page this data does
     # not build (/sellers/ in the repo data, which holds no sellers) is left out, never pointed at a missing page.
-    for old_path, new_path in REDIRECTS.items():
+    # every seller move (site.seller_redirects, task 4C) gets the same fallback page at its old address, so a host without
+    # server redirects, and tools/tier1_guard.py, see the move (queue block 29, 9 Nov 2026)
+    moves = list(REDIRECTS.items()) + [(f"/sellers/{o}/", f"/sellers/{n}/") for o, n in sorted(SELLER_MOVES.items())
+                                       if f"/sellers/{o}/" not in REDIRECTS]
+    for old_path, new_path in moves:
         assert not built(old_path), f"redirect from {old_path}, which is still a page"
         if not built(new_path) and not (DIST / new_path.strip("/") / "index.html").exists():
             print(f"redirect {old_path} left out: {new_path} is not built with this data")
@@ -6010,10 +6014,13 @@ def main():
     (DIST / "CNAME").write_text("peptidechooser.com\n")
     (DIST / ".nojekyll").write_text("")
     # Cloudflare Pages, the new host (owner queue block 5, step 4A); GitHub Pages serves both as plain files and ignores them.
-    # _redirects stays empty until task 4C moves the 36 addresses; the project's own *.pages.dev address never competes
-    # with peptidechooser.com in Google.
-    (DIST / "_redirects").write_text("# Server redirects on Cloudflare Pages (301). Empty until task 4C (site map rules, section 8).\n"
-                                     + "".join(f"/sellers/{o}/ /sellers/{n}/ 301\n" for o, n in sorted(SELLER_MOVES.items())))
+    # _redirects (task 4C, site map rules, section 8): every move in data/redirects.json and every seller move is a server
+    # 301; the meta-refresh pages above stay as the fallback. The project's own *.pages.dev address never competes with
+    # peptidechooser.com in Google.
+    _301 = {o: n for o, n in REDIRECTS.items() if built(n) or (DIST / n.strip("/") / "index.html").exists()}
+    _301 |= {f"/sellers/{o}/": f"/sellers/{n}/" for o, n in SELLER_MOVES.items()}
+    (DIST / "_redirects").write_text("# Server redirects on Cloudflare Pages (301), task 4C (site map rules, section 8).\n"
+                                     + "".join(f"{o} {n} 301\n" for o, n in sorted(_301.items())))
     (DIST / "_headers").write_text("# Cloudflare Pages only: keep the project's pages.dev address out of Google.\n"
                                    "https://:project.pages.dev/*\n  X-Robots-Tag: noindex\n")
     (DIST / "robots.txt").write_text(f"User-agent: *\nAllow: /\nDisallow: /out/\nSitemap: {SITE}/sitemap.xml\n")
