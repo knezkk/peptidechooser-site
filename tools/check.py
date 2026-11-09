@@ -1694,7 +1694,8 @@ BLEND_NAME = re.compile(r"/|\+|\bwith\b", re.I)
 
 def check_offers(P):
     """Seller offer test of 20 (queue block 28, task 6A; site map rules section 1; ODOBRENO PRAVILA - Karlo - 9. 11. 2026 -
-    6A test). Without PC_OFFERS no offer page exists. With it: at most 20 pairs, each listed in data/offer_test.json; only
+    6A test) and its pilot of 3 (block 28c; ODOBRENO PRAVILA - Karlo - 9. 11. 2026 - 6A pilot 3): only the 3 pilot pairs are
+    indexable and built without PC_OFFERS; the rest need PC_OFFERS=preview and carry noindex. With it: at most 20 pairs, each listed in data/offer_test.json; only
     an online clinic; no blend among its plans; the page shows at least one thing its parents do not (plan terms or its own
     price history); an indexable one also has a measured search or two of the things, sits in sitemap-offer.xml only and
     carries BreadcrumbList as its only schema."""
@@ -1704,8 +1705,16 @@ def check_offers(P):
     pairs = {(x["seller"], x["substance"]): x for x in (json.loads(f.read_text(encoding="utf-8"))["pairs"] if f.exists() else [])}
     if len(pairs) > 20:
         errs.append(f"data/offer_test.json: {len(pairs)} pairs, the test is 20")
-    if names and not os.environ.get("PC_OFFERS"):
-        errs.append(f"{names[0]}: an offer page is built without PC_OFFERS (nothing goes live before the owner approves)")
+    pilot = {tuple(x) for x in ((json.loads(f.read_text(encoding="utf-8")).get("pilot") or {}).get("pairs") or [] if f.exists() else [])}
+    if len(pilot) > 3:
+        errs.append(f"data/offer_test.json: {len(pilot)} pilot pairs, the pilot is 3 (ODOBRENO PRAVILA - Karlo - 9. 11. 2026 - 6A pilot 3)")
+    for name in names:
+        if tuple(name.split("/")[1:3]) not in pilot and not os.environ.get("PC_OFFERS"):
+            errs.append(f"{name}: an offer page outside the pilot of 3 is built without PC_OFFERS")
+    indexed = [n for n in names if "noindex" not in P[n].meta.get("robots", "")]
+    for name in indexed:
+        if tuple(name.split("/")[1:3]) not in pilot:
+            errs.append(f"{name}: indexable but not in the pilot of 3; only the pilot pairs are indexable until it is read")
     offer_map = (DIST / "sitemap-offer.xml").read_text(encoding="utf-8") if (DIST / "sitemap-offer.xml").exists() else ""
     other_maps = "".join(x.read_text(encoding="utf-8") for x in DIST.glob("sitemap-*.xml") if x.name != "sitemap-offer.xml")
     for name in names:

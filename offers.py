@@ -1,7 +1,8 @@
 """Seller offer pages, test of 20 (queue block 28, task 6A; design/pages/new-types.md, Seller offer, with the round 3 fixes;
 site map rules section 1; ODOBRENO PRAVILA - Karlo - 9. 11. 2026 - 6A test). One online clinic's offer of one substance at
-/sellers/<seller>/<substance>/, built only with PC_OFFERS set (build.py, OFFERS_ON). Every fact comes from the data; the
-title, description, H1 and the template sentences below are proposals that wait for ODOBRENO SEO.
+/sellers/<seller>/<substance>/, built for the pilot of 3 (build.py, OFFER_PILOT) and, with PC_OFFERS=preview, for the
+rest of the test. Every fact comes from the data; the title, description, H1 and the template sentences below are
+approved (ODOBRENO SEO - Karlo - 9. 11. 2026 - PR #161).
 
 The page, top to bottom: the first screen (H1, author line, the kind chip, one paragraph; the Background check card on the
 right), the "<Substance> plans" band (the clinic table's rows without the Clinic column), the plan terms and the price
@@ -151,7 +152,7 @@ def next_and_sources(b, seller, sub, plans):
         if url and url not in seen:
             seen.add(url)
             srcs.append(f'<li>{escape(n)}, {escape(b.clean(p["plan_name"]))}, price page, {b.nice_date(p["last_seen"])}: '
-                        f'<a href="{escape(url)}" rel="nofollow">{escape(url)}</a></li>')
+                        f'{escape(url)}</li>')  # as text: a seller page never links to a seller's site (pages/seller.md)
     src = (f'<section class="pep-sources" aria-labelledby="sources-h"><h2 id="sources-h" class="h-sources">Sources</h2>'
            f'<ol class="small sources">{"".join(srcs)}</ol></section>') if srcs else ""
     return (f'<section class="section pep-foot"><div class="wrap"><div class="goal-two"><div><h2 class="h-sources">What to do next</h2>'

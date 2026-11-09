@@ -120,5 +120,24 @@
       "search": null
     }
   ],
-  "measured": "9 Nov 2026 (Manufactura call 73232536): the other 17 pairs have no figure (too small to measure); none was guessed."
+  "measured": "9 Nov 2026 (Manufactura call 73232536): the other 17 pairs have no figure (too small to measure); none was guessed.",
+  "pilot": {
+    "approved": "ODOBRENO PRAVILA - Karlo - 9. 11. 2026 - 6A pilot 3; template ODOBRENO SEO - Karlo - 9. 11. 2026 - PR #161",
+    "pairs": [
+      [
+        "peter-md",
+        "testosterone"
+      ],
+      [
+        "male-excel-excel-medical",
+        "testosterone"
+      ],
+      [
+        "enhance-md",
+        "tirzepatide"
+      ]
+    ],
+    "read": "12 weeks after the pages go live: passes if all 3 are in Google and at least 1 has clicks (queue block 28c).",
+    "rule": "Only these pairs are built indexable, without PC_OFFERS, and only while they pass the rule above. The other 17 stay behind PC_OFFERS=preview, noindex. At most 3 indexable offer pages until the pilot is read."
+  }
 }

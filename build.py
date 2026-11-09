@@ -1114,8 +1114,8 @@ CLINIC_PROFILES = {k: r for k, r in PROFILES.items() if k not in SHOPS}
 
 # Seller offer pages, test of 20 (queue block 28, task 6A; site map rules section 1 and decision 3; design/pages/new-types.md,
 # Seller offer; ODOBRENO PRAVILA - Karlo - 9. 11. 2026 - 6A test). The pairs are in data/offer_test.json. Off unless
-# PC_OFFERS is set: "1" builds the pairs that pass the rule, indexable, in their own sitemap file (sitemap-offer.xml);
-# "preview" builds every listed pair that shows at least one of the three things, with noindex, for the owner to look at.
+# PC_OFFERS is set, except the pilot below, built indexable in its own sitemap file (sitemap-offer.xml);
+# PC_OFFERS="preview" builds every listed pair that shows at least one of the three things, with noindex, for the owner to look at.
 OFFERS_ON = os.environ.get("PC_OFFERS") or ""
 OFFER_TEST = json.loads((ROOT / "data" / "offer_test.json").read_text(encoding="utf-8")) if (ROOT / "data" / "offer_test.json").exists() else {}
 HIST_MIN_POINTS, HIST_MIN_DAYS = 3, 60  # price history: at least 3 checks over 60 days (nav-parts.md, Price history)
@@ -1173,7 +1173,10 @@ def offer_passes(pair):
 
 
 OFFER_PAIRS = [x for x in OFFER_TEST.get("pairs") or [] if x["seller"] in CLINIC_PROFILES and offer_plans(x["seller"], x["substance"])]
-OFFER_INDEXED = {(x["seller"], x["substance"]) for x in OFFER_PAIRS if OFFERS_ON == "1" and offer_passes(x)}
+# The pilot of 3 (queue block 28c; ODOBRENO PRAVILA - Karlo - 9. 11. 2026 - 6A pilot 3, template ODOBRENO SEO - Karlo -
+# 9. 11. 2026 - PR #161): only the pairs in offer_test.json "pilot" are indexable, built without PC_OFFERS, while they pass.
+OFFER_PILOT = {tuple(x) for x in (OFFER_TEST.get("pilot") or {}).get("pairs") or []}
+OFFER_INDEXED = {(x["seller"], x["substance"]) for x in OFFER_PAIRS if (x["seller"], x["substance"]) in OFFER_PILOT and offer_passes(x)}
 OFFER_BUILT = OFFER_INDEXED | {(x["seller"], x["substance"]) for x in OFFER_PAIRS
                                if OFFERS_ON == "preview" and sum(offer_things(x["seller"], x["substance"]).values()) >= 1}
 
