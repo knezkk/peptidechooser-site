@@ -9,7 +9,7 @@ import os
 import re
 import subprocess
 import sys
-from datetime import date
+from datetime import date, datetime
 from html import escape, unescape
 from html.parser import HTMLParser
 from pathlib import Path
@@ -1071,7 +1071,9 @@ def check_parts(P):
     def pages_in(section):
         # a redirect page (an old address, data/redirects.json) is not one of the section's pages
         root = DIST / section
-        return len([d for d in root.iterdir() if (d / "index.html").exists()
+        # nor is a waiting substance's page (queue block 27): built, but counted only once it may be listed
+        skip = waiting_pages() if section == "peptides" else set()
+        return len([d for d in root.iterdir() if (d / "index.html").exists() and d.name not in skip
                     and 'http-equiv="refresh"' not in (d / "index.html").read_text(encoding="utf-8")]) if root.exists() else 0
     sellers, peps = pages_in("sellers"), pages_in("peptides")
     lp = DIST / "fda-warning-letters" / "index.html"
@@ -1592,8 +1594,15 @@ def check_arch(P):
     for old, new in moves.items():
         if f"/sellers/{old}/ /sellers/{new}/ 301" not in red:
             errs.append(f"_redirects: no 301 from /sellers/{old}/ to /sellers/{new}/")
-        if (DIST / "sellers" / old).exists():
-            errs.append(f"sellers/{old}/: the old address of a moved seller is still built")
+        # the old address holds only the fallback page: noindex, a meta refresh and the canonical of the new address (queue
+        # block 29, 9 Nov 2026: tools/tier1_guard.py reads the move from it)
+        f = DIST / "sellers" / old / "index.html"
+        html = f.read_text(encoding="utf-8") if f.exists() else ""
+        if not re.search(rf'http-equiv="refresh" content="0; url=/sellers/{re.escape(new)}/"', html) or 'content="noindex"' not in html \
+                or f'rel="canonical" href="{SITE}/sellers/{new}/"' not in html:
+            errs.append(f"sellers/{old}/: no fallback page that moves to /sellers/{new}/ (a page, or nothing, at the old address)")
+        if f.exists() and any(p.name != "index.html" for p in (DIST / "sellers" / old).rglob("*")):
+            errs.append(f"sellers/{old}/: the old address of a moved seller still has pages under it")
         if f"/sellers/{old}/<" in sm:
             errs.append(f"sitemap: the old address /sellers/{old}/ is listed")
         for name, html in tables:
@@ -1623,6 +1632,49 @@ def check_arch(P):
     return errs
 
 
+def check_arch_switch(P):
+    """Owner task 24 (9 Nov 2026): the lab mark, the price history and the data's "Not a peptide" chip show only with
+    PC_ARCH_DATA=1. Off: none of them. On: a lab mark only on a shop row, from a lab report in the data; a price history
+    only with 3 checks over 60 days; /fda-approved/, once built, marks every substance the data calls no peptide."""
+    errs, on = [], os.environ.get("PC_ARCH_DATA") == "1"
+    d = json.loads((ROOT / "data" / "site.json").read_text(encoding="utf-8"))
+    text = lambda h: " ".join(unescape(re.sub(r"<[^>]+>", " ", h)).split())
+    month = lambda iso: date.fromisoformat(str(iso)[:10]).strftime("%b %Y")
+    marks = {" · ".join(x for x in ("Lab report", c.get("lab_name") or "", month(c["coa_date"])) if x)
+             for c in d.get("coa_reports") or [] if c.get("coa_date")}
+    for name in P:
+        html = (DIST / name).read_text(encoding="utf-8")
+        labs = re.findall(r'<span class="chip chip-lab"[^>]*>([^<]*)</span>', html)
+        hist = re.search(r'id="history">(.*?)</details>', html, re.S)
+        if not on and (labs or hist):
+            errs.append(f"{name}: a lab mark or a price history without PC_ARCH_DATA=1")
+            continue
+        for x in labs:
+            if unescape(x) not in marks:
+                errs.append(f"{name}: lab mark '{unescape(x)}' is not a lab report in the data")
+        for tr in re.findall(r'<table class="[^"]*tbl-clinics[^"]*">.*?</table>', html, re.S):
+            if "chip-lab" in tr:
+                errs.append(f"{name}: a lab mark on a clinic row")
+        if hist:
+            days = [_parse_day(x) for x in re.findall(r"<tr><td>([^<]+)</td><td", hist.group(1))]
+            if len(days) < 3 or (max(days) - min(days)).days < 60:
+                errs.append(f"{name}: a price history with {len(days)} checks over {(max(days) - min(days)).days if days else 0} days")
+    fa = DIST / "fda-approved" / "index.html"
+    if on and fa.exists():
+        html = fa.read_text(encoding="utf-8")
+        for tr in re.findall(r"<tr\b.*?</tr>", html, re.S):
+            slug = re.search(r'href="/peptides/([^/"]+)/"', tr)
+            nots = {r["substance_slug"] for r in d.get("legal_db") or [] if r.get("is_peptide") is False}
+            if slug and slug.group(1) in nots and "Not a peptide" not in text(tr):
+                errs.append(f"fda-approved/index.html: {slug.group(1)} is no peptide in the data but has no 'Not a peptide' chip")
+    return errs
+
+
+def _parse_day(s):
+    """"8 Nov 2026" as a date."""
+    return datetime.strptime(" ".join(s.split()), "%d %b %Y").date()
+
+
 def check_kept_sellers(P):
     """Owner task 25 (9 Nov 2026), site map rule 5.1: no seller page in the last live sitemap (LIVE_SITEMAP, the deploy's
     copy) disappears without a redirect in data/redirects.json (or a 4C move in site.seller_redirects); a kept page of a
@@ -1641,6 +1693,75 @@ def check_kept_sellers(P):
         name = f"sellers/{slug}/index.html"
         if name in P and "No longer in our data" in (DIST / name).read_text(encoding="utf-8") and 'href="/out/' in (DIST / name).read_text(encoding="utf-8"):
             errs.append(f"{name}: a seller that left the data still has a paid link")
+    return errs
+
+
+def waiting_pages():
+    """The substances of the legal rows marked `wait` whose page is built with noindex (not listed yet; queue block 27)."""
+    src = Path(os.environ["SITE_JSON"]) if os.environ.get("SITE_JSON") else ROOT / "data" / "site.json"
+    rows = json.loads(src.read_text(encoding="utf-8"))["legal"]["rows"]
+    out = set()
+    for x in (r["substances"][0] for r in rows if r.get("wait") and r.get("substances")):
+        f = DIST / "peptides" / x / "index.html"
+        if f.exists() and re.search(r'<meta name="robots" content="[^"]*noindex', f.read_text(encoding="utf-8")):
+            out.add(x)
+    return out
+
+
+OFFICIAL_SOURCE = re.compile(r"https://(?:[a-z.]+\.)?(?:fda\.gov|hhs\.gov|federalregister\.gov|nih\.gov|clinicaltrials\.gov)/")
+
+
+def check_wave_b(P):
+    """Owner's assistant, queue block 27 (9 Nov 2026). Waiting substances: a legal row marked `wait` (cagrilintide, IGF-1
+    LR3; peptide-data spec 0027) carries its own official source and check date; its page is built, and while it is
+    noindex (fewer than three of the six signals) no other page links to it, the /peptides/ A to Z and search leave it out,
+    and the A to Z count matches its rows. By goal: every goal page in the data is in the header's By goal menu, and the
+    menu and Home's goal cards link only goal pages this build has."""
+    errs = []
+    src = Path(os.environ["SITE_JSON"]) if os.environ.get("SITE_JSON") else ROOT / "data" / "site.json"
+    d = json.loads(src.read_text(encoding="utf-8"))
+    az = P.get("peptides/index.html")
+    az_html = (DIST / "peptides" / "index.html").read_text(encoding="utf-8") if az else ""
+    search = (DIST / "search-index.json").read_text(encoding="utf-8") if (DIST / "search-index.json").exists() else ""
+    for r in d["legal"]["rows"]:
+        if not r.get("wait"):
+            continue
+        x, s = r["substances"][0], r.get("source") or {}
+        if len(r["substances"]) != 1 or r["status"] == "FDA approved":
+            errs.append(f"legal row {r['peptide']}: a waiting row is one substance and never FDA approved")
+        if not (s.get("text") and OFFICIAL_SOURCE.match(s.get("url") or "")):
+            errs.append(f"legal row {r['peptide']}: a waiting row needs its own official source (text and an fda.gov, hhs.gov or nih.gov url)")
+        if not re.fullmatch(r"\d{4}-\d\d-\d\d", r.get("checked") or ""):
+            errs.append(f"legal row {r['peptide']}: a waiting row needs its check date")
+        name = f"peptides/{x}/index.html"
+        if name not in P:
+            errs.append(f"{name}: the waiting substance's page is not built")
+            continue
+        if "noindex" not in P[name].meta.get("robots", ""):
+            if az and f'href="/peptides/{x}/"' not in az_html:
+                errs.append(f"{name}: indexable but not on the /peptides/ A to Z")
+            continue
+        for other, p in P.items():
+            if other != name and any((h.get("href") or "").split("#")[0] == f"/peptides/{x}/" for h in p.links):
+                errs.append(f"{other}: links the waiting page /peptides/{x}/ (it is listed nowhere until it has its signals)")
+        if f'"/peptides/{x}/"' in search:
+            errs.append(f"search-index.json: holds the waiting page /peptides/{x}/")
+    if az:
+        rows = az_html.count('<tr data-group="')
+        m = re.search(r"we track, (\d+) in all", az_html)
+        if m and int(m.group(1)) != rows - az_html.count("(cream or serum)</a>"):
+            errs.append(f"peptides/index.html: the A to Z says {m.group(1)} in all but lists {rows} rows")
+    # By goal: the menu on Home holds every goal page in the data and links only pages that exist
+    home = (DIST / "index.html").read_text(encoding="utf-8") if (DIST / "index.html").exists() else ""
+    menu = re.search(r'id="nav-p-goal">(.*?)(?:aria-controls="nav-p-|$)', home, re.S)
+    menu_goals = set(re.findall(r'href="/([a-z0-9-]+)/" data-ev="goal_pick"', menu.group(1))) if menu else set()
+    for g in d["goals"]:
+        if g.get("page") and (DIST / g["slug"] / "index.html").exists() and g["slug"] not in menu_goals:
+            errs.append(f"index.html: the goal page /{g['slug']}/ is missing from the By goal menu (NAV_GOAL_GROUPS)")
+    cards = set(re.findall(r'<a class="goal-card" href="/([a-z0-9-]+)/"', home))
+    for slug in sorted(menu_goals | cards):
+        if not (DIST / slug / "index.html").exists():
+            errs.append(f"index.html: By goal or a goal card links /{slug}/, which this build does not have")
     return errs
 
 
@@ -1681,7 +1802,7 @@ def check_addresses(P):
     return errs
 
 
-CHECKS = {"words": check_words, "seo": check_seo, "schema": check_schema, "parts": check_parts, "data": check_data, "book": check_book, "events": check_events, "logic": check_logic, "rules33": check_rules33, "addresses": check_addresses, "arch": check_arch, "kept-sellers": check_kept_sellers}
+CHECKS = {"words": check_words, "seo": check_seo, "schema": check_schema, "parts": check_parts, "data": check_data, "book": check_book, "events": check_events, "logic": check_logic, "rules33": check_rules33, "addresses": check_addresses, "arch": check_arch, "arch-switch": check_arch_switch, "kept-sellers": check_kept_sellers, "wave-b": check_wave_b}
 
 # Plan names against their form (owner task w2, 3 Nov 2026): a clinic's own plan name can name another form than the
 # plan's `dosage_form` ("Ozempic Pill" for a pen). The site cannot change data, so this only warns, never fails, and the

@@ -28,6 +28,21 @@ AUTHOR = "Peptide Chooser editorial team"
 
 # SITE_JSON points at another data file (a local preview with database rows); the deploy always reads data/site.json.
 DATA = json.loads(Path(os.environ.get("SITE_JSON") or ROOT / "data" / "site.json").read_text(encoding="utf-8"))
+# Draft pages (owner queue block 14, wave B, 8 Nov 2026): goals, legal rows and their sources in data/drafts.json join the
+# data only when PC_DRAFTS=1, so a merge publishes nothing; going live moves an entry into site.json after ODOBRENO SEO.
+if os.environ.get("PC_DRAFTS") and (ROOT / "data" / "drafts.json").exists():
+    _drafts = json.loads((ROOT / "data" / "drafts.json").read_text(encoding="utf-8"))
+    DATA["goals"] += _drafts.get("goals", [])
+    for _g in DATA["goals"]:  # proposed changes to a live goal (block 14: /longevity/ without "energy"), drafts only
+        _g.update(_drafts.get("goal_changes", {}).get(_g["slug"], {}))
+        # rows added to a live goal (block 19: the third signal for cagrilintide, orforglipron and IGF-1 LR3), with their sources
+        _add = _drafts.get("goal_rows", {}).get(_g["slug"], {})
+        _g["peptides"] = _g["peptides"] + _add.get("peptides", [])
+        if _add.get("sources"):
+            _g["sources"] = _g.get("sources", []) + _add["sources"]
+    DATA["legal"]["rows"] += _drafts.get("legal_rows", [])
+    DATA["legal"]["sources"] += _drafts.get("legal_sources", [])
+    DATA["subpages"] = _drafts.get("subpages", [])
 # The HHS compounding policy of 30 Oct 2026 is worded once, in legal.hhs_policy (owner queue block 4, 7 Nov 2026): every
 # {hhs_<key>} in the data is that entry's text, so no page types its own version.
 HHS = DATA["legal"].get("hhs_policy") or {}
@@ -382,8 +397,12 @@ def goals_strip(heading, skip=None):
 # Header categories (pages.md, Every page, Header; owner task 3 Nov 2026, the "Home v2" sketch): five buttons, each opening
 # a panel of links to pages (never a section of Home). A link shows only when its page is in this build, a category only
 # when it has a link. By goal groups the goal pages as below, each with its option count and the cheapest price the data has.
-NAV_GOAL_GROUPS = [("Hair and skin", ("hair", "skin")), ("Weight", ("weight-loss",)), ("Body", ("muscle", "recovery")),
-                   ("Drive and aging", ("libido", "longevity"))]
+# Wave B (design/pages/goal.md, By goal menu; ODOBRENO DIZAJN - Karlo - 8. 11. 2026 - PR #142; queue block 27, 9 Nov 2026):
+# six groups (two columns until w1 widens the card; see nav_cats). A goal shows only when its page is in this build and has `page` in the data, so a
+# draft goal (data/drafts.json, PC_DRAFTS=1 only) stays out of the deploy and joins by itself when it moves to site.json.
+NAV_GOAL_GROUPS = [("Hair and skin", ("hair", "skin")), ("Weight", ("weight-loss",)),
+                   ("Body", ("muscle", "recovery", "growth-hormone")), ("Hormones", ("testosterone", "menopause")),
+                   ("Drive and aging", ("libido", "longevity")), ("Sleep and energy", ("sleep", "energy"))]
 # "Body" added (owner answer 2 a to w2, 3 Nov 2026): /learn/ has a sixth topic for the muscle, skin, recovery, libido and aging guides
 LEARN_TOPICS = [("hair", "Hair"), ("glp1", "GLP-1"), ("legal", "Legal"), ("buying", "Buying"), ("data", "Data"), ("body", "Body")]
 
@@ -432,7 +451,9 @@ def nav_cats(path):
                       for head, slugs in groups if any(x in goals for x in slugs))
         return f'<div class="nav-col">{out}</div>' if out else ""
 
-    # By goal in two columns, as in the sketch: Hair and skin with Weight, then Body with Drive and aging
+    # By goal in two columns, as in the sketch: Hair and skin with Weight, then the other groups. The book's three columns of
+    # two (goal.md, By goal menu) wait for w1's card width (.handoff/to-w1.md, 9 Nov 2026): three 270px columns and
+    # "Start here" leave the 1180px container (tools/check_layout.js).
     goal_cols = [col(NAV_GOAL_GROUPS[:2]), col(NAV_GOAL_GROUPS[2:])]
     letters_on = max((r["letter_date"] for r in LETTERS_ALL if r.get("letter_date")), default="")
     plans, sellers = compare_items() if (PLANS or PROFILES) else ([], [])
@@ -601,6 +622,11 @@ def item_list_schema(name, items):
 
 
 ALL_GOALS = DATA["goals"]
+# Goal subpages /<goal>/<topic>/ (design/pages/group.md, Goal subpage; drafts only, owner queue block 15): a goal-like entry
+# with its own options, `parent`, `path` and `panel` (the parent goal's colour panel). Not in ALL_GOALS: a subpage is never
+# on Home, in the menu, in the goals strip or in the legal tables; it is reached from its goal page.
+SUBPAGES = DATA.get("subpages") or []
+SUB_ORAL_FORMS = {"tablet", "odt", "capsule", "troche", "drops"}  # plan dosage forms taken by mouth
 # The hair goal's cosmetic option is a scalp product (data agent's task 33): its window takes only listings named for hair or scalp.
 SCALP_OPTIONS = {id(p) for g in ALL_GOALS if g["slug"] == "hair" for p in g.get("peptides") or [] if p["status"].startswith("Cosmetic")}
 LEGAL = DATA["legal"]
@@ -730,6 +756,8 @@ def clinic_plans(g):
         return []
     rows = [r for r in PLANS if r.get("price_monthly") is not None
             and on_goal(g, r, cp["substances"])]
+    if cp.get("oral"):  # a subpage on pills: only plans taken by mouth (the approved pill, or a compounded tablet or drops)
+        rows = [r for r in rows if r.get("product_kind") == "oral_branded" or (r.get("dosage_form") or "") in SUB_ORAL_FORMS]
     return sorted(rows, key=lambda r: (float(r["price_monthly"]), r["seller_name"], r["plan_name"]))
 
 
@@ -816,7 +844,7 @@ def row_plan(g, p):
         found = [r for r in rows if r.get("product_kind") == "compounded" and on_sub(r, subs)]
     elif p.get("substance") and p["status"].startswith("FDA approved"):
         found = [r for r in rows if row_fits(p, r) and r.get("product_kind") in BRANDED
-                 and not other_use(g, r) and form_fits(p, r)]
+                 and (p.get("other_use_ok") or not other_use(g, r)) and form_fits(p, r)]
     else:
         return None
     return found[0] if found else None
@@ -825,7 +853,7 @@ def row_plan(g, p):
 # Plans shown on a row or a price pad that are not a goal's GOAL_PLANS plan get their own source after the plan sources.
 plan_key = lambda r: f'{r["seller_slug"]}-{r["plan_slug"]}'
 EXTRA_PLANS = {}
-for _g in ALL_GOALS:
+for _g in ALL_GOALS + SUBPAGES:  # SUBPAGES is empty unless drafts are built
     _rows = goal_plans(_g)
     for _r in [row_plan(_g, _p) for _p in _g["peptides"]] + _rows[:1]:
         if _r and _r is not GOAL_PLANS.get(_g["slug"]):
@@ -1451,15 +1479,20 @@ def option_plans(g, p):
     priced = [r for r in PLANS if r.get("price_monthly") is not None]
     if p.get("plan_kind") == "compounded":
         subs = compounded_subs(g, p)
-        return [r for r in priced if on_goal(g, r, subs) and r.get("product_kind") == "compounded"]
+        # a compounded row that names its form takes only plans that state that form (block 15: tablets, not every copy)
+        return [r for r in priced if on_goal(g, r, subs) and r.get("product_kind") == "compounded"
+                and (not p.get("plan_form") or form_fits(p, r, strict=True))]
     if not (p.get("substance") and approved_row(p)):
         return []
-    return [r for r in priced if r.get("product_kind") in BRAND_KINDS and row_fits(p, r) and on_goal(g, r, plan_subs(r)) and not other_use(g, r)
+    # other_use_ok: a row about the other use itself (block 15: "Ozempic or Rybelsus tablets", approved for diabetes)
+    return [r for r in priced if r.get("product_kind") in BRAND_KINDS and row_fits(p, r) and on_goal(g, r, plan_subs(r))
+            and (p.get("other_use_ok") or not other_use(g, r))
             and plan_fits(p, r) and form_fits(p, r, strict=False)]
 
 
 def clinic_key(g, p):
-    return f'clinics-{g["slug"]}-{"compounded" if p.get("plan_kind") == "compounded" else p["substance"]}'
+    # `key`: a row's own window name when two rows share a substance (block 15: the Wegovy pill and Ozempic rows)
+    return f'clinics-{g["slug"]}-{p.get("key") or ("compounded" if p.get("plan_kind") == "compounded" else p["substance"])}'
 
 
 def clinic_open(g, p, rp=None, low=None):
@@ -1470,12 +1503,14 @@ def clinic_open(g, p, rp=None, low=None):
     rows = option_plans(g, p)
     if not rows:
         return ""
-    plan = low or rp or min(rows, key=lambda r: (float(r["price_monthly"]), r["seller_name"]))
+    # the row's plan only when its window holds it (9 Nov 2026: Peter MD's TRT plan of unknown kind on /libido/ is the row's
+    # cheapest, but the window lists only brand and generic plans, so the button names the window's cheapest)
+    plan = low or (rp if any(r is rp for r in rows) else None) or min(rows, key=lambda r: (float(r["price_monthly"]), r["seller_name"]))
     otc = needs_rx(p) is False
     noun = "seller" if otc else "clinic"
     n = len({r["seller_slug"] for r in rows})
     key = clinic_key(g, p)
-    href = f'/{g["slug"]}/#clinics' if (g.get("clinic_plans") or g.get("clinic_table")) and g.get("page") else f'/sellers/{plan["seller_slug"]}/'
+    href = f'{g.get("path") or "/" + g["slug"] + "/"}#clinics' if (g.get("clinic_plans") or g.get("clinic_table")) and g.get("page") else f'/sellers/{plan["seller_slug"]}/'
     small = '<span class="paid">Pharmacy, no prescription</span>' if otc else ""
     return (f'<span class="pick-act"><a class="btn btn-wait btn-sm btn-cta sellers-open" href="{href}" data-dlg="{key}" data-src="/windows/{key}.json"{ev("prices_window_open", substance="compounded" if p.get("plan_kind") == "compounded" else p.get("substance"), window_kind="clinic", rows=len(rows))}>'
             f'Buy from {usd(plan["price_monthly"])}/mo · {plural(n, noun)}</a>{small}</span>')
@@ -1800,6 +1835,8 @@ def legal_rows(only=None):
     for r in LEGAL["rows"]:
         if not keep(r.get("substances", [])) or (only is None and r.get("goal_only")):
             continue  # a goal_only row and its source live on that goal's page, not in Home's table
+        if set(r.get("substances") or []) <= set(PEP_WAITING) and r.get("wait"):
+            continue  # a waiting substance is listed nowhere yet
         if only is not None and r.get("checked"):
             seen.append(r["checked"])
         found = [db_status(slug) for slug in r.get("substances", [])] if LEGAL_DB else []
@@ -1855,6 +1892,39 @@ for _r in sorted(DATA.get("letter_substances") or [], key=lambda r: (r["letter_d
     SUBS_OF_LETTER.setdefault(_r["letter_url"], []).append(_r["substance_slug"])
 LETTER_CO = {r["letter_url"]: r["company_name"] for r in LETTERS_ALL}
 LETTERS_URL = "/fda-warning-letters/" if LETTERS_ALL else "/#letters"
+
+
+# Waiting substances (owner's assistant, queue block 27, 9 Nov 2026; peptide-data spec 0027): a hand row marked `wait`
+# (cagrilintide, IGF-1 LR3) has no official status in the database, so the site carries its own row with its own
+# `source`. Until its page has three of the six signals (pages.md, Peptide, Thin pages) the page is built with noindex
+# but listed nowhere: not in the legal tables, the A to Z, the counts, search or a comparison, and its source takes no
+# number. Once it has them it joins PEPTIDE_SLUGS and its source the numbered list, by itself. Counted here, before the
+# sources are numbered; a waiting row is never FDA approved, so the clinic plan and approved brand signals do not apply.
+# pep_signals() must agree (checked where PEP_THIN is set).
+def wait_signals(slug):
+    words = {re.sub(r"\s*\(.*\)", "", hand_legal(slug)["peptide"]).strip().lower(), slug.replace("-", " ")}
+    return {"goal page": any(slug in subs_of(p) for g in ALL_GOALS if g.get("page") for p in g["peptides"]),
+            "shop table": bool(seller_rows(slug, "research")), "FDA letter": bool(LETTER_SUBS_ON and LETTER_SUBS.get(slug)),
+            "guide": any(w in g["title"].lower() for g in guides.GUIDES for w in words)}
+
+
+PEP_WAITING = []
+for _r in LEGAL["rows"]:
+    if not _r.get("wait"):
+        continue
+    assert _r["status"] != "FDA approved" and len(_r["substances"]) == 1 and not _r.get("src"), _r["peptide"]
+    _x = _r["substances"][0]
+    if db_status(_x):
+        continue  # the database has a status now: its row wins, the hand row is not used
+    if sum(wait_signals(_x).values()) < 3:
+        PEP_WAITING.append(_x)
+        continue
+    _r["src"] = len(LEGAL["sources"]) + 1
+    LEGAL["sources"].append({"n": _r["src"], **_r["source"]})
+    _head, _sep, _rest = SOURCES_HOME.partition('<li id="src-price-')
+    SOURCES_HOME = (_head + f'<li id="src-{_r["src"]}">{_r["source"]["text"]}: <a href="{_r["source"]["url"]}" rel="nofollow">'
+                    f'{_r["source"]["url"]}</a></li>' + _sep + _rest)
+PEPTIDE_SLUGS[:] = [x for x in PEPTIDE_SLUGS if x not in PEP_WAITING]
 renumber_sources()  # after LETTERS_URL: the option rows' plan lines carry the letter chip
 
 # The letters page (pages.md, Letters, owner 1 Nov 2026): every letter in `letters_all` (site.fda_letters_all through
@@ -2375,13 +2445,24 @@ def page_footnotes(body):
     return head + sep + tail[:ol.start()] + ol.group(1) + lis + ol.group(3) + tail[ol.end():]
 
 
+def narrower(g):
+    """"Narrower questions" under a goal's options (group.md, Goal subpage): its subpages as text links between hairlines,
+    only when one is in this build."""
+    subs = [x for x in SUBPAGES if x.get("parent") == g["slug"]]
+    if not subs:
+        return ""
+    items = "".join(f'<li><a href="{x["path"]}">{escape(x["link"])}</a></li>' for x in subs)
+    return f'<div class="goal-narrow"><h3 class="h-sources">Narrower questions</h3><ul class="next-list">{items}</ul></div>'
+
+
 def category_page(g):
     return page_footnotes(category_body(g))
 
 
 # Questions on a goal page (SEO round c, group 2, queue block 9): the searches "peptides for skin", "best peptides for
 # muscle growth" and the like, answered from the goal's approved texts and its option rows; no new claim.
-GOAL_FAQ = {"skin", "muscle", "weight-loss", "hair"}
+GOAL_FAQ = {"skin", "muscle", "weight-loss", "hair", "growth-hormone", "sleep", "energy", "weight-loss-pills",
+            "weight-loss-new-drugs", "testosterone"}  # all after "hair": drafts
 
 
 def goal_price_word(g, p):
@@ -2846,7 +2927,7 @@ def category_body(g):
     <h1>{g["h1"]}</h1>
     {author_line(GOAL_CHECKED)}{SOURCE_LINE}
     <p class="intro">{lead}</p>
-    </div><div class="goal-panel goal-c-{g["slug"]}">{parts.goal_photo(g["slug"], 120)}</div></div>
+    </div><div class="goal-panel goal-c-{g.get("panel", g["slug"])}">{parts.goal_photo(g.get("panel", g["slug"]), 120)}</div></div>
     {cards}
   </div>
 </section>
@@ -2854,7 +2935,7 @@ def category_body(g):
   <div class="wrap">
     <div class="chooser flow flow-solo">
       <div class="flow-hd fh-compare"><h2>Compare the options</h2><a class="step-legal" href="{"#legal" if legal else "/#legal"}"><strong>Is it legal today?</strong></a></div>
-      <div class="flow-compare"><div class="step-panel"><p class="goal-for">{g["for"]}</p><ul class="opts">{opt_html}</ul>{instead}</div></div>
+      <div class="flow-compare"><div class="step-panel"><p class="goal-for">{g["for"]}</p><ul class="opts">{opt_html}</ul>{instead}{narrower(g)}</div></div>
     </div>
   </div>
 </section>{goal_clinic_section(g, plans)}{tools_html}{legal_html}{goal_faq(g)}
@@ -3852,6 +3933,11 @@ for _g in ALL_GOALS:
         PAGES.append((f"/{_g['slug']}/", f"{_g['slug']}/index.html", _g["title"], _g["description"],
                       category_page(_g), faq_schema(goal_faq_pairs(_g)), [(f"/{_g['slug']}/", _g["name"])]))
 
+for _g in SUBPAGES:  # drafts only (PC_DRAFTS=1)
+    _p = next(x for x in ALL_GOALS if x["slug"] == _g["parent"])
+    PAGES.append((_g["path"], _g["path"].strip("/") + "/index.html", _g["title"], _g["description"], category_page(_g),
+                  faq_schema(goal_faq_pairs(_g)), [(f"/{_p['slug']}/", _p["name"]), (_g["path"], _g["name"])]))
+
 if PROFILES:
     PAGES.append(("/sellers/", "sellers/index.html", "Peptide sellers and their checks | Peptide Chooser",
                   (f"The {len(SHOPS)} peptide shops and {len(CLINIC_PROFILES)} online clinics in our database, each on its own page "
@@ -4123,7 +4209,7 @@ def pep_status(slug):
     r = hand_legal(slug)
     if not r:
         return None
-    src = next(x for x in LEGAL["sources"] if x["n"] == r["src"])
+    src = r.get("source") or next(x for x in LEGAL["sources"] if x["n"] == r["src"])  # a waiting row's own source
     name = re.sub(r"\s*\(.*\)", "", r["peptide"]) if r.get("substances") == [slug] else substance_name(slug)
     return {"chip": r["chip"], "label": r["status"], "sentence": r["note"], "name": name, "url": src["url"],
             "seen": r.get("checked") or LEGAL["checked"], "hand": True}
@@ -4462,6 +4548,105 @@ def shop_checks(r):
     return f'<span class="num">{sc}</span> of {len(SCORE_CHECKS)} checks' if sc is not None else "not checked yet"
 
 
+# Owner task 24 (9 Nov 2026; peptide-data spec 0025): the lab mark and the price history (design/pages/nav-parts.md,
+# peptide.md "Substance page parts for the new types") are drawn only with PC_ARCH_DATA=1; without it nothing visible
+# changes. Each reads its view from site.json and is left out while the view is empty.
+ARCH = os.environ.get("PC_ARCH_DATA") == "1"
+COA_REPORTS = DATA.get("coa_reports") or []
+PRICE_HISTORY = DATA.get("price_history") or []
+PLAN_PRICE_HISTORY = DATA.get("plan_price_history") or []
+# a substance the data marks as no peptide (substance_status.is_peptide; finasteride, minoxidil, orforglipron, NAD+):
+# the "Not a peptide" chip of the group and /fda-approved/ tables (group.md) reads this set, never a typed list
+NOT_PEPTIDES = {r["substance_slug"] for r in DATA.get("legal_db") or [] if r.get("is_peptide") is False}
+HIST_MIN_POINTS, HIST_MIN_DAYS = 3, 60
+
+
+def not_peptide_chip(slug):
+    return '<span class="chip chip-neutral">Not a peptide</span>' if ARCH and slug in NOT_PEPTIDES else ""
+
+
+def month_year(iso):
+    return date.fromisoformat(str(iso)[:10]).strftime("%b %Y")
+
+
+def lab_mark(r):
+    """The lab mark (nav-parts.md): "Lab report · <Lab> · <Mon YYYY>", the newest report we hold for this listing; nothing
+    for a listing without one or for a clinic. A lab with an indexed page would link it; none is built yet, so the chip
+    names the report's source in its title (never a link to a shop)."""
+    if not ARCH or r.get("product_id") is None or is_clinic(PROFILES.get(r["seller_slug"]) or SELLERS.get(r["seller_slug"]) or {}):
+        return ""
+    found = [c for c in COA_REPORTS if c.get("product_id") == r["product_id"] and c["seller_slug"] == r["seller_slug"] and c.get("coa_date")]
+    if not found:
+        return ""
+    c = max(found, key=lambda c: c["coa_date"])
+    text = " · ".join(x for x in ("Lab report", c.get("lab_name") or "", month_year(c["coa_date"])) if x)
+    return f' <span class="chip chip-lab" title="Source: {escape(c.get("source_url") or "")}">{escape(text)}</span>'
+
+
+def hist_series(slug):
+    """(points, what): the price history the substance page draws, or ([], ""). An approved medicine: the cheapest plan that
+    is not compounded (brand or generic, pep_low_plan), per month with its care fee; otherwise the size with the lowest price
+    per mg at the shops shown. Only with HIST_MIN_POINTS checks over HIST_MIN_DAYS days."""
+    s = pep_status(slug)
+    if pep_group(s) == "approved":
+        p = pep_low_plan(slug)
+        if not p:
+            return [], ""
+        pts = [(r["observed_on"], round(float(r["price_monthly"]) + float(r.get("membership_fee_monthly") or 0), 2))
+               for r in PLAN_PRICE_HISTORY if r["seller_slug"] == p["seller_slug"] and r["plan_slug"] == p["plan_slug"]]
+        what = f'{seller_base(p["seller_name"])}\'s {clean(p["plan_name"])} per month', "/mo"
+    else:
+        low = pep_low_shop(slug)
+        if not low or low.get("variant_id") is None:
+            return [], ""
+        pts = [(r["observed_on"], float(r["price_per_mg"])) for r in PRICE_HISTORY
+               if r.get("variant_id") == low["variant_id"] and r.get("price_per_mg") is not None]
+        name = seller_base(clean(SELLERS.get(low["seller_slug"], {}).get("seller_name") or low["seller_name"]))
+        what = f"lowest per mg at {name}", "/mg"
+    pts = sorted(pts)
+    if len(pts) < HIST_MIN_POINTS or (date.fromisoformat(pts[-1][0][:10]) - date.fromisoformat(pts[0][0][:10])).days < HIST_MIN_DAYS:
+        return [], ""
+    return pts, what
+
+
+def price_history(slug):
+    """"Price over time" (nav-parts.md): a step line on white, three hairlines with their prices, months along the bottom,
+    the newest point as a dot with its label, and the same points as a table under it. "" without enough points."""
+    if not ARCH:
+        return ""
+    pts, what = hist_series(slug)
+    if not pts:
+        return ""
+    label, unit = what
+    fmt = (lambda v: f"{per_mg(v)}/mg") if unit == "/mg" else (lambda v: f"{usd(v)}/mo")
+    d0, d1 = date.fromisoformat(pts[0][0][:10]), date.fromisoformat(pts[-1][0][:10])
+    lo, hi = min(v for _, v in pts), max(v for _, v in pts)
+    W, H, L, R, T, B = 640, 160, 64, 112, 12, 24
+    x = lambda d: L + (date.fromisoformat(d[:10]) - d0).days / max((d1 - d0).days, 1) * (W - L - R)
+    y = lambda v: T + (1 - ((v - lo) / (hi - lo) if hi > lo else .5)) * (H - T - B)
+    path = f"M{x(pts[0][0]):.1f},{y(pts[0][1]):.1f}"
+    for (d, v), (_, prev) in zip(pts[1:], pts):
+        path += f" H{x(d):.1f} V{y(v):.1f}"
+    lines = "".join(f'<line class="ph-hair" x1="{L}" x2="{W - R}" y1="{y(v):.1f}" y2="{y(v):.1f}"/>'
+                    f'<text class="ph-label" x="{L - 8}" y="{y(v) + 4:.1f}" text-anchor="end">{fmt(v)}</text>'
+                    for v in sorted({lo, round((lo + hi) / 2, 2), hi}))
+    months, m = [], date(d0.year, d0.month, 1)
+    while m <= d1:
+        if m >= d0:
+            months.append(f'<text class="ph-label" x="{x(m.isoformat()):.1f}" y="{H - 4}" text-anchor="middle">{m.strftime("%b")}</text>')
+        m = date(m.year + (m.month == 12), m.month % 12 + 1, 1)
+    last_d, last_v = pts[-1]
+    aria = f"Price over time: {fmt(pts[0][1])} on {nice_date(pts[0][0][:10])}, {fmt(last_v)} on {nice_date(last_d[:10])}."
+    svg = (f'<svg class="price-hist" viewBox="0 0 {W} {H}" width="100%" role="img" aria-label="{escape(aria)}">'
+           f'{lines}{"".join(months)}<path class="ph-step" d="{path}"/>'
+           f'<circle class="ph-dot" cx="{x(last_d):.1f}" cy="{y(last_v):.1f}" r="3"/>'
+           f'<text class="ph-now" x="{x(last_d) + 8:.1f}" y="{y(last_v) + 4:.1f}">{fmt(last_v)}, {nice_date(last_d[:10])}</text></svg>')
+    rows_ = "".join(f'<tr><td>{nice_date(d[:10])}</td><td class="num">{fmt(v)}</td></tr>' for d, v in pts)
+    return (f'<h3>Price over time</h3><p class="small">{escape(label[0].upper() + label[1:])}. Checked {nice_date(pts[0][0][:10])} to {nice_date(last_d[:10])}.</p>'
+            f'{svg}<details><summary>Prices as a table</summary><div class="tbl-wrap"><table class="tbl tbl-compact">'
+            f'<thead><tr><th scope="col">Date</th><th scope="col">Price</th></tr></thead><tbody>{rows_}</tbody></table></div></details>')
+
+
 def pep_shops_section(slug):
     rows = sorted(pep_shops(slug), key=shop_rank)  # the same order as "Where to get it": best-checked first
     if not rows:
@@ -4476,7 +4661,7 @@ def pep_shops_section(slug):
         seen = r.get("price_observed_at") or r.get("last_seen") or ""
         newest = max(newest, seen)
         trs.append(f'<tr><td>{name}</td><td class="num" data-l="Size">{size}</td><td class="num" data-l="Price">{price}</td>'
-                   f'<td class="num" data-l="Per mg">{ppm}</td><td data-l="Checks">{shop_checks(r)}</td></tr>')
+                   f'<td class="num" data-l="Per mg">{ppm}</td><td data-l="Checks">{shop_checks(r)}{lab_mark(r)}</td></tr>')
     return f"""
 <section class="section" id="sold">
   <div class="wrap">
@@ -4827,10 +5012,12 @@ def pep_page(slug):
     clin = bool(pep_clinic_plans(slug))
     sold_id, sold = unwrap(pep_plans_section(slug) if pep_group(s) == "approved" or clin else pep_shops_section(slug))
     sold = sold.replace('class="tbl tbl-cards', 'class="tbl tbl-compact tbl-cards', 1)
+    hist = price_history(slug)
     # clinics and shops are never mixed in one table (every-page.md): the shops get their own section under the clinics
     _, shops = unwrap(pep_shops_section(slug)) if clin else ("", "")
     shops = shops.replace('class="tbl tbl-cards', 'class="tbl tbl-compact tbl-cards', 1).replace("<h2>Where it is sold</h2>", "<h2>Research-use shops</h2>", 1)
     left = ((f'<div class="panel-line pep-block" id="evidence">{evidence}</div>' if evidence else "")
+            + (f'<div class="panel-line pep-block" id="history">{hist}</div>' if hist else "")
             + (f'<div class="panel-line pep-block" id="letters">{letters}</div>' if letters else ""))
     blocks = f'<div class="pep-body"><div class="pep-left">{left}</div><div class="pep-right">{pep_facts(slug, s)}{pep_guides(slug)}</div></div>'
     nxt = pep_next(slug)
@@ -4935,6 +5122,28 @@ draw();})();
 </script>"""
 
 
+def not_peptide(slug):
+    """The database says the substance is not a peptide (site.substance_status.is_peptide; finasteride, minoxidil, orforglipron)."""
+    return any(r.get("is_peptide") is False for r in LEGAL_DB or [] if r["substance_slug"] == slug)
+
+
+def group_table(slugs, caption):
+    """The substances of a group page (design/pages/group.md): the /peptides/ A to Z table cut to the group, a "Not a
+    peptide" chip right after a name the database flags, a thin (noindex) substance as plain text, and no filter row at
+    12 rows or fewer (none of the draft groups has more). Returns (html, rows)."""
+    rows = sorted((x for x in slugs if x in PEPTIDE_SLUGS), key=lambda x: pep_name(x).lower())
+    name = lambda x: (f'<a class="name" href="/peptides/{x}/">{escape(pep_name(x))}</a>' if x not in PEP_THIN
+                      else f'<span class="name">{escape(pep_name(x))}</span>')
+    np_chip = ' <span class="chip chip-neutral">Not a peptide</span>'
+    trs = "".join(
+        f'<tr><td>{name(x)}{np_chip if not_peptide(x) else ""}</td>'
+        f'<td data-l="Status"><span class="chip chip-{pep_status(x)["chip"]}">{pep_status(x)["label"]}</span></td>'
+        f'<td data-l="What it means">{pep_means(x)}</td><td class="num" data-l="Lowest price">{pep_low(x)}</td></tr>' for x in rows)
+    return (f'<div class="tbl-wrap"><table class="tbl tbl-cards tbl-peptides"><caption class="vh">{escape(caption)}</caption>'
+            f'<thead><tr><th scope="col">Substance</th><th scope="col">Status</th><th scope="col">What it means</th>'
+            f'<th scope="col">Lowest price</th></tr></thead><tbody>{trs}</tbody></table></div>'), rows
+
+
 def peptides_index():
     """/peptides/ (owner UX audit B16, 3 Nov 2026): one table in A to Z order with a Status column, a row of letters to jump
     to, and the three statuses as filter chips (all on; shown with JavaScript only). Title and H1 unchanged (rule 8)."""
@@ -4993,7 +5202,9 @@ def pep_signals(slug):
 # Thin pages (pages.md, Peptide; owner task 2 Nov 2026): a page with fewer than three of the six is still built and
 # linked, but carries noindex and leaves the sitemap and llms.txt, as /search/ does.
 PEP_MIN_SIGNALS = 3
-PEP_THIN = [x for x in PEPTIDE_SLUGS if sum(pep_signals(x).values()) < PEP_MIN_SIGNALS]
+PEP_THIN = [x for x in PEPTIDE_SLUGS + PEP_WAITING if sum(pep_signals(x).values()) < PEP_MIN_SIGNALS]
+for _x in [s for r in LEGAL["rows"] if r.get("wait") and not db_status(r["substances"][0]) for s in r["substances"]]:
+    assert sum(wait_signals(_x).values()) == sum(pep_signals(_x).values()), f"wait_signals and pep_signals differ for {_x}"
 
 if PEPTIDE_SLUGS:
     PAGES.append(("/peptides/", "peptides/index.html", "Peptides A to Z: FDA status and prices | Peptide Chooser",
@@ -5004,7 +5215,7 @@ if PEPTIDE_SLUGS:
                   [("/peptides/", "Peptides")]))
     for _x in PEP_THIN:
         NOINDEX.add(f"/peptides/{_x}/")
-    for _x in PEPTIDE_SLUGS:
+    for _x in PEPTIDE_SLUGS + PEP_WAITING:  # a waiting page is built, noindex and linked from nowhere
         PAGES.append((f"/peptides/{_x}/", f"peptides/{_x}/index.html", pep_title(_x), pep_description(_x), pep_page(_x), faq_schema(pep_faq_pairs(_x)),
                       [("/peptides/", "Peptides"), (f"/peptides/{_x}/", pep_short(_x))]))
 
@@ -5776,7 +5987,11 @@ def main():
     # an old path to its new one; GitHub Pages has no server redirects, so each old path gets a page with a meta refresh,
     # the canonical of the new page and noindex. Never a path the build already has. A redirect to a page this data does
     # not build (/sellers/ in the repo data, which holds no sellers) is left out, never pointed at a missing page.
-    for old_path, new_path in REDIRECTS.items():
+    # every seller move (site.seller_redirects, task 4C) gets the same fallback page at its old address, so a host without
+    # server redirects, and tools/tier1_guard.py, see the move (queue block 29, 9 Nov 2026)
+    moves = list(REDIRECTS.items()) + [(f"/sellers/{o}/", f"/sellers/{n}/") for o, n in sorted(SELLER_MOVES.items())
+                                       if f"/sellers/{o}/" not in REDIRECTS]
+    for old_path, new_path in moves:
         assert not built(old_path), f"redirect from {old_path}, which is still a page"
         if not built(new_path) and not (DIST / new_path.strip("/") / "index.html").exists():
             print(f"redirect {old_path} left out: {new_path} is not built with this data")
@@ -5799,10 +6014,13 @@ def main():
     (DIST / "CNAME").write_text("peptidechooser.com\n")
     (DIST / ".nojekyll").write_text("")
     # Cloudflare Pages, the new host (owner queue block 5, step 4A); GitHub Pages serves both as plain files and ignores them.
-    # _redirects stays empty until task 4C moves the 36 addresses; the project's own *.pages.dev address never competes
-    # with peptidechooser.com in Google.
-    (DIST / "_redirects").write_text("# Server redirects on Cloudflare Pages (301). Empty until task 4C (site map rules, section 8).\n"
-                                     + "".join(f"/sellers/{o}/ /sellers/{n}/ 301\n" for o, n in sorted(SELLER_MOVES.items())))
+    # _redirects (task 4C, site map rules, section 8): every move in data/redirects.json and every seller move is a server
+    # 301; the meta-refresh pages above stay as the fallback. The project's own *.pages.dev address never competes with
+    # peptidechooser.com in Google.
+    _301 = {o: n for o, n in REDIRECTS.items() if built(n) or (DIST / n.strip("/") / "index.html").exists()}
+    _301 |= {f"/sellers/{o}/": f"/sellers/{n}/" for o, n in SELLER_MOVES.items()}
+    (DIST / "_redirects").write_text("# Server redirects on Cloudflare Pages (301), task 4C (site map rules, section 8).\n"
+                                     + "".join(f"{o} {n} 301\n" for o, n in sorted(_301.items())))
     (DIST / "_headers").write_text("# Cloudflare Pages only: keep the project's pages.dev address out of Google.\n"
                                    "https://:project.pages.dev/*\n  X-Robots-Tag: noindex\n")
     (DIST / "robots.txt").write_text(f"User-agent: *\nAllow: /\nDisallow: /out/\nSitemap: {SITE}/sitemap.xml\n")
@@ -5824,7 +6042,7 @@ def main():
     (DIST / "windows").mkdir(exist_ok=True)
     for key, html in SELLER_WINDOWS.items():
         (DIST / "windows" / f"{key}.json").write_text(json.dumps({"html": html}), encoding="utf-8")
-    for g in ALL_GOALS:
+    for g in ALL_GOALS + SUBPAGES:  # SUBPAGES only with drafts
         for p in g["peptides"]:
             if option_plans(g, p):
                 (DIST / "windows" / f"{clinic_key(g, p)}.json").write_text(json.dumps({"html": clinic_window(g, p)}), encoding="utf-8")
@@ -5866,6 +6084,16 @@ def what_next(g):
     plans and shops among the goal's substances, and /sellers/ filtered to the goal's substance with the most sellers."""
     subs = {x for p in g["peptides"] for x in subs_of(p)}
     links = []
+    if g.get("parent"):  # a subpage: its goal first, then the goal's other subpages (group.md, Goal subpage; rule 4.3)
+        par = next(x for x in ALL_GOALS if x["slug"] == g["parent"])
+        links.append(f'<li><a href="/{par["slug"]}/">Every {escape(par["label"].lower())} option, compared</a></li>')
+        links += [f'<li><a href="{x["path"]}">{escape(x["link"])}</a></li>' for x in SUBPAGES
+                  if x.get("parent") == g["parent"] and x is not g][:4]
+    # the twin goal page of an overlap, with its own search words (site map rules 6; block 14: /energy/ and /longevity/),
+    # only when that page is in this build
+    tw = g.get("pair") or {}
+    if tw.get("slug") and built(f'/{tw["slug"]}/'):
+        links.append(f'<li><a href="/{tw["slug"]}/">{escape(tw["text"])}</a></li>')
     gd = next((x for x in guides.GUIDES if x["slug"] == g.get("guide")), None)
     if gd:
         links.append(f'<li><a href="/learn/{gd["slug"]}/">Read the guide: {gd["title"]}</a></li>')
@@ -5886,7 +6114,7 @@ def what_next(g):
     return f'<section class="section goal-sec goal-next" id="next"><div class="wrap goal-two">{nxt}{other}</div></section>' if nxt or other else ""
 
 
-_GOALS_BY_SLUG = {g["slug"]: g for g in ALL_GOALS}
+_GOALS_BY_SLUG = {g["slug"]: g for g in ALL_GOALS + SUBPAGES}
 PAGES = [p[:4] + (re.sub(r"<!--next:([a-z0-9-]+)-->", lambda m: what_next(_GOALS_BY_SLUG[m.group(1)]), p[4]),) + p[5:]
          if "<!--next:" in p[4] else p for p in PAGES]
 
@@ -5899,6 +6127,8 @@ def cited_sources():
     """{url: [text, has_link, [(path, title), ...]]} from every page's source lists, in first-cited order."""
     out = {}
     for path, _, title, _, body, *_ in PAGES:
+        if path in {f"/peptides/{x}/" for x in PEP_WAITING}:
+            continue  # a waiting page is listed nowhere, /sources/ included (queue block 27)
         for ol in re.findall(r'<ol class="[^"]*\bsources\b[^"]*"[^>]*>(.*?)</ol>', body, re.S):
             for li in re.findall(r"<li[^>]*>(.*?)</li>", ol, re.S):
                 m = re.match(r'(.*?):\s*(?:<a href="(https?://[^"]+)"[^>]*>[^<]*</a>|(https?://\S+))\s*$', li.strip(), re.S)
