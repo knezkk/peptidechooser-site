@@ -272,6 +272,134 @@
         "slug": "longevity",
         "text": "Longevity peptides: Epitalon, MOTS-c and NAD+ for aging"
       }
+    },
+    {
+      "slug": "testosterone",
+      "clinic_table": {
+        "substances": [
+          "testosterone",
+          "enclomiphene"
+        ]
+      },
+      "name": "Testosterone",
+      "label": "Testosterone",
+      "page": true,
+      "title": "Peptides for testosterone vs TRT, compared | Peptide Chooser",
+      "h1": "Peptides for testosterone, compared with approved TRT.",
+      "description": "Kisspeptin, gonadorelin and hCG are sold to raise testosterone. What is FDA approved, what TRT plans from online clinics cost, and what shops sell.",
+      "short_answer": "Testosterone itself is FDA approved, on prescription, only for men with low testosterone from a medical condition; it is a hormone, not a peptide. hCG, a peptide hormone sold as Pregnyl and Novarel, is FDA approved for some men whose low testosterone comes from the pituitary. Gonadorelin and kisspeptin-10, sold online to raise testosterone, have no approved product on the market, and the FDA lists kisspeptin-10 among substances that may be a significant safety risk in compounding. We show what online clinics charge for TRT and do not link to research-use shops.",
+      "legal_section": true,
+      "main_query": "peptides for testosterone",
+      "intro": "Testosterone is FDA approved only for men with low testosterone from a medical condition, and it is not a peptide. No peptide is approved to raise testosterone in men without such a condition.",
+      "peptides": [
+        {
+          "name": "Testosterone (TRT)",
+          "plain": "A shot, gel or cream on prescription. Not a peptide. Approved only for men with low testosterone from a medical condition.",
+          "status": "FDA approved",
+          "chip": "ok",
+          "not_peptide": true,
+          "does": "Replaces a hormone the body makes too little of. Not FDA approved for low testosterone without an associated medical condition.",
+          "how": "Prescription, after blood tests.",
+          "status_plain": "FDA approved only for low testosterone with an associated medical condition.",
+          "substance": "testosterone",
+          "src": [
+            10
+          ],
+          "line_one": "shot or gel for low testosterone",
+          "rx_word": "on prescription"
+        },
+        {
+          "name": "Pharmacy-made testosterone",
+          "plain": "A cream or gel mixed by a pharmacy, from online clinics on prescription. Not an FDA-approved product.",
+          "status": "Not FDA approved; pharmacy-made",
+          "chip": "warn",
+          "not_peptide": true,
+          "does": "Testosterone mixed by a compounding pharmacy for one patient, sold by online clinics as part of a TRT plan. The FDA does not check these batch by batch.",
+          "how": "Prescription through the clinic.",
+          "status_plain": "Not FDA approved; pharmacy-made.",
+          "plan_kind": "compounded",
+          "plan_substances": [
+            "testosterone"
+          ],
+          "src": [
+            10
+          ],
+          "line_one": "pharmacy-made cream from online clinics",
+          "rx_word": "on prescription"
+        },
+        {
+          "name": "hCG (Pregnyl, Novarel)",
+          "plain": "A peptide hormone shot on prescription. Approved for some men whose low testosterone comes from the pituitary.",
+          "status": "FDA approved",
+          "chip": "ok",
+          "does": "A hormone shot that tells the testes to make testosterone. FDA approved for selected cases of low testosterone caused by the pituitary, not for TRT in general.",
+          "how": "Prescription.",
+          "status_plain": "FDA approved for selected cases of pituitary-related low testosterone.",
+          "src": [
+            16
+          ],
+          "line_one": "approved shot for pituitary-related low testosterone",
+          "rx_word": "on prescription"
+        },
+        {
+          "name": "Enclomiphene",
+          "plain": "A pill some online clinics prescribe for low testosterone. Pharmacy-made, not FDA approved for any use.",
+          "status": "Not FDA approved; pharmacy-made",
+          "chip": "warn",
+          "does": "A pill some clinics prescribe for low testosterone. It is not FDA approved for any use, so only pharmacies make it.",
+          "how": "Prescription through the clinic.",
+          "status_plain": "Not FDA approved; pharmacy-made.",
+          "plan_kind": "compounded",
+          "plan_substances": [
+            "enclomiphene"
+          ],
+          "src": [
+            11
+          ],
+          "line_one": "pharmacy-made pill for low testosterone",
+          "rx_word": "on prescription"
+        },
+        {
+          "name": "hCG and gonadorelin from online shops",
+          "plain": "Vials labelled for lab use, no prescription. Not approved products; gonadorelin's approved versions are discontinued.",
+          "status": "Not an approved product",
+          "chip": "neutral",
+          "does": "Sold by research-use shops to raise testosterone or keep the testes working during TRT. Not approved products: no dose control, no checks.",
+          "how": "Research-use shops, with our checks.",
+          "status_plain": "Not an approved product.",
+          "substances": [
+            "hcg",
+            "gonadorelin"
+          ],
+          "src": [
+            17
+          ],
+          "line_one": "research-use vials sold for testosterone",
+          "rx_word": "research use only"
+        },
+        {
+          "name": "Kisspeptin-10",
+          "plain": "A peptide sold for testosterone, in vials labelled for lab use. Not approved for any use.",
+          "status": "Not approved",
+          "chip": "neutral",
+          "does": "A peptide that signals the brain to release the hormones that start testosterone production. Not approved; the FDA lists it among substances that may be a significant safety risk in compounding.",
+          "how": "Research-use shops, with our checks.",
+          "status_plain": "Not approved for any use.",
+          "substance": "kisspeptin-10",
+          "src": [
+            18
+          ],
+          "line_one": "vials sold for testosterone",
+          "rx_word": "research use only"
+        }
+      ],
+      "short": "Testosterone",
+      "panel_title": "Testosterone and TRT",
+      "for": "For low testosterone: approved TRT and its prices first, then what the peptides sold for it really are.",
+      "pair": {
+        "slug": "libido",
+        "text": "Peptides for sex drive: PT-141 and the approved options"
+      }
     }
   ],
   "legal_rows": [
@@ -294,6 +422,36 @@
       "substances": [
         "cagrilintide"
       ]
+    },
+    {
+      "peptide": "hCG",
+      "status": "FDA approved",
+      "chip": "ok",
+      "note": "as Pregnyl and Novarel, for selected cases of low testosterone from the pituitary; shop vials are not approved",
+      "src": 16,
+      "substances": [
+        "hcg"
+      ]
+    },
+    {
+      "peptide": "Gonadorelin",
+      "status": "No approved product on the market",
+      "chip": "neutral",
+      "note": "its approved products (Factrel, Lutrepulse) are discontinued",
+      "src": 17,
+      "substances": [
+        "gonadorelin"
+      ]
+    },
+    {
+      "peptide": "Kisspeptin-10",
+      "status": "Not approved",
+      "chip": "neutral",
+      "note": "the FDA lists it among bulk substances that may present significant safety risks in compounding",
+      "src": 18,
+      "substances": [
+        "kisspeptin-10"
+      ]
     }
   ],
   "legal_sources": [
@@ -306,6 +464,21 @@
       "n": 15,
       "text": "Drugs@FDA through openFDA: no product with cagrilintide, searched 9 Nov 2026",
       "url": "https://api.fda.gov/drug/drugsfda.json?search=products.active_ingredients.name:CAGRILINTIDE"
+    },
+    {
+      "n": 16,
+      "text": "FDA drug label for Pregnyl (chorionic gonadotropin), Indications and Usage, through openFDA, effective 2 Dec 2025, read 9 Nov 2026",
+      "url": "https://api.fda.gov/drug/label.json?search=openfda.brand_name:%22PREGNYL%22"
+    },
+    {
+      "n": 17,
+      "text": "Drugs@FDA through openFDA: gonadorelin products Factrel (NDA 018123) and Lutrepulse (NDA 019687), both discontinued, searched 9 Nov 2026",
+      "url": "https://api.fda.gov/drug/drugsfda.json?search=products.active_ingredients.name:GONADORELIN"
+    },
+    {
+      "n": 18,
+      "text": "FDA, Certain Bulk Drug Substances for Use in Compounding that May Present Significant Safety Risks, read 9 Nov 2026",
+      "url": "https://www.fda.gov/drugs/human-drug-compounding/certain-bulk-drug-substances-use-compounding-may-present-significant-safety-risks"
     }
   ],
   "goal_changes": {
@@ -320,6 +493,12 @@
       "pair": {
         "slug": "energy",
         "text": "Peptides for energy: MOTS-c and NAD+"
+      }
+    },
+    "libido": {
+      "pair": {
+        "slug": "testosterone",
+        "text": "Peptides for testosterone, compared with approved TRT"
       }
     }
   },

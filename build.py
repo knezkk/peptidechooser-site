@@ -2414,7 +2414,7 @@ def category_page(g):
 # Questions on a goal page (SEO round c, group 2, queue block 9): the searches "peptides for skin", "best peptides for
 # muscle growth" and the like, answered from the goal's approved texts and its option rows; no new claim.
 GOAL_FAQ = {"skin", "muscle", "weight-loss", "hair", "growth-hormone", "sleep", "energy", "weight-loss-pills",
-            "weight-loss-new-drugs"}  # all after "hair": drafts
+            "weight-loss-new-drugs", "testosterone"}  # all after "hair": drafts
 
 
 def goal_price_word(g, p):
