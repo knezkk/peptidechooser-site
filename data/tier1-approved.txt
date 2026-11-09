@@ -137,3 +137,6 @@ ODOBRENO SEO - Karlo - 9. 11. 2026 - PR #154 (task 25: a kept seller page opens 
 
 ODOBRENO SEO - Karlo - 9. 11. 2026 - PR #155 (vardenafil description with the clinic count line; no price question for a clinic without a monthly plan)
 /peptides/vardenafil/ 69d0257c1686
+
+ODOBRENO SEO - Karlo - 9. 11. 2026 - new page male-excel-excel-medical
+/sellers/male-excel-excel-medical/ 717748b4698f
