@@ -743,6 +743,7 @@ def plural(n, word):
 # substance is one of the goal's `clinic_plans.substances`. A plan with no substance, or another one, shows only on the seller's
 # own page, never on a goal page or in a clinic window, until the data carries a goal tag (owner answer to #104 Q2 A, 5 Nov 2026).
 BRANDED = ("branded", "oral_branded")
+BRAND_KINDS = BRANDED + ("generic",)  # the kinds an FDA-approved row and its window take (option_plans, row_plan)
 
 
 def clinic_plans(g):
@@ -828,8 +829,10 @@ def row_plan(g, p):
     if not g.get("clinic_plans"):
         if not (p.get("substance") and p["status"].startswith("FDA approved")):
             return None
+        # the same kinds as the row's window (option_plans, BRAND_KINDS): a plan of unknown kind ("other", Peter MD's TRT
+        # plans, 9 Nov 2026) never prices an FDA-approved row whose window cannot list it (owner task 21)
         found = [r for r in PLANS if row_fits(p, r) and on_goal(g, r, plan_subs(r)) and r.get("price_monthly") is not None
-                 and r.get("product_kind") != "compounded" and plan_fits(p, r) and form_fits(p, r)]
+                 and r.get("product_kind") in BRAND_KINDS and plan_fits(p, r) and form_fits(p, r)]
         best = min(found, key=lambda r: (float(r["price_monthly"]), r["seller_name"])) if found else None
         plan = GOAL_PLANS.get(g["slug"])
         return plan if best and plan and best["seller_slug"] == plan["seller_slug"] and best["plan_slug"] == plan["plan_slug"] else best
@@ -1461,7 +1464,6 @@ SELLER_WINDOWS = {window_key(p): seller_window(p) for g in ALL_GOALS for p in g[
 
 
 # The plans that may stand under an FDA-approved card (owner task 21, 8 Nov 2026: "only plans of the brand medicine").
-BRAND_KINDS = ("branded", "oral_branded", "generic")
 
 
 def option_plans(g, p):
