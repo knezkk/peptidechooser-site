@@ -9,7 +9,7 @@ import os
 import re
 import subprocess
 import sys
-from datetime import date
+from datetime import date, datetime
 from html import escape, unescape
 from html.parser import HTMLParser
 from pathlib import Path
@@ -1623,6 +1623,49 @@ def check_arch(P):
     return errs
 
 
+def check_arch_switch(P):
+    """Owner task 24 (9 Nov 2026): the lab mark, the price history and the data's "Not a peptide" chip show only with
+    PC_ARCH_DATA=1. Off: none of them. On: a lab mark only on a shop row, from a lab report in the data; a price history
+    only with 3 checks over 60 days; /fda-approved/, once built, marks every substance the data calls no peptide."""
+    errs, on = [], os.environ.get("PC_ARCH_DATA") == "1"
+    d = json.loads((ROOT / "data" / "site.json").read_text(encoding="utf-8"))
+    text = lambda h: " ".join(unescape(re.sub(r"<[^>]+>", " ", h)).split())
+    month = lambda iso: date.fromisoformat(str(iso)[:10]).strftime("%b %Y")
+    marks = {" · ".join(x for x in ("Lab report", c.get("lab_name") or "", month(c["coa_date"])) if x)
+             for c in d.get("coa_reports") or [] if c.get("coa_date")}
+    for name in P:
+        html = (DIST / name).read_text(encoding="utf-8")
+        labs = re.findall(r'<span class="chip chip-lab"[^>]*>([^<]*)</span>', html)
+        hist = re.search(r'id="history">(.*?)</details>', html, re.S)
+        if not on and (labs or hist):
+            errs.append(f"{name}: a lab mark or a price history without PC_ARCH_DATA=1")
+            continue
+        for x in labs:
+            if unescape(x) not in marks:
+                errs.append(f"{name}: lab mark '{unescape(x)}' is not a lab report in the data")
+        for tr in re.findall(r'<table class="[^"]*tbl-clinics[^"]*">.*?</table>', html, re.S):
+            if "chip-lab" in tr:
+                errs.append(f"{name}: a lab mark on a clinic row")
+        if hist:
+            days = [_parse_day(x) for x in re.findall(r"<tr><td>([^<]+)</td><td", hist.group(1))]
+            if len(days) < 3 or (max(days) - min(days)).days < 60:
+                errs.append(f"{name}: a price history with {len(days)} checks over {(max(days) - min(days)).days if days else 0} days")
+    fa = DIST / "fda-approved" / "index.html"
+    if on and fa.exists():
+        html = fa.read_text(encoding="utf-8")
+        for tr in re.findall(r"<tr\b.*?</tr>", html, re.S):
+            slug = re.search(r'href="/peptides/([^/"]+)/"', tr)
+            nots = {r["substance_slug"] for r in d.get("legal_db") or [] if r.get("is_peptide") is False}
+            if slug and slug.group(1) in nots and "Not a peptide" not in text(tr):
+                errs.append(f"fda-approved/index.html: {slug.group(1)} is no peptide in the data but has no 'Not a peptide' chip")
+    return errs
+
+
+def _parse_day(s):
+    """"8 Nov 2026" as a date."""
+    return datetime.strptime(" ".join(s.split()), "%d %b %Y").date()
+
+
 def check_kept_sellers(P):
     """Owner task 25 (9 Nov 2026), site map rule 5.1: no seller page in the last live sitemap (LIVE_SITEMAP, the deploy's
     copy) disappears without a redirect in data/redirects.json (or a 4C move in site.seller_redirects); a kept page of a
@@ -1681,7 +1724,7 @@ def check_addresses(P):
     return errs
 
 
-CHECKS = {"words": check_words, "seo": check_seo, "schema": check_schema, "parts": check_parts, "data": check_data, "book": check_book, "events": check_events, "logic": check_logic, "rules33": check_rules33, "addresses": check_addresses, "arch": check_arch, "kept-sellers": check_kept_sellers}
+CHECKS = {"words": check_words, "seo": check_seo, "schema": check_schema, "parts": check_parts, "data": check_data, "book": check_book, "events": check_events, "logic": check_logic, "rules33": check_rules33, "addresses": check_addresses, "arch": check_arch, "arch-switch": check_arch_switch, "kept-sellers": check_kept_sellers}
 
 # Plan names against their form (owner task w2, 3 Nov 2026): a clinic's own plan name can name another form than the
 # plan's `dosage_form` ("Ozempic Pill" for a pen). The site cannot change data, so this only warns, never fails, and the
