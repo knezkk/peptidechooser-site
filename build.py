@@ -37,6 +37,7 @@ if os.environ.get("PC_DRAFTS") and (ROOT / "data" / "drafts.json").exists():
         _g.update(_drafts.get("goal_changes", {}).get(_g["slug"], {}))
     DATA["legal"]["rows"] += _drafts.get("legal_rows", [])
     DATA["legal"]["sources"] += _drafts.get("legal_sources", [])
+    DATA["subpages"] = _drafts.get("subpages", [])
 # The HHS compounding policy of 30 Oct 2026 is worded once, in legal.hhs_policy (owner queue block 4, 7 Nov 2026): every
 # {hhs_<key>} in the data is that entry's text, so no page types its own version.
 HHS = DATA["legal"].get("hhs_policy") or {}
@@ -610,6 +611,11 @@ def item_list_schema(name, items):
 
 
 ALL_GOALS = DATA["goals"]
+# Goal subpages /<goal>/<topic>/ (design/pages/group.md, Goal subpage; drafts only, owner queue block 15): a goal-like entry
+# with its own options, `parent`, `path` and `panel` (the parent goal's colour panel). Not in ALL_GOALS: a subpage is never
+# on Home, in the menu, in the goals strip or in the legal tables; it is reached from its goal page.
+SUBPAGES = DATA.get("subpages") or []
+SUB_ORAL_FORMS = {"tablet", "odt", "capsule", "troche", "drops"}  # plan dosage forms taken by mouth
 # The hair goal's cosmetic option is a scalp product (data agent's task 33): its window takes only listings named for hair or scalp.
 SCALP_OPTIONS = {id(p) for g in ALL_GOALS if g["slug"] == "hair" for p in g.get("peptides") or [] if p["status"].startswith("Cosmetic")}
 LEGAL = DATA["legal"]
@@ -739,6 +745,8 @@ def clinic_plans(g):
         return []
     rows = [r for r in PLANS if r.get("price_monthly") is not None
             and on_goal(g, r, cp["substances"])]
+    if cp.get("oral"):  # a subpage on pills: only plans taken by mouth (the approved pill, or a compounded tablet or drops)
+        rows = [r for r in rows if r.get("product_kind") == "oral_branded" or (r.get("dosage_form") or "") in SUB_ORAL_FORMS]
     return sorted(rows, key=lambda r: (float(r["price_monthly"]), r["seller_name"], r["plan_name"]))
 
 
@@ -825,7 +833,7 @@ def row_plan(g, p):
         found = [r for r in rows if r.get("product_kind") == "compounded" and on_sub(r, subs)]
     elif p.get("substance") and p["status"].startswith("FDA approved"):
         found = [r for r in rows if row_fits(p, r) and r.get("product_kind") in BRANDED
-                 and not other_use(g, r) and form_fits(p, r)]
+                 and (p.get("other_use_ok") or not other_use(g, r)) and form_fits(p, r)]
     else:
         return None
     return found[0] if found else None
@@ -834,7 +842,7 @@ def row_plan(g, p):
 # Plans shown on a row or a price pad that are not a goal's GOAL_PLANS plan get their own source after the plan sources.
 plan_key = lambda r: f'{r["seller_slug"]}-{r["plan_slug"]}'
 EXTRA_PLANS = {}
-for _g in ALL_GOALS:
+for _g in ALL_GOALS + SUBPAGES:  # SUBPAGES is empty unless drafts are built
     _rows = goal_plans(_g)
     for _r in [row_plan(_g, _p) for _p in _g["peptides"]] + _rows[:1]:
         if _r and _r is not GOAL_PLANS.get(_g["slug"]):
@@ -1460,15 +1468,20 @@ def option_plans(g, p):
     priced = [r for r in PLANS if r.get("price_monthly") is not None]
     if p.get("plan_kind") == "compounded":
         subs = compounded_subs(g, p)
-        return [r for r in priced if on_goal(g, r, subs) and r.get("product_kind") == "compounded"]
+        # a compounded row that names its form takes only plans that state that form (block 15: tablets, not every copy)
+        return [r for r in priced if on_goal(g, r, subs) and r.get("product_kind") == "compounded"
+                and (not p.get("plan_form") or form_fits(p, r, strict=True))]
     if not (p.get("substance") and approved_row(p)):
         return []
-    return [r for r in priced if r.get("product_kind") in BRAND_KINDS and row_fits(p, r) and on_goal(g, r, plan_subs(r)) and not other_use(g, r)
+    # other_use_ok: a row about the other use itself (block 15: "Ozempic or Rybelsus tablets", approved for diabetes)
+    return [r for r in priced if r.get("product_kind") in BRAND_KINDS and row_fits(p, r) and on_goal(g, r, plan_subs(r))
+            and (p.get("other_use_ok") or not other_use(g, r))
             and plan_fits(p, r) and form_fits(p, r, strict=False)]
 
 
 def clinic_key(g, p):
-    return f'clinics-{g["slug"]}-{"compounded" if p.get("plan_kind") == "compounded" else p["substance"]}'
+    # `key`: a row's own window name when two rows share a substance (block 15: the Wegovy pill and Ozempic rows)
+    return f'clinics-{g["slug"]}-{p.get("key") or ("compounded" if p.get("plan_kind") == "compounded" else p["substance"])}'
 
 
 def clinic_open(g, p, rp=None, low=None):
@@ -1484,7 +1497,7 @@ def clinic_open(g, p, rp=None, low=None):
     noun = "seller" if otc else "clinic"
     n = len({r["seller_slug"] for r in rows})
     key = clinic_key(g, p)
-    href = f'/{g["slug"]}/#clinics' if (g.get("clinic_plans") or g.get("clinic_table")) and g.get("page") else f'/sellers/{plan["seller_slug"]}/'
+    href = f'{g.get("path") or "/" + g["slug"] + "/"}#clinics' if (g.get("clinic_plans") or g.get("clinic_table")) and g.get("page") else f'/sellers/{plan["seller_slug"]}/'
     small = '<span class="paid">Pharmacy, no prescription</span>' if otc else ""
     return (f'<span class="pick-act"><a class="btn btn-wait btn-sm btn-cta sellers-open" href="{href}" data-dlg="{key}" data-src="/windows/{key}.json"{ev("prices_window_open", substance="compounded" if p.get("plan_kind") == "compounded" else p.get("substance"), window_kind="clinic", rows=len(rows))}>'
             f'Buy from {usd(plan["price_monthly"])}/mo · {plural(n, noun)}</a>{small}</span>')
@@ -2384,13 +2397,24 @@ def page_footnotes(body):
     return head + sep + tail[:ol.start()] + ol.group(1) + lis + ol.group(3) + tail[ol.end():]
 
 
+def narrower(g):
+    """"Narrower questions" under a goal's options (group.md, Goal subpage): its subpages as text links between hairlines,
+    only when one is in this build."""
+    subs = [x for x in SUBPAGES if x.get("parent") == g["slug"]]
+    if not subs:
+        return ""
+    items = "".join(f'<li><a href="{x["path"]}">{escape(x["link"])}</a></li>' for x in subs)
+    return f'<div class="goal-narrow"><h3 class="h-sources">Narrower questions</h3><ul class="next-list">{items}</ul></div>'
+
+
 def category_page(g):
     return page_footnotes(category_body(g))
 
 
 # Questions on a goal page (SEO round c, group 2, queue block 9): the searches "peptides for skin", "best peptides for
 # muscle growth" and the like, answered from the goal's approved texts and its option rows; no new claim.
-GOAL_FAQ = {"skin", "muscle", "weight-loss", "hair", "growth-hormone", "sleep", "energy"}  # the last three: drafts
+GOAL_FAQ = {"skin", "muscle", "weight-loss", "hair", "growth-hormone", "sleep", "energy", "weight-loss-pills",
+            "weight-loss-new-drugs"}  # all after "hair": drafts
 
 
 def goal_price_word(g, p):
@@ -2855,7 +2879,7 @@ def category_body(g):
     <h1>{g["h1"]}</h1>
     {author_line(GOAL_CHECKED)}{SOURCE_LINE}
     <p class="intro">{lead}</p>
-    </div><div class="goal-panel goal-c-{g["slug"]}">{parts.goal_photo(g["slug"], 120)}</div></div>
+    </div><div class="goal-panel goal-c-{g.get("panel", g["slug"])}">{parts.goal_photo(g.get("panel", g["slug"]), 120)}</div></div>
     {cards}
   </div>
 </section>
@@ -2863,7 +2887,7 @@ def category_body(g):
   <div class="wrap">
     <div class="chooser flow flow-solo">
       <div class="flow-hd fh-compare"><h2>Compare the options</h2><a class="step-legal" href="{"#legal" if legal else "/#legal"}"><strong>Is it legal today?</strong></a></div>
-      <div class="flow-compare"><div class="step-panel"><p class="goal-for">{g["for"]}</p><ul class="opts">{opt_html}</ul>{instead}</div></div>
+      <div class="flow-compare"><div class="step-panel"><p class="goal-for">{g["for"]}</p><ul class="opts">{opt_html}</ul>{instead}{narrower(g)}</div></div>
     </div>
   </div>
 </section>{goal_clinic_section(g, plans)}{tools_html}{legal_html}{goal_faq(g)}
@@ -3860,6 +3884,11 @@ for _g in ALL_GOALS:
     if _g.get("page"):
         PAGES.append((f"/{_g['slug']}/", f"{_g['slug']}/index.html", _g["title"], _g["description"],
                       category_page(_g), faq_schema(goal_faq_pairs(_g)), [(f"/{_g['slug']}/", _g["name"])]))
+
+for _g in SUBPAGES:  # drafts only (PC_DRAFTS=1)
+    _p = next(x for x in ALL_GOALS if x["slug"] == _g["parent"])
+    PAGES.append((_g["path"], _g["path"].strip("/") + "/index.html", _g["title"], _g["description"], category_page(_g),
+                  faq_schema(goal_faq_pairs(_g)), [(f"/{_p['slug']}/", _p["name"]), (_g["path"], _g["name"])]))
 
 if PROFILES:
     PAGES.append(("/sellers/", "sellers/index.html", "Peptide sellers and their checks | Peptide Chooser",
@@ -5045,6 +5074,28 @@ draw();})();
 </script>"""
 
 
+def not_peptide(slug):
+    """The database says the substance is not a peptide (site.substance_status.is_peptide; finasteride, minoxidil, orforglipron)."""
+    return any(r.get("is_peptide") is False for r in LEGAL_DB or [] if r["substance_slug"] == slug)
+
+
+def group_table(slugs, caption):
+    """The substances of a group page (design/pages/group.md): the /peptides/ A to Z table cut to the group, a "Not a
+    peptide" chip right after a name the database flags, a thin (noindex) substance as plain text, and no filter row at
+    12 rows or fewer (none of the draft groups has more). Returns (html, rows)."""
+    rows = sorted((x for x in slugs if x in PEPTIDE_SLUGS), key=lambda x: pep_name(x).lower())
+    name = lambda x: (f'<a class="name" href="/peptides/{x}/">{escape(pep_name(x))}</a>' if x not in PEP_THIN
+                      else f'<span class="name">{escape(pep_name(x))}</span>')
+    np_chip = ' <span class="chip chip-neutral">Not a peptide</span>'
+    trs = "".join(
+        f'<tr><td>{name(x)}{np_chip if not_peptide(x) else ""}</td>'
+        f'<td data-l="Status"><span class="chip chip-{pep_status(x)["chip"]}">{pep_status(x)["label"]}</span></td>'
+        f'<td data-l="What it means">{pep_means(x)}</td><td class="num" data-l="Lowest price">{pep_low(x)}</td></tr>' for x in rows)
+    return (f'<div class="tbl-wrap"><table class="tbl tbl-cards tbl-peptides"><caption class="vh">{escape(caption)}</caption>'
+            f'<thead><tr><th scope="col">Substance</th><th scope="col">Status</th><th scope="col">What it means</th>'
+            f'<th scope="col">Lowest price</th></tr></thead><tbody>{trs}</tbody></table></div>'), rows
+
+
 def peptides_index():
     """/peptides/ (owner UX audit B16, 3 Nov 2026): one table in A to Z order with a Status column, a row of letters to jump
     to, and the three statuses as filter chips (all on; shown with JavaScript only). Title and H1 unchanged (rule 8)."""
@@ -5934,7 +5985,7 @@ def main():
     (DIST / "windows").mkdir(exist_ok=True)
     for key, html in SELLER_WINDOWS.items():
         (DIST / "windows" / f"{key}.json").write_text(json.dumps({"html": html}), encoding="utf-8")
-    for g in ALL_GOALS:
+    for g in ALL_GOALS + SUBPAGES:  # SUBPAGES only with drafts
         for p in g["peptides"]:
             if option_plans(g, p):
                 (DIST / "windows" / f"{clinic_key(g, p)}.json").write_text(json.dumps({"html": clinic_window(g, p)}), encoding="utf-8")
@@ -5976,6 +6027,11 @@ def what_next(g):
     plans and shops among the goal's substances, and /sellers/ filtered to the goal's substance with the most sellers."""
     subs = {x for p in g["peptides"] for x in subs_of(p)}
     links = []
+    if g.get("parent"):  # a subpage: its goal first, then the goal's other subpages (group.md, Goal subpage; rule 4.3)
+        par = next(x for x in ALL_GOALS if x["slug"] == g["parent"])
+        links.append(f'<li><a href="/{par["slug"]}/">Every {escape(par["label"].lower())} option, compared</a></li>')
+        links += [f'<li><a href="{x["path"]}">{escape(x["link"])}</a></li>' for x in SUBPAGES
+                  if x.get("parent") == g["parent"] and x is not g][:4]
     # the twin goal page of an overlap, with its own search words (site map rules 6; block 14: /energy/ and /longevity/),
     # only when that page is in this build
     tw = g.get("pair") or {}
@@ -6001,7 +6057,7 @@ def what_next(g):
     return f'<section class="section goal-sec goal-next" id="next"><div class="wrap goal-two">{nxt}{other}</div></section>' if nxt or other else ""
 
 
-_GOALS_BY_SLUG = {g["slug"]: g for g in ALL_GOALS}
+_GOALS_BY_SLUG = {g["slug"]: g for g in ALL_GOALS + SUBPAGES}
 PAGES = [p[:4] + (re.sub(r"<!--next:([a-z0-9-]+)-->", lambda m: what_next(_GOALS_BY_SLUG[m.group(1)]), p[4]),) + p[5:]
          if "<!--next:" in p[4] else p for p in PAGES]
 
