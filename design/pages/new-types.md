@@ -8,6 +8,7 @@ Rules for all five:
 - **Every page** has the breadcrumb and BreadcrumbList, the author line, a "Checked <date>" stamp, What to do next, Sources, and links across to up to five indexable pages of the same type that share a goal or substance (rule 4.3).
 - **Paid links** by the paid link rule (parts.md, Buttons) and site map rule 4.5: a clinic may carry one; a supplement seller only on a cosmetic product; a research-use shop never, its offer pages included; a guide never.
 - **No dose, ever** (`tools/check.py`), and no link to a shop's domain.
+- **Share image** (w4 block 7; ODOBRENO DIZAJN and ODOBRENO SEO - Karlo - 9. 11. 2026, PR #150): a page of a new type (group, brand, seller offer, lab, company FDA letters, tool) carries one line above its title on its share image, in `ink-2`, 26px bold: "Substance group", "Brand", "Seller offer", "Lab reports", "FDA warning letters", "Tool". A group page also shows its line icon, 132px in `ink`, on a 220px `paper-2` panel right of the title. Every other page keeps the plain card (`tools/og.py`).
 
 ## Brand `/peptides/<substance>/<brand>/`
 
