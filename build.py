@@ -1055,6 +1055,36 @@ PRODUCTS = DATA.get("products") or []
 SELLERS = {r["seller_slug"]: r for r in DATA.get("sellers") or []}
 # Seller pages (pages.md, Seller): one per seller in site.seller_profile, through tools/pull_data.py
 PROFILES = {r["seller_slug"]: r for r in DATA.get("seller_profiles") or []}
+
+
+def _live_seller_pages():
+    """The seller pages already published: the live sitemap the deploy fetches into LIVE_SITEMAP, else the last build's own
+    sitemap files (read before dist is cleared)."""
+    f = os.environ.get("LIVE_SITEMAP")
+    files = [Path(f)] if f and Path(f).is_file() else [DIST / "sitemap.xml"] + sorted(DIST.glob("sitemap-*.xml"))
+    text = "".join(x.read_text(encoding="utf-8") for x in files if x.is_file())
+    return set(re.findall(re.escape(SITE) + r"/sellers/([a-z0-9-]+)/</loc>", text))
+
+
+# A seller that leaves the data keeps its page (site map rule 5.1, no page is deleted; owner task 25, 9 Nov 2026): when its
+# page is live and data/redirects.json sends it nowhere, the page is built from its last profile, from data/seller_archive.json
+# or the live /seller-archive.json the deploy fetches into LIVE_SELLER_ARCHIVE. It has no Visit button, no /out/ link and no
+# compare button, says it left our data, and stays in the sitemap. Every build publishes the profiles it holds there.
+_moved = json.loads((ROOT / "data" / "redirects.json").read_text(encoding="utf-8")) if (ROOT / "data" / "redirects.json").exists() else {}
+_moved |= {f"/sellers/{r['old_slug']}/": f"/sellers/{r['new_slug']}/" for r in DATA.get("seller_redirects") or []}  # 4C moves
+SELLER_ARCHIVE = {}
+for _f in (os.environ.get("LIVE_SELLER_ARCHIVE"), ROOT / "data" / "seller_archive.json"):
+    if _f and Path(_f).is_file():
+        try:
+            SELLER_ARCHIVE.update(json.loads(Path(_f).read_text(encoding="utf-8")).get("sellers") or {})
+        except ValueError:
+            pass
+GONE = {}
+if PROFILES:
+    _live = _live_seller_pages()
+    GONE = {k: {**v, "gone": True, "paid_url": None} for k, v in SELLER_ARCHIVE.items()
+            if k not in PROFILES and k in _live and f"/sellers/{k}/" not in _moved}
+    PROFILES.update(GONE)
 # A tool (pages.md, Category, Tools) does not prescribe: no seller page, not counted as a clinic. A shop stays a shop. An entry
 # with `clinic` prescribes too (Vitals Vault, owner answer to #104 Q1 A): it keeps its seller page and counts as a clinic.
 TOOL_PROFILES = {t["seller_slug"]: PROFILES.pop(t["seller_slug"]) for g in DATA.get("goals") or [] for t in g.get("tools") or []
@@ -2740,7 +2770,10 @@ def decide_cards(g):
                                          f'<strong>From {money(low)} a {"bottle" if what == "serum" else "product"}</strong>, {plural(n, "shop")}',
                                          f'<span class="pick-act">{sellers_button(cos, False, f"Compare {plural(n, what)}", "btn-wait")}</span>', parts.thumb("serum-dropper")))
     else:
-        ru = next((p for p in g["peptides"] if has_window(p) and window_kind(p) == "research"), None)
+        # a row sold only for research use first: sermorelin has a shop window too, but clinics prescribe it (owner answer
+        # 9 Nov 2026, /muscle/), so the card names it only when no research-use-only row has a window
+        rus = [p for p in g["peptides"] if has_window(p) and window_kind(p) == "research"]
+        ru = next((p for p in rus if p.get("rx_word") == "research use only"), rus[0] if rus else None)
         if ru:
             low, n = window_low(ru)
             if low is not None:
@@ -3465,7 +3498,9 @@ def seller_faq_pairs(r):
     checks = [t for _, t in seller_checks(r)]
     pairs = [
         (f"What does {name} {'prescribe' if clinic else 'sell'}?", ans[0]),
-        (f"How much does {name} cost?", ans[1] if clinic and len(ans) > 1 else ""),
+        # the price sentence only: a clinic with no monthly plan (Rx Peps Direct, per-order prices, task 26) has none, and the
+        # next sentence of its answer is not a price
+        (f"How much does {name} cost?", ans[1] if clinic and clinic_plan_rows(r) and len(ans) > 1 else ""),
         (f"Has the FDA sent {name} a warning letter?", lines["score_no_fda_letter"]),
         (f"Does {name} ship to every state?", f"Not to {', '.join(STATES.get(x, x) for x in states)}." if states else f"We have no state limits on file for {name}.") if clinic else ("", ""),
         (f"How do we check {name}?", f"On {home.num_word(len(checks)).lower()} facts: {', '.join(checks[:-1])} and {checks[-1]}. Each is a yes or no with its date, in the list above."),
@@ -3483,6 +3518,8 @@ def seller_action(r):
     another shop, on /compare/ (built whenever seller pages are). A clinic with a paid link in the data also gets "Visit <Name>"
     with "Paid link" under it, the same size beside it: the one pair of actions (pages.md, Seller, Top block; owner answer
     Q1 b, 4 Nov 2026)."""
+    if r.get("gone"):
+        return ""
     if r["seller_slug"] in CLINIC_PROFILES:
         plans = clinic_plan_rows(r)
         compare = (f'<a class="btn btn-ink" href="/compare/?a=p.{r["seller_slug"]}.{plans[0]["plan_slug"]}"{ev("compare_pick", kind="plan")}>Compare with another clinic</a>'
@@ -3497,6 +3534,9 @@ def seller_action(r):
 def seller_page(r):
     clinic = r["seller_slug"] in CLINIC_PROFILES
     answer = " ".join(clinic_answer(r) if clinic else short_answer(r))
+    if r.get("gone"):  # proposal for the owner's ODOBRENO SEO (task 25): what is true for a closed and a gated seller alike
+        answer = (f'No longer in our data: the facts below are from {nice_date(r["archived_on"])}, the last day we tracked '
+                  f'{seller_base(seller_name(r))}. ' + answer)
     checked = max((r.get("price_updated_at") or "")[:10], (r.get("score_checked_on") or "")[:10], (r.get("first_seen") or "")[:10])
     on = prices_checked(r)
     meta = " · ".join(x for x in ("Prices, checks and what we found",
@@ -4245,6 +4285,10 @@ def pep_description(slug):
                     - {n.split()[0].title()})
     if brands and pep_group(s) == "approved":
         parts.append(f'Approved brand{"s" if len(brands) > 1 else ""}: {", ".join(brands[:3])}.')
+    # too short for the 110-character rule (vardenafil, task 26, 9 Nov 2026: no goal page, no brand or generic plan): the clinic
+    # table's own count line, a fact the page shows
+    if len(" ".join(parts + ["Checked 30 Sep 2026.", "We compare and never sell."])) < 110 and pep_plans(slug):
+        parts.append(f'{plural(len(pep_plans(slug)), "plan")} at the online clinics we track.')
     parts.append(f"Checked {nice_date(pep_checked(slug))}.")
     parts.append("We compare and never sell.")
     out = parts[0]
@@ -5887,6 +5931,11 @@ def main():
                 (DIST / "windows" / f"{clinic_key(g, p)}.json").write_text(json.dumps({"html": clinic_window(g, p)}), encoding="utf-8")
     (DIST / "search-index.json").write_text(json.dumps(search_index(), ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
     write_sitemaps()
+    # every profile the site holds, so a seller that leaves the data later keeps its page (GONE, owner task 25)
+    (DIST / "seller-archive.json").write_text(json.dumps({"sellers": {k: {kk: vv for kk, vv in v.items() if kk not in ("gone", "paid_url")}
+                                                                      | {"archived_on": v.get("archived_on") or DATA_CHECKED[:10]}
+                                                                      for k, v in sorted(PROFILES.items())}},
+                                                         ensure_ascii=False, separators=(",", ":")) + "\n", encoding="utf-8")
     (DIST / "pages.json").write_text(json.dumps([{"path": p[0], "title": p[2]} for p in PAGES] + [{"path": "/404", "title": "Page not found | Peptide Chooser"}]))
     print("built", len(PAGES) + 1, "pages")
     if PEPTIDE_SLUGS:

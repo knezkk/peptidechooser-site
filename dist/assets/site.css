@@ -744,3 +744,6 @@ body:has(.home-sec) .site-foot { margin-top: 0; }
   .sf-break { display: none; }
 }
 .sellers-sec[hidden] + .sellers-sec { margin-top: 0; }
+
+/* /sources/: a page title link in a source group is a tap target (44px) on phones, also when it fits on one line (w3, PR 152). */
+@media (max-width:640px){ .src-group h3 a { display: inline-flex; align-items: center; min-height: 44px; } }
