@@ -274,40 +274,8 @@
       }
     }
   ],
-  "legal_rows": [
-    {
-      "peptide": "IGF-1 LR3",
-      "status": "Not approved",
-      "chip": "neutral",
-      "note": "no approved product; the approved IGF-1 medicine is mecasermin (Increlex), a different product",
-      "src": 14,
-      "substances": [
-        "igf-1-lr3"
-      ]
-    },
-    {
-      "peptide": "Cagrilintide",
-      "status": "Not approved",
-      "chip": "neutral",
-      "note": "in clinical trials; no approved product",
-      "src": 15,
-      "substances": [
-        "cagrilintide"
-      ]
-    }
-  ],
-  "legal_sources": [
-    {
-      "n": 14,
-      "text": "Drugs@FDA through openFDA: no product with IGF-1 LR3; mecasermin (Increlex) approved 30 Aug 2005, searched 9 Nov 2026",
-      "url": "https://api.fda.gov/drug/drugsfda.json?search=products.active_ingredients.name:MECASERMIN"
-    },
-    {
-      "n": 15,
-      "text": "Drugs@FDA through openFDA: no product with cagrilintide, searched 9 Nov 2026",
-      "url": "https://api.fda.gov/drug/drugsfda.json?search=products.active_ingredients.name:CAGRILINTIDE"
-    }
-  ],
+  "legal_rows": [],
+  "legal_sources": [],
   "goal_changes": {
     "longevity": {
       "name": "Longevity and aging",
