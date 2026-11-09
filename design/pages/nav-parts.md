@@ -30,6 +30,7 @@ A lab-label chip for a lab report (COA) we hold, in the chip family (4px corners
 - **Link:** to /labs/<lab>/ when that page is indexed, else to the report's own source as text with its date (no link to a shop's domain, the existing rule).
 - **Where:** a shop row's Checks cell on the substance page and the seller page, the offer page's first screen, and every row of a lab page. A listing without a report shows nothing (the seller's "Lab reports" mark already says so).
 - **Never** on a clinic row: clinics publish no lab reports (sellers-list.md).
+- **Classes** (`bundle.css`, Lab mark; w2 task 24, PR #151): `.chip-lab`.
 
 ## Price history (substance and seller offer pages; data task 1g)
 
@@ -38,4 +39,5 @@ One small chart of a price over time, from the price-history view only:
 - **Look:** an inline SVG, the content width, 160px tall (120px under 640px): a step line, 1.5px `clinic`, on `white`; three `line` hairlines (low, middle, high) with their prices in `small` `ink-2` at the left; months along the bottom in `small`; the newest point a 6px `clinic` dot labelled "$X/mg, <date>" (or "$X/mo"). No area fill, no gradient, no animation, no tooltip needed to read it.
 - **Heading:** h3 at display-4, "Price over time", with one `small` line under it: what the price is (lowest per mg at <Shop>, or <Clinic>'s <Plan> per month) and "Checked <dates>".
 - **Table twin:** under the chart a `details` "Prices as a table" with the same points (date, price, source), so the numbers never rest on the drawing alone; the SVG has `role="img"` and an `aria-label` that says the first and last price and the dates.
+- **Classes** (`bundle.css`, Price history; w2 task 24, PR #151): `.price-hist` (the SVG), `.ph-hair` (hairlines), `.ph-step` (the line), `.ph-dot` (the newest point), `.ph-label` (prices and months), `.ph-now` (the newest label). The build writes classes only, never inline style (check-parts).
 - **Numbers from data, never typed:** every point comes from the view with its check date; a gap stays a gap.

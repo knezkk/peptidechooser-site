@@ -119,3 +119,24 @@ ODOBRENO SEO - Karlo - 8. 11. 2026 - PR #136
 ODOBRENO SEO - Karlo - 8. 11. 2026 - PR #140 (first sentence of /peptides/bremelanotide/: "Bremelanotide (PT-141) is one molecule under two names (see below).")
 
 ODOBRENO SEO - Karlo - 9. 11. 2026 - PR #144 (task 23 with Q1 A and Q2 A: "Plan covers N medicines", plan counts, cheapest lines on /hair/, /libido/ and the substance pages; table in the run report, no title, description or H1 change)
+
+ODOBRENO SEO - Karlo - 8. 11. 2026 - PR #145 part 1 (additions on /learn/are-peptides-safe/, /learn/are-peptides-legal-in-the-us/, /learn/is-bpc-157-legal/ and the substance pages with clinic plans or the HHS policy; texts in the PR. Part 2, /learn/peptides-vs-steroids/, is not approved: draft until task 4C)
+
+ODOBRENO SEO - Karlo - 9. 11. 2026 - PR #149 (/muscle/ "No prescription" card: CJC-1295 / ipamorelin instead of sermorelin)
+
+ODOBRENO SEO - Karlo - 9. 11. 2026 - shop prices in descriptions
+/sellers/one-aminos/ 703d14e6f1ca
+/sellers/peptidology/ ba79896b373f
+/sellers/virtus-peptides/ 08b3a1d53d55
+
+ODOBRENO SEO - Karlo - 9. 11. 2026 - new pages bremelanotide-vs-tadalafil and rx-peps-direct
+/compare/bremelanotide-vs-tadalafil/ d65485d00bfb
+/sellers/rx-peps-direct/ fb7c96d38273
+
+ODOBRENO SEO - Karlo - 9. 11. 2026 - PR #154 (task 25: a kept seller page opens with "No longer in our data: the facts below are from <date>, the last day we tracked <Name>."; first: /sellers/unyx-peptides/)
+
+ODOBRENO SEO - Karlo - 9. 11. 2026 - PR #155 (vardenafil description with the clinic count line; no price question for a clinic without a monthly plan)
+/peptides/vardenafil/ 69d0257c1686
+
+ODOBRENO SEO - Karlo - 9. 11. 2026 - new page male-excel-excel-medical
+/sellers/male-excel-excel-medical/ 717748b4698f

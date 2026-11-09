@@ -33,10 +33,10 @@ jobs:
       - name: fetch the live sitemap
         run: python3 tools/live_sitemap.py "$RUNNER_TEMP"
       - run: python3 build.py
-        env: { LIVE_SITEMAP: "${{ runner.temp }}/live-sitemap.xml", LIVE_LASTMOD: "${{ runner.temp }}/live-lastmod.json" }
+        env: { LIVE_SITEMAP: "${{ runner.temp }}/live-sitemap.xml", LIVE_LASTMOD: "${{ runner.temp }}/live-lastmod.json", LIVE_SELLER_ARCHIVE: "${{ runner.temp }}/live-seller-archive.json" }
       # a page born from new data gets its share image here (owner answer Q1 a, 3 Nov 2026), then the site is rebuilt
       - name: draw missing share images
-        env: { LIVE_SITEMAP: "${{ runner.temp }}/live-sitemap.xml", LIVE_LASTMOD: "${{ runner.temp }}/live-lastmod.json" }
+        env: { LIVE_SITEMAP: "${{ runner.temp }}/live-sitemap.xml", LIVE_LASTMOD: "${{ runner.temp }}/live-lastmod.json", LIVE_SELLER_ARCHIVE: "${{ runner.temp }}/live-seller-archive.json" }
         run: |
           if [ "$(python3 tools/og.py --missing --count)" != "0" ]; then
             pip install -q playwright==1.49.1
@@ -51,6 +51,7 @@ jobs:
           python3 tools/test_tier1_guard.py
           python3 tools/tier1_guard.py
       - name: check-words, check-seo, check-schema, check-parts
+        env: { LIVE_SITEMAP: "${{ runner.temp }}/live-sitemap.xml" }
         run: python3 tools/check.py
       - name: check-layout
         run: |
