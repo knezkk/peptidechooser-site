@@ -120,4 +120,6 @@ ODOBRENO SEO - Karlo - 8. 11. 2026 - PR #140 (first sentence of /peptides/bremel
 
 ODOBRENO SEO - Karlo - 9. 11. 2026 - PR #144 (task 23 with Q1 A and Q2 A: "Plan covers N medicines", plan counts, cheapest lines on /hair/, /libido/ and the substance pages; table in the run report, no title, description or H1 change)
 
+ODOBRENO SEO - Karlo - 8. 11. 2026 - PR #145 part 1 (additions on /learn/are-peptides-safe/, /learn/are-peptides-legal-in-the-us/, /learn/is-bpc-157-legal/ and the substance pages with clinic plans or the HHS policy; texts in the PR. Part 2, /learn/peptides-vs-steroids/, is not approved: draft until task 4C)
+
 ODOBRENO SEO - Karlo - 9. 11. 2026 - PR #149 (/muscle/ "No prescription" card: CJC-1295 / ipamorelin instead of sermorelin)
