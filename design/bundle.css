@@ -650,6 +650,8 @@ p.not-in{margin:4px 0 0}
 /* Goal drawing: clinic blue on clinic-tint */
 .goal-art{flex:none;fill:none;stroke:var(--g,var(--clinic));stroke-width:2.4;stroke-linecap:round}
 .goal-c-hair{--g:var(--goal-hair);--gt:var(--goal-hair-tint)}.goal-c-skin{--g:var(--goal-skin);--gt:var(--goal-skin-tint)}.goal-c-weight-loss{--g:var(--goal-weight-loss);--gt:var(--goal-weight-loss-tint)}.goal-c-muscle{--g:var(--goal-muscle);--gt:var(--goal-muscle-tint)}.goal-c-recovery{--g:var(--goal-recovery);--gt:var(--goal-recovery-tint)}.goal-c-libido{--g:var(--goal-libido);--gt:var(--goal-libido-tint)}.goal-c-longevity{--g:var(--goal-longevity);--gt:var(--goal-longevity-tint)}
+/* The five new goals (owner, ODOBRENO DIZAJN - Karlo - 8. 11. 2026 - w4 crteži novih ciljeva; w4 block 6): the same pair of tokens as the seven. */
+.goal-c-growth-hormone{--g:var(--goal-growth-hormone);--gt:var(--goal-growth-hormone-tint)}.goal-c-sleep{--g:var(--goal-sleep);--gt:var(--goal-sleep-tint)}.goal-c-testosterone{--g:var(--goal-testosterone);--gt:var(--goal-testosterone-tint)}.goal-c-energy{--g:var(--goal-energy);--gt:var(--goal-energy-tint)}.goal-c-menopause{--g:var(--goal-menopause);--gt:var(--goal-menopause-tint)}
 .goal-pic{display:flex;align-items:center;justify-content:center;height:84px;margin-bottom:10px;border-radius:var(--radius-art-s);background:var(--gt)}
 .goal-photo{display:block;width:100%;height:100%;object-fit:cover;border-radius:inherit}
 .goal-panel{display:none}
@@ -691,3 +693,14 @@ p.not-in{margin:4px 0 0}
 .faq-item{padding:var(--space-3) 0;border-bottom:1px solid var(--line)}
 .faq-item h3{margin:0 0 4px;font:700 var(--ui-size)/1.35 var(--font-text);color:var(--ink)}
 .faq-item p{margin:0;max-width:68ch;color:var(--ink-2);line-height:1.55}
+
+/* Lab mark (pages/nav-parts.md, Lab mark; w2 task 24, PR #151): a lab-label chip, white with a 1px ink border. */
+.chip-lab{background:var(--white);color:var(--ink);border:1px solid var(--ink)}
+/* Price history (pages/nav-parts.md, Price history; w2 task 24, PR #151): a step line on white, three hairlines, the newest point labelled. No fill, no animation. */
+.price-hist{display:block;width:100%;height:auto;max-height:160px;background:var(--white)}
+.ph-hair{stroke:var(--line);stroke-width:1}
+.ph-step{fill:none;stroke:var(--clinic);stroke-width:1.5}
+.ph-dot{fill:var(--clinic)}
+.ph-label{font:400 12px var(--font-text);fill:var(--ink-2)}
+.ph-now{font:600 12px var(--font-text);fill:var(--ink)}
+@media (max-width:640px){.price-hist{max-height:120px}}

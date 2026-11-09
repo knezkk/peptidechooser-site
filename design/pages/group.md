@@ -6,6 +6,8 @@ Index: [`design/pages.md`](../pages.md). Owner queue block 6, step 3a (8 Nov 202
 
 Substances grouped by approval, route or class. A group page is made only when it passes its Google rule (a measured search, at least 6 of the top 10 match the format); the format, list or guide, follows that check. No goal colour, no goal drawing, no body figure: a group is not a goal.
 
+**Group icons** (w4 block 7; ODOBRENO DIZAJN - Karlo - 9. 11. 2026, PR #150): `assets/art.svg` `group-<slug>`, one per group page: /fda-approved/ a stamp with a check, /prescription/ the ℞ pad, /supplements/ a capsule, /topical/ a drop over skin, /injections/ a vial (never a needle), /bioregulators/ a chain of three units. The goal drawings' style (one 2px line, round caps, 56 grid, readable at 34px), always in `ink` on `paper-2`, because a group has no colour of its own. Today the icon is used only on the share image; a place on the page itself comes with the first built group page.
+
 **Which layout** (owner, 8 Nov 2026): guide layout for /fda-approved/, /prescription/ and /injections/; list layout for /supplements/, /topical/ and /bioregulators/. A later group takes the layout its Google check shows.
 
 ### List layout (/supplements/, /topical/, /bioregulators/)
@@ -38,3 +40,8 @@ A narrower search inside a goal that shares fewer than 3 of the Google top 10 wi
 - **On the goal page:** a "Narrower questions" line under the options: the goal's indexable subpages as text links between hairlines (the What to do next part), only when one exists.
 - **Not on Home, not in the By goal menu:** a subpage is reached from its goal page, search and the sitemap; the goal stays the one entry.
 - **Schema:** BreadcrumbList; FAQPage only with the Questions part.
+
+## Round 3 fixes (owner answer a, 8 Nov 2026; ODOBRENO DIZAJN - Karlo - 9. 11. 2026 - PR #143)
+
+- **Not a peptide:** in a group's substance table (and on /fda-approved/ first), a substance that is not a peptide (today finasteride, minoxidil and orforglipron, from a peptide flag in the data, w2) stays in the table with a `chip-neutral` "Not a peptide" right after its name, so the page never calls it a peptide (the architecture plan).
+- **Goal subpage:** the first screen's right column is the goal's own panel (`goal-panel goal-c-<goal>` with the goal's photo, or its drawing until a photo is chosen), never an empty tint.

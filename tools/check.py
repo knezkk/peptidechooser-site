@@ -9,7 +9,7 @@ import os
 import re
 import subprocess
 import sys
-from datetime import date
+from datetime import date, datetime
 from html import escape, unescape
 from html.parser import HTMLParser
 from pathlib import Path
@@ -188,10 +188,16 @@ def rule8_errs(P):
     return errs
 
 
+def sitemap_all():
+    """The sitemap index and every file it points to (task 23, 8 Nov 2026), as one text."""
+    files = [DIST / "sitemap.xml"] + sorted(DIST.glob("sitemap-*.xml"))
+    return "".join(f.read_text(encoding="utf-8") for f in files if f.exists())
+
+
 def check_seo(P):
     errs, titles, descs = [], {}, {}
     errs += rule8_errs(P)
-    sitemap = (DIST / "sitemap.xml").read_text()
+    sitemap = sitemap_all()
     for name, p in P.items():
         path = "/" if name == "index.html" else "/" + name.replace("index.html", "")
         if name == "404.html":
@@ -435,7 +441,7 @@ def check_paid_plumbing():
     robots = (DIST / "robots.txt").read_text(encoding="utf-8")
     if "Disallow: /out/" not in robots:
         errs.append("robots.txt: no Disallow: /out/")
-    if "/out/" in (DIST / "sitemap.xml").read_text(encoding="utf-8"):
+    if "/out/" in sitemap_all():
         errs.append("sitemap.xml: /out/ in the sitemap")
     urls = [r["tracking_url"] for r in data["redirects"] if r.get("tracking_url")]
     for f in sorted(p for p in DIST.rglob("*") if p.suffix in (".html", ".json", ".xml", ".txt") and "out" not in p.relative_to(DIST).parts[:1]):
@@ -821,7 +827,7 @@ def check_parts(P):
             errs.append(f"{name}: does not link both sides to their pages")
         if all(h.startswith("/peptides/") for h in heads) and len(re.findall(r'rel="nofollow">(?:FDA source|Source)</a>', html)) < 2:
             errs.append(f"{name}: a substance without its status source")
-    sm = (DIST / "sitemap.xml").read_text(encoding="utf-8") if (DIST / "sitemap.xml").exists() else ""
+    sm = sitemap_all()
     seen = set()
     for loc in re.findall(r"<loc>[^<]*/compare/([a-z0-9-]+)-vs-([a-z0-9-]+)/</loc>", sm):
         key = frozenset(loc)
@@ -863,7 +869,7 @@ def check_parts(P):
                 errs.append(f"{name}: thin ({', '.join(has) or 'status only'}) but indexed")
     # Orphans (pages/every-page.md, Rules that apply to every page): every page in the sitemap is linked from another page of the
     # build (not the sitemap or llms.txt, which are not pages).
-    sm = (DIST / "sitemap.xml").read_text(encoding="utf-8") if (DIST / "sitemap.xml").exists() else ""
+    sm = sitemap_all()
     linked = set()
     for name, p in P.items():
         own = page_path(name)
@@ -872,7 +878,7 @@ def check_parts(P):
             if h.startswith("/") and h != own:
                 linked.add(h)
     for loc in re.findall(rf"<loc>{re.escape(SITE)}([^<]*)</loc>", sm):
-        if loc != "/" and loc not in linked:
+        if loc != "/" and not loc.endswith(".xml") and loc not in linked:
             errs.append(f"sitemap.xml: {loc} is linked from no other page")
     # The author line (pages/every-page.md, Rules that apply to every page): every goal, seller, peptide, compare, guide and letters
     # page carries the one line "<team>. Checked <date>." with the same class, exactly once.
@@ -1537,7 +1543,9 @@ def check_rules33(P):
                     mine = x["seller_slug"] in b or name.startswith(f"sellers/{x['seller_slug']}/")
                     if pn and mine and pn in t and "/mo" in t:
                         errs.append(f"{name}: the per-order plan {x['seller_slug']} '{pn}' is shown with '/mo'")
-                if f"sellers/{x['seller_slug']}/" in name and f"{usd(x['price_per_order'])}/mo" in text(html):
+                # the page's own content: the menu's goal prices ("Energy and aging, from $135/mo") are other plans (task 26)
+                main = re.search(r"<main\b.*?</main>", html, re.S)
+                if f"sellers/{x['seller_slug']}/" in name and f"{usd(x['price_per_order'])}/mo" in text(main.group(0) if main else html):
                     errs.append(f"{name}: '{usd(x['price_per_order'])}/mo' is the per-order price of '{pn}'")
     return errs
 
@@ -1549,6 +1557,134 @@ ADDRESS_RX = re.compile(r"^/(?:[a-z0-9]+(?:-[a-z0-9]+)*/)*$")
 STALE_WORDS = ("best", "cheapest", "latest")
 RESERVED = {"peptides", "sellers", "compare", "learn", "labs", "tools", "fda-warning-letters", "search", "out", "about",
             "how-we-rate", "sources", "contact", "corrections", "disclosure", "privacy", "assets", "og", "windows"}
+
+
+def check_arch(P):
+    """Owner task 23 (8 Nov 2026), the architecture data: 1. a plan covering several medicines stands once in a table and
+    says "Plan covers N medicines"; 3. each seller move has its 301 and no page, link or sitemap entry keeps the old address;
+    4. sitemap.xml is an index of one file per page type, each URL in one file of its type, with the date in lastmod.json."""
+    errs = []
+    d = json.loads((ROOT / "data" / "site.json").read_text(encoding="utf-8"))
+    text = lambda h: " ".join(unescape(re.sub(r"<[^>]+>", " ", h)).split())
+    multi = {(x["seller_slug"], " ".join((x["plan_name"] or "").split())): len(set(x.get("substance_slugs") or []))
+             for x in d.get("plans") or [] if len(set(x.get("substance_slugs") or [])) > 1 and x.get("price_per_order") is None}
+    tables = [(n, (DIST / n).read_text(encoding="utf-8")) for n in P]
+    tables += [(f"windows/{f.name}", json.loads(f.read_text(encoding="utf-8")).get("html", ""))
+               for f in sorted((DIST / "windows").glob("clinics-*.json"))] if (DIST / "windows").exists() else []
+    for name, html in tables:
+        for tbody in re.findall(r"<tbody>(.*?)</tbody>", html, re.S):
+            seen = set()
+            for row in re.findall(r"<tr\b[^>]*>.*?</tr>", tbody, re.S):
+                slug = re.search(r'data-clinic="([^"]+)"', row) or re.search(r'href="/sellers/([^/"]+)/"', row)
+                pn = re.search(r'class="(?:name )?plan-cut" title="([^"]*)"', row)
+                if not (slug and pn):
+                    continue
+                key = (slug.group(1), " ".join(unescape(pn.group(1)).split()))
+                if key in seen:
+                    errs.append(f"{name}: the plan {key[0]} '{key[1]}' stands twice in one table")
+                seen.add(key)
+                n = multi.get(key)
+                if n and f"Plan covers {n} medicines" not in text(row):
+                    errs.append(f"{name}: the plan {key[0]} '{key[1]}' covers {n} medicines but does not say so")
+    moves = {r["old_slug"]: r["new_slug"] for r in d.get("seller_redirects") or [] if r.get("old_slug") and r.get("new_slug")}
+    red = (DIST / "_redirects").read_text(encoding="utf-8") if (DIST / "_redirects").exists() else ""
+    sm = sitemap_all()
+    for old, new in moves.items():
+        if f"/sellers/{old}/ /sellers/{new}/ 301" not in red:
+            errs.append(f"_redirects: no 301 from /sellers/{old}/ to /sellers/{new}/")
+        if (DIST / "sellers" / old).exists():
+            errs.append(f"sellers/{old}/: the old address of a moved seller is still built")
+        if f"/sellers/{old}/<" in sm:
+            errs.append(f"sitemap: the old address /sellers/{old}/ is listed")
+        for name, html in tables:
+            if f'href="/sellers/{old}/' in html or f'href="{SITE}/sellers/{old}/' in html:
+                errs.append(f"{name}: links to the old address /sellers/{old}/")
+    index = (DIST / "sitemap.xml").read_text(encoding="utf-8") if (DIST / "sitemap.xml").exists() else ""
+    if "<sitemapindex" not in index:
+        return errs + ["sitemap.xml: not a sitemap index"]
+    marks = json.loads((DIST / "lastmod.json").read_text(encoding="utf-8")) if (DIST / "lastmod.json").exists() else {}
+    want = {"seller": r"/sellers/[^/]+/", "substance": r"/peptides/[^/]+/", "compare": r"/compare/[^/]+-vs-[^/]+/", "guide": r"/learn/[^/]+/"}
+    where = {}
+    for loc in re.findall(r"<loc>([^<]+)</loc>", index):
+        m = re.fullmatch(re.escape(SITE) + r"/sitemap-(main|goal|group|substance|seller|compare|guide|trust)\.xml", loc)
+        if not m or not (DIST / f"sitemap-{m.group(1)}.xml").exists():
+            errs.append(f"sitemap.xml: '{loc}' is not one of our page-type files")
+            continue
+        body = (DIST / f"sitemap-{m.group(1)}.xml").read_text(encoding="utf-8")
+        for path, day in re.findall(re.escape(SITE) + r"(/[^<]*)</loc><lastmod>([^<]*)</lastmod>", body):
+            if path in where:
+                errs.append(f"sitemap: {path} is in sitemap-{where[path]}.xml and sitemap-{m.group(1)}.xml")
+            where[path] = m.group(1)
+            if not re.fullmatch(r"\d{4}-\d{2}-\d{2}", day) or (marks.get(path) or {}).get("d") != day:
+                errs.append(f"sitemap-{m.group(1)}.xml: {path} has lastmod '{day}', not its date in lastmod.json")
+            for t, rx in want.items():
+                if re.fullmatch(rx, path) and m.group(1) != t:
+                    errs.append(f"sitemap-{m.group(1)}.xml: {path} belongs in sitemap-{t}.xml")
+    return errs
+
+
+def check_arch_switch(P):
+    """Owner task 24 (9 Nov 2026): the lab mark, the price history and the data's "Not a peptide" chip show only with
+    PC_ARCH_DATA=1. Off: none of them. On: a lab mark only on a shop row, from a lab report in the data; a price history
+    only with 3 checks over 60 days; /fda-approved/, once built, marks every substance the data calls no peptide."""
+    errs, on = [], os.environ.get("PC_ARCH_DATA") == "1"
+    d = json.loads((ROOT / "data" / "site.json").read_text(encoding="utf-8"))
+    text = lambda h: " ".join(unescape(re.sub(r"<[^>]+>", " ", h)).split())
+    month = lambda iso: date.fromisoformat(str(iso)[:10]).strftime("%b %Y")
+    marks = {" · ".join(x for x in ("Lab report", c.get("lab_name") or "", month(c["coa_date"])) if x)
+             for c in d.get("coa_reports") or [] if c.get("coa_date")}
+    for name in P:
+        html = (DIST / name).read_text(encoding="utf-8")
+        labs = re.findall(r'<span class="chip chip-lab"[^>]*>([^<]*)</span>', html)
+        hist = re.search(r'id="history">(.*?)</details>', html, re.S)
+        if not on and (labs or hist):
+            errs.append(f"{name}: a lab mark or a price history without PC_ARCH_DATA=1")
+            continue
+        for x in labs:
+            if unescape(x) not in marks:
+                errs.append(f"{name}: lab mark '{unescape(x)}' is not a lab report in the data")
+        for tr in re.findall(r'<table class="[^"]*tbl-clinics[^"]*">.*?</table>', html, re.S):
+            if "chip-lab" in tr:
+                errs.append(f"{name}: a lab mark on a clinic row")
+        if hist:
+            days = [_parse_day(x) for x in re.findall(r"<tr><td>([^<]+)</td><td", hist.group(1))]
+            if len(days) < 3 or (max(days) - min(days)).days < 60:
+                errs.append(f"{name}: a price history with {len(days)} checks over {(max(days) - min(days)).days if days else 0} days")
+    fa = DIST / "fda-approved" / "index.html"
+    if on and fa.exists():
+        html = fa.read_text(encoding="utf-8")
+        for tr in re.findall(r"<tr\b.*?</tr>", html, re.S):
+            slug = re.search(r'href="/peptides/([^/"]+)/"', tr)
+            nots = {r["substance_slug"] for r in d.get("legal_db") or [] if r.get("is_peptide") is False}
+            if slug and slug.group(1) in nots and "Not a peptide" not in text(tr):
+                errs.append(f"fda-approved/index.html: {slug.group(1)} is no peptide in the data but has no 'Not a peptide' chip")
+    return errs
+
+
+def _parse_day(s):
+    """"8 Nov 2026" as a date."""
+    return datetime.strptime(" ".join(s.split()), "%d %b %Y").date()
+
+
+def check_kept_sellers(P):
+    """Owner task 25 (9 Nov 2026), site map rule 5.1: no seller page in the last live sitemap (LIVE_SITEMAP, the deploy's
+    copy) disappears without a redirect in data/redirects.json (or a 4C move in site.seller_redirects); a kept page of a
+    seller that left the data has no /out/ link."""
+    errs, f = [], os.environ.get("LIVE_SITEMAP")
+    d = json.loads((ROOT / "data" / "site.json").read_text(encoding="utf-8"))
+    if not (f and Path(f).is_file() and d.get("seller_profiles")):
+        return errs  # the repo data builds no seller page; the deploy's real data is what this guards
+    moved = json.loads((ROOT / "data" / "redirects.json").read_text(encoding="utf-8"))
+    moved |= {f"/sellers/{r['old_slug']}/": f"/sellers/{r['new_slug']}/" for r in d.get("seller_redirects") or []}
+    for slug in sorted(set(re.findall(re.escape(SITE) + r"/sellers/([a-z0-9-]+)/</loc>", Path(f).read_text(encoding="utf-8")))):
+        if f"/sellers/{slug}/" not in moved and not (DIST / "sellers" / slug / "index.html").exists():
+            errs.append(f"sellers/{slug}/: live but not built and no redirect in data/redirects.json (site map rule 5.1)")
+    archive = json.loads((DIST / "seller-archive.json").read_text(encoding="utf-8")).get("sellers", {}) if (DIST / "seller-archive.json").exists() else {}
+    for slug in archive:
+        name = f"sellers/{slug}/index.html"
+        if name in P and "No longer in our data" in (DIST / name).read_text(encoding="utf-8") and 'href="/out/' in (DIST / name).read_text(encoding="utf-8"):
+            errs.append(f"{name}: a seller that left the data still has a paid link")
+    return errs
 
 
 def live_addresses():
@@ -1588,7 +1724,7 @@ def check_addresses(P):
     return errs
 
 
-CHECKS = {"words": check_words, "seo": check_seo, "schema": check_schema, "parts": check_parts, "data": check_data, "book": check_book, "events": check_events, "logic": check_logic, "rules33": check_rules33, "addresses": check_addresses}
+CHECKS = {"words": check_words, "seo": check_seo, "schema": check_schema, "parts": check_parts, "data": check_data, "book": check_book, "events": check_events, "logic": check_logic, "rules33": check_rules33, "addresses": check_addresses, "arch": check_arch, "arch-switch": check_arch_switch, "kept-sellers": check_kept_sellers}
 
 # Plan names against their form (owner task w2, 3 Nov 2026): a clinic's own plan name can name another form than the
 # plan's `dosage_form` ("Ozempic Pill" for a pen). The site cannot change data, so this only warns, never fails, and the
