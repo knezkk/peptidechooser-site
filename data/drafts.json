@@ -480,6 +480,9 @@
         "slug": "testosterone",
         "text": "Peptides for testosterone, compared with approved TRT"
       }
+    },
+    "weight-loss": {
+      "short_answer": "Two weekly shots are FDA approved for weight management, semaglutide (Wegovy) and tirzepatide (Zepbound), both on prescription. Online clinics also sell compounded copies, cheaper and not checked by the FDA batch by batch. A daily pill, orforglipron (Foundayo), is also FDA approved for weight management; it is not a peptide. Retatrutide and cagrilintide are still in trials and sold only by research-use shops. Below: what each option costs at the clinics we track, and which clinics have an FDA warning letter."
     }
   },
   "subpages": [
@@ -728,5 +731,86 @@
         }
       ]
     }
-  ]
+  ],
+  "goal_rows": {
+    "weight-loss": {
+      "peptides": [
+        {
+          "name": "Foundayo (orforglipron)",
+          "plain": "A daily pill on prescription for adults with obesity, or overweight with a weight-related health problem. Not a peptide.",
+          "status": "FDA approved",
+          "chip": "ok",
+          "does": "In a 72-week trial in 3,127 adults with obesity, people lost 7.5% to 11.2% of body weight, by dose, against 2.1% on placebo.",
+          "how": "Prescription.",
+          "status_plain": "FDA approved for weight management.",
+          "substance": "orforglipron",
+          "plan_form": "pill",
+          "src": [
+            301,
+            302
+          ],
+          "line_one": "daily pill for weight loss, not a peptide",
+          "rx_word": "on prescription"
+        },
+        {
+          "name": "Cagrilintide with semaglutide (CagriSema)",
+          "plain": "Cagrilintide is in trials combined with semaglutide (CagriSema). Not approved; Drugs@FDA lists no product with it.",
+          "status": "Not approved; still in trials",
+          "chip": "neutral",
+          "does": "In a 68-week trial in 3,417 adults with obesity or overweight, people on the combination lost 20.4% of body weight, against 3.0% on placebo.",
+          "how": "Research-use shops sell cagrilintide in vials, with our checks.",
+          "status_plain": "Not approved; in trials.",
+          "substance": "cagrilintide",
+          "src": [
+            322
+          ],
+          "line_one": "combination shot, still in trials",
+          "rx_word": "research use only"
+        }
+      ],
+      "sources": [
+        {
+          "n": 301,
+          "text": "FDA drug label for Foundayo (orforglipron), Indications and Usage, through openFDA, effective 29 Jul 2026",
+          "url": "https://api.fda.gov/drug/label.json?search=openfda.brand_name:%22FOUNDAYO%22"
+        },
+        {
+          "n": 302,
+          "text": "Wharton S et al., Orforglipron, an Oral Small-Molecule GLP-1 Receptor Agonist for Obesity Treatment (ATTAIN-1), N Engl J Med 393(18), 2025, PubMed 40960239",
+          "url": "https://pubmed.ncbi.nlm.nih.gov/40960239/"
+        },
+        {
+          "n": 322,
+          "text": "Garvey WT et al., Coadministered Cagrilintide and Semaglutide in Adults with Overweight or Obesity (REDEFINE 1), N Engl J Med 393(7), 2025, PubMed 40544433",
+          "url": "https://pubmed.ncbi.nlm.nih.gov/40544433/"
+        }
+      ]
+    },
+    "muscle": {
+      "peptides": [
+        {
+          "name": "IGF-1 LR3",
+          "plain": "A lab-made, longer-acting form of IGF-1 sold for muscle, in vials for lab use. Not approved.",
+          "status": "Not approved",
+          "chip": "neutral",
+          "does": "A modified form of IGF-1, a hormone the body makes in response to growth hormone. No approved product; the approved IGF-1 medicine, mecasermin (Increlex), is a different product.",
+          "how": "Research-use shops, with our checks.",
+          "status_plain": "Not approved.",
+          "substance": "igf-1-lr3",
+          "src": [
+            401
+          ],
+          "line_one": "vials sold for muscle",
+          "rx_word": "research use only"
+        }
+      ],
+      "sources": [
+        {
+          "n": 401,
+          "text": "Drugs@FDA through openFDA: no product with IGF-1 LR3; mecasermin (Increlex) approved 30 Aug 2005, searched 9 Nov 2026",
+          "url": "https://api.fda.gov/drug/drugsfda.json?search=products.active_ingredients.name:MECASERMIN"
+        }
+      ]
+    }
+  }
 }

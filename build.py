@@ -35,6 +35,11 @@ if os.environ.get("PC_DRAFTS") and (ROOT / "data" / "drafts.json").exists():
     DATA["goals"] += _drafts.get("goals", [])
     for _g in DATA["goals"]:  # proposed changes to a live goal (block 14: /longevity/ without "energy"), drafts only
         _g.update(_drafts.get("goal_changes", {}).get(_g["slug"], {}))
+        # rows added to a live goal (block 19: the third signal for cagrilintide, orforglipron and IGF-1 LR3), with their sources
+        _add = _drafts.get("goal_rows", {}).get(_g["slug"], {})
+        _g["peptides"] = _g["peptides"] + _add.get("peptides", [])
+        if _add.get("sources"):
+            _g["sources"] = _g.get("sources", []) + _add["sources"]
     DATA["legal"]["rows"] += _drafts.get("legal_rows", [])
     DATA["legal"]["sources"] += _drafts.get("legal_sources", [])
     DATA["subpages"] = _drafts.get("subpages", [])
@@ -1498,7 +1503,9 @@ def clinic_open(g, p, rp=None, low=None):
     rows = option_plans(g, p)
     if not rows:
         return ""
-    plan = low or rp or min(rows, key=lambda r: (float(r["price_monthly"]), r["seller_name"]))
+    # the row's plan only when its window holds it (9 Nov 2026: Peter MD's TRT plan of unknown kind on /libido/ is the row's
+    # cheapest, but the window lists only brand and generic plans, so the button names the window's cheapest)
+    plan = low or (rp if any(r is rp for r in rows) else None) or min(rows, key=lambda r: (float(r["price_monthly"]), r["seller_name"]))
     otc = needs_rx(p) is False
     noun = "seller" if otc else "clinic"
     n = len({r["seller_slug"] for r in rows})
