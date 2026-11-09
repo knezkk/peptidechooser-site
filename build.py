@@ -5960,10 +5960,13 @@ def main():
     (DIST / "CNAME").write_text("peptidechooser.com\n")
     (DIST / ".nojekyll").write_text("")
     # Cloudflare Pages, the new host (owner queue block 5, step 4A); GitHub Pages serves both as plain files and ignores them.
-    # _redirects stays empty until task 4C moves the 36 addresses; the project's own *.pages.dev address never competes
-    # with peptidechooser.com in Google.
-    (DIST / "_redirects").write_text("# Server redirects on Cloudflare Pages (301). Empty until task 4C (site map rules, section 8).\n"
-                                     + "".join(f"/sellers/{o}/ /sellers/{n}/ 301\n" for o, n in sorted(SELLER_MOVES.items())))
+    # _redirects (task 4C, site map rules, section 8): every move in data/redirects.json and every seller move is a server
+    # 301; the meta-refresh pages above stay as the fallback. The project's own *.pages.dev address never competes with
+    # peptidechooser.com in Google.
+    _301 = {o: n for o, n in REDIRECTS.items() if built(n) or (DIST / n.strip("/") / "index.html").exists()}
+    _301 |= {f"/sellers/{o}/": f"/sellers/{n}/" for o, n in SELLER_MOVES.items()}
+    (DIST / "_redirects").write_text("# Server redirects on Cloudflare Pages (301), task 4C (site map rules, section 8).\n"
+                                     + "".join(f"{o} {n} 301\n" for o, n in sorted(_301.items())))
     (DIST / "_headers").write_text("# Cloudflare Pages only: keep the project's pages.dev address out of Google.\n"
                                    "https://:project.pages.dev/*\n  X-Robots-Tag: noindex\n")
     (DIST / "robots.txt").write_text(f"User-agent: *\nAllow: /\nDisallow: /out/\nSitemap: {SITE}/sitemap.xml\n")
