@@ -134,3 +134,6 @@ ODOBRENO SEO - Karlo - 9. 11. 2026 - new pages bremelanotide-vs-tadalafil and rx
 /sellers/rx-peps-direct/ fb7c96d38273
 
 ODOBRENO SEO - Karlo - 9. 11. 2026 - PR #154 (task 25: a kept seller page opens with "No longer in our data: the facts below are from <date>, the last day we tracked <Name>."; first: /sellers/unyx-peptides/)
+
+ODOBRENO SEO - Karlo - 9. 11. 2026 - PR #155 (vardenafil description with the clinic count line; no price question for a clinic without a monthly plan)
+/peptides/vardenafil/ 69d0257c1686

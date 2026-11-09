@@ -1543,7 +1543,9 @@ def check_rules33(P):
                     mine = x["seller_slug"] in b or name.startswith(f"sellers/{x['seller_slug']}/")
                     if pn and mine and pn in t and "/mo" in t:
                         errs.append(f"{name}: the per-order plan {x['seller_slug']} '{pn}' is shown with '/mo'")
-                if f"sellers/{x['seller_slug']}/" in name and f"{usd(x['price_per_order'])}/mo" in text(html):
+                # the page's own content: the menu's goal prices ("Energy and aging, from $135/mo") are other plans (task 26)
+                main = re.search(r"<main\b.*?</main>", html, re.S)
+                if f"sellers/{x['seller_slug']}/" in name and f"{usd(x['price_per_order'])}/mo" in text(main.group(0) if main else html):
                     errs.append(f"{name}: '{usd(x['price_per_order'])}/mo' is the per-order price of '{pn}'")
     return errs
 
