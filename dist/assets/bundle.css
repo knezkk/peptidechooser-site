@@ -693,3 +693,14 @@ p.not-in{margin:4px 0 0}
 .faq-item{padding:var(--space-3) 0;border-bottom:1px solid var(--line)}
 .faq-item h3{margin:0 0 4px;font:700 var(--ui-size)/1.35 var(--font-text);color:var(--ink)}
 .faq-item p{margin:0;max-width:68ch;color:var(--ink-2);line-height:1.55}
+
+/* Lab mark (pages/nav-parts.md, Lab mark; w2 task 24, PR #151): a lab-label chip, white with a 1px ink border. */
+.chip-lab{background:var(--white);color:var(--ink);border:1px solid var(--ink)}
+/* Price history (pages/nav-parts.md, Price history; w2 task 24, PR #151): a step line on white, three hairlines, the newest point labelled. No fill, no animation. */
+.price-hist{display:block;width:100%;height:auto;max-height:160px;background:var(--white)}
+.ph-hair{stroke:var(--line);stroke-width:1}
+.ph-step{fill:none;stroke:var(--clinic);stroke-width:1.5}
+.ph-dot{fill:var(--clinic)}
+.ph-label{font:400 12px var(--font-text);fill:var(--ink-2)}
+.ph-now{font:600 12px var(--font-text);fill:var(--ink)}
+@media (max-width:640px){.price-hist{max-height:120px}}
