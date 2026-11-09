@@ -1514,7 +1514,9 @@ def how_line(p):
     if has_window(p) and window_kind(p) == "research" and not re.search(r"shop|do not link", p["how"], re.I):
         clinics = any(on_sub(r, subs_of(p)) for r in PLANS)
         return "Research-use shops, with our checks." + (" Online clinics also prescribe it." if clinics else "")
-    return p["how"]
+    # a link to a substance page this build does not have (no status in the data) keeps its words without the link (block 21)
+    return re.sub(r'<a href="/peptides/([a-z0-9-]+)/">(.*?)</a>',
+                  lambda m: m.group(0) if m.group(1) in PEPTIDE_SLUGS else m.group(2), p["how"])
 
 
 # A row whose data has no listing says so where the button would be, by its kind (owner, 4 Nov 2026), never an empty space.
