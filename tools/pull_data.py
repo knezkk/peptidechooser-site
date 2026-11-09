@@ -133,6 +133,28 @@ def move_sellers(x, redirects):
     return walk(x)
 
 
+def add_history_and_labs(d):
+    """Owner task 24 (9 Nov 2026; peptide-data spec 0025): the price history of the sizes and plans the site shows, the lab
+    reports of its listings and the lab list. Each view is read only once it exists; until then the keys stay empty and the
+    build is unchanged. The build draws them only with PC_ARCH_DATA=1."""
+    ids = lambda key: ",".join(str(int(r[key])) for r in d["products"] if r.get(key) is not None) or "0"
+    d["price_history"] = (rows(
+        "select seller_slug, substance_slug, product_id, variant_id, price_usd, price_per_mg, observed_on, source_id "
+        f"from site.price_history where variant_id in ({ids('variant_id')}) order by variant_id, observed_on")
+        if has_view("price_history") and any(r.get("variant_id") is not None for r in d["products"]) else [])
+    d["plan_price_history"] = (rows(
+        "select seller_slug, plan_slug, price_monthly, membership_fee_monthly, observed_on, source_id, source_url "
+        "from site.plan_price_history where price_monthly is not null order by seller_slug, plan_slug, observed_on")
+        if has_view("plan_price_history") else [])
+    d["coa_reports"] = (rows(
+        "select seller_slug, substance_slug, product_id, lab_slug, lab_name, coa_date, source_id, source_url "
+        f"from site.coa_reports where product_id in ({ids('product_id')}) order by product_id, coa_date desc")
+        if has_view("coa_reports") else [])
+    d["labs"] = rows("select * from site.labs order by lab_slug") if has_view("labs") else []
+    print(f"pull_data: {len(d['price_history'])} size and {len(d['plan_price_history'])} plan price changes, "
+          f"{len(d['coa_reports'])} lab reports, {len(d['labs'])} labs")
+
+
 def pull_paid():
     """site.paid_redirects and site.seller_copy_rules (peptide-data task 13) into data/paid.json, the only data file that
     holds tracking addresses (paid.py). Until both views exist the file stays as it is and the build uses the fixture.
@@ -279,7 +301,7 @@ def main():
     products = rows(
         "select seller_slug, seller_name, seller_status, product_name, variant_title, product_url, substance_slug, is_blend, "
         "amount_mg, form, price_usd, price_per_mg, price_observed_at, first_seen, last_seen, has_coa, coa_count"
-        f"{optional_columns('products', 'product_id')} from site.products")
+        f"{optional_columns('products', 'product_id', 'variant_id')} from site.products")
     add_cosmetic_links(products)
     d["products"] = keep_products(products, substances(d))
     used = {r["seller_slug"] for r in d["products"]}
@@ -329,6 +351,7 @@ def main():
     d["letter_substances"] = rows(
         "select letter_reference, letter_url, letter_date, substance_slug, substance_name, first_mention "
         "from site.letter_substances order by letter_date desc, substance_slug")
+    add_history_and_labs(d)
     d["pulled_at"] = datetime.utcnow().isoformat(timespec="seconds") + "Z"
     d = move_sellers(d, d["seller_redirects"])
     if PAID.exists() and d["seller_redirects"]:
