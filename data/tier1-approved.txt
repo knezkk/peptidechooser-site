@@ -128,3 +128,7 @@ ODOBRENO SEO - Karlo - 9. 11. 2026 - shop prices in descriptions
 /sellers/one-aminos/ 703d14e6f1ca
 /sellers/peptidology/ ba79896b373f
 /sellers/virtus-peptides/ 08b3a1d53d55
+
+ODOBRENO SEO - Karlo - 9. 11. 2026 - new pages bremelanotide-vs-tadalafil and rx-peps-direct
+/compare/bremelanotide-vs-tadalafil/ d65485d00bfb
+/sellers/rx-peps-direct/ fb7c96d38273
