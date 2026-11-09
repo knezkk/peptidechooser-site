@@ -35,6 +35,11 @@ if os.environ.get("PC_DRAFTS") and (ROOT / "data" / "drafts.json").exists():
     DATA["goals"] += _drafts.get("goals", [])
     for _g in DATA["goals"]:  # proposed changes to a live goal (block 14: /longevity/ without "energy"), drafts only
         _g.update(_drafts.get("goal_changes", {}).get(_g["slug"], {}))
+        # rows added to a live goal (block 19: the third signal for cagrilintide, orforglipron and IGF-1 LR3), with their sources
+        _add = _drafts.get("goal_rows", {}).get(_g["slug"], {})
+        _g["peptides"] = _g["peptides"] + _add.get("peptides", [])
+        if _add.get("sources"):
+            _g["sources"] = _g.get("sources", []) + _add["sources"]
     DATA["legal"]["rows"] += _drafts.get("legal_rows", [])
     DATA["legal"]["sources"] += _drafts.get("legal_sources", [])
     DATA["subpages"] = _drafts.get("subpages", [])
@@ -400,8 +405,12 @@ def goals_strip(heading, skip=None):
 # Header categories (pages.md, Every page, Header; owner task 3 Nov 2026, the "Home v2" sketch): five buttons, each opening
 # a panel of links to pages (never a section of Home). A link shows only when its page is in this build, a category only
 # when it has a link. By goal groups the goal pages as below, each with its option count and the cheapest price the data has.
-NAV_GOAL_GROUPS = [("Hair and skin", ("hair", "skin")), ("Weight", ("weight-loss",)), ("Body", ("muscle", "recovery")),
-                   ("Drive and aging", ("libido", "longevity"))]
+# Wave B (design/pages/goal.md, By goal menu; ODOBRENO DIZAJN - Karlo - 8. 11. 2026 - PR #142; queue block 27, 9 Nov 2026):
+# six groups (two columns until w1 widens the card; see nav_cats). A goal shows only when its page is in this build and has `page` in the data, so a
+# draft goal (data/drafts.json, PC_DRAFTS=1 only) stays out of the deploy and joins by itself when it moves to site.json.
+NAV_GOAL_GROUPS = [("Hair and skin", ("hair", "skin")), ("Weight", ("weight-loss",)),
+                   ("Body", ("muscle", "recovery", "growth-hormone")), ("Hormones", ("testosterone", "menopause")),
+                   ("Drive and aging", ("libido", "longevity")), ("Sleep and energy", ("sleep", "energy"))]
 # "Body" added (owner answer 2 a to w2, 3 Nov 2026): /learn/ has a sixth topic for the muscle, skin, recovery, libido and aging guides
 LEARN_TOPICS = [("hair", "Hair"), ("glp1", "GLP-1"), ("legal", "Legal"), ("buying", "Buying"), ("data", "Data"), ("body", "Body")]
 
@@ -450,7 +459,9 @@ def nav_cats(path):
                       for head, slugs in groups if any(x in goals for x in slugs))
         return f'<div class="nav-col">{out}</div>' if out else ""
 
-    # By goal in two columns, as in the sketch: Hair and skin with Weight, then Body with Drive and aging
+    # By goal in two columns, as in the sketch: Hair and skin with Weight, then the other groups. The book's three columns of
+    # two (goal.md, By goal menu) wait for w1's card width (.handoff/to-w1.md, 9 Nov 2026): three 270px columns and
+    # "Start here" leave the 1180px container (tools/check_layout.js).
     goal_cols = [col(NAV_GOAL_GROUPS[:2]), col(NAV_GOAL_GROUPS[2:])]
     letters_on = max((r["letter_date"] for r in LETTERS_ALL if r.get("letter_date")), default="")
     plans, sellers = compare_items() if (PLANS or PROFILES) else ([], [])
@@ -1500,7 +1511,9 @@ def clinic_open(g, p, rp=None, low=None):
     rows = option_plans(g, p)
     if not rows:
         return ""
-    plan = low or rp or min(rows, key=lambda r: (float(r["price_monthly"]), r["seller_name"]))
+    # the row's plan only when its window holds it (9 Nov 2026: Peter MD's TRT plan of unknown kind on /libido/ is the row's
+    # cheapest, but the window lists only brand and generic plans, so the button names the window's cheapest)
+    plan = low or (rp if any(r is rp for r in rows) else None) or min(rows, key=lambda r: (float(r["price_monthly"]), r["seller_name"]))
     otc = needs_rx(p) is False
     noun = "seller" if otc else "clinic"
     n = len({r["seller_slug"] for r in rows})
@@ -1830,6 +1843,8 @@ def legal_rows(only=None):
     for r in LEGAL["rows"]:
         if not keep(r.get("substances", [])) or (only is None and r.get("goal_only")):
             continue  # a goal_only row and its source live on that goal's page, not in Home's table
+        if set(r.get("substances") or []) <= set(PEP_WAITING) and r.get("wait"):
+            continue  # a waiting substance is listed nowhere yet
         if only is not None and r.get("checked"):
             seen.append(r["checked"])
         found = [db_status(slug) for slug in r.get("substances", [])] if LEGAL_DB else []
@@ -1885,6 +1900,39 @@ for _r in sorted(DATA.get("letter_substances") or [], key=lambda r: (r["letter_d
     SUBS_OF_LETTER.setdefault(_r["letter_url"], []).append(_r["substance_slug"])
 LETTER_CO = {r["letter_url"]: r["company_name"] for r in LETTERS_ALL}
 LETTERS_URL = "/fda-warning-letters/" if LETTERS_ALL else "/#letters"
+
+
+# Waiting substances (owner's assistant, queue block 27, 9 Nov 2026; peptide-data spec 0027): a hand row marked `wait`
+# (cagrilintide, IGF-1 LR3) has no official status in the database, so the site carries its own row with its own
+# `source`. Until its page has three of the six signals (pages.md, Peptide, Thin pages) the page is built with noindex
+# but listed nowhere: not in the legal tables, the A to Z, the counts, search or a comparison, and its source takes no
+# number. Once it has them it joins PEPTIDE_SLUGS and its source the numbered list, by itself. Counted here, before the
+# sources are numbered; a waiting row is never FDA approved, so the clinic plan and approved brand signals do not apply.
+# pep_signals() must agree (checked where PEP_THIN is set).
+def wait_signals(slug):
+    words = {re.sub(r"\s*\(.*\)", "", hand_legal(slug)["peptide"]).strip().lower(), slug.replace("-", " ")}
+    return {"goal page": any(slug in subs_of(p) for g in ALL_GOALS if g.get("page") for p in g["peptides"]),
+            "shop table": bool(seller_rows(slug, "research")), "FDA letter": bool(LETTER_SUBS_ON and LETTER_SUBS.get(slug)),
+            "guide": any(w in g["title"].lower() for g in guides.GUIDES for w in words)}
+
+
+PEP_WAITING = []
+for _r in LEGAL["rows"]:
+    if not _r.get("wait"):
+        continue
+    assert _r["status"] != "FDA approved" and len(_r["substances"]) == 1 and not _r.get("src"), _r["peptide"]
+    _x = _r["substances"][0]
+    if db_status(_x):
+        continue  # the database has a status now: its row wins, the hand row is not used
+    if sum(wait_signals(_x).values()) < 3:
+        PEP_WAITING.append(_x)
+        continue
+    _r["src"] = len(LEGAL["sources"]) + 1
+    LEGAL["sources"].append({"n": _r["src"], **_r["source"]})
+    _head, _sep, _rest = SOURCES_HOME.partition('<li id="src-price-')
+    SOURCES_HOME = (_head + f'<li id="src-{_r["src"]}">{_r["source"]["text"]}: <a href="{_r["source"]["url"]}" rel="nofollow">'
+                    f'{_r["source"]["url"]}</a></li>' + _sep + _rest)
+PEPTIDE_SLUGS[:] = [x for x in PEPTIDE_SLUGS if x not in PEP_WAITING]
 renumber_sources()  # after LETTERS_URL: the option rows' plan lines carry the letter chip
 
 # The letters page (pages.md, Letters, owner 1 Nov 2026): every letter in `letters_all` (site.fda_letters_all through
@@ -4169,7 +4217,7 @@ def pep_status(slug):
     r = hand_legal(slug)
     if not r:
         return None
-    src = next(x for x in LEGAL["sources"] if x["n"] == r["src"])
+    src = r.get("source") or next(x for x in LEGAL["sources"] if x["n"] == r["src"])  # a waiting row's own source
     name = re.sub(r"\s*\(.*\)", "", r["peptide"]) if r.get("substances") == [slug] else substance_name(slug)
     return {"chip": r["chip"], "label": r["status"], "sentence": r["note"], "name": name, "url": src["url"],
             "seen": r.get("checked") or LEGAL["checked"], "hand": True}
@@ -5305,7 +5353,9 @@ def pep_signals(slug):
 # Thin pages (pages.md, Peptide; owner task 2 Nov 2026): a page with fewer than three of the six is still built and
 # linked, but carries noindex and leaves the sitemap and llms.txt, as /search/ does.
 PEP_MIN_SIGNALS = 3
-PEP_THIN = [x for x in PEPTIDE_SLUGS if sum(pep_signals(x).values()) < PEP_MIN_SIGNALS]
+PEP_THIN = [x for x in PEPTIDE_SLUGS + PEP_WAITING if sum(pep_signals(x).values()) < PEP_MIN_SIGNALS]
+for _x in [s for r in LEGAL["rows"] if r.get("wait") and not db_status(r["substances"][0]) for s in r["substances"]]:
+    assert sum(wait_signals(_x).values()) == sum(pep_signals(_x).values()), f"wait_signals and pep_signals differ for {_x}"
 
 if PEPTIDE_SLUGS:
     PAGES.append(("/peptides/", "peptides/index.html", "Peptides A to Z: FDA status and prices | Peptide Chooser",
@@ -5316,7 +5366,7 @@ if PEPTIDE_SLUGS:
                   [("/peptides/", "Peptides")]))
     for _x in PEP_THIN:
         NOINDEX.add(f"/peptides/{_x}/")
-    for _x in PEPTIDE_SLUGS:
+    for _x in PEPTIDE_SLUGS + PEP_WAITING:  # a waiting page is built, noindex and linked from nowhere
         PAGES.append((f"/peptides/{_x}/", f"peptides/{_x}/index.html", pep_title(_x), pep_description(_x), pep_page(_x), faq_schema(pep_faq_pairs(_x)),
                       [("/peptides/", "Peptides"), (f"/peptides/{_x}/", pep_short(_x))]))
 
@@ -6095,7 +6145,11 @@ def main():
     # an old path to its new one; GitHub Pages has no server redirects, so each old path gets a page with a meta refresh,
     # the canonical of the new page and noindex. Never a path the build already has. A redirect to a page this data does
     # not build (/sellers/ in the repo data, which holds no sellers) is left out, never pointed at a missing page.
-    for old_path, new_path in REDIRECTS.items():
+    # every seller move (site.seller_redirects, task 4C) gets the same fallback page at its old address, so a host without
+    # server redirects, and tools/tier1_guard.py, see the move (queue block 29, 9 Nov 2026)
+    moves = list(REDIRECTS.items()) + [(f"/sellers/{o}/", f"/sellers/{n}/") for o, n in sorted(SELLER_MOVES.items())
+                                       if f"/sellers/{o}/" not in REDIRECTS]
+    for old_path, new_path in moves:
         assert not built(old_path), f"redirect from {old_path}, which is still a page"
         if not built(new_path) and not (DIST / new_path.strip("/") / "index.html").exists():
             print(f"redirect {old_path} left out: {new_path} is not built with this data")
@@ -6118,10 +6172,13 @@ def main():
     (DIST / "CNAME").write_text("peptidechooser.com\n")
     (DIST / ".nojekyll").write_text("")
     # Cloudflare Pages, the new host (owner queue block 5, step 4A); GitHub Pages serves both as plain files and ignores them.
-    # _redirects stays empty until task 4C moves the 36 addresses; the project's own *.pages.dev address never competes
-    # with peptidechooser.com in Google.
-    (DIST / "_redirects").write_text("# Server redirects on Cloudflare Pages (301). Empty until task 4C (site map rules, section 8).\n"
-                                     + "".join(f"/sellers/{o}/ /sellers/{n}/ 301\n" for o, n in sorted(SELLER_MOVES.items())))
+    # _redirects (task 4C, site map rules, section 8): every move in data/redirects.json and every seller move is a server
+    # 301; the meta-refresh pages above stay as the fallback. The project's own *.pages.dev address never competes with
+    # peptidechooser.com in Google.
+    _301 = {o: n for o, n in REDIRECTS.items() if built(n) or (DIST / n.strip("/") / "index.html").exists()}
+    _301 |= {f"/sellers/{o}/": f"/sellers/{n}/" for o, n in SELLER_MOVES.items()}
+    (DIST / "_redirects").write_text("# Server redirects on Cloudflare Pages (301), task 4C (site map rules, section 8).\n"
+                                     + "".join(f"{o} {n} 301\n" for o, n in sorted(_301.items())))
     (DIST / "_headers").write_text("# Cloudflare Pages only: keep the project's pages.dev address out of Google.\n"
                                    "https://:project.pages.dev/*\n  X-Robots-Tag: noindex\n")
     (DIST / "robots.txt").write_text(f"User-agent: *\nAllow: /\nDisallow: /out/\nSitemap: {SITE}/sitemap.xml\n")
@@ -6228,6 +6285,8 @@ def cited_sources():
     """{url: [text, has_link, [(path, title), ...]]} from every page's source lists, in first-cited order."""
     out = {}
     for path, _, title, _, body, *_ in PAGES:
+        if path in {f"/peptides/{x}/" for x in PEP_WAITING}:
+            continue  # a waiting page is listed nowhere, /sources/ included (queue block 27)
         for ol in re.findall(r'<ol class="[^"]*\bsources\b[^"]*"[^>]*>(.*?)</ol>', body, re.S):
             for li in re.findall(r"<li[^>]*>(.*?)</li>", ol, re.S):
                 m = re.match(r'(.*?):\s*(?:<a href="(https?://[^"]+)"[^>]*>[^<]*</a>|(https?://\S+))\s*$', li.strip(), re.S)
