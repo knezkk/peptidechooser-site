@@ -38,6 +38,14 @@ if os.environ.get("PC_DRAFTS") and (ROOT / "data" / "drafts.json").exists():
     DATA["legal"]["rows"] += _drafts.get("legal_rows", [])
     DATA["legal"]["sources"] += _drafts.get("legal_sources", [])
     DATA["subpages"] = _drafts.get("subpages", [])
+    # Group pages in the list layout (group.md, List layout; owner queue block 20, wave D): a group's members are the
+    # database's substances of its class (site.substances.substance_class). A member without a database status gets the
+    # group's checked status as its own hand row: no page of its own, shown only in the group's table.
+    DATA["list_groups"] = _drafts.get("list_groups", [])
+    _with_db = {r["substance_slug"] for r in DATA.get("legal_db") or []}
+    for _lg in DATA["list_groups"]:
+        DATA["legal"]["rows"] += [dict(_lg["status"], peptide=s["canonical_name"], substances=[s["substance_slug"]], no_page=True, goal_only=True)
+                                  for s in DATA.get("substances") or [] if s.get("substance_class") == _lg["class"] and s["substance_slug"] not in _with_db]
 # The HHS compounding policy of 30 Oct 2026 is worded once, in legal.hhs_policy (owner queue block 4, 7 Nov 2026): every
 # {hhs_<key>} in the data is that entry's text, so no page types its own version.
 HHS = DATA["legal"].get("hhs_policy") or {}
@@ -4971,7 +4979,7 @@ def pep_page(slug):
     left = ((f'<div class="panel-line pep-block" id="evidence">{evidence}</div>' if evidence else "")
             + (f'<div class="panel-line pep-block" id="history">{hist}</div>' if hist else "")
             + (f'<div class="panel-line pep-block" id="letters">{letters}</div>' if letters else ""))
-    blocks = f'<div class="pep-body"><div class="pep-left">{left}</div><div class="pep-right">{pep_facts(slug, s)}{pep_guides(slug)}</div></div>'
+    blocks = f'<div class="pep-body"><div class="pep-left">{left}</div><div class="pep-right">{pep_facts(slug, s)}{pep_guides(slug)}{group_link(slug)}</div></div>'
     nxt = pep_next(slug)
     faq = (f'\n<section class="section"><div class="wrap">{faq_block(pep_name(slug) + (f" ({NAMES[slug][0]})" if NAMES.get(slug) else ""), pep_faq_pairs(slug), "faq-h")}</div></section>'
            if pep_faq_pairs(slug) else "")
@@ -5083,8 +5091,8 @@ def group_table(slugs, caption):
     """The substances of a group page (design/pages/group.md): the /peptides/ A to Z table cut to the group, a "Not a
     peptide" chip right after a name the database flags, a thin (noindex) substance as plain text, and no filter row at
     12 rows or fewer (none of the draft groups has more). Returns (html, rows)."""
-    rows = sorted((x for x in slugs if x in PEPTIDE_SLUGS), key=lambda x: pep_name(x).lower())
-    name = lambda x: (f'<a class="name" href="/peptides/{x}/">{escape(pep_name(x))}</a>' if x not in PEP_THIN
+    rows = sorted((x for x in slugs if x in PEPTIDE_SLUGS or hand_legal(x)), key=lambda x: pep_name(x).lower())
+    name = lambda x: (f'<a class="name" href="/peptides/{x}/">{escape(pep_name(x))}</a>' if x in PEPTIDE_SLUGS and x not in PEP_THIN
                       else f'<span class="name">{escape(pep_name(x))}</span>')
     np_chip = ' <span class="chip chip-neutral">Not a peptide</span>'
     trs = "".join(
@@ -5094,6 +5102,149 @@ def group_table(slugs, caption):
     return (f'<div class="tbl-wrap"><table class="tbl tbl-cards tbl-peptides"><caption class="vh">{escape(caption)}</caption>'
             f'<thead><tr><th scope="col">Substance</th><th scope="col">Status</th><th scope="col">What it means</th>'
             f'<th scope="col">Lowest price</th></tr></thead><tbody>{trs}</tbody></table></div>'), rows
+
+
+LIST_GROUPS = DATA.get("list_groups") or []  # drafts only (PC_DRAFTS=1)
+GROUP_SHOPS_FIRST = 10  # with JavaScript the shops table shows its first ten and "Show all N" (as /sellers/)
+
+
+def list_members(g):
+    """A list-layout group's substances: every database substance of its class that has a status (database or the group's
+    checked row), in the table's order."""
+    slugs = [s["substance_slug"] for s in DATA.get("substances") or [] if s.get("substance_class") == g["class"]]
+    return sorted((x for x in slugs if x in PEPTIDE_SLUGS or hand_legal(x)), key=lambda x: pep_name(x).lower())
+
+
+def group_link(slug):
+    """On a substance page, its list-layout group page (group.md: the group and its main substance link each other)."""
+    gs = [g for g in LIST_GROUPS if slug in list_members(g)]
+    if not gs:
+        return ""
+    items = "".join(f'<li><a href="{g["path"]}">{escape(g["crumb"])}</a></li>' for g in gs)
+    return f'<section class="related" aria-labelledby="group-h"><h2 id="group-h" class="h-sources">Group</h2><ul>{items}</ul></section>'
+
+
+GROUP_FILTER_JS = """<script>
+(function(){var t=document.getElementById('grp-table'),f=document.querySelector('.grp-filter');if(!t||!f)return;
+var q=document.getElementById('grp-q'),c=document.getElementById('grp-clear'),n=document.getElementById('grp-n'),e=document.getElementById('grp-none'),
+rows=[].slice.call(t.tBodies[0].rows);var h=new URLSearchParams(location.hash.slice(1));if(h.get('name'))q.value=h.get('name');
+function draw(){var s=q.value.trim().toLowerCase(),k=0;rows.forEach(function(r){var hit=!s||r.cells[0].textContent.toLowerCase().indexOf(s)>=0;r.hidden=!hit;if(hit)k++;});
+n.textContent=k+' of '+rows.length+' shown.';e.hidden=k>0;t.parentNode.hidden=k===0;
+history.replaceState(null,'',s?'#name='+encodeURIComponent(s):location.pathname+location.search);}
+var sb=document.getElementById('grp-shops'),mo=document.getElementById('grp-more');if(sb&&mo){var sr=[].slice.call(sb.rows);
+sr.forEach(function(r,i){r.hidden=i>=10;});mo.hidden=false;mo.querySelector('button').addEventListener('click',function(){sr.forEach(function(r){r.hidden=false;});mo.hidden=true;});}
+f.hidden=false;q.addEventListener('input',draw);[c,document.getElementById('grp-reset')].forEach(function(b){b.addEventListener('click',function(v){v.preventDefault();q.value='';draw();q.focus();});});draw();})();
+</script>"""
+
+
+def list_group_page(g):
+    """A group page in the list layout (design/pages/group.md, List layout; owner queue block 20, wave D): the top with the
+    short answer and the facts pad, the substances with the name filter, where to buy by kind, guides, what to do next and
+    sources. Research-use shops get "Our review" only; a clinic's button follows the paid link rule (clinic_button)."""
+    rows = list_members(g)
+    table, _ = group_table(rows, f"{g['crumb']} and their FDA status")
+    table = table.replace('<table class="tbl', '<table id="grp-table" class="tbl', 1)
+    approved = [x for x in rows if pep_group(pep_status(x)) == "approved"]
+    checked = max(pep_checked(x) for x in rows)
+    srcs = [g["what_src"]]
+    hand = {pep_status(x)["url"]: next(s for s in LEGAL["sources"] if s["n"] == hand_legal(x)["src"]) for x in rows if not db_status(x)}
+    srcs += list({s["url"]: {"text": s["text"], "url": s["url"]} for s in hand.values()}.values())
+    srcs += list({db_status(x)["url"]: {"text": f'{source_word(db_status(x)["url"])}, the status of {pep_name(x)}, first seen by us {nice_date(db_status(x)["seen"])}',
+                                         "url": db_status(x)["url"]} for x in rows if db_status(x)}.values())
+    ref = lambda i: f'<a class="ref" href="#gsrc-{i}" aria-label="Source {i}"><sup>{i}</sup></a>'
+    sold = f'research-use shops sell {"them" if not approved else "the others"}, labelled not for use in people.{ref(2) if len(srcs) > 1 else ""}'
+    none = ("None of them is FDA approved; " if not approved else
+            f"{and_list([pep_name(x) for x in approved])} {'is' if len(approved) == 1 else 'are'} FDA approved; ")
+    lede = f'{escape(g["what"])}{ref(1)} We track {len(rows)} of them. {none}{sold}'
+    pad = (f'<aside class="board rx grp-pad" aria-label="The group in numbers"><ul class="facts-list">'
+           f'<li><span>Substances</span><span class="num">{len(rows)}</span></li>'
+           f'<li><span>FDA approved</span><span class="num">{len(approved)}</span></li></ul>'
+           f'<p class="letters-stamp"><span class="stamp">Checked {nice_date(checked)}</span></p></aside>')
+    main = "".join(f'<p class="small">{escape(t)}: <a href="/peptides/{x}/">{escape(pep_name(x))}</a>.</p>'
+                   for x, t in (g.get("main") or {}).items() if x in PEPTIDE_SLUGS and x not in PEP_THIN)
+    shops = sorted((r for r in SHOPS.values() if any(p["seller_slug"] == r["seller_slug"] and p["substance_slug"] in rows for p in PRODUCTS)),
+                   key=sellers_order)
+    me = sys.modules[__name__]
+    def shop_tr(r):
+        mine = sorted({p["substance_slug"] for p in PRODUCTS if p["seller_slug"] == r["seller_slug"] and p["substance_slug"] in rows}, key=lambda x: pep_name(x).lower())
+        low = vial_ppm([p for p in PRODUCTS if p["seller_slug"] == r["seller_slug"] and p["substance_slug"] in rows])
+        names = [pep_name(x) for x in mine]
+        return (f'<tr><td><span class="cell-pic">{parts.tile(r["seller_slug"], seller_base(seller_name(r)), 40, shop=True)}<a class="name" href="/sellers/{r["seller_slug"]}/">{seller_name(r)}</a></span></td>'
+                f'<td data-l="Sells">{escape(", ".join(names[:3]) + (f" and {len(names) - 3} more" if len(names) > 3 else ""))}</td>'
+                f'<td class="num" data-l="From">{per_mg(min(low)) + "/mg" if low else "unknown"}</td>'
+                f'<td data-l="Checks">{check_bar(r)}</td><td data-l="FDA letters">{home.where_letters(me, r)}</td>'
+                f'<td class="act"><a class="btn btn-line btn-sm" href="/sellers/{r["seller_slug"]}/">Our review</a></td></tr>')
+    clinics = [r for r in CLINIC_PROFILES.values() if set(clinic_subs(r)) & set(rows)]
+    def clinic_tr(r):
+        plans = [p for p in clinic_plan_rows(r) if p.get("substance_slug") in rows and p.get("price_monthly") is not None]
+        low = min((float(p["price_monthly"]) for p in plans), default=None)
+        mine = sorted({p["substance_slug"] for p in plans}, key=lambda x: pep_name(x).lower())
+        return (f'<tr><td><span class="cell-pic">{parts.tile(r["seller_slug"], seller_base(seller_name(r)), 40, seller=r)}<a class="name" href="/sellers/{r["seller_slug"]}/">{seller_name(r)}</a></span></td>'
+                f'<td data-l="What it prescribes">{escape(", ".join(pep_name(x) for x in mine))}</td>'
+                f'<td class="num" data-l="From">{usd(low) + "/mo" if low is not None else "unknown"}</td>'
+                f'<td data-l="Checks">{check_bar(r)}</td><td data-l="FDA letters">{home.where_letters(me, r)}</td>'
+                f'<td class="act">{clinic_button(r["seller_slug"], "See plans", in_table=True)}</td></tr>')
+    th = lambda who, what: (f'<thead><tr><th scope="col">{who}</th><th scope="col">{what}</th><th scope="col">From</th>'
+                            f'<th scope="col">Checks</th><th scope="col">FDA letters</th>{ACT_TH}</tr></thead>')
+    where = ""
+    if clinics:
+        where += (f'<h3 class="h-sources">Online clinics</h3><div class="tbl-wrap"><table class="tbl tbl-cards tbl-sellers tbl-where">'
+                  f'<caption class="vh">Online clinics that prescribe one of them</caption>{th("Clinic", "What it prescribes")}'
+                  f'<tbody>{"".join(clinic_tr(r) for r in clinics)}</tbody></table></div>')
+    if shops:
+        where += (f'<h3 class="h-sources">Research-use shops</h3><div class="tbl-wrap"><table class="tbl tbl-cards tbl-sellers tbl-where">'
+                  f'<caption class="vh">Research-use shops that list one of them, most checks first</caption>{th("Shop", "Sells")}'
+                  f'<tbody id="grp-shops">{"".join(shop_tr(r) for r in shops)}</tbody></table></div>'
+                  + (f'<p class="legal-more" id="grp-more" hidden><button type="button" class="btn btn-line">Show all {len(shops)}</button></p>'
+                     if len(shops) > GROUP_SHOPS_FIRST else "")
+                  + '<p class="small sellers-note">A research-use shop sells vials labelled not for use in people. We link to our review of it, never to the shop.</p>')
+    where = (f'<section class="section" id="where"><div class="wrap"><h2>Where they are sold</h2>{where}'
+             '<p class="small" style="margin-top:16px">Checks are facts we hold about the seller, not a safety or quality grade. <a href="/how-we-rate/">How we rate</a></p>'
+             '</div></section>') if where else ""
+    words = {w for x in rows for w in (pep_short(x).lower(), x.replace("-", " "))}
+    gds = [x for x in guides.GUIDES if any(w in x["title"].lower() for w in words)][:5]
+    guide_li = lambda x: f'<li><a href="/learn/{x["slug"]}/">{escape(x["title"])}</a></li>'
+    gd = (f'<section class="section"><div class="wrap"><section class="related" aria-labelledby="gguides-h"><h2 id="gguides-h" class="h-sources">Guides</h2>'
+          f'<ul>{"".join(guide_li(x) for x in gds)}</ul></section></div></section>') if gds else ""
+    nxt = [f'<li><a href="/peptides/{x}/">{escape(t)}: {escape(pep_name(x))}</a></li>' for x, t in (g.get("main") or {}).items()
+           if x in PEPTIDE_SLUGS and x not in PEP_THIN]
+    nxt += ['<li><a href="/peptides/">Every peptide we track, with its FDA status</a></li>',
+            '<li><a href="/learn/are-peptides-legal-in-the-us/">Are peptides legal in the US?</a></li>']
+    src_li = "".join(f'<li id="gsrc-{i}">{escape(s["text"])}: <a href="{escape(s["url"])}" rel="nofollow">{escape(s["url"])}</a></li>'
+                     for i, s in enumerate(srcs, start=1))
+    return f"""
+<section class="section letters-hd">
+  <div class="wrap hero-grid">
+    <div>
+      <h1>{escape(g["h1"])}</h1>
+      {author_line(checked)}
+      <p class="lede">{lede}</p>
+    </div>
+    {pad}
+  </div>
+</section>
+<section class="band-2" id="substances">
+  <div class="wrap">
+    <h2>The {plural(len(rows), "substance")} in this group</h2>
+    <div class="letters-filter grp-filter" hidden>
+      <div class="legal-filter"><label for="grp-q">Filter by name</label><input class="input" id="grp-q" type="text" autocomplete="off"><button type="button" class="btn btn-line btn-sm" id="grp-clear">Clear</button></div>
+      <p class="small" id="grp-n" aria-live="polite"></p>
+    </div>
+    {table}
+    <p class="small" id="grp-none" hidden>Nothing matches these filters. <a href="#substances" id="grp-reset">Clear filters</a></p>
+    {main}
+  </div>
+</section>
+{where}{gd}
+<section class="section goal-sec goal-next" id="next"><div class="wrap"><div><h2 class="h-sources">What to do next</h2><ul class="next-list">{"".join(nxt)}</ul></div></div></section>
+<section class="section" id="sources">
+  <div class="wrap">
+    <h2 class="h-sources">Sources</h2>
+    <ol class="small sources" style="padding-left:1.2em">{src_li}</ol>
+  </div>
+</section>
+{GROUP_FILTER_JS}
+"""
 
 
 def peptides_index():
@@ -5168,6 +5319,13 @@ if PEPTIDE_SLUGS:
     for _x in PEPTIDE_SLUGS:
         PAGES.append((f"/peptides/{_x}/", f"peptides/{_x}/index.html", pep_title(_x), pep_description(_x), pep_page(_x), faq_schema(pep_faq_pairs(_x)),
                       [("/peptides/", "Peptides"), (f"/peptides/{_x}/", pep_short(_x))]))
+
+for _g in LIST_GROUPS:  # drafts only (PC_DRAFTS=1): list-layout group pages (group.md), after the substance pages they link
+    if list_members(_g):
+        PAGES.append((_g["path"], _g["path"].strip("/") + "/index.html", _g["title"], _g["description"], list_group_page(_g),
+                      item_list_schema(_g["crumb"], [(pep_name(x), f"{SITE}/peptides/{x}/" if x in PEPTIDE_SLUGS and x not in PEP_THIN else f"{SITE}{_g['path']}")
+                                                     for x in list_members(_g)]),
+                      [(_g["path"], _g["crumb"])]))
 
 
 # Comparison pages (pages.md, Compare `/compare/<a>-vs-<b>/`; owner task 2 Nov 2026): static, indexable pairs from the
