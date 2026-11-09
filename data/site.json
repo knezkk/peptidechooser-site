@@ -989,6 +989,36 @@
         ]
       },
       {
+        "peptide": "Cagrilintide",
+        "status": "Not approved",
+        "chip": "neutral",
+        "note": "in clinical trials; no approved product",
+        "substances": [
+          "cagrilintide"
+        ],
+        "wait": true,
+        "source": {
+          "text": "Drugs@FDA through openFDA: no product with cagrilintide, searched 9 Nov 2026",
+          "url": "https://api.fda.gov/drug/drugsfda.json?search=products.active_ingredients.name:CAGRILINTIDE"
+        },
+        "checked": "2026-11-09"
+      },
+      {
+        "peptide": "IGF-1 LR3",
+        "status": "Not approved",
+        "chip": "neutral",
+        "note": "no approved product; the approved IGF-1 medicine is mecasermin (Increlex), a different product",
+        "substances": [
+          "igf-1-lr3"
+        ],
+        "wait": true,
+        "source": {
+          "text": "Drugs@FDA through openFDA: no product with IGF-1 LR3; mecasermin (Increlex) approved 30 Aug 2005, searched 9 Nov 2026",
+          "url": "https://api.fda.gov/drug/drugsfda.json?search=products.active_ingredients.name:MECASERMIN"
+        },
+        "checked": "2026-11-09"
+      },
+      {
         "peptide": "Sermorelin",
         "status": "Not approved",
         "chip": "neutral",
