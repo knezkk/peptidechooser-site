@@ -4,7 +4,13 @@
     {
       "seller": "peter-md",
       "substance": "testosterone",
-      "search": null
+      "search": {
+        "volume": 163,
+        "avg_12m": 170,
+        "query": "peter md testosterone",
+        "source": "Manufactura keywords_volume, US Google, average of the last 3 months, call 73232536",
+        "checked": "2026-11-09"
+      }
     },
     {
       "seller": "dudemeds",
@@ -19,7 +25,13 @@
     {
       "seller": "male-excel-excel-medical",
       "substance": "testosterone",
-      "search": null
+      "search": {
+        "volume": 60,
+        "avg_12m": 90,
+        "query": "male excel testosterone",
+        "source": "Manufactura keywords_volume, US Google, average of the last 3 months, call 73232536",
+        "checked": "2026-11-09"
+      }
     },
     {
       "seller": "mydrhank",
@@ -49,7 +61,13 @@
     {
       "seller": "enhance-md",
       "substance": "tirzepatide",
-      "search": null
+      "search": {
+        "volume": 23,
+        "avg_12m": 30,
+        "query": "enhance md tirzepatide",
+        "source": "Manufactura keywords_volume, US Google, average of the last 3 months, call 73232536",
+        "checked": "2026-11-09"
+      }
     },
     {
       "seller": "enhance-md",
@@ -101,5 +119,6 @@
       "substance": "sildenafil",
       "search": null
     }
-  ]
+  ],
+  "measured": "9 Nov 2026 (Manufactura call 73232536): the other 17 pairs have no figure (too small to measure); none was guessed."
 }
