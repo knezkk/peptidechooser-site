@@ -123,3 +123,8 @@ ODOBRENO SEO - Karlo - 9. 11. 2026 - PR #144 (task 23 with Q1 A and Q2 A: "Plan 
 ODOBRENO SEO - Karlo - 8. 11. 2026 - PR #145 part 1 (additions on /learn/are-peptides-safe/, /learn/are-peptides-legal-in-the-us/, /learn/is-bpc-157-legal/ and the substance pages with clinic plans or the HHS policy; texts in the PR. Part 2, /learn/peptides-vs-steroids/, is not approved: draft until task 4C)
 
 ODOBRENO SEO - Karlo - 9. 11. 2026 - PR #149 (/muscle/ "No prescription" card: CJC-1295 / ipamorelin instead of sermorelin)
+
+ODOBRENO SEO - Karlo - 9. 11. 2026 - shop prices in descriptions
+/sellers/one-aminos/ 703d14e6f1ca
+/sellers/peptidology/ ba79896b373f
+/sellers/virtus-peptides/ 08b3a1d53d55
