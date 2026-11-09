@@ -590,7 +590,7 @@ def page(path, title, description, body, schema="", crumb=None):
 </footer>
 {COOKIE_BAR}
 {NAV_JS}
-{SEARCH_JS}
+{"" if path == "/" else SEARCH_JS}
 {MOTION_JS}
 </body>
 </html>
@@ -2536,7 +2536,7 @@ def category_page(g):
 # Questions on a goal page (SEO round c, group 2, queue block 9): the searches "peptides for skin", "best peptides for
 # muscle growth" and the like, answered from the goal's approved texts and its option rows; no new claim.
 GOAL_FAQ = {"skin", "muscle", "weight-loss", "hair", "growth-hormone", "sleep", "energy", "weight-loss-pills",
-            "weight-loss-new-drugs", "testosterone"}  # all after "hair": drafts
+            "weight-loss-new-drugs", "testosterone"}  # all after "hair": wave A and B (queue blocks 18 and 21)
 
 
 def goal_price_word(g, p):
@@ -4440,7 +4440,11 @@ def pep_description(slug):
         parts.append(f'Online clinic plans from {usd(plan["price_monthly"])} a month.')
     goals = list(dict.fromkeys(g["name"].lower() for g, _ in pep_goals(slug)))
     if goals:
-        parts.append(f'On our {" and ".join(goals[:2])} page{"s" if len(goals[:2]) > 1 else ""}.')
+        # a goal name with "and" in it ("muscle and hormones") names each page apart (queue block 21: "On our muscle and
+        # hormones and growth hormone pages")
+        two = goals[:2]
+        parts.append(f'On our {two[0]} page and our {two[1]} page.' if len(two) > 1 and any(" and " in x for x in two)
+                     else f'On our {" and ".join(two)} page{"s" if len(two) > 1 else ""}.')
     brands = sorted({brand_base(a["brand_name"]) for a in APPROVED_DB if a["substance_slug"] == slug and a.get("brand_name")}
                     - {n.split()[0].title()})
     if brands and pep_group(s) == "approved":
@@ -6115,7 +6119,9 @@ def main():
         (DIST / "windows" / f"goal-{k}.json").write_text(json.dumps({"html": html}), encoding="utf-8")
     (DIST / "assets" / "nav.js").write_text(NAV_SCRIPT + STATE_SCRIPT + EVENTS_SCRIPT, encoding="utf-8")
     if home.JS:
-        (DIST / "assets" / "home.js").write_text(home.JS, encoding="utf-8")
+        # Home carries the header search in its cached file too (queue block 21: the wave B goals took Home past 60 KB)
+        search = SEARCH_JS.strip()[len("<script>"):-len("</script>")]
+        (DIST / "assets" / "home.js").write_text(search + "\n" + home.JS, encoding="utf-8")
     if home.ROWS:
         (DIST / home.WHERE_JSON).write_text(home.ROWS, encoding="utf-8")
     (DIST / "windows").mkdir(exist_ok=True)

@@ -278,7 +278,7 @@
       "title": "Weight loss peptides vs Wegovy, Zepbound | Peptide Chooser",
       "h1": "Peptides for weight loss, compared with the approved shots.",
       "description": "Wegovy and Zepbound are FDA approved for weight loss; compounded copies and retatrutide are not. Online clinic prices compared, with any FDA letter shown.",
-      "short_answer": "Two weekly shots are FDA approved for weight management, semaglutide (Wegovy) and tirzepatide (Zepbound), both on prescription. Online clinics also sell compounded copies, cheaper and not checked by the FDA batch by batch. Retatrutide is still in trials and sold only by research-use shops. Below: what each option costs at the clinics we track, and which clinics have an FDA warning letter.",
+      "short_answer": "Two weekly shots are FDA approved for weight management, semaglutide (Wegovy) and tirzepatide (Zepbound), both on prescription. Online clinics also sell compounded copies, cheaper and not checked by the FDA batch by batch. A daily pill, orforglipron (Foundayo), is also FDA approved for weight management; it is not a peptide. Retatrutide and cagrilintide are still in trials and sold only by research-use shops. Below: what each option costs at the clinics we track, and which clinics have an FDA warning letter.",
       "legal_section": true,
       "clinic_plans": {
         "substances": [
@@ -351,6 +351,86 @@
           "substance": "retatrutide",
           "line_one": "experimental shot, still in trials",
           "rx_word": "research use only"
+        },
+        {
+          "name": "Foundayo (orforglipron)",
+          "plain": "A daily pill on prescription for adults with obesity, or overweight with a weight-related health problem. Not a peptide.",
+          "status": "FDA approved",
+          "chip": "ok",
+          "does": "In a 72-week trial in 3,127 adults with obesity, people lost 7.5% to 11.2% of body weight, by dose, against 2.1% on placebo.",
+          "how": "Prescription.",
+          "status_plain": "FDA approved for weight management.",
+          "substance": "orforglipron",
+          "plan_form": "pill",
+          "src": [
+            301,
+            302
+          ],
+          "line_one": "daily pill for weight loss, not a peptide",
+          "rx_word": "on prescription"
+        },
+        {
+          "name": "Cagrilintide with semaglutide (CagriSema)",
+          "plain": "Cagrilintide is in trials combined with semaglutide (CagriSema). Not approved; Drugs@FDA lists no product with it.",
+          "status": "Not approved; still in trials",
+          "chip": "neutral",
+          "does": "In a 68-week trial in 3,417 adults with obesity or overweight, people on the combination lost 20.4% of body weight, against 3.0% on placebo.",
+          "how": "Research-use shops sell cagrilintide in vials, with our checks.",
+          "status_plain": "Not approved; in trials.",
+          "substance": "cagrilintide",
+          "src": [
+            322
+          ],
+          "line_one": "combination shot, still in trials",
+          "rx_word": "research use only"
+        },
+        {
+          "name": "Liraglutide (Saxenda)",
+          "plain": "A daily shot on prescription, for obesity or overweight with a weight-related health problem.",
+          "status": "FDA approved",
+          "chip": "ok",
+          "does": "The older, daily GLP-1 shot. Liraglutide is also sold as Victoza for type 2 diabetes, which is not approved for weight loss.",
+          "how": "Prescription. Our <a href=\"/peptides/liraglutide/\">liraglutide page</a> has its status and sources, and <a href=\"/fda-approved/\">FDA approved peptides</a> lists every approved one we track.",
+          "status_plain": "FDA approved for weight management.",
+          "substance": "liraglutide",
+          "plan_form": "shot",
+          "src": [
+            303
+          ],
+          "line_one": "daily shot for weight loss",
+          "rx_word": "on prescription"
+        },
+        {
+          "name": "Naltrexone-bupropion (Contrave)",
+          "plain": "A pill on prescription, for obesity or overweight with a weight-related health problem. Not a peptide.",
+          "status": "FDA approved",
+          "chip": "ok",
+          "does": "Two older medicines in one tablet: naltrexone, which blocks opioid receptors, and bupropion, an antidepressant.",
+          "how": "Prescription.",
+          "status_plain": "FDA approved for weight management.",
+          "substance": "naltrexone-bupropion",
+          "plan_form": "pill",
+          "src": [
+            304
+          ],
+          "line_one": "pill for weight loss, not a peptide",
+          "rx_word": "on prescription"
+        },
+        {
+          "name": "Orlistat (Alli)",
+          "plain": "A capsule sold over the counter for overweight adults, with a low-calorie, low-fat diet. Not a peptide.",
+          "status": "FDA approved",
+          "chip": "ok",
+          "does": "Sold over the counter as Alli for overweight adults 18 and older, used with a reduced-calorie, low-fat diet.",
+          "how": "Over the counter, at any pharmacy.",
+          "status_plain": "FDA approved; Alli is sold over the counter.",
+          "substance": "orlistat",
+          "plan_form": "pill",
+          "src": [
+            305
+          ],
+          "line_one": "capsule without prescription, not a peptide",
+          "rx_word": "over the counter"
         }
       ],
       "short": "Weight loss",
@@ -363,6 +443,38 @@
           "line": "An over-the-counter app and glucose sensor for adults not on insulin; FDA cleared as a device, not approved as a weight-loss medicine.",
           "source": "FDA 510(k) K250106, Signos Glucose Monitoring System, read 4 Nov 2026",
           "url": "https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfPMN/pmn.cfm?ID=K250106"
+        }
+      ],
+      "sources": [
+        {
+          "n": 301,
+          "text": "FDA drug label for Foundayo (orforglipron), Indications and Usage, through openFDA, effective 29 Jul 2026",
+          "url": "https://api.fda.gov/drug/label.json?search=openfda.brand_name:%22FOUNDAYO%22"
+        },
+        {
+          "n": 302,
+          "text": "Wharton S et al., Orforglipron, an Oral Small-Molecule GLP-1 Receptor Agonist for Obesity Treatment (ATTAIN-1), N Engl J Med 393(18), 2025, PubMed 40960239",
+          "url": "https://pubmed.ncbi.nlm.nih.gov/40960239/"
+        },
+        {
+          "n": 322,
+          "text": "Garvey WT et al., Coadministered Cagrilintide and Semaglutide in Adults with Overweight or Obesity (REDEFINE 1), N Engl J Med 393(7), 2025, PubMed 40544433",
+          "url": "https://pubmed.ncbi.nlm.nih.gov/40544433/"
+        },
+        {
+          "n": 303,
+          "text": "FDA drug label for Saxenda (liraglutide), Indications and Usage, through openFDA, effective 25 Feb 2026",
+          "url": "https://api.fda.gov/drug/label.json?search=openfda.brand_name:%22SAXENDA%22"
+        },
+        {
+          "n": 304,
+          "text": "FDA drug label for Contrave (naltrexone and bupropion), Indications and Usage, through openFDA, effective 10 Nov 2025",
+          "url": "https://api.fda.gov/drug/label.json?search=openfda.brand_name:%22CONTRAVE%22"
+        },
+        {
+          "n": 305,
+          "text": "FDA drug label for Alli (orlistat), over the counter, Uses, through openFDA, effective 27 Mar 2024",
+          "url": "https://api.fda.gov/drug/label.json?search=openfda.brand_name:%22ALLI%22"
         }
       ]
     },
@@ -434,11 +546,48 @@
           ],
           "line_one": "vials sold for growth hormone",
           "rx_word": "research use only"
+        },
+        {
+          "name": "IGF-1 LR3",
+          "plain": "A lab-made, longer-acting form of IGF-1 sold for muscle, in vials for lab use. Not approved.",
+          "status": "Not approved",
+          "chip": "neutral",
+          "does": "A modified form of IGF-1, a hormone the body makes in response to growth hormone. No approved product; the approved IGF-1 medicine, mecasermin (Increlex), is a different product.",
+          "how": "Research-use shops, with our checks.",
+          "status_plain": "Not approved.",
+          "substance": "igf-1-lr3",
+          "src": [
+            401
+          ],
+          "line_one": "vials sold for muscle",
+          "rx_word": "research use only"
+        },
+        {
+          "name": "Testosterone (TRT)",
+          "plain": "A gel or shot on prescription. Approved only for men with low testosterone from a medical condition.",
+          "status": "FDA approved",
+          "chip": "ok",
+          "does": "Replaces a hormone the body makes too little of. Not FDA approved for low testosterone without an associated medical condition.",
+          "how": "Prescription, after blood tests. Our <a href=\"/testosterone/\">testosterone page</a> compares the online clinics that prescribe it.",
+          "status_plain": "FDA approved only for low testosterone with an associated medical condition.",
+          "substance": "testosterone",
+          "src": [
+            10
+          ],
+          "line_one": "gel or shot for low testosterone",
+          "rx_word": "on prescription"
         }
       ],
       "short": "Muscle and hormones",
       "panel_title": "Muscle growth and growth hormone",
-      "for": "For building muscle or \"boosting growth hormone\": no peptide is approved for that. Here is what the sold ones actually are."
+      "for": "For building muscle or \"boosting growth hormone\": no peptide is approved for that. Here is what the sold ones actually are.",
+      "sources": [
+        {
+          "n": 401,
+          "text": "Drugs@FDA through openFDA: no product with IGF-1 LR3; mecasermin (Increlex) approved 30 Aug 2005, searched 9 Nov 2026",
+          "url": "https://api.fda.gov/drug/drugsfda.json?search=products.active_ingredients.name:MECASERMIN"
+        }
+      ]
     },
     {
       "slug": "recovery",
@@ -637,11 +786,38 @@
           "substance": "melanotan-2",
           "line_one": "tanning peptide also sold for libido",
           "rx_word": "research use only"
+        },
+        {
+          "name": "Flibanserin (Addyi)",
+          "plain": "A daily pill on prescription for women under 65 with low sexual desire that causes distress. Not a peptide.",
+          "status": "FDA approved",
+          "chip": "ok",
+          "does": "Approved for acquired, generalized low sexual desire (HSDD) in women under 65 that is not caused by another condition, the relationship or a medicine. Not approved for men.",
+          "how": "Prescription.",
+          "status_plain": "FDA approved for low sexual desire in women under 65.",
+          "substance": "flibanserin",
+          "plan_form": "pill",
+          "src": [
+            501
+          ],
+          "line_one": "daily pill for low desire in women, not a peptide",
+          "rx_word": "on prescription"
         }
       ],
       "short": "Sexual health",
       "panel_title": "Sex drive and sexual health",
-      "for": "For low desire, erections or low testosterone: the approved medicines, and what the online \"PT-141\" really is."
+      "for": "For low desire, erections or low testosterone: the approved medicines, and what the online \"PT-141\" really is.",
+      "pair": {
+        "slug": "testosterone",
+        "text": "Peptides for testosterone, compared with approved TRT"
+      },
+      "sources": [
+        {
+          "n": 501,
+          "text": "FDA drug label for Addyi (flibanserin), Indications and Usage, through openFDA, effective 22 Dec 2025",
+          "url": "https://api.fda.gov/drug/label.json?search=openfda.brand_name:%22ADDYI%22"
+        }
+      ]
     },
     {
       "slug": "longevity",
@@ -731,7 +907,11 @@
           "line": "Lab tests. Discount code PEPTIDECHOOSER15; we earn when it is used.",
           "source": "Jinfiniti program terms, read 4 Nov 2026"
         }
-      ]
+      ],
+      "pair": {
+        "slug": "energy",
+        "text": "Peptides for energy: MOTS-c and NAD+"
+      }
     },
     {
       "slug": "menopause",
@@ -870,6 +1050,406 @@
           "url": "https://www.fda.gov/drugs/human-drug-compounding/compounding-and-fda-questions-and-answers"
         }
       ]
+    },
+    {
+      "slug": "growth-hormone",
+      "clinic_table": {
+        "substances": [
+          "sermorelin"
+        ]
+      },
+      "guide": "best-peptides-for-muscle-growth",
+      "name": "Growth hormone",
+      "label": "Growth hormone",
+      "page": true,
+      "title": "Growth hormone peptides: what is approved | Peptide Chooser",
+      "h1": "Growth hormone peptides, compared with the approved medicines.",
+      "description": "Sermorelin, ipamorelin, CJC-1295, tesamorelin and IGF-1 LR3: what each is, which is FDA approved and for what, and what clinics and shops charge.",
+      "short_answer": "Growth hormone itself (somatropin) is FDA approved, mainly for children and adults with growth hormone deficiency. Tesamorelin (Egrifta) is approved only to reduce belly fat in adults with HIV and lipodystrophy. Sermorelin's approved product left the market years ago; online clinics prescribe pharmacy-made versions. CJC-1295, ipamorelin and IGF-1 LR3 are research-use products with no approved version; we show their prices and checks and do not link to the shops.",
+      "legal_section": true,
+      "main_query": "growth hormone peptides",
+      "intro": "Growth hormone itself is FDA approved for growth hormone deficiency. The peptides sold to raise it are pharmacy-made or research-use, and none is approved for that.",
+      "peptides": [
+        {
+          "name": "Growth hormone (somatropin)",
+          "plain": "Lab-made human growth hormone, a shot on prescription. FDA approved mainly for growth hormone deficiency.",
+          "status": "FDA approved",
+          "chip": "ok",
+          "does": "Approved for children who do not grow because of growth hormone deficiency or some other conditions, and for adults with growth hormone deficiency. Not approved for healthy adults who want more muscle or energy.",
+          "how": "Prescription.",
+          "status_plain": "FDA approved, mainly for growth hormone deficiency.",
+          "substance": "somatropin",
+          "src": [
+            201
+          ],
+          "line_one": "approved growth hormone shot",
+          "rx_word": "on prescription"
+        },
+        {
+          "name": "Tesamorelin (Egrifta)",
+          "plain": "A daily shot on prescription, approved only to reduce belly fat in people with HIV, not for muscle.",
+          "status": "FDA approved",
+          "chip": "ok",
+          "does": "A daily shot approved only to reduce belly fat in people with HIV. Sold off-label by clinics for \"growth hormone\".",
+          "how": "Prescription.",
+          "status_plain": "FDA approved for HIV-related belly fat only.",
+          "substance": "tesamorelin",
+          "src": [
+            202
+          ],
+          "top_pick": false,
+          "top_pick_why": "Approved only for HIV-related belly fat, not for raising growth hormone (owner, 31 Oct 2026, on /muscle/).",
+          "no_link": "Approved for HIV belly fat only",
+          "drawing": "vial-brand",
+          "drawing_source": "https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=3d783378-b02d-4f19-99dd-0fc91a042224",
+          "drawing_checked_at": "2026-11-04",
+          "line_one": "daily shot for belly fat in HIV",
+          "rx_word": "on prescription"
+        },
+        {
+          "name": "CJC-1295",
+          "plain": "A peptide meant to make the body release growth hormone, in research-use vials. Not approved.",
+          "status": "Not approved",
+          "chip": "neutral",
+          "does": "A long-acting copy of the hormone that tells the body to release growth hormone. In two trials in healthy adults it raised growth hormone and IGF-I; the trials did not measure muscle or strength.",
+          "how": "Research-use shops, with our checks.",
+          "status_plain": "Not approved for any use.",
+          "substance": "cjc-1295",
+          "src": [
+            203
+          ],
+          "line_one": "vials sold to raise growth hormone",
+          "rx_word": "research use only"
+        },
+        {
+          "name": "Ipamorelin",
+          "plain": "A peptide meant to make the body release growth hormone, in research-use vials. Not approved.",
+          "status": "Not approved",
+          "chip": "neutral",
+          "does": "Acts on a different receptor than CJC-1295, with the same aim. Its one larger trial in people, 117 patients after bowel surgery, found it did no better than a placebo. The FDA lists safety concerns for it.",
+          "how": "Research-use shops, with our checks.",
+          "status_plain": "Not approved for any use.",
+          "substance": "ipamorelin",
+          "src": [
+            204,
+            205,
+            206
+          ],
+          "line_one": "vials sold to raise growth hormone",
+          "rx_word": "research use only"
+        },
+        {
+          "name": "IGF-1 LR3",
+          "plain": "Sold as a form of IGF-1, in research-use vials. Drugs@FDA lists no product with it.",
+          "status": "Not approved",
+          "chip": "neutral",
+          "does": "Sold for growth by research-use shops. The approved IGF-1 medicine is a different product, mecasermin (Increlex).",
+          "how": "Research-use shops.",
+          "status_plain": "Not approved for any use.",
+          "substance": "igf-1-lr3",
+          "src": [
+            207
+          ],
+          "line_one": "vials sold as IGF-1",
+          "rx_word": "research use only"
+        },
+        {
+          "name": "Sermorelin",
+          "plain": "A pharmacy-mixed shot on prescription that makes the body release growth hormone. No approved product.",
+          "status": "No FDA-approved product on the market",
+          "chip": "neutral",
+          "does": "A growth-hormone-releasing shot from compounding pharmacies; the approved brand was taken off the market years ago.",
+          "how": "Prescription through clinics.",
+          "status_plain": "No FDA-approved product on the market.",
+          "substance": "sermorelin",
+          "line_one": "pharmacy-made growth-hormone shot",
+          "rx_word": "on prescription"
+        }
+      ],
+      "short": "Growth hormone",
+      "panel_title": "Growth hormone peptides",
+      "for": "For raising growth hormone: what is approved and for whom, and what the sold peptides are.",
+      "sources": [
+        {
+          "n": 201,
+          "text": "FDA drug label for Genotropin (somatropin), Indications and Usage, through openFDA, effective 4 Aug 2026",
+          "url": "https://api.fda.gov/drug/label.json?search=openfda.brand_name:%22GENOTROPIN%22"
+        },
+        {
+          "n": 202,
+          "text": "FDA drug label for Egrifta SV (tesamorelin), Indications and Usage, through openFDA, effective 29 Jul 2026",
+          "url": "https://api.fda.gov/drug/label.json?search=openfda.brand_name:%22EGRIFTA%22"
+        },
+        {
+          "n": 203,
+          "text": "Teichman SL et al., Prolonged stimulation of growth hormone and IGF-I secretion by CJC-1295 in healthy adults, J Clin Endocrinol Metab 91(3), 2006, PubMed 16352683",
+          "url": "https://pubmed.ncbi.nlm.nih.gov/16352683/"
+        },
+        {
+          "n": 204,
+          "text": "Raun K et al., Ipamorelin, the first selective growth hormone secretagogue, Eur J Endocrinol 139(5), 1998, PubMed 9849822",
+          "url": "https://pubmed.ncbi.nlm.nih.gov/9849822/"
+        },
+        {
+          "n": 205,
+          "text": "Beck DE et al., Randomized, controlled, proof-of-concept study of ipamorelin for postoperative ileus, Int J Colorectal Dis 29(12), 2014, PubMed 25331030",
+          "url": "https://pubmed.ncbi.nlm.nih.gov/25331030/"
+        },
+        {
+          "n": 206,
+          "text": "FDA, Certain Bulk Drug Substances for Use in Compounding that May Present Significant Safety Risks, current as of 22 Apr 2026",
+          "url": "https://www.fda.gov/drugs/human-drug-compounding/certain-bulk-drug-substances-use-compounding-may-present-significant-safety-risks"
+        },
+        {
+          "n": 207,
+          "text": "Drugs@FDA through openFDA: no product with IGF-1 LR3; mecasermin (Increlex) approved 30 Aug 2005, searched 9 Nov 2026",
+          "url": "https://api.fda.gov/drug/drugsfda.json?search=products.active_ingredients.name:MECASERMIN"
+        }
+      ]
+    },
+    {
+      "slug": "sleep",
+      "name": "Sleep",
+      "label": "Sleep",
+      "page": true,
+      "title": "Peptides for sleep: DSIP and the evidence | Peptide Chooser",
+      "h1": "Peptides for sleep, compared with the evidence.",
+      "description": "DSIP is the peptide sold for sleep. It is not FDA approved, and its trials in people are small and old. What it is, its status, and what shops charge.",
+      "short_answer": "DSIP (delta sleep-inducing peptide) is the peptide sold for sleep; it is not FDA approved, and its trials in people are small and from the 1980s. Its nomination for pharmacy compounding was withdrawn, and the FDA says it lacks the safety information to know whether it would cause harm.",
+      "legal_section": true,
+      "main_query": "peptides for sleep",
+      "intro": "DSIP, the peptide sold for sleep, is not FDA approved, and its trials in people are small and old.",
+      "peptides": [
+        {
+          "name": "DSIP",
+          "plain": "Delta sleep-inducing peptide, sold for sleep in research-use vials. Not approved; small, old trials in people.",
+          "status": "Not approved",
+          "chip": "neutral",
+          "does": "In a 1987 study, 14 adults with chronic insomnia slept better on 7 nights of DSIP shots than on placebo nights; we found no larger or newer trial. The FDA says it lacks the safety information to know whether it would cause harm.",
+          "how": "Research-use shops.",
+          "status_plain": "Not approved for any use.",
+          "substance": "dsip",
+          "src": [
+            221,
+            222
+          ],
+          "line_one": "vials sold for sleep",
+          "rx_word": "research use only"
+        }
+      ],
+      "short": "Sleep",
+      "panel_title": "Peptides for sleep",
+      "for": "For trouble sleeping: what the peptide sold for it is, and what its trials in people showed.",
+      "sources": [
+        {
+          "n": 221,
+          "text": "Schneider-Helmert D, Effects of delta-sleep-inducing peptide on 24-hour sleep-wake behaviour in severe chronic insomnia, Eur Neurol 27(2), 1987, PubMed 3622582",
+          "url": "https://pubmed.ncbi.nlm.nih.gov/3622582/"
+        },
+        {
+          "n": 222,
+          "text": "FDA, Certain Bulk Drug Substances for Use in Compounding that May Present Significant Safety Risks (emideltide, DSIP), current as of 22 Apr 2026",
+          "url": "https://www.fda.gov/drugs/human-drug-compounding/certain-bulk-drug-substances-use-compounding-may-present-significant-safety-risks"
+        }
+      ]
+    },
+    {
+      "slug": "energy",
+      "clinic_table": {
+        "substances": [
+          "nad-plus",
+          "sermorelin",
+          "mots-c"
+        ]
+      },
+      "guide": "longevity-peptides-epitalon-mots-c-nad",
+      "name": "Energy",
+      "label": "Energy",
+      "page": true,
+      "title": "Peptides for energy: MOTS-c and NAD+ | Peptide Chooser",
+      "h1": "Peptides for energy: what is sold, and what the evidence shows.",
+      "description": "MOTS-c, NAD+ and sermorelin are sold for energy. None is FDA approved for it. What each one is, the evidence in people, and what clinics and shops charge.",
+      "short_answer": "No peptide is FDA approved for energy. MOTS-c has been tested in animals only; since 30 Oct 2026 an HHS policy lets licensed pharmacies compound it under conditions, which is not FDA approval. NAD+ is not a peptide at all; clinics sell it as shots and drips without approval. Sermorelin's approved product left the market years ago; online clinics prescribe pharmacy-made versions.",
+      "legal_section": true,
+      "main_query": "peptides for energy",
+      "intro": "No peptide is approved for energy. MOTS-c is tested in animals only, NAD+ is not a peptide, and sermorelin has no approved product on the market.",
+      "peptides": [
+        {
+          "name": "MOTS-c",
+          "plain": "A peptide sold for energy, in vials labelled for lab use. Not approved and tested in animals only.",
+          "status": "{hhs_status}",
+          "chip": "neutral",
+          "does": "A \"mitochondrial\" peptide sold for energy; animal studies only. {hhs_does}",
+          "how": "Research-use shops.",
+          "status_plain": "Not approved.",
+          "substance": "mots-c",
+          "src": [
+            13
+          ],
+          "line_one": "vials sold for energy",
+          "rx_word": "research use only"
+        },
+        {
+          "name": "NAD+ injections",
+          "plain": "Not a peptide: a molecule made from vitamin B3, sold by clinics as shots or drips. Not FDA approved.",
+          "status": "Not a peptide; compounded, not FDA approved",
+          "chip": "warn",
+          "does": "Not a peptide: a vitamin-B3-derived molecule sold by clinics as shots or drips for energy.",
+          "how": "Clinics and compounding pharmacies.",
+          "status_plain": "Not FDA approved.",
+          "substance": "nad-plus",
+          "not_peptide": true,
+          "line_one": "clinic shots or drips, not a peptide",
+          "rx_word": "at clinics"
+        },
+        {
+          "name": "Sermorelin",
+          "plain": "A pharmacy-mixed shot on prescription that makes the body release growth hormone. No approved product.",
+          "status": "No FDA-approved product on the market",
+          "chip": "neutral",
+          "does": "A growth-hormone-releasing shot from compounding pharmacies; the approved brand was taken off the market years ago.",
+          "how": "Prescription through clinics.",
+          "status_plain": "No FDA-approved product on the market.",
+          "substance": "sermorelin",
+          "line_one": "pharmacy-made growth-hormone shot",
+          "rx_word": "on prescription"
+        }
+      ],
+      "short": "Energy",
+      "panel_title": "Energy peptides",
+      "for": "For more energy: what is sold, what is not even a peptide, and what the evidence says.",
+      "pair": {
+        "slug": "longevity",
+        "text": "Longevity peptides: Epitalon, MOTS-c and NAD+ for aging"
+      }
+    },
+    {
+      "slug": "testosterone",
+      "clinic_table": {
+        "substances": [
+          "testosterone",
+          "enclomiphene"
+        ]
+      },
+      "name": "Testosterone",
+      "label": "Testosterone",
+      "page": true,
+      "title": "Peptides for testosterone vs TRT, compared | Peptide Chooser",
+      "h1": "Peptides for testosterone, compared with approved TRT.",
+      "description": "Kisspeptin, gonadorelin and hCG are sold to raise testosterone. What is FDA approved, what TRT plans from online clinics cost, and what shops sell.",
+      "short_answer": "Testosterone itself is FDA approved, on prescription, only for men with low testosterone from a medical condition; it is a hormone, not a peptide. hCG, a peptide hormone sold as Pregnyl and Novarel, is FDA approved for some men whose low testosterone comes from the pituitary. Gonadorelin and kisspeptin-10, sold online to raise testosterone, have no approved product on the market, and the FDA lists kisspeptin-10 among substances that may be a significant safety risk in compounding. We show what online clinics charge for TRT and do not link to research-use shops.",
+      "legal_section": true,
+      "main_query": "peptides for testosterone",
+      "intro": "Testosterone is FDA approved only for men with low testosterone from a medical condition, and it is not a peptide. No peptide is approved to raise testosterone in men without such a condition.",
+      "peptides": [
+        {
+          "name": "Testosterone (TRT)",
+          "plain": "A shot, gel or cream on prescription. Not a peptide. Approved only for men with low testosterone from a medical condition.",
+          "status": "FDA approved",
+          "chip": "ok",
+          "not_peptide": true,
+          "does": "Replaces a hormone the body makes too little of. Not FDA approved for low testosterone without an associated medical condition.",
+          "how": "Prescription, after blood tests.",
+          "status_plain": "FDA approved only for low testosterone with an associated medical condition.",
+          "substance": "testosterone",
+          "src": [
+            10
+          ],
+          "line_one": "shot or gel for low testosterone",
+          "rx_word": "on prescription"
+        },
+        {
+          "name": "Pharmacy-made testosterone",
+          "plain": "A cream or gel mixed by a pharmacy, from online clinics on prescription. Not an FDA-approved product.",
+          "status": "Not FDA approved; pharmacy-made",
+          "chip": "warn",
+          "not_peptide": true,
+          "does": "Testosterone mixed by a compounding pharmacy for one patient, sold by online clinics as part of a TRT plan. The FDA does not check these batch by batch.",
+          "how": "Prescription through the clinic.",
+          "status_plain": "Not FDA approved; pharmacy-made.",
+          "plan_kind": "compounded",
+          "plan_substances": [
+            "testosterone"
+          ],
+          "src": [
+            10
+          ],
+          "line_one": "pharmacy-made cream from online clinics",
+          "rx_word": "on prescription"
+        },
+        {
+          "name": "hCG (Pregnyl, Novarel)",
+          "plain": "A peptide hormone shot on prescription. Approved for some men whose low testosterone comes from the pituitary.",
+          "status": "FDA approved",
+          "chip": "ok",
+          "does": "A hormone shot that tells the testes to make testosterone. FDA approved for selected cases of low testosterone caused by the pituitary, not for TRT in general.",
+          "how": "Prescription.",
+          "status_plain": "FDA approved for selected cases of pituitary-related low testosterone.",
+          "src": [
+            16
+          ],
+          "line_one": "approved shot for pituitary-related low testosterone",
+          "rx_word": "on prescription"
+        },
+        {
+          "name": "Enclomiphene",
+          "plain": "A pill some online clinics prescribe for low testosterone. Pharmacy-made, not FDA approved for any use.",
+          "status": "Not FDA approved; pharmacy-made",
+          "chip": "warn",
+          "does": "A pill some clinics prescribe for low testosterone. It is not FDA approved for any use, so only pharmacies make it.",
+          "how": "Prescription through the clinic.",
+          "status_plain": "Not FDA approved; pharmacy-made.",
+          "plan_kind": "compounded",
+          "plan_substances": [
+            "enclomiphene"
+          ],
+          "src": [
+            11
+          ],
+          "line_one": "pharmacy-made pill for low testosterone",
+          "rx_word": "on prescription"
+        },
+        {
+          "name": "hCG and gonadorelin from online shops",
+          "plain": "Vials labelled for lab use, no prescription. Not approved products; gonadorelin's approved versions are discontinued.",
+          "status": "Not an approved product",
+          "chip": "neutral",
+          "does": "Sold by research-use shops to raise testosterone or keep the testes working during TRT. Not approved products: no dose control, no checks.",
+          "how": "Research-use shops, with our checks.",
+          "status_plain": "Not an approved product.",
+          "substances": [
+            "hcg",
+            "gonadorelin"
+          ],
+          "src": [
+            17
+          ],
+          "line_one": "research-use vials sold for testosterone",
+          "rx_word": "research use only"
+        },
+        {
+          "name": "Kisspeptin-10",
+          "plain": "A peptide sold for testosterone, in vials labelled for lab use. Not approved for any use.",
+          "status": "Not approved",
+          "chip": "neutral",
+          "does": "A peptide that signals the brain to release the hormones that start testosterone production. Not approved; the FDA lists it among substances that may be a significant safety risk in compounding.",
+          "how": "Research-use shops, with our checks.",
+          "status_plain": "Not approved for any use.",
+          "substance": "kisspeptin-10",
+          "src": [
+            18
+          ],
+          "line_one": "vials sold for testosterone",
+          "rx_word": "research use only"
+        }
+      ],
+      "short": "Testosterone",
+      "panel_title": "Testosterone and TRT",
+      "for": "For low testosterone: approved TRT and its prices first, then what the peptides sold for it really are.",
+      "pair": {
+        "slug": "libido",
+        "text": "Peptides for sex drive: PT-141 and the approved options"
+      }
     }
   ],
   "subpages": [
@@ -1018,6 +1598,103 @@
           "n": 315,
           "text": "FDA, Compounding and the FDA: Questions and Answers",
           "url": "https://www.fda.gov/drugs/human-drug-compounding/compounding-and-fda-questions-and-answers"
+        }
+      ]
+    },
+    {
+      "slug": "weight-loss-new-drugs",
+      "parent": "weight-loss",
+      "path": "/weight-loss/new-drugs/",
+      "panel": "weight-loss",
+      "link": "New weight loss drugs: orforglipron, retatrutide, cagrilintide",
+      "name": "New weight loss drugs",
+      "label": "New weight loss drugs",
+      "short": "New weight loss drugs",
+      "page": true,
+      "title": "New weight loss drugs: what is approved | Peptide Chooser",
+      "h1": "New weight loss drugs, compared: approved, in trials and sold online.",
+      "description": "Orforglipron (Foundayo) is a newly FDA-approved weight loss pill. Retatrutide and cagrilintide are still in trials. What each is, the trials and prices.",
+      "short_answer": "Orforglipron, sold as Foundayo, was FDA approved on 1 Apr 2026 as a daily weight loss pill; it is not a peptide. Retatrutide and cagrilintide are still in trials and not approved; research-use shops sell retatrutide and cagrilintide anyway. In their trials, people lost up to 11.2% of body weight on orforglipron, 20.4% on cagrilintide with semaglutide and up to 24.2% on retatrutide, against 2.1% to 3.0% on placebo; the trials were not a head-to-head comparison.",
+      "legal_section": true,
+      "main_query": "new weight loss drugs",
+      "intro": "One new weight loss medicine is FDA approved, the pill orforglipron. Retatrutide and cagrilintide are still in trials.",
+      "clinic_plans": {
+        "substances": [
+          "orforglipron"
+        ]
+      },
+      "guide": "best-peptides-for-weight-loss",
+      "for": "For the newest weight loss medicines: which one is approved, what the trials showed, and what is sold without approval.",
+      "panel_title": "New weight loss drugs",
+      "peptides": [
+        {
+          "name": "Foundayo (orforglipron)",
+          "plain": "A daily pill on prescription for adults with obesity, or overweight with a weight-related health problem. Not a peptide.",
+          "status": "FDA approved",
+          "chip": "ok",
+          "does": "In a 72-week trial in 3,127 adults with obesity, people lost 7.5% to 11.2% of body weight, by dose, against 2.1% on placebo.",
+          "how": "Prescription.",
+          "status_plain": "FDA approved for weight management.",
+          "substance": "orforglipron",
+          "plan_form": "pill",
+          "src": [
+            301,
+            302
+          ],
+          "line_one": "daily pill for weight loss, not a peptide",
+          "rx_word": "on prescription"
+        },
+        {
+          "name": "Retatrutide",
+          "plain": "A newer shot still in trials, not approved for anyone. Sold online only in research-use vials.",
+          "status": "Not approved; still in trials",
+          "chip": "neutral",
+          "does": "A newer three-hormone shot. In a 48-week phase 2 trial, people lost 8.7% to 24.2% of body weight, by dose, against 2.1% on placebo.",
+          "how": "Research-use shops, with our checks.",
+          "status_plain": "Not approved; in trials.",
+          "substance": "retatrutide",
+          "src": [
+            321
+          ],
+          "line_one": "experimental shot, still in trials",
+          "rx_word": "research use only"
+        },
+        {
+          "name": "Cagrilintide with semaglutide (CagriSema)",
+          "plain": "Cagrilintide is in trials combined with semaglutide (CagriSema). Not approved; Drugs@FDA lists no product with it.",
+          "status": "Not approved; still in trials",
+          "chip": "neutral",
+          "does": "In a 68-week trial in 3,417 adults with obesity or overweight, people on the combination lost 20.4% of body weight, against 3.0% on placebo.",
+          "how": "Research-use shops sell cagrilintide in vials, with our checks.",
+          "status_plain": "Not approved; in trials.",
+          "substance": "cagrilintide",
+          "src": [
+            322
+          ],
+          "line_one": "combination shot, still in trials",
+          "rx_word": "research use only"
+        }
+      ],
+      "sources": [
+        {
+          "n": 301,
+          "text": "FDA drug label for Foundayo (orforglipron), Indications and Usage, through openFDA, effective 29 Jul 2026",
+          "url": "https://api.fda.gov/drug/label.json?search=openfda.brand_name:%22FOUNDAYO%22"
+        },
+        {
+          "n": 302,
+          "text": "Wharton S et al., Orforglipron, an Oral Small-Molecule GLP-1 Receptor Agonist for Obesity Treatment (ATTAIN-1), N Engl J Med 393(18), 2025, PubMed 40960239",
+          "url": "https://pubmed.ncbi.nlm.nih.gov/40960239/"
+        },
+        {
+          "n": 321,
+          "text": "Jastreboff AM et al., Triple-Hormone-Receptor Agonist Retatrutide for Obesity, N Engl J Med 389(6), 2023, PubMed 37366315",
+          "url": "https://pubmed.ncbi.nlm.nih.gov/37366315/"
+        },
+        {
+          "n": 322,
+          "text": "Garvey WT et al., Coadministered Cagrilintide and Semaglutide in Adults with Overweight or Obesity (REDEFINE 1), N Engl J Med 393(7), 2025, PubMed 40544433",
+          "url": "https://pubmed.ncbi.nlm.nih.gov/40544433/"
         }
       ]
     }
@@ -1275,6 +1952,36 @@
         "no_page": true,
         "goal_only": true,
         "checked": "2026-11-05"
+      },
+      {
+        "peptide": "hCG",
+        "status": "FDA approved",
+        "chip": "ok",
+        "note": "as Pregnyl and Novarel, for selected cases of low testosterone from the pituitary; shop vials are not approved",
+        "src": 16,
+        "substances": [
+          "hcg"
+        ]
+      },
+      {
+        "peptide": "Gonadorelin",
+        "status": "No approved product on the market",
+        "chip": "neutral",
+        "note": "its approved products (Factrel, Lutrepulse) are discontinued",
+        "src": 17,
+        "substances": [
+          "gonadorelin"
+        ]
+      },
+      {
+        "peptide": "Kisspeptin-10",
+        "status": "Not approved",
+        "chip": "neutral",
+        "note": "the FDA lists it among bulk substances that may present significant safety risks in compounding",
+        "src": 18,
+        "substances": [
+          "kisspeptin-10"
+        ]
       }
     ],
     "sources": [
@@ -1342,6 +2049,31 @@
         "n": 13,
         "text": "HHS, Enforcement Discretion Policy Regarding 503A Compounding Using Certain Peptide Bulk Drug Substances, with Appendices A and B, read 7 Nov 2026",
         "url": "https://www.hhs.gov/sites/default/files/hhs-503a-peptide-enforcement-discretion-policy-appendix-b.pdf"
+      },
+      {
+        "n": 14,
+        "text": "Drugs@FDA through openFDA: no product with IGF-1 LR3; mecasermin (Increlex) approved 30 Aug 2005, searched 9 Nov 2026",
+        "url": "https://api.fda.gov/drug/drugsfda.json?search=products.active_ingredients.name:MECASERMIN"
+      },
+      {
+        "n": 15,
+        "text": "Drugs@FDA through openFDA: no product with cagrilintide, searched 9 Nov 2026",
+        "url": "https://api.fda.gov/drug/drugsfda.json?search=products.active_ingredients.name:CAGRILINTIDE"
+      },
+      {
+        "n": 16,
+        "text": "FDA drug label for Pregnyl (chorionic gonadotropin), Indications and Usage, through openFDA, effective 2 Dec 2025, read 9 Nov 2026",
+        "url": "https://api.fda.gov/drug/label.json?search=openfda.brand_name:%22PREGNYL%22"
+      },
+      {
+        "n": 17,
+        "text": "Drugs@FDA through openFDA: gonadorelin products Factrel (NDA 018123) and Lutrepulse (NDA 019687), both discontinued, searched 9 Nov 2026",
+        "url": "https://api.fda.gov/drug/drugsfda.json?search=products.active_ingredients.name:GONADORELIN"
+      },
+      {
+        "n": 18,
+        "text": "FDA, Certain Bulk Drug Substances for Use in Compounding that May Present Significant Safety Risks, read 9 Nov 2026",
+        "url": "https://www.fda.gov/drugs/human-drug-compounding/certain-bulk-drug-substances-use-compounding-may-present-significant-safety-risks"
       }
     ],
     "hhs_policy": {
