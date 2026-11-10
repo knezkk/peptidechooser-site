@@ -166,3 +166,23 @@ ODOBRENO SEO - Karlo - 10. 11. 2026 - PR #166
 /learn/peptides-vs-steroids/ acbe433cbc1d
 /prescription/ 3c6d9f73bb0e
 /weight-loss/pills/ 1609318bd55e
+
+ODOBRENO SEO - Karlo - 10. 11. 2026 - PR #169
+/energy/ 8333db6c85e4
+/growth-hormone/ cb7d61f696ea
+/peptides/cagrilintide/ a9433bc6ff6d
+/peptides/cjc-1295/ 36f325e7cb7f
+/peptides/dsip/ aac71b0273b8
+/peptides/gonadorelin/ 82b7c926f094
+/peptides/hcg/ 2ac4a671a9cc
+/peptides/ipamorelin/ eba94c91bb11
+/peptides/kisspeptin-10/ 037df665e3ab
+/peptides/liraglutide/ 0a67da2fd245
+/peptides/mots-c/ af35c91fdbe9
+/peptides/nad-plus/ ed39e84d9633
+/peptides/orforglipron/ 92a35c2dfaaa
+/peptides/somatropin/ a72ad7d0b66d
+/peptides/tesamorelin/ ffa5fce624bd
+/sleep/ b387803c617f
+/testosterone/ 0b83a65b4210
+/weight-loss/new-drugs/ 4a96b18d1623
