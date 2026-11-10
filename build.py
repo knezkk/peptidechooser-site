@@ -5493,9 +5493,20 @@ def cmp_sub_pairs():
         subs = sorted({s for p in g["peptides"] for s in subs_of(p) if s in PEPTIDE_SLUGS})
         for i, a in enumerate(subs):
             for b in subs[i + 1:]:
-                if pep_group(pep_status(a)) == pep_group(pep_status(b)):
+                if pep_group(pep_status(a)) == pep_group(pep_status(b)) and cmp_sub_searched(a, b):
                     out.setdefault((a, b), []).append(g)
     return out
+
+
+# A new substance pair needs a measured search (owner, 10 Nov 2026; site map rules, Google rule for /compare/): built only
+# when live already (rule 8) or measured above 0 in data/compare_searches.json, with that file's source and check date.
+CMP_SEARCHES = json.loads((Path(__file__).parent / "data" / "compare_searches.json").read_text(encoding="utf-8"))
+
+
+def cmp_sub_searched(a, b):
+    key = cmp_path(a, b).strip("/").split("/")[-1]
+    m = (CMP_SEARCHES["measured"]["pairs"].get(key) or {}).get("volume") or 0
+    return key in CMP_SEARCHES["live"]["pairs"] or m > 0
 
 
 def cmp_clinic_plan(clinic, sub):
@@ -5630,6 +5641,13 @@ def cmp_status_words(slug):
     return STATUS_WORDS.get(pep_group(s), s["label"].lower())
 
 
+def cmp_status_is(slug, both=False):
+    """The status with its verb: "is not approved", "has no approved product on the market" (owner, 10 Nov 2026: "is no
+    approved product" was wrong English)."""
+    w = cmp_status_words(slug)
+    return ("have " if both else "has ") + w if w.startswith("no ") else ("are " if both else "is ") + w
+
+
 def cmp_sub_cell(slug, goals):
     """One substance's cells, in the row order of cmp_sub_rows."""
     s = pep_status(slug)
@@ -5665,7 +5683,7 @@ def cmp_sub_answer(a, b):
     """Two or three sentences from data: the statuses, then the prices that can be set side by side."""
     na, nb = pep_short(a), pep_short(b)
     wa, wb = cmp_status_words(a), cmp_status_words(b)
-    out = [f"Both are {wa}." if wa == wb else f"{na} is {wa}; {nb} is {wb}."]
+    out = [f"Both {cmp_status_is(a, True)}." if wa == wb else f"{na} {cmp_status_is(a)}; {nb} {cmp_status_is(b)}."]
     la, lb = pep_low_shop(a), pep_low_shop(b)
     pa = pep_low_plan(a) if pep_group(pep_status(a)) == "approved" else None
     pb = pep_low_plan(b) if pep_group(pep_status(b)) == "approved" else None
@@ -5733,7 +5751,7 @@ def cmp_sub_facts(a, b):
     ga, gb = pep_group(pep_status(a)), pep_group(pep_status(b))
     if ga != gb and "approved" in (ga, gb):
         w, o = (a, b) if ga == "approved" else (b, a)
-        side(w == a).append(("you want an FDA-approved medicine", f"{pep_short(w)} is FDA approved and {pep_short(o)} is {cmp_status_words(o)}"))
+        side(w == a).append(("you want an FDA-approved medicine", f"{pep_short(w)} is FDA approved and {pep_short(o)} {cmp_status_is(o)}"))
     approved = ga == gb == "approved"
     if approved:
         la, lb = sub_form_lows(a), sub_form_lows(b)
