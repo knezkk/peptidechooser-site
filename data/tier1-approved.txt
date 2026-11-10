@@ -186,3 +186,6 @@ ODOBRENO SEO - Karlo - 10. 11. 2026 - PR #169
 /sleep/ b387803c617f
 /testosterone/ 0b83a65b4210
 /weight-loss/new-drugs/ 4a96b18d1623
+
+ODOBRENO SEO - Karlo - 10. 11. 2026 - PR #170
+/longevity/ 649df3fbf774
