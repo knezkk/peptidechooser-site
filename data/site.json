@@ -829,12 +829,12 @@
       },
       "guide": "longevity-peptides-epitalon-mots-c-nad",
       "approved_instead_guide": "longevity-peptides-epitalon-mots-c-nad",
-      "name": "Longevity and energy",
-      "label": "Energy and aging",
+      "name": "Longevity and aging",
+      "label": "Longevity and aging",
       "page": true,
-      "title": "Peptides for energy and aging, compared | Peptide Chooser",
-      "h1": "Peptides for energy and aging, compared with the evidence.",
-      "description": "Epitalon, MOTS-c and NAD+ shots are sold for energy and anti-aging. None is FDA approved; HHS changed the rules for two in Oct 2026. The evidence and prices.",
+      "title": "Peptides for longevity and aging, compared | Peptide Chooser",
+      "h1": "Peptides for longevity and aging, compared with the evidence.",
+      "description": "Epitalon, MOTS-c and NAD+ shots are sold as anti-aging. None is FDA approved; HHS changed the rules for two in Oct 2026. The evidence and prices.",
       "short_answer": "Nothing on this page is FDA approved. In July 2026 the FDA proposed keeping Epitalon and MOTS-c off the pharmacy compounding list; on 30 Oct 2026 HHS said it does not intend to act against licensed pharmacies that compound them under 10 conditions. NAD+ is not a peptide at all; clinics sell it as shots and drips without approval. We show prices and checks for the research-use products and do not link to the shops.",
       "legal_section": true,
       "map": {
@@ -888,8 +888,8 @@
           "rx_word": "at clinics"
         }
       ],
-      "short": "Longevity and energy",
-      "panel_title": "Energy, aging and longevity",
+      "short": "Longevity and aging",
+      "panel_title": "Aging and longevity",
       "for": "For \"anti-aging\" and more energy: what is sold, what the evidence says, and what is not even a peptide.",
       "tools": [
         {
