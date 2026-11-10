@@ -198,3 +198,16 @@ ODOBRENO SEO - Karlo - 10. 11. 2026 - PR #169 compare and weight loss
 /compare/epitalon-vs-mots-c/ aa3cfd6cb1b5
 /peptides/cagrilintide/ cfe2843cb75f
 /peptides/liraglutide/ 1c0a89c8eb77
+
+ODOBRENO SEO - Karlo - 10. 11. 2026 - PR #169 wave B compare pages
+/compare/epitalon-vs-mots-c/ aa3cfd6cb1b5
+/compare/gonadorelin-vs-kisspeptin-10/ bd2c0721c71c
+/compare/liraglutide-vs-orforglipron/ 824981d6da80
+/compare/liraglutide-vs-semaglutide/ 9f5cc3d7aeae
+/compare/liraglutide-vs-tirzepatide/ dcc8dd515bf9
+/compare/mots-c-vs-sermorelin/ c332e36bca73
+/compare/nad-plus-vs-sermorelin/ a24b5f4d51d0
+/compare/orforglipron-vs-tirzepatide/ 8706d610716c
+/compare/somatropin-vs-tesamorelin/ 51938e0a2b21
+/peptides/cagrilintide/ cfe2843cb75f
+/peptides/liraglutide/ 1c0a89c8eb77
