@@ -723,12 +723,14 @@ def check_parts(P):
                 errs.append(f"{name}: a date in the Background check card's check rows")
             if len(re.findall(r'class="chip chip-(?:ok|neutral) mark-(?:yes|no)"', main.group(1) if main else "")) != want:
                 errs.append(f"{name}: the check marks appear outside the card")
+            # an offer page (/sellers/<seller>/<substance>/, queue block 28) has the card but not the legit list or the review H1
+            offer = not re.fullmatch(r"sellers/[^/]+/index\.html", name)
             legit = re.search(r'<ul class="check-list legit-list">(.*?)</ul>', html, re.S)
-            if not legit or len(re.findall(r'<span class="check-key">', legit.group(1))) != want \
-                    or len(re.findall(r'class="check-line"', html)) != want:
+            if not offer and (not legit or len(re.findall(r'<span class="check-key">', legit.group(1))) != want \
+                    or len(re.findall(r'class="check-line"', html)) != want):
                 errs.append(f"{name}: the {want} facts not once, in the legit list")
             h1 = [t.strip() for tag, t in P[name].h if tag == "h1"]
-            if not h1 or not h1[0].endswith(" review") or not P[name].title.strip().startswith(h1[0][:-7]):
+            if not offer and (not h1 or not h1[0].endswith(" review") or not P[name].title.strip().startswith(h1[0][:-7])):
                 errs.append(f"{name}: H1 not '<Name> review' or the title does not start with the name ({h1})")
             if 'href="https://www.fda.gov/' in html and "FDA letter</a>" in html and 'id="fda-letters"' not in html:
                 errs.append(f"{name}: FDA letters without id=\"fda-letters\"")
@@ -1625,7 +1627,7 @@ def check_arch(P):
     want = {"seller": r"/sellers/[^/]+/", "substance": r"/peptides/[^/]+/", "compare": r"/compare/[^/]+-vs-[^/]+/", "guide": r"/learn/[^/]+/"}
     where = {}
     for loc in re.findall(r"<loc>([^<]+)</loc>", index):
-        m = re.fullmatch(re.escape(SITE) + r"/sitemap-(main|goal|group|substance|seller|compare|guide|trust)\.xml", loc)
+        m = re.fullmatch(re.escape(SITE) + r"/sitemap-(main|goal|group|substance|seller|offer|compare|guide|trust)\.xml", loc)
         if not m or not (DIST / f"sitemap-{m.group(1)}.xml").exists():
             errs.append(f"sitemap.xml: '{loc}' is not one of our page-type files")
             continue
@@ -1703,6 +1705,63 @@ def check_kept_sellers(P):
         name = f"sellers/{slug}/index.html"
         if name in P and "No longer in our data" in (DIST / name).read_text(encoding="utf-8") and 'href="/out/' in (DIST / name).read_text(encoding="utf-8"):
             errs.append(f"{name}: a seller that left the data still has a paid link")
+    return errs
+
+
+BLEND_NAME = re.compile(r"/|\+|\bwith\b", re.I)
+
+
+def check_offers(P):
+    """Seller offer test of 20 (queue block 28, task 6A; site map rules section 1; ODOBRENO PRAVILA - Karlo - 9. 11. 2026 -
+    6A test) and its pilot of 3 (block 28c; ODOBRENO PRAVILA - Karlo - 9. 11. 2026 - 6A pilot 3): only the 3 pilot pairs are
+    indexable and built without PC_OFFERS; the rest need PC_OFFERS=preview and carry noindex. With it: at most 20 pairs, each listed in data/offer_test.json; only
+    an online clinic; no blend among its plans; the page shows at least one thing its parents do not (plan terms or its own
+    price history); an indexable one also has a measured search or two of the things, sits in sitemap-offer.xml only and
+    carries BreadcrumbList as its only schema."""
+    errs = []
+    names = sorted(n for n in P if re.fullmatch(r"sellers/[^/]+/[^/]+/index\.html", n))
+    f = ROOT / "data" / "offer_test.json"
+    pairs = {(x["seller"], x["substance"]): x for x in (json.loads(f.read_text(encoding="utf-8"))["pairs"] if f.exists() else [])}
+    if len(pairs) > 20:
+        errs.append(f"data/offer_test.json: {len(pairs)} pairs, the test is 20")
+    pilot = {tuple(x) for x in ((json.loads(f.read_text(encoding="utf-8")).get("pilot") or {}).get("pairs") or [] if f.exists() else [])}
+    if len(pilot) > 3:
+        errs.append(f"data/offer_test.json: {len(pilot)} pilot pairs, the pilot is 3 (ODOBRENO PRAVILA - Karlo - 9. 11. 2026 - 6A pilot 3)")
+    for name in names:
+        if tuple(name.split("/")[1:3]) not in pilot and not os.environ.get("PC_OFFERS"):
+            errs.append(f"{name}: an offer page outside the pilot of 3 is built without PC_OFFERS")
+    indexed = [n for n in names if "noindex" not in P[n].meta.get("robots", "")]
+    for name in indexed:
+        if tuple(name.split("/")[1:3]) not in pilot:
+            errs.append(f"{name}: indexable but not in the pilot of 3; only the pilot pairs are indexable until it is read")
+    offer_map = (DIST / "sitemap-offer.xml").read_text(encoding="utf-8") if (DIST / "sitemap-offer.xml").exists() else ""
+    other_maps = "".join(x.read_text(encoding="utf-8") for x in DIST.glob("sitemap-*.xml") if x.name != "sitemap-offer.xml")
+    for name in names:
+        seller, sub = name.split("/")[1:3]
+        html = (DIST / name).read_text(encoding="utf-8")
+        path = f"/sellers/{seller}/{sub}/"
+        if (seller, sub) not in pairs:
+            errs.append(f"{name}: not one of the pairs in data/offer_test.json")
+        parent = DIST / "sellers" / seller / "index.html"
+        if not parent.exists() or 'class="check-nolab"' not in parent.read_text(encoding="utf-8"):
+            errs.append(f"{name}: an offer page for a seller that is not an online clinic with a page")
+        for plan in re.findall(r'<tr><td><span class="cell-pic">.*?<span class="name">(.*?)</span>', html):
+            if BLEND_NAME.search(re.sub(r"<[^>]+>", "", re.sub(r"\bNAD\+", "NAD", plan))):
+                errs.append(f"{name}: a blend among its plans ({re.sub(r'<[^>]+>', '', plan)}); blends never get an offer page")
+        terms = 'id="terms"' in html and 'class="facts-list"' in html
+        hist = "Price over time" in html
+        if not (terms or hist):
+            errs.append(f"{name}: shows nothing its parent pages do not (no plan terms, no price history)")
+        if "noindex" in P[name].meta.get("robots", ""):
+            continue
+        search = ((pairs.get((seller, sub)) or {}).get("search") or {}).get("volume", 0)
+        if not (search > 0 or (terms and hist)):
+            errs.append(f"{name}: indexable without a measured search or two of the three things")
+        if f"<loc>{SITE}{path}</loc>" not in offer_map or f"<loc>{SITE}{path}</loc>" in other_maps:
+            errs.append(f"{name}: an indexable offer page belongs in sitemap-offer.xml and nowhere else")
+        types = set(re.findall(r'"@type":\s*"([A-Za-z]+)"', " ".join(re.findall(r'<script type="application/ld\+json">(.*?)</script>', html, re.S))))
+        if types - {"BreadcrumbList", "ListItem"}:
+            errs.append(f"{name}: schema other than BreadcrumbList ({', '.join(sorted(types))})")
     return errs
 
 
@@ -1812,7 +1871,7 @@ def check_addresses(P):
     return errs
 
 
-CHECKS = {"words": check_words, "seo": check_seo, "schema": check_schema, "parts": check_parts, "data": check_data, "book": check_book, "events": check_events, "logic": check_logic, "rules33": check_rules33, "addresses": check_addresses, "arch": check_arch, "arch-switch": check_arch_switch, "kept-sellers": check_kept_sellers, "wave-b": check_wave_b}
+CHECKS = {"words": check_words, "seo": check_seo, "schema": check_schema, "parts": check_parts, "data": check_data, "book": check_book, "events": check_events, "logic": check_logic, "rules33": check_rules33, "addresses": check_addresses, "arch": check_arch, "arch-switch": check_arch_switch, "offers": check_offers, "kept-sellers": check_kept_sellers, "wave-b": check_wave_b}
 
 # Plan names against their form (owner task w2, 3 Nov 2026): a clinic's own plan name can name another form than the
 # plan's `dosage_form` ("Ozempic Pill" for a pen). The site cannot change data, so this only warns, never fails, and the

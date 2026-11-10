@@ -1,0 +1,143 @@
+{
+  "rule": "Seller offer test of 20 (queue block 28, task 6A; site map rules section 1 and decision 3; ODOBRENO PRAVILA - Karlo - 9. 11. 2026 - 6A test). One clinic's offer of one substance gets /sellers/<seller>/<substance>/ only with PC_OFFERS=1 and only when the page shows at least one thing the seller and substance pages do not (its own plan price history, its own lab report, plan terms: commitment, first-month price or consult fee) and either a measured search for the pair or two of the three. Blends never. `search` is the measured monthly US search for the pair (volume, query, source, checked), null until measured. Read after 12 weeks: passes if at least 16 of 20 are in Google and at least 5 have clicks.",
+  "pairs": [
+    {
+      "seller": "peter-md",
+      "substance": "testosterone",
+      "search": {
+        "volume": 163,
+        "avg_12m": 170,
+        "query": "peter md testosterone",
+        "source": "Manufactura keywords_volume, US Google, average of the last 3 months, call 73232536",
+        "checked": "2026-11-09"
+      }
+    },
+    {
+      "seller": "dudemeds",
+      "substance": "testosterone",
+      "search": null
+    },
+    {
+      "seller": "winona",
+      "substance": "minoxidil",
+      "search": null
+    },
+    {
+      "seller": "male-excel-excel-medical",
+      "substance": "testosterone",
+      "search": {
+        "volume": 60,
+        "avg_12m": 90,
+        "query": "male excel testosterone",
+        "source": "Manufactura keywords_volume, US Google, average of the last 3 months, call 73232536",
+        "checked": "2026-11-09"
+      }
+    },
+    {
+      "seller": "mydrhank",
+      "substance": "semaglutide",
+      "search": null
+    },
+    {
+      "seller": "mydrhank",
+      "substance": "tadalafil",
+      "search": null
+    },
+    {
+      "seller": "rxspan-md",
+      "substance": "semaglutide",
+      "search": null
+    },
+    {
+      "seller": "rxspan-md",
+      "substance": "tirzepatide",
+      "search": null
+    },
+    {
+      "seller": "rxspan-md",
+      "substance": "nad-plus",
+      "search": null
+    },
+    {
+      "seller": "enhance-md",
+      "substance": "tirzepatide",
+      "search": {
+        "volume": 23,
+        "avg_12m": 30,
+        "query": "enhance md tirzepatide",
+        "source": "Manufactura keywords_volume, US Google, average of the last 3 months, call 73232536",
+        "checked": "2026-11-09"
+      }
+    },
+    {
+      "seller": "enhance-md",
+      "substance": "semaglutide",
+      "search": null
+    },
+    {
+      "seller": "medgm",
+      "substance": "semaglutide",
+      "search": null
+    },
+    {
+      "seller": "healthrx",
+      "substance": "semaglutide",
+      "search": null
+    },
+    {
+      "seller": "healthrx",
+      "substance": "tirzepatide",
+      "search": null
+    },
+    {
+      "seller": "rxspan-md",
+      "substance": "tadalafil",
+      "search": null
+    },
+    {
+      "seller": "medgm",
+      "substance": "tirzepatide",
+      "search": null
+    },
+    {
+      "seller": "rxspan-md",
+      "substance": "minoxidil",
+      "search": null
+    },
+    {
+      "seller": "mydrhank",
+      "substance": "finasteride",
+      "search": null
+    },
+    {
+      "seller": "rxspan-md",
+      "substance": "sermorelin",
+      "search": null
+    },
+    {
+      "seller": "mydrhank",
+      "substance": "sildenafil",
+      "search": null
+    }
+  ],
+  "measured": "9 Nov 2026 (Manufactura call 73232536): the other 17 pairs have no figure (too small to measure); none was guessed.",
+  "pilot": {
+    "approved": "ODOBRENO PRAVILA - Karlo - 9. 11. 2026 - 6A pilot 3; template ODOBRENO SEO - Karlo - 9. 11. 2026 - PR #161",
+    "pairs": [
+      [
+        "peter-md",
+        "testosterone"
+      ],
+      [
+        "male-excel-excel-medical",
+        "testosterone"
+      ],
+      [
+        "enhance-md",
+        "tirzepatide"
+      ]
+    ],
+    "read": "12 weeks after the pages go live: passes if all 3 are in Google and at least 1 has clicks (queue block 28c).",
+    "rule": "Only these pairs are built indexable, without PC_OFFERS, and only while they pass the rule above. The other 17 stay behind PC_OFFERS=preview, noindex. At most 3 indexable offer pages until the pilot is read."
+  }
+}
