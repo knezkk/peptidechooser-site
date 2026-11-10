@@ -4,5 +4,3 @@
 /learn/best-peptides-for-muscle-growth/ live
 /learn/best-peptides-for-weight-loss/ live
 /learn/cheapest-bpc-157-per-mg/ live
-# Move list (section 8): allowed until task 4C moves it, then this line goes.
-/learn/fda-warning-letters-peptides-2026/ move-list
