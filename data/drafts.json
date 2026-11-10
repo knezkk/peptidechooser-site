@@ -2,7 +2,13 @@
   "rule": "Draft pages (owner queue block 14, wave B, 8 Nov 2026). Nothing here is built unless PC_DRAFTS=1 (build.py, tools/pull_data.py), so a merge publishes nothing. A goal goes live by moving it into site.json after the owner's ODOBRENO SEO for its title, H1, description and texts. Facts come only from the data and the sources listed with each entry. goal_changes: proposed changes to a live goal, applied only with PC_DRAFTS=1 (block 14, owner answer 9 Nov 2026: /longevity/ about longevity and aging only, /energy/ the main page for energy). subpages: goal subpages /<goal>/<topic>/ (block 15), drafts only.",
   "goals": [],
   "legal_rows": [],
-  "legal_sources": [],
+  "legal_sources": [
+    {
+      "n": 19,
+      "text": "Drugs@FDA, searched through openFDA (brand, generic and active ingredient names) for the 18 bioregulators in our database: no approved product (the one hit, Cardiogen-82, is a rubidium scan agent, not the peptide), 9 Nov 2026",
+      "url": "https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm"
+    }
+  ],
   "goal_changes": {
     "longevity": {
       "name": "Longevity and aging",
@@ -14,5 +20,31 @@
       "panel_title": "Aging and longevity"
     }
   },
-  "subpages": []
+  "subpages": [],
+  "list_groups": [
+    {
+      "slug": "bioregulators",
+      "path": "/bioregulators/",
+      "crumb": "Bioregulator peptides",
+      "class": "bioregulator",
+      "title": "Bioregulator peptides and their FDA status | Peptide Chooser",
+      "h1": "Bioregulator peptides: the Khavinson peptides and their status.",
+      "description": "Bioregulators are short peptides from Vladimir Khavinson's research in Russia. Each one we track, with its FDA status, its source and where it is sold.",
+      "what": "Bioregulators are short peptides studied for decades by Vladimir Khavinson's group in Russia, mostly in laboratory animals.",
+      "what_src": {
+        "text": "Khavinson VKh, Kuznik BI, Ryzhak GA. Peptide bioregulators: the new class of geroprotectors. Communication 1. Results of experimental studies. Adv Gerontol. 2012;25(4):696-708 (in Russian), PubMed 23734519",
+        "url": "https://pubmed.ncbi.nlm.nih.gov/23734519/"
+      },
+      "main": {
+        "epitalon": "Epitalon, the best known of them, has its own page"
+      },
+      "status": {
+        "status": "Not approved",
+        "chip": "neutral",
+        "note": "no FDA-approved product; sold by research-use shops, labelled not for use in people",
+        "src": 19,
+        "checked": "2026-11-09"
+      }
+    }
+  ]
 }
