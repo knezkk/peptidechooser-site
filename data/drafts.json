@@ -623,6 +623,54 @@
           ],
           "line_one": "combination shot, still in trials",
           "rx_word": "research use only"
+        },
+        {
+          "name": "Liraglutide (Saxenda)",
+          "plain": "A daily shot on prescription, for obesity or overweight with a weight-related health problem.",
+          "status": "FDA approved",
+          "chip": "ok",
+          "does": "The older, daily GLP-1 shot. Liraglutide is also sold as Victoza for type 2 diabetes, which is not approved for weight loss.",
+          "how": "Prescription. Our <a href=\"/peptides/liraglutide/\">liraglutide page</a> has its status and sources, and <a href=\"/fda-approved/\">FDA approved peptides</a> lists every approved one we track.",
+          "status_plain": "FDA approved for weight management.",
+          "substance": "liraglutide",
+          "plan_form": "shot",
+          "src": [
+            303
+          ],
+          "line_one": "daily shot for weight loss",
+          "rx_word": "on prescription"
+        },
+        {
+          "name": "Naltrexone-bupropion (Contrave)",
+          "plain": "A pill on prescription, for obesity or overweight with a weight-related health problem. Not a peptide.",
+          "status": "FDA approved",
+          "chip": "ok",
+          "does": "Two older medicines in one tablet: naltrexone, which blocks opioid receptors, and bupropion, an antidepressant.",
+          "how": "Prescription.",
+          "status_plain": "FDA approved for weight management.",
+          "substance": "naltrexone-bupropion",
+          "plan_form": "pill",
+          "src": [
+            304
+          ],
+          "line_one": "pill for weight loss, not a peptide",
+          "rx_word": "on prescription"
+        },
+        {
+          "name": "Orlistat (Alli)",
+          "plain": "A capsule sold over the counter for overweight adults, with a low-calorie, low-fat diet. Not a peptide.",
+          "status": "FDA approved",
+          "chip": "ok",
+          "does": "Sold over the counter as Alli for overweight adults 18 and older, used with a reduced-calorie, low-fat diet.",
+          "how": "Over the counter, at any pharmacy.",
+          "status_plain": "FDA approved; Alli is sold over the counter.",
+          "substance": "orlistat",
+          "plan_form": "pill",
+          "src": [
+            305
+          ],
+          "line_one": "capsule without prescription, not a peptide",
+          "rx_word": "over the counter"
         }
       ],
       "sources": [
@@ -640,6 +688,21 @@
           "n": 322,
           "text": "Garvey WT et al., Coadministered Cagrilintide and Semaglutide in Adults with Overweight or Obesity (REDEFINE 1), N Engl J Med 393(7), 2025, PubMed 40544433",
           "url": "https://pubmed.ncbi.nlm.nih.gov/40544433/"
+        },
+        {
+          "n": 303,
+          "text": "FDA drug label for Saxenda (liraglutide), Indications and Usage, through openFDA, effective 25 Feb 2026",
+          "url": "https://api.fda.gov/drug/label.json?search=openfda.brand_name:%22SAXENDA%22"
+        },
+        {
+          "n": 304,
+          "text": "FDA drug label for Contrave (naltrexone and bupropion), Indications and Usage, through openFDA, effective 10 Nov 2025",
+          "url": "https://api.fda.gov/drug/label.json?search=openfda.brand_name:%22CONTRAVE%22"
+        },
+        {
+          "n": 305,
+          "text": "FDA drug label for Alli (orlistat), over the counter, Uses, through openFDA, effective 27 Mar 2024",
+          "url": "https://api.fda.gov/drug/label.json?search=openfda.brand_name:%22ALLI%22"
         }
       ]
     },
@@ -659,6 +722,21 @@
           ],
           "line_one": "vials sold for muscle",
           "rx_word": "research use only"
+        },
+        {
+          "name": "Testosterone (TRT)",
+          "plain": "A gel or shot on prescription. Approved only for men with low testosterone from a medical condition.",
+          "status": "FDA approved",
+          "chip": "ok",
+          "does": "Replaces a hormone the body makes too little of. Not FDA approved for low testosterone without an associated medical condition.",
+          "how": "Prescription, after blood tests. Our <a href=\"/testosterone/\">testosterone page</a> compares the online clinics that prescribe it.",
+          "status_plain": "FDA approved only for low testosterone with an associated medical condition.",
+          "substance": "testosterone",
+          "src": [
+            10
+          ],
+          "line_one": "gel or shot for low testosterone",
+          "rx_word": "on prescription"
         }
       ],
       "sources": [
@@ -666,6 +744,33 @@
           "n": 401,
           "text": "Drugs@FDA through openFDA: no product with IGF-1 LR3; mecasermin (Increlex) approved 30 Aug 2005, searched 9 Nov 2026",
           "url": "https://api.fda.gov/drug/drugsfda.json?search=products.active_ingredients.name:MECASERMIN"
+        }
+      ]
+    },
+    "libido": {
+      "peptides": [
+        {
+          "name": "Flibanserin (Addyi)",
+          "plain": "A daily pill on prescription for women under 65 with low sexual desire that causes distress. Not a peptide.",
+          "status": "FDA approved",
+          "chip": "ok",
+          "does": "Approved for acquired, generalized low sexual desire (HSDD) in women under 65 that is not caused by another condition, the relationship or a medicine. Not approved for men.",
+          "how": "Prescription.",
+          "status_plain": "FDA approved for low sexual desire in women under 65.",
+          "substance": "flibanserin",
+          "plan_form": "pill",
+          "src": [
+            501
+          ],
+          "line_one": "daily pill for low desire in women, not a peptide",
+          "rx_word": "on prescription"
+        }
+      ],
+      "sources": [
+        {
+          "n": 501,
+          "text": "FDA drug label for Addyi (flibanserin), Indications and Usage, through openFDA, effective 22 Dec 2025",
+          "url": "https://api.fda.gov/drug/label.json?search=openfda.brand_name:%22ADDYI%22"
         }
       ]
     }
