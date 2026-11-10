@@ -3,7 +3,7 @@
 > An independent US comparison site: peptide products next to FDA-approved alternatives, with evidence, FDA status and price per month for each goal. We compare; we never sell.
 
 
-## Home and goals (9 pages)
+## Home and goals (13 pages)
 
 - [Best peptides by goal, compared | Peptide Chooser](https://peptidechooser.com/): Find the right option for your goal and where to get it at the best price. FDA-approved options first, research-use peptides with their real status.
 - [Peptides for hair loss vs proven options | Peptide Chooser](https://peptidechooser.com/hair/): Peptides for hair loss next to finasteride and minoxidil: FDA status, evidence in people and price per month for each option, checked and dated.
@@ -12,12 +12,16 @@
 - [Muscle growth peptides vs what is approved | Peptide Chooser](https://peptidechooser.com/muscle/): CJC-1295, ipamorelin, sermorelin and tesamorelin for muscle and growth hormone: what each is, what is approved and for what, and what sellers charge.
 - [BPC-157 and TB-500 for healing, compared | Peptide Chooser](https://peptidechooser.com/recovery/): BPC-157 and TB-500 are sold for injuries and joints, but neither is approved for any use. The evidence, the HHS policy of Oct 2026 and what sellers charge.
 - [PT-141 and peptides for sex drive compared | Peptide Chooser](https://peptidechooser.com/libido/): Bremelanotide (Vyleesi) is FDA approved for low sexual desire in women. The same molecule is sold as PT-141 without approval. What that means, and the prices.
-- [Peptides for energy and aging, compared | Peptide Chooser](https://peptidechooser.com/longevity/): Epitalon, MOTS-c and NAD+ shots are sold for energy and anti-aging. None is FDA approved; HHS changed the rules for two in Oct 2026. The evidence and prices.
+- [Peptides for longevity and aging, compared | Peptide Chooser](https://peptidechooser.com/longevity/): Epitalon, MOTS-c and NAD+ shots are sold as anti-aging. None is FDA approved; HHS changed the rules for two in Oct 2026. The evidence and prices.
 - [Menopause treatments compared, with prices | Peptide Chooser](https://peptidechooser.com/menopause/): Estradiol, estradiol with progesterone and fezolinetant (Veozah) are FDA approved for menopause hot flashes. Compounded hormones are not. What each one is.
+- [Growth hormone peptides: what is approved | Peptide Chooser](https://peptidechooser.com/growth-hormone/): Sermorelin, ipamorelin, CJC-1295, tesamorelin and IGF-1 LR3: what each is, which is FDA approved and for what, and what clinics and shops charge.
+- [Peptides for sleep: DSIP and the evidence | Peptide Chooser](https://peptidechooser.com/sleep/): DSIP is the peptide sold for sleep. It is not FDA approved, and its trials in people are small and old. What it is, its status, and what shops charge.
+- [Peptides for energy: MOTS-c and NAD+ | Peptide Chooser](https://peptidechooser.com/energy/): MOTS-c, NAD+ and sermorelin are sold for energy. None is FDA approved for it. What each one is, the evidence in people, and what clinics and shops charge.
+- [Peptides for testosterone vs TRT, compared | Peptide Chooser](https://peptidechooser.com/testosterone/): Kisspeptin, gonadorelin and hCG are sold to raise testosterone. What is FDA approved, what TRT plans from online clinics cost, and what shops sell.
 
 ## Peptides (1 page)
 
-- [Peptides A to Z: FDA status and prices | Peptide Chooser](https://peptidechooser.com/peptides/): Every peptide and approved alternative we track, 13 in all, grouped FDA approved, not approved and cosmetic, with its source and the lowest price we show.
+- [Peptides A to Z: FDA status and prices | Peptide Chooser](https://peptidechooser.com/peptides/): Every peptide and approved alternative we track, 16 in all, grouped FDA approved, not approved and cosmetic, with its source and the lowest price we show.
 
 ## Guides (29 pages)
 
@@ -51,7 +55,7 @@
 - [Best peptides for weight loss: what is FDA approved](https://peptidechooser.com/learn/best-peptides-for-weight-loss/): Semaglutide and tirzepatide are FDA-approved peptides for weight loss. Compounded versions and retatrutide, with clinic prices and FDA status.
 - [Peptides vs steroids: what each is and what is legal](https://peptidechooser.com/learn/peptides-vs-steroids/): Anabolic steroids are man-made testosterone; the peptides sold for muscle act on growth hormone. FDA status, evidence in people and the risks of each.
 
-## About the site (10 pages)
+## About the site (11 pages)
 
 - [About Peptide Chooser](https://peptidechooser.com/about/): Peptide Chooser is an independent site that compares peptide products and sellers for people in the United States.
 - [How we rate peptide products and sellers | Peptide Chooser](https://peptidechooser.com/how-we-rate/): The checks Peptide Chooser runs on every peptide seller (lab reports for shops, FDA letters, company, legal pages, fresh prices) and how goal pages are built.
@@ -60,6 +64,7 @@
 - [Privacy policy | Peptide Chooser](https://peptidechooser.com/privacy/): What information Peptide Chooser collects when you visit or email us, how long we keep it, your rights, and how to contact us about your data.
 - [Mistakes we fixed | Peptide Chooser](https://peptidechooser.com/corrections/): Every factual error Peptide Chooser has corrected, with the date, what was wrong and what changed. Send corrections with a source and we list the fix here.
 - [GLP-1 pills for weight loss, compared | Peptide Chooser](https://peptidechooser.com/weight-loss/pills/): The Wegovy pill and Foundayo (orforglipron) are FDA-approved pills for weight loss. Compounded tablets are not. What each one is, and clinic prices.
+- [New weight loss drugs: what is approved | Peptide Chooser](https://peptidechooser.com/weight-loss/new-drugs/): Orforglipron (Foundayo) is a newly FDA-approved weight loss pill. Retatrutide and cagrilintide are still in trials. What each is, the trials and prices.
 - [FDA approved peptides: the full list | Peptide Chooser](https://peptidechooser.com/fda-approved/): Every FDA-approved peptide we track, with its brands, its source and clinic prices. Approved medicines that are not peptides are marked as such.
 - [Prescription and compounded peptides | Peptide Chooser](https://peptidechooser.com/prescription/): Compounded peptides are made by a pharmacy on a prescription and are not FDA approved. Which peptides that covers, the HHS policy, and clinic prices.
 - [Sources: where every number comes from | Peptide Chooser](https://peptidechooser.com/sources/): Every source behind the numbers on Peptide Chooser: FDA pages and openFDA, MedlinePlus, PubMed studies, state registries and our own database.

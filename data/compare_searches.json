@@ -1,0 +1,34 @@
+{
+  "_rule": "A substance comparison (/compare/{a}-vs-{b}/) from a shared goal page is built only when it is live already (rule 8) or its search is measured above 0 here (null: the tool gave no figure). Owner, 10 Nov 2026 (site map rule: a compare page needs a measured search).",
+  "live": {
+    "checked": "2026-11-10",
+    "source": "https://peptidechooser.com/sitemap.xml",
+    "pairs": [
+      "acetyl-hexapeptide-8-vs-palmitoyl-pentapeptide-4",
+      "bpc-157-vs-ghk-cu",
+      "bremelanotide-vs-tadalafil",
+      "cjc-1295-vs-ipamorelin",
+      "cjc-1295-vs-sermorelin",
+      "epitalon-vs-mots-c",
+      "epitalon-vs-nad-plus",
+      "ghk-cu-vs-tb-500",
+      "ipamorelin-vs-sermorelin",
+      "mots-c-vs-nad-plus",
+      "semaglutide-vs-tirzepatide"
+    ]
+  },
+  "measured": {
+    "checked": "2026-11-10",
+    "source": "Manufactura keywords_volume, US, monthly average of the last 3 months (call e06c4069)",
+    "pairs": {
+      "liraglutide-vs-semaglutide": {"query": "liraglutide vs semaglutide", "volume": 1700},
+      "liraglutide-vs-tirzepatide": {"query": "liraglutide vs tirzepatide", "volume": 920},
+      "gonadorelin-vs-kisspeptin-10": {"query": "gonadorelin vs kisspeptin", "volume": 83},
+      "liraglutide-vs-orforglipron": {"query": "liraglutide vs orforglipron", "volume": null},
+      "mots-c-vs-sermorelin": {"query": "mots-c vs sermorelin", "volume": null},
+      "nad-plus-vs-sermorelin": {"query": "nad vs sermorelin", "volume": null},
+      "orforglipron-vs-tirzepatide": {"query": "orforglipron vs tirzepatide", "volume": null},
+      "somatropin-vs-tesamorelin": {"query": "somatropin vs tesamorelin", "volume": null}
+    }
+  }
+}

@@ -598,7 +598,7 @@ def page(path, title, description, body, schema="", crumb=None):
 </footer>
 {COOKIE_BAR}
 {NAV_JS}
-{SEARCH_JS}
+{"" if path == "/" else SEARCH_JS}
 {MOTION_JS}
 </body>
 </html>
@@ -1522,7 +1522,9 @@ def how_line(p):
     if has_window(p) and window_kind(p) == "research" and not re.search(r"shop|do not link", p["how"], re.I):
         clinics = any(on_sub(r, subs_of(p)) for r in PLANS)
         return "Research-use shops, with our checks." + (" Online clinics also prescribe it." if clinics else "")
-    return p["how"]
+    # a link to a substance page this build does not have (no status in the data) keeps its words without the link (block 21)
+    return re.sub(r'<a href="/peptides/([a-z0-9-]+)/">(.*?)</a>',
+                  lambda m: m.group(0) if m.group(1) in PEPTIDE_SLUGS else m.group(2), p["how"])
 
 
 # A row whose data has no listing says so where the button would be, by its kind (owner, 4 Nov 2026), never an empty space.
@@ -2544,7 +2546,7 @@ def category_page(g):
 # Questions on a goal page (SEO round c, group 2, queue block 9): the searches "peptides for skin", "best peptides for
 # muscle growth" and the like, answered from the goal's approved texts and its option rows; no new claim.
 GOAL_FAQ = {"skin", "muscle", "weight-loss", "hair", "growth-hormone", "sleep", "energy", "weight-loss-pills",
-            "weight-loss-new-drugs", "testosterone"}  # all after "hair": drafts
+            "weight-loss-new-drugs", "testosterone"}  # all after "hair": wave A and B (queue blocks 18 and 21)
 
 
 def goal_price_word(g, p):
@@ -4453,7 +4455,11 @@ def pep_description(slug):
         parts.append(f'Online clinic plans from {usd(plan["price_monthly"])} a month.')
     goals = list(dict.fromkeys(g["name"].lower() for g, _ in pep_goals(slug)))
     if goals:
-        parts.append(f'On our {" and ".join(goals[:2])} page{"s" if len(goals[:2]) > 1 else ""}.')
+        # a goal name with "and" in it ("muscle and hormones") names each page apart (queue block 21: "On our muscle and
+        # hormones and growth hormone pages")
+        two = goals[:2]
+        parts.append(f'On our {two[0]} page and our {two[1]} page.' if len(two) > 1 and any(" and " in x for x in two)
+                     else f'On our {" and ".join(two)} page{"s" if len(two) > 1 else ""}.')
     brands = sorted({brand_base(a["brand_name"]) for a in APPROVED_DB if a["substance_slug"] == slug and a.get("brand_name")}
                     - {n.split()[0].title()})
     if brands and pep_group(s) == "approved":
@@ -5487,9 +5493,20 @@ def cmp_sub_pairs():
         subs = sorted({s for p in g["peptides"] for s in subs_of(p) if s in PEPTIDE_SLUGS})
         for i, a in enumerate(subs):
             for b in subs[i + 1:]:
-                if pep_group(pep_status(a)) == pep_group(pep_status(b)):
+                if pep_group(pep_status(a)) == pep_group(pep_status(b)) and cmp_sub_searched(a, b):
                     out.setdefault((a, b), []).append(g)
     return out
+
+
+# A new substance pair needs a measured search (owner, 10 Nov 2026; site map rules, Google rule for /compare/): built only
+# when live already (rule 8) or measured above 0 in data/compare_searches.json, with that file's source and check date.
+CMP_SEARCHES = json.loads((Path(__file__).parent / "data" / "compare_searches.json").read_text(encoding="utf-8"))
+
+
+def cmp_sub_searched(a, b):
+    key = cmp_path(a, b).strip("/").split("/")[-1]
+    m = (CMP_SEARCHES["measured"]["pairs"].get(key) or {}).get("volume") or 0
+    return key in CMP_SEARCHES["live"]["pairs"] or m > 0
 
 
 def cmp_clinic_plan(clinic, sub):
@@ -5624,6 +5641,13 @@ def cmp_status_words(slug):
     return STATUS_WORDS.get(pep_group(s), s["label"].lower())
 
 
+def cmp_status_is(slug, both=False):
+    """The status with its verb: "is not approved", "has no approved product on the market" (owner, 10 Nov 2026: "is no
+    approved product" was wrong English)."""
+    w = cmp_status_words(slug)
+    return ("have " if both else "has ") + w if w.startswith("no ") else ("are " if both else "is ") + w
+
+
 def cmp_sub_cell(slug, goals):
     """One substance's cells, in the row order of cmp_sub_rows."""
     s = pep_status(slug)
@@ -5659,7 +5683,7 @@ def cmp_sub_answer(a, b):
     """Two or three sentences from data: the statuses, then the prices that can be set side by side."""
     na, nb = pep_short(a), pep_short(b)
     wa, wb = cmp_status_words(a), cmp_status_words(b)
-    out = [f"Both are {wa}." if wa == wb else f"{na} is {wa}; {nb} is {wb}."]
+    out = [f"Both {cmp_status_is(a, True)}." if wa == wb else f"{na} {cmp_status_is(a)}; {nb} {cmp_status_is(b)}."]
     la, lb = pep_low_shop(a), pep_low_shop(b)
     pa = pep_low_plan(a) if pep_group(pep_status(a)) == "approved" else None
     pb = pep_low_plan(b) if pep_group(pep_status(b)) == "approved" else None
@@ -5727,7 +5751,7 @@ def cmp_sub_facts(a, b):
     ga, gb = pep_group(pep_status(a)), pep_group(pep_status(b))
     if ga != gb and "approved" in (ga, gb):
         w, o = (a, b) if ga == "approved" else (b, a)
-        side(w == a).append(("you want an FDA-approved medicine", f"{pep_short(w)} is FDA approved and {pep_short(o)} is {cmp_status_words(o)}"))
+        side(w == a).append(("you want an FDA-approved medicine", f"{pep_short(w)} is FDA approved and {pep_short(o)} {cmp_status_is(o)}"))
     approved = ga == gb == "approved"
     if approved:
         la, lb = sub_form_lows(a), sub_form_lows(b)
@@ -6279,7 +6303,9 @@ def main():
         (DIST / "windows" / f"goal-{k}.json").write_text(json.dumps({"html": html}), encoding="utf-8")
     (DIST / "assets" / "nav.js").write_text(NAV_SCRIPT + STATE_SCRIPT + EVENTS_SCRIPT, encoding="utf-8")
     if home.JS:
-        (DIST / "assets" / "home.js").write_text(home.JS, encoding="utf-8")
+        # Home carries the header search in its cached file too (queue block 21: the wave B goals took Home past 60 KB)
+        search = SEARCH_JS.strip()[len("<script>"):-len("</script>")]
+        (DIST / "assets" / "home.js").write_text(search + "\n" + home.JS, encoding="utf-8")
     if home.ROWS:
         (DIST / home.WHERE_JSON).write_text(home.ROWS, encoding="utf-8")
     (DIST / "windows").mkdir(exist_ok=True)
