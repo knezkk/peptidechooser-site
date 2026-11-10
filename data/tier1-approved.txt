@@ -191,3 +191,10 @@ ODOBRENO SEO - Karlo - 10. 11. 2026 - PR #170
 /longevity/ 649df3fbf774
 ODOBRENO SEO - Karlo - 10. 11. 2026 - PR #170 epitalon
 /peptides/epitalon/ c9e9463c5868
+ODOBRENO SEO - Karlo - 10. 11. 2026 - PR #169 compare and weight loss
+/compare/gonadorelin-vs-kisspeptin-10/ a3dee25992b7
+/compare/liraglutide-vs-semaglutide/ 9f5cc3d7aeae
+/compare/liraglutide-vs-tirzepatide/ dcc8dd515bf9
+/compare/epitalon-vs-mots-c/ aa3cfd6cb1b5
+/peptides/cagrilintide/ cfe2843cb75f
+/peptides/liraglutide/ 1c0a89c8eb77
