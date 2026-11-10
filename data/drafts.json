@@ -3,16 +3,6 @@
   "goals": [],
   "legal_rows": [],
   "legal_sources": [],
-  "goal_changes": {
-    "longevity": {
-      "name": "Longevity and aging",
-      "label": "Longevity and aging",
-      "short": "Longevity and aging",
-      "title": "Peptides for longevity and aging, compared | Peptide Chooser",
-      "h1": "Peptides for longevity and aging, compared with the evidence.",
-      "description": "Epitalon, MOTS-c and NAD+ shots are sold as anti-aging. None is FDA approved; HHS changed the rules for two in Oct 2026. The evidence and prices.",
-      "panel_title": "Aging and longevity"
-    }
-  },
+  "goal_changes": {},
   "subpages": []
 }
