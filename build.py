@@ -2607,7 +2607,10 @@ def plan_form_word(r):
 KIND_CHIP = {"brand": ("ok", "Brand"), "compounded": ("warn", "Compounded"), "program": ("neutral", "Program"),
              # owner task 2 Nov 2026: "other" is never called compounded, and its label is the plan's form (kind_chip);
              # "generic" (an approved medicine under its own name) renders once the data side sends it
-             "generic": ("ok", "Generic")}
+             "generic": ("ok", "Generic"),
+             # queue block 30-31 (owner's assistant, 10 Nov 2026): the data's "not_stated" kind (regulatory_group not_stated)
+             # is never called compounded or brand; it says the seller does not say
+             "not_stated": ("neutral", "Seller does not say")}
 
 
 def kind_chip(r):
@@ -2626,9 +2629,11 @@ def plan_chip(g, r):
 
 
 def plan_kind(r):
-    """"program" for a plan that names no medication, "brand" for branded or oral_branded, "other" and "generic" as the
-    data names them, else "compounded"."""
+    """"program" for a plan that names no medication, "brand" for branded or oral_branded, "other", "generic" and
+    "not_stated" as the data names them, else "compounded"."""
     k = r.get("product_kind")
+    if k == "not_stated" and r["substance_slug"]:  # the seller does not say which kind (queue block 31)
+        return k
     if k in ("other", "generic"):  # the data's own kind first: Ivim's membership names no medicine and is still "other"
         return k
     if not r["substance_slug"]:
@@ -4406,7 +4411,7 @@ def pep_answer(slug, first=None):
         out.append(f'<a href="#letters">{plural(n, "FDA warning letter")}</a> name{"s" if n == 1 else ""} it.')
     p = (first or pep_low_plan(slug)) if pep_group(s) == "approved" else None
     if p:
-        out.append(f'The first plan below, the lowest {"compounded plan" if p.get("product_kind") == "compounded" else "monthly plan that is not compounded"} at the online clinics we track, is {usd(p["price_monthly"])} '
+        out.append(f'The first plan below, the lowest {"compounded plan" if p.get("product_kind") == "compounded" else "monthly plan, whose kind the seller does not say," if p.get("product_kind") == "not_stated" else "monthly plan that is not compounded"} at the online clinics we track, is {usd(p["price_monthly"])} '
                    f'({clinic_link(p["seller_slug"], seller_base(p["seller_name"]), True)}, {clean(p["plan_name"])}), checked {nice_date(p["last_seen"])}.')
     return out
 
@@ -5051,7 +5056,8 @@ def pep_faq_pairs(slug):
     if p:
         r = p[0]
         what = ("compounded, made by a pharmacy and not FDA approved, even when an approved medicine has the same ingredient"
-                if r.get("product_kind") == "compounded" else "not compounded")
+                if r.get("product_kind") == "compounded" else "the seller does not say whether it is compounded"
+                if r.get("product_kind") == "not_stated" else "not compounded")
         pairs.append((f"How much does {alias} cost?",
                       f'The lowest plan at the online clinics we track is {usd(r["price_monthly"])} a month '
                       f'({clinic_link(r["seller_slug"], seller_base(r["seller_name"]), True)}, {escape(clean(r["plan_name"]))}), {what}. '

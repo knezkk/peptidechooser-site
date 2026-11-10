@@ -4,11 +4,14 @@ Reads the `site.*` views through the read-only role (peptide-data spec 0015) and
   - site.catalog_counts  -> "db": options and sellers counted, newest price date
   - site.substance_status, site.approved_drugs -> "legal_db": status per substance with its source and date
   - site.plan_prices     -> "plans": telehealth plan prices per seller, with the date the page was last seen
-                            and the seller's FDA warning letters (fda_letter_count, last_fda_letter_date)
+                            and the seller's FDA warning letters (fda_letter_count, last_fda_letter_date), and, once the
+                            data side has them, regulatory_group (fda_approved, compounded, not_stated,
+                            membership_or_bundle) and route (queue block 31, peptide-data 1b and 1c)
   - site.substances      -> "substances": every substance's name, substance_group, substance_class and is_peptide, for the
                             group pages (/bioregulators/, queue block 30)
-  - site.products        -> "products": research-use listings for the substances the site shows (see keep_products),
-                            plus every substance of a group page's class (GROUP_CLASSES)
+  - site.products        -> "products" (with regulatory_group research_use_only, supplement or cosmetic, and route from
+                            the form; queue block 31): research-use listings for the substances the site shows (see
+                            keep_products), plus every substance of a group page's class (GROUP_CLASSES)
   - site.sellers         -> "sellers": the seller rows those listings point to, with their background check and their
                             five-check score (score, score_* yes/no, score_checked_on)
   - site.fda_letters    -> "letters": the newest FDA warning letters to sellers in the database (see letters_rows)
@@ -312,12 +315,12 @@ def main():
         "commitment_months, observed_at, last_seen, pricing_url, fda_letter_count, last_fda_letter_date"
         # spec 0023 (task 22, 8 Nov 2026): a per-order price, read once the data side has migrated it; substance_slugs: every
         # medicine a plan covers (decision 0d, owner 8 Nov 2026)
-        f"{optional_columns('plan_prices', 'price_per_order', 'order_quantity', 'order_supply_days', 'fee_per_order', 'substance_slugs')} "
+        f"{optional_columns('plan_prices', 'price_per_order', 'order_quantity', 'order_supply_days', 'fee_per_order', 'substance_slugs', 'regulatory_group', 'route')} "
         "from site.plan_prices order by seller_slug, plan_slug")
     products = rows(
         "select seller_slug, seller_name, seller_status, product_name, variant_title, product_url, substance_slug, is_blend, "
         "amount_mg, form, price_usd, price_per_mg, price_observed_at, first_seen, last_seen, has_coa, coa_count"
-        f"{optional_columns('products', 'product_id', 'variant_id')} from site.products")
+        f"{optional_columns('products', 'product_id', 'variant_id', 'regulatory_group', 'route')} from site.products")
     add_cosmetic_links(products)
     d["products"] = keep_products(products, substances(d))
     used = {r["seller_slug"] for r in d["products"]}
