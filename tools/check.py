@@ -1268,6 +1268,41 @@ def check_data(P):
             errs.append(f"legal_db {name} ({r.get('regime')}): no source_url")
         if not (r.get("first_seen_by_us") or r.get("valid_from")):
             errs.append(f"legal_db {name} ({r.get('regime')}): no date")
+    # the group pages (queue block 30): once the pull carries site.substances, every substance has its class and group
+    # fields, and every substance of a listed class has its shop listings in the pull (tools/pull_data.py, GROUP_CLASSES)
+    subs = d.get("substances") or []
+    for x in subs:
+        if not x.get("substance_slug") or "substance_class" not in x or "substance_group" not in x or "is_peptide" not in x:
+            errs.append(f"substances {x.get('substance_slug', '?')}: no substance_class, substance_group or is_peptide")
+    listed = {r["substance_slug"] for r in d.get("products") or []}
+    for x in subs:
+        if x.get("substance_class") == "bioregulator" and x["substance_slug"] not in listed and d.get("products"):
+            errs.append(f"substances {x['substance_slug']}: a bioregulator without its shop listings in the pull")
+    # regulatory group, form and route (queue block 31; peptide-data 1b and 1c): once the pull carries them, each is one of
+    # the data side's values, a plan's kind agrees with its group, and a listing's route agrees with its form
+    plan_groups = {"fda_approved": ("branded", "oral_branded", "generic"), "compounded": ("compounded",),
+                   "not_stated": ("not_stated",), "membership_or_bundle": ("other",)}
+    for r in d.get("plans") or []:
+        g = r.get("regulatory_group")
+        if "regulatory_group" in r and g not in plan_groups:
+            errs.append(f"plans {r.get('seller_slug')}/{r.get('plan_slug')}: regulatory_group {g!r} is not one of {', '.join(plan_groups)}")
+        elif g and r.get("product_kind") not in plan_groups[g]:
+            errs.append(f"plans {r.get('seller_slug')}/{r.get('plan_slug')}: kind {r.get('product_kind')!r} under group {g!r}")
+    # a plan whose seller does not say its kind is never called compounded or brand on its seller page
+    for r in (x for x in d.get("plans") or [] if x.get("product_kind") == "not_stated" and x.get("substance_slug")):
+        f = DIST / "sellers" / r["seller_slug"] / "index.html"
+        rows_html = re.findall(r"<tr[ >].*?</tr>", f.read_text(encoding="utf-8"), re.S) if f.exists() else []
+        name = escape(r["plan_name"], quote=False)
+        for row in (x for x in rows_html if f">{name}<" in x):
+            if re.search(r'class="chip chip-(?:warn|ok)">(?:Compounded|Brand)', row) or "Seller does not say" not in row:
+                errs.append(f"sellers/{r['seller_slug']}/index.html: the plan {r['plan_name']} of kind not_stated is not shown as 'Seller does not say'")
+    form_route = {"vial": "injection", "capsule": "oral", "tablet": "oral", "nasal_spray": "nasal", "cream": "topical",
+                  "serum": "topical", "lotion": "topical", "gel": "topical", "foam": "topical", "topical": "topical"}
+    for r in d.get("products") or []:
+        if "regulatory_group" in r and r["regulatory_group"] not in ("research_use_only", "supplement", "cosmetic"):
+            errs.append(f"products {r.get('seller_slug')} {r.get('substance_slug')}: regulatory_group {r['regulatory_group']!r}")
+        if "route" in r and r.get("form") in form_route and r["route"] != form_route[r["form"]]:
+            errs.append(f"products {r.get('seller_slug')} {r.get('substance_slug')}: form {r['form']} with route {r['route']!r}")
     if d.get("letters") and not d.get("pulled_at"):
         errs.append("letters without pulled_at: the section's Checked date comes from it")
     for r in d.get("letters") or []:

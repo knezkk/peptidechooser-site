@@ -24,6 +24,7 @@ after three tries stops the deploy too (it says so): the guard never passes on w
 Usage: python3 tools/tier1_guard.py       TIER1_LIVE=<url> reads another site, for tests.
 """
 import hashlib
+import http.client
 import json
 import os
 import re
@@ -119,7 +120,7 @@ def fetch(url):
         except urllib.error.HTTPError as e:
             if e.code == 404:
                 return 404, ""
-        except OSError:
+        except (OSError, http.client.HTTPException):  # a cut-off answer (IncompleteRead) is tried again too
             pass
         time.sleep(2 * (i + 1))
     return 0, ""
