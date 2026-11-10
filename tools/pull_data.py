@@ -4,11 +4,14 @@ Reads the `site.*` views through the read-only role (peptide-data spec 0015) and
   - site.catalog_counts  -> "db": options and sellers counted, newest price date
   - site.substance_status, site.approved_drugs -> "legal_db": status per substance with its source and date
   - site.plan_prices     -> "plans": telehealth plan prices per seller, with the date the page was last seen
-                            and, once the data side has them, regulatory_group (fda_approved, compounded, not_stated,
+                            and the seller's FDA warning letters (fda_letter_count, last_fda_letter_date), and, once the
+                            data side has them, regulatory_group (fda_approved, compounded, not_stated,
                             membership_or_bundle) and route (queue block 31, peptide-data 1b and 1c)
-                            and the seller's FDA warning letters (fda_letter_count, last_fda_letter_date)
+  - site.substances      -> "substances": every substance's name, substance_group, substance_class and is_peptide, for the
+                            group pages (/bioregulators/, queue block 30)
   - site.products        -> "products" (with regulatory_group research_use_only, supplement or cosmetic, and route from
-                            the form; queue block 31): research-use listings for the substances the site shows (see keep_products)
+                            the form; queue block 31): research-use listings for the substances the site shows (see
+                            keep_products), plus every substance of a group page's class (GROUP_CLASSES)
   - site.sellers         -> "sellers": the seller rows those listings point to, with their background check and their
                             five-check score (score, score_* yes/no, score_checked_on)
   - site.fda_letters    -> "letters": the newest FDA warning letters to sellers in the database (see letters_rows)
@@ -188,7 +191,13 @@ def substances(d):
         goals, rows = goals + dr.get("goals", []), rows + dr.get("legal_rows", [])
     out = {p["substance"] for g in goals for p in g.get("peptides", []) if p.get("substance")}
     out |= {s for g in goals for p in g.get("peptides", []) for s in p.get("substances", [])}
-    return out | {s for r in rows for s in r.get("substances", [])}
+    out |= {s for r in rows for s in r.get("substances", [])}
+    # a group page lists every substance of its class (queue block 30, owner 10 Nov 2026: /bioregulators/, #163)
+    return out | {x["substance_slug"] for x in d.get("substances") or [] if x.get("substance_class") in GROUP_CLASSES}
+
+
+# The substance classes a group page lists in full (site map rules section 2, question 6; w3's /bioregulators/ draft, #163).
+GROUP_CLASSES = ("bioregulator",)
 
 
 # Cosmetic product forms (products.product_form): a cosmetic option's window lists only these (build.py COSMETIC_FORMS)
@@ -291,6 +300,8 @@ def main():
     # data side adds the column; the site shows it when present and nothing when not (owner task 2 Nov 2026)
     listing = rows("select count(*) as n from information_schema.columns where table_schema = 'site' "
                    "and table_name = 'substance_status' and column_name = 'fda_listing'")[0]["n"]
+    d["substances"] = rows("select substance_slug, canonical_name, is_peptide, substance_group, substance_class "
+                           "from site.substances order by substance_slug") if has_view("substances") else []
     d["legal_db"] = rows(
         "select substance_slug, canonical_name, is_peptide, regime, status_value, scope, valid_from, "
         f"first_seen_by_us, source_id, source_url{', fda_listing' if listing else ''} from site.substance_status "
