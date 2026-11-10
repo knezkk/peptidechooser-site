@@ -1268,6 +1268,16 @@ def check_data(P):
             errs.append(f"legal_db {name} ({r.get('regime')}): no source_url")
         if not (r.get("first_seen_by_us") or r.get("valid_from")):
             errs.append(f"legal_db {name} ({r.get('regime')}): no date")
+    # the group pages (queue block 30): once the pull carries site.substances, every substance has its class and group
+    # fields, and every substance of a listed class has its shop listings in the pull (tools/pull_data.py, GROUP_CLASSES)
+    subs = d.get("substances") or []
+    for x in subs:
+        if not x.get("substance_slug") or "substance_class" not in x or "substance_group" not in x or "is_peptide" not in x:
+            errs.append(f"substances {x.get('substance_slug', '?')}: no substance_class, substance_group or is_peptide")
+    listed = {r["substance_slug"] for r in d.get("products") or []}
+    for x in subs:
+        if x.get("substance_class") == "bioregulator" and x["substance_slug"] not in listed and d.get("products"):
+            errs.append(f"substances {x['substance_slug']}: a bioregulator without its shop listings in the pull")
     if d.get("letters") and not d.get("pulled_at"):
         errs.append("letters without pulled_at: the section's Checked date comes from it")
     for r in d.get("letters") or []:
