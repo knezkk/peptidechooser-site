@@ -19,6 +19,7 @@ import guides
 import parts
 import home
 import paid
+import offers
 
 ROOT = Path(__file__).parent
 DIST = ROOT / "dist"
@@ -175,7 +176,7 @@ def page_type(path):
     if bits[0] == "search":
         return "search"
     if bits[0] == "sellers":
-        return "seller" if len(bits) > 1 else "sellers"
+        return "offer" if len(bits) == 3 else "seller"  # seller offers in their own file (site map rules, section 1) if len(bits) > 1 else "sellers"
     if bits[0] == "peptides" and len(bits) > 1:
         return "peptide"
     if bits[0] == "learn" and len(bits) > 1:
@@ -1129,6 +1130,79 @@ TOOL_PROFILES = {t["seller_slug"]: PROFILES.pop(t["seller_slug"]) for g in DATA.
 # (product_count > 0), a clinic only plans (product_count 0). Every list of shops takes SHOPS; a clinic is never in one.
 SHOPS = {k: r for k, r in PROFILES.items() if (r.get("product_count") or 0) > 0}
 CLINIC_PROFILES = {k: r for k, r in PROFILES.items() if k not in SHOPS}
+
+# Seller offer pages, test of 20 (queue block 28, task 6A; site map rules section 1 and decision 3; design/pages/new-types.md,
+# Seller offer; ODOBRENO PRAVILA - Karlo - 9. 11. 2026 - 6A test). The pairs are in data/offer_test.json. Off unless
+# PC_OFFERS is set, except the pilot below, built indexable in its own sitemap file (sitemap-offer.xml);
+# PC_OFFERS="preview" builds every listed pair that shows at least one of the three things, with noindex, for the owner to look at.
+OFFERS_ON = os.environ.get("PC_OFFERS") or ""
+OFFER_TEST = json.loads((ROOT / "data" / "offer_test.json").read_text(encoding="utf-8")) if (ROOT / "data" / "offer_test.json").exists() else {}
+HIST_MIN_POINTS, HIST_MIN_DAYS = 3, 60  # price history: at least 3 checks over 60 days (nav-parts.md, Price history)
+
+
+def plan_is_blend(p):
+    """A plan of several ingredients (site map rules: blends never get an offer page). The data lists only the substances we
+    track (substance_slugs), so "Red Pill (Tadalafil/Pycnogenol)" carries tadalafil alone: a plan whose name joins ingredients
+    with "/", "+" or "with" counts as a blend too (decided in queue block 28, 9 Nov 2026; the data has no blend flag for plans)."""
+    name = re.sub(r"\bNAD\+", "NAD", p.get("plan_name") or "", flags=re.I)  # "NAD+" is one substance's name, not a "+"
+    return len(p.get("substance_slugs") or []) > 1 or bool(re.search(r"/|\+|\bwith\b", name, re.I))
+
+
+def offer_plans(seller, sub):
+    """The clinic's priced plans of exactly this one substance, cheapest first; blends never count."""
+    return sorted((p for p in PLANS if p["seller_slug"] == seller and p["substance_slug"] == sub and p.get("price_monthly") is not None
+                   and not plan_is_blend(p)), key=lambda p: (float(p["price_monthly"]), p["plan_name"]))
+
+
+def plan_terms(p):
+    """A plan's terms the seller and substance pages do not show: [(name, value)] for its commitment, its first-month price
+    and its consult fee. The monthly price and the care fee are on the seller page already, so they do not count."""
+    out = []
+    if p.get("commitment_months"):
+        out.append(("Commitment", plural(int(p["commitment_months"]), "month")))
+    if p.get("price_first_month") is not None and float(p["price_first_month"]) != float(p["price_monthly"]):
+        out.append(("First month", f'{usd(p["price_first_month"])}, then {usd(p["price_monthly"])} a month'))
+    if p.get("consult_fee") is not None:
+        out.append(("Consult fee", "none" if float(p["consult_fee"]) == 0 else usd(p["consult_fee"])))
+    return out
+
+
+def offer_history(p):
+    """The plan's own price history, [(day, monthly with care fee)], when it has HIST_MIN_POINTS checks over HIST_MIN_DAYS."""
+    pts = sorted({(r["observed_on"][:10], round(float(r["price_monthly"]) + float(r.get("membership_fee_monthly") or 0), 2))
+                  for r in DATA.get("plan_price_history") or [] if r["seller_slug"] == p["seller_slug"] and r["plan_slug"] == p["plan_slug"]
+                  and r.get("price_monthly") is not None})
+    if len(pts) < HIST_MIN_POINTS or (date.fromisoformat(pts[-1][0]) - date.fromisoformat(pts[0][0])).days < HIST_MIN_DAYS:
+        return []
+    return pts
+
+
+def offer_things(seller, sub):
+    """Which of the three things the offer page shows that its parents do not (site map rules, section 1)."""
+    plans = offer_plans(seller, sub)
+    return {"price history": any(offer_history(p) for p in plans),
+            "lab report": False,  # an online clinic publishes no lab reports (pages.md, Seller: checked on four facts)
+            "plan terms": any(plan_terms(p) for p in plans)}
+
+
+def offer_passes(pair):
+    """The Google rule for a seller offer: at least one of the three things, and a measured search or two of the three."""
+    n = sum(offer_things(pair["seller"], pair["substance"]).values())
+    return n >= 1 and ((pair.get("search") or {}).get("volume", 0) > 0 or n >= 2)
+
+
+OFFER_PAIRS = [x for x in OFFER_TEST.get("pairs") or [] if x["seller"] in CLINIC_PROFILES and offer_plans(x["seller"], x["substance"])]
+# The pilot of 3 (queue block 28c; ODOBRENO PRAVILA - Karlo - 9. 11. 2026 - 6A pilot 3, template ODOBRENO SEO - Karlo -
+# 9. 11. 2026 - PR #161): only the pairs in offer_test.json "pilot" are indexable, built without PC_OFFERS, while they pass.
+OFFER_PILOT = {tuple(x) for x in (OFFER_TEST.get("pilot") or {}).get("pairs") or []}
+OFFER_INDEXED = {(x["seller"], x["substance"]) for x in OFFER_PAIRS if (x["seller"], x["substance"]) in OFFER_PILOT and offer_passes(x)}
+OFFER_BUILT = OFFER_INDEXED | {(x["seller"], x["substance"]) for x in OFFER_PAIRS
+                               if OFFERS_ON == "preview" and sum(offer_things(x["seller"], x["substance"]).values()) >= 1}
+
+
+def offer_link(seller, sub, text):
+    """`text` linked to the offer page when that page is indexed (site map rule 4.3), else unchanged."""
+    return f'<a href="/sellers/{seller}/{sub}/">{text}</a>' if (seller, sub) in OFFER_INDEXED else text
 # A real logo (pages.md, Seller tile): the entry in data/seller_logos.json and the brand's file in assets/logos/, both, never a shop.
 # A tool has no seller page: its logo is used only in the Tools block. An entry with neither a page nor a tool waits for its seller.
 TOOL_LOGOS = {}
@@ -2541,7 +2615,10 @@ def plan_form_word(r):
 KIND_CHIP = {"brand": ("ok", "Brand"), "compounded": ("warn", "Compounded"), "program": ("neutral", "Program"),
              # owner task 2 Nov 2026: "other" is never called compounded, and its label is the plan's form (kind_chip);
              # "generic" (an approved medicine under its own name) renders once the data side sends it
-             "generic": ("ok", "Generic")}
+             "generic": ("ok", "Generic"),
+             # queue block 30-31 (owner's assistant, 10 Nov 2026): the data's "not_stated" kind (regulatory_group not_stated)
+             # is never called compounded or brand; it says the seller does not say
+             "not_stated": ("neutral", "Seller does not say")}
 
 
 def kind_chip(r):
@@ -2560,9 +2637,11 @@ def plan_chip(g, r):
 
 
 def plan_kind(r):
-    """"program" for a plan that names no medication, "brand" for branded or oral_branded, "other" and "generic" as the
-    data names them, else "compounded"."""
+    """"program" for a plan that names no medication, "brand" for branded or oral_branded, "other", "generic" and
+    "not_stated" as the data names them, else "compounded"."""
     k = r.get("product_kind")
+    if k == "not_stated" and r["substance_slug"]:  # the seller does not say which kind (queue block 31)
+        return k
     if k in ("other", "generic"):  # the data's own kind first: Ivim's membership names no medicine and is still "other"
         return k
     if not r["substance_slug"]:
@@ -2633,7 +2712,7 @@ def clinic_section(g, rows):
         # on phones the first CLINICS_FIRST rows show until "Show all N" (owner answer Q2 a, 2 Nov 2026; bundle.css, Clinic table)
         more = ' class="more"' if i >= CLINICS_FIRST else ""
         plan = explain_brand(r["plan_name"], named)
-        trs.append(f'<tr{more} data-s="{row_sub(g, r)}"{state_attrs(r["seller_slug"])}><td>{clinic_link(r["seller_slug"], seller_base(r["seller_name"]))}</td><td data-l="Plan"><span class="plan-cut" title="{escape(strip_tags(plan))}">{slash_break(plan)}</span></td>'
+        trs.append(f'<tr{more} data-s="{row_sub(g, r)}"{state_attrs(r["seller_slug"])}><td>{clinic_link(r["seller_slug"], seller_base(r["seller_name"]))}</td><td data-l="Plan"><span class="plan-cut" title="{escape(strip_tags(plan))}">{offer_link(r["seller_slug"], r["substance_slug"], slash_break(plan))}</span></td>'
                    f'<td>{plan_chip(g, r)}</td>'
                    f'<td data-l="Per month"><span class="num">{usd(r["price_monthly"])}</span>{plan_letter(r)}{f"<span class=sub>{care}</span>" if care else ""}{covers_note(r)}</td>'
                    # every row: the letter chip by the price, no FDA letter column, "See plans" to our clinic page (owner answers
@@ -3387,7 +3466,7 @@ def clinic_plans_section(r):
                      if other else '<span class="sub">no medication named</span>' if not p["substance_slug"]
                      else '<span class="sub">form not stated</span>' if not p.get("dosage_form") else '<span class="sub">no other clinic</span>')
         fee = p.get("membership_fee_monthly")
-        trs.append(f'<tr><td><span class="cell-pic">{parts.plan_picture(p)}<span class="name">{slash_break(clean(p["plan_name"]))}</span></span></td><td data-l="What it is">{plan_chip(plan_goal(p), p)}</td>'
+        trs.append(f'<tr><td><span class="cell-pic">{parts.plan_picture(p)}<span class="name">{offer_link(p["seller_slug"], p["substance_slug"], slash_break(clean(p["plan_name"])))}</span></span></td><td data-l="What it is">{plan_chip(plan_goal(p), p)}</td>'
                    f'<td class="num" data-l="Per month">{usd(p["price_monthly"])}</td>'
                    f'<td data-l="Care fee">{"not known" if fee is None else "none" if float(fee) == 0 else usd(fee) + "/mo, included"}</td>'
                    f'<td data-l="Cheapest elsewhere">{elsewhere}</td></tr>')
@@ -4340,7 +4419,7 @@ def pep_answer(slug, first=None):
         out.append(f'<a href="#letters">{plural(n, "FDA warning letter")}</a> name{"s" if n == 1 else ""} it.')
     p = (first or pep_low_plan(slug)) if pep_group(s) == "approved" else None
     if p:
-        out.append(f'The first plan below, the lowest {"compounded plan" if p.get("product_kind") == "compounded" else "monthly plan that is not compounded"} at the online clinics we track, is {usd(p["price_monthly"])} '
+        out.append(f'The first plan below, the lowest {"compounded plan" if p.get("product_kind") == "compounded" else "monthly plan, whose kind the seller does not say," if p.get("product_kind") == "not_stated" else "monthly plan that is not compounded"} at the online clinics we track, is {usd(p["price_monthly"])} '
                    f'({clinic_link(p["seller_slug"], seller_base(p["seller_name"]), True)}, {clean(p["plan_name"])}), checked {nice_date(p["last_seen"])}.')
     return out
 
@@ -4566,7 +4645,6 @@ PLAN_PRICE_HISTORY = DATA.get("plan_price_history") or []
 # a substance the data marks as no peptide (substance_status.is_peptide; finasteride, minoxidil, orforglipron, NAD+):
 # the "Not a peptide" chip of the group and /fda-approved/ tables (group.md) reads this set, never a typed list
 NOT_PEPTIDES = {r["substance_slug"] for r in DATA.get("legal_db") or [] if r.get("is_peptide") is False}
-HIST_MIN_POINTS, HIST_MIN_DAYS = 3, 60
 
 
 def not_peptide_chip(slug):
@@ -4986,7 +5064,8 @@ def pep_faq_pairs(slug):
     if p:
         r = p[0]
         what = ("compounded, made by a pharmacy and not FDA approved, even when an approved medicine has the same ingredient"
-                if r.get("product_kind") == "compounded" else "not compounded")
+                if r.get("product_kind") == "compounded" else "the seller does not say whether it is compounded"
+                if r.get("product_kind") == "not_stated" else "not compounded")
         pairs.append((f"How much does {alias} cost?",
                       f'The lowest plan at the online clinics we track is {usd(r["price_monthly"])} a month '
                       f'({clinic_link(r["seller_slug"], seller_base(r["seller_name"]), True)}, {escape(clean(r["plan_name"]))}), {what}. '
@@ -5378,6 +5457,12 @@ for _g in LIST_GROUPS:  # drafts only (PC_DRAFTS=1): list-layout group pages (gr
                       [(_g["path"], _g["crumb"])]))
 
 
+# Seller offer pages (queue block 28, offers.py): only with PC_OFFERS; nothing is built or linked without it.
+_offer_pages, _offer_noindex = offers.pages(sys.modules[__name__])
+PAGES += _offer_pages
+NOINDEX |= _offer_noindex
+
+
 # Comparison pages (pages.md, Compare `/compare/<a>-vs-<b>/`; owner task 2 Nov 2026): static, indexable pairs from the
 # data /compare/ uses, built after every other page so the "Compared with" lines and "Popular comparisons" can be added
 # to /compare/, the /peptides/ pages and the clinic pages here. Substance pairs: every two substances with a page that
@@ -5422,7 +5507,7 @@ def cmp_clinic_name(slug):
 # URL carries the date its visible content last changed. dist/lastmod.json keeps each page's visible-text fingerprint and
 # that date; the deploy fetches the live copy into LIVE_LASTMOD (tools/live_sitemap.py), so an unchanged page keeps its
 # date. A date stamp alone ("Checked 8 Nov 2026") is not a change. Without the live copy every date is DATA_CHECKED.
-SITEMAP_TYPES = ("main", "goal", "group", "substance", "seller", "compare", "guide", "trust")
+SITEMAP_TYPES = ("main", "goal", "group", "substance", "seller", "offer", "compare", "guide", "trust")
 TRUST_PAGES = {"about", "how-we-rate", "sources", "contact", "corrections", "disclosure", "privacy"}
 LIST_PAGES = {"peptides", "sellers", "compare", "learn", "fda-warning-letters", "search"}
 _MONTHS = r"(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?"
@@ -5441,7 +5526,7 @@ def sitemap_type(path):
     if bits[0] == "peptides":
         return "substance"
     if bits[0] == "sellers":
-        return "seller"
+        return "offer" if len(bits) == 3 else "seller"  # seller offers in their own file (site map rules, section 1)
     if bits[0] == "compare":
         return "compare"
     if bits[0] == "learn":
@@ -6052,7 +6137,7 @@ def cmp_links_in():
                                                                  for x in sorted(pairs, key=lambda x: (-x[3], x[1]))))
             line = ""  # the pair is in "What to do next" now (owner task 3 Nov 2026)
             body = body.replace('<section class="section pep-foot">\n  <div class="wrap">', '<section class="section pep-foot">\n  <div class="wrap">\n    ' + line, 1)
-        elif path.startswith("/sellers/") and path.split("/")[2] in CLINIC_PROFILES:
+        elif path.startswith("/sellers/") and path.count("/") == 3 and path.split("/")[2] in CLINIC_PROFILES:  # not an offer page
             line = cmp_compared_with(path.split("/")[2])
             body += f'<section class="section"><div class="wrap">{line}</div></section>\n' if line else ""
         PAGES[i] = (path, out, title, desc, body, schema, crumb)
