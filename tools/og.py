@@ -5,6 +5,7 @@ favicon-32.png, apple-touch-icon.png (180), icon-512.png, then rebuild.
 python3 tools/og.py --missing draws only the pages that have no image yet and leaves the favicons (--missing --count
 prints how many); the deploy runs it, so a page born from new data gets its image there (owner answer Q1 a, 3 Nov 2026).
 """
+import base64
 import json
 import re
 import sys
@@ -19,8 +20,8 @@ col = {t["name"]: t["value"] for t in tokens["color"]["tokens"]}
 mark = (ROOT / "assets" / "logo.svg").read_text()
 
 TEMPLATE = """<!doctype html><html><head><meta charset="utf-8">
-<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,800&family=Public+Sans:wght@800&family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
 <style>
+{fonts}
 body{{margin:0;width:1200px;height:630px;background:{paper};color:{ink};font-family:"Atkinson Hyperlegible",Arial,sans-serif;display:flex;flex-direction:column;justify-content:space-between;padding:64px;box-sizing:border-box;border-bottom:16px solid {mark}}}
 .t{{font:800 64px/1.05 "Bricolage Grotesque",Arial,sans-serif;letter-spacing:-0.02em;max-width:1000px;overflow-wrap:anywhere}}
 .b{{display:flex;align-items:center;gap:16px;font:800 32px "Public Sans",Arial,sans-serif;letter-spacing:-0.015em}}
@@ -42,6 +43,11 @@ KINDS = [(r"^/(" + "|".join(GROUPS) + r")/$", "Substance group"), (r"^/peptides/
          (r"^/sellers/[^/]+/[^/]+/$", "Seller offer"), (r"^/labs/[^/]+/$", "Lab reports"),
          (r"^/fda-warning-letters/[^/]+/$", "FDA warning letters"), (r"^/tools/[^/]+/$", "Tool")]
 ART = (ROOT / "assets" / "art.svg").read_text()
+# The fonts live in the repo (tools/og-fonts, OFL), inlined as data URLs, so drawing needs no network and no system
+# font packages (owner, 11 Nov 2026).
+FONTS = re.sub(r"url\(([^)]+)\)", lambda m: "url(data:font/woff2;base64,"
+               + base64.b64encode((ROOT / "tools" / "og-fonts" / m.group(1)).read_bytes()).decode() + ")",
+               (ROOT / "tools" / "og-fonts" / "fonts.css").read_text())
 
 
 def kind_icon(path):
@@ -69,8 +75,9 @@ with sync_playwright() as p:
         title = item["title"].split(" | ")[0]
         kind, icon = kind_icon(item["path"])
         pg.set_content(TEMPLATE.format(paper=col["paper"], paper2=col["paper-2"], ink=col["ink"], ink2=col["ink-2"], mark=col["mark"],
-                                       svg=mark, title=title, kind=kind, icon=icon))
-        pg.wait_for_timeout(600)
+                                       svg=mark, title=title, kind=kind, icon=icon, fonts=FONTS))
+        pg.evaluate("document.fonts.ready")
+        pg.wait_for_timeout(200)
         pg.screenshot(path=str(out / f"{name}.png"))
         print("og", name)
     if missing or arg("--pages"):
