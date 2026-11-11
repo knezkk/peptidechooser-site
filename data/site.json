@@ -2074,6 +2074,11 @@
         "n": 18,
         "text": "FDA, Certain Bulk Drug Substances for Use in Compounding that May Present Significant Safety Risks, read 9 Nov 2026",
         "url": "https://www.fda.gov/drugs/human-drug-compounding/certain-bulk-drug-substances-use-compounding-may-present-significant-safety-risks"
+      },
+      {
+        "n": 19,
+        "text": "Drugs@FDA, searched through openFDA (brand, generic and active ingredient names) for the 18 bioregulators in our database: no approved product (the one hit, Cardiogen-82, is a rubidium scan agent, not the peptide), 9 Nov 2026",
+        "url": "https://www.accessdata.fda.gov/scripts/cder/daf/index.cfm"
       }
     ],
     "hhs_policy": {
@@ -2248,6 +2253,32 @@
     {
       "term": "Is it safe?",
       "text": "only approved products have safety data from large trials. For everything else the honest answer is: unknown."
+    }
+  ],
+  "list_groups": [
+    {
+      "slug": "bioregulators",
+      "path": "/bioregulators/",
+      "crumb": "Bioregulator peptides",
+      "class": "bioregulator",
+      "title": "Bioregulator peptides and their FDA status | Peptide Chooser",
+      "h1": "Bioregulator peptides: the Khavinson peptides and their status.",
+      "description": "Bioregulators are short peptides from Vladimir Khavinson's research in Russia. Each one we track, with its FDA status, its source and where it is sold.",
+      "what": "Bioregulators are short peptides studied for decades by Vladimir Khavinson's group in Russia, mostly in laboratory animals.",
+      "what_src": {
+        "text": "Khavinson VKh, Kuznik BI, Ryzhak GA. Peptide bioregulators: the new class of geroprotectors. Communication 1. Results of experimental studies. Adv Gerontol. 2012;25(4):696-708 (in Russian), PubMed 23734519",
+        "url": "https://pubmed.ncbi.nlm.nih.gov/23734519/"
+      },
+      "main": {
+        "epitalon": "Epitalon, the best known of them, has its own page"
+      },
+      "status": {
+        "status": "Not approved",
+        "chip": "neutral",
+        "note": "no FDA-approved product; sold by research-use shops, labelled not for use in people",
+        "src": 19,
+        "checked": "2026-11-09"
+      }
     }
   ]
 }
