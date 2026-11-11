@@ -1702,9 +1702,9 @@ def check_arch(P):
 
 def check_arch_switch(P):
     """Owner task 24 (9 Nov 2026): the lab mark, the price history and the data's "Not a peptide" chip show only with
-    PC_ARCH_DATA=1. Off: none of them. On: a lab mark only on a shop row, from a lab report in the data; a price history
+    PC_ARCH_DATA on (the default from 11 Nov 2026; PC_ARCH_DATA=0 turns it off). Off: none of them. On: a lab mark only on a shop row, from a lab report in the data; a price history
     only with 3 checks over 60 days; /fda-approved/, once built, marks every substance the data calls no peptide."""
-    errs, on = [], os.environ.get("PC_ARCH_DATA") == "1"
+    errs, on = [], os.environ.get("PC_ARCH_DATA", "1") == "1"
     d = json.loads((ROOT / "data" / "site.json").read_text(encoding="utf-8"))
     text = lambda h: " ".join(unescape(re.sub(r"<[^>]+>", " ", h)).split())
     month = lambda iso: date.fromisoformat(str(iso)[:10]).strftime("%b %Y")
