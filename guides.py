@@ -1309,6 +1309,12 @@ def rx_slugs(b):
             and (b.pep_status(x)["label"] == "Pharmacy-made" or x in hhs or x in clinic)]
 
 
+def group_rows(b, slug):
+    """The substances in a group page's own table (Home's By approval card counts them; home.md)."""
+    slugs = approved_slugs(b) if slug == "fda-approved" else rx_slugs(b) if slug == "prescription" else []
+    return [x for x in slugs if x in b.PEPTIDE_SLUGS or b.hand_legal(x)]
+
+
 def g_fda_approved(b, f, N):
     """/fda-approved/ (group page, guide layout; owner queue block 15): the approved substances from our database, those
     that are not peptides marked, what approval means, and where they are sold. No paid link (rule 4.5)."""
