@@ -24,6 +24,8 @@ Reads the `site.*` views through the read-only role (peptide-data spec 0015) and
     compare pairs and the letters page's substance filter
   - site.seller_profile, site.seller_substances, site.seller_letters -> "seller_profiles", "seller_substances" (top 12 per
     seller, see top_substances), "seller_letters": the seller pages /sellers/ and /sellers/<slug>/
+  - "filters" (derived from "plans" and "products", see filters): per substance and per seller its regulation and route
+    values, and how many have each, for the filters of /peptides/ and /sellers/ (queue block 32)
 
 Everything else in site.json (hand-checked prices with their sources, texts, goals) is left untouched.
 Run before build.py:  SITE_DATABASE_URL=postgres://site_reader:...@host:5432/postgres python3 tools/pull_data.py
@@ -199,6 +201,36 @@ def substances(d):
 # The substance classes a group page lists in full (site map rules section 2, question 6; w3's /bioregulators/ draft, #163).
 GROUP_CLASSES = ("bioregulator",)
 
+# The filters of /peptides/ and /sellers/ (architecture step 9, queue block 32): the values in the order the buttons show
+# them. membership_or_bundle says how a plan is sold, not how it is regulated, so it is no filter value. The data side's
+# plan routes subcutaneous and sc_or_im are injections.
+FILTER_VALUES = {
+    "regulation": ("fda_approved", "compounded", "not_stated", "research_use_only", "supplement", "cosmetic"),
+    "route": ("injection", "oral", "topical", "nasal"),
+}
+ROUTE_ALIASES = {"subcutaneous": "injection", "sc_or_im": "injection"}
+
+
+def filters(d):
+    """Per substance and per seller, the regulation and route values its plans and listings have, and per value how many
+    substances and sellers have it: the data behind the filter buttons. Filters never create an address (site map rules
+    section 3, rule 7), so this only feeds a page's own list."""
+    have = {"substances": {}, "sellers": {}}
+    for r in (d.get("plans") or []) + (d.get("products") or []):
+        vals = {"regulation": r.get("regulatory_group"), "route": ROUTE_ALIASES.get(r.get("route"), r.get("route"))}
+        subs = {s for s in [r.get("substance_slug"), *(r.get("substance_slugs") or [])] if s}
+        for kind, keys in (("substances", subs), ("sellers", {r["seller_slug"]} if r.get("seller_slug") else set())):
+            for key in keys:
+                slot = have[kind].setdefault(key, {f: set() for f in FILTER_VALUES})
+                for f, v in vals.items():
+                    if v in FILTER_VALUES[f]:
+                        slot[f].add(v)
+    out = {"values": {f: list(v) for f, v in FILTER_VALUES.items()}}
+    for kind, items in have.items():
+        out[kind] = {k: {f: [v for v in FILTER_VALUES[f] if v in s[f]] for f in FILTER_VALUES} for k, s in sorted(items.items())}
+        out[kind + "_counts"] = {f: {v: sum(v in s[f] for s in items.values()) for v in FILTER_VALUES[f]} for f in FILTER_VALUES}
+    return out
+
 
 # Cosmetic product forms (products.product_form): a cosmetic option's window lists only these (build.py COSMETIC_FORMS)
 # "topical" too (owner answer, 3 Nov 2026: the database holds GHK-Cu, SNAP-8 and AHK-Cu listings as topical)
@@ -373,6 +405,7 @@ def main():
     add_history_and_labs(d)
     d["pulled_at"] = datetime.utcnow().isoformat(timespec="seconds") + "Z"
     d = move_sellers(d, d["seller_redirects"])
+    d["filters"] = filters(d)
     if PAID.exists() and d["seller_redirects"]:
         PAID.write_text(json.dumps(move_sellers(json.loads(PAID.read_text(encoding="utf-8")), d["seller_redirects"]),
                                    indent=2, ensure_ascii=False) + "\n", encoding="utf-8")

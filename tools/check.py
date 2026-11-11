@@ -1303,6 +1303,37 @@ def check_data(P):
             errs.append(f"products {r.get('seller_slug')} {r.get('substance_slug')}: regulatory_group {r['regulatory_group']!r}")
         if "route" in r and r.get("form") in form_route and r["route"] != form_route[r["form"]]:
             errs.append(f"products {r.get('seller_slug')} {r.get('substance_slug')}: form {r['form']} with route {r['route']!r}")
+    # the filter data of /peptides/ and /sellers/ (queue block 32): each substance's and seller's values are exactly those
+    # of its plans and listings, only known values, and each count is the number of substances or sellers with that value
+    fl = d.get("filters")
+    if fl:
+        known = {"regulation": {"fda_approved", "compounded", "not_stated", "research_use_only", "supplement", "cosmetic"},
+                 "route": {"injection", "oral", "topical", "nasal"}}
+        alias = {"subcutaneous": "injection", "sc_or_im": "injection"}
+        want = {"substances": {}, "sellers": {}}
+        for r in (d.get("plans") or []) + (d.get("products") or []):
+            v = {"regulation": r.get("regulatory_group"), "route": alias.get(r.get("route"), r.get("route"))}
+            for kind, keys in (("substances", {r.get("substance_slug"), *(r.get("substance_slugs") or [])} - {None}),
+                               ("sellers", {r.get("seller_slug")} - {None})):
+                for k in keys:
+                    slot = want[kind].setdefault(k, {f: set() for f in known})
+                    for f in known:
+                        if v[f] in known[f]:
+                            slot[f].add(v[f])
+        for kind in want:
+            got = fl.get(kind) or {}
+            for k in set(want[kind]) | set(got):
+                for f in known:
+                    g = set((got.get(k) or {}).get(f) or [])
+                    if g - known[f]:
+                        errs.append(f"filters {kind} {k}: unknown {f} {sorted(g - known[f])}")
+                    if g != want[kind].get(k, {}).get(f, set()):
+                        errs.append(f"filters {kind} {k}: {f} {sorted(g)} is not what its plans and listings say, {sorted(want[kind].get(k, {}).get(f, set()))}")
+            for f in known:
+                for val, n in ((fl.get(kind + "_counts") or {}).get(f) or {}).items():
+                    real = sum(val in s[f] for s in want[kind].values())
+                    if n != real:
+                        errs.append(f"filters {kind}_counts {f} {val}: {n}, but {real} {kind} have it")
     if d.get("letters") and not d.get("pulled_at"):
         errs.append("letters without pulled_at: the section's Checked date comes from it")
     for r in d.get("letters") or []:
@@ -1671,9 +1702,9 @@ def check_arch(P):
 
 def check_arch_switch(P):
     """Owner task 24 (9 Nov 2026): the lab mark, the price history and the data's "Not a peptide" chip show only with
-    PC_ARCH_DATA=1. Off: none of them. On: a lab mark only on a shop row, from a lab report in the data; a price history
+    PC_ARCH_DATA on (the default from 11 Nov 2026; PC_ARCH_DATA=0 turns it off). Off: none of them. On: a lab mark only on a shop row, from a lab report in the data; a price history
     only with 3 checks over 60 days; /fda-approved/, once built, marks every substance the data calls no peptide."""
-    errs, on = [], os.environ.get("PC_ARCH_DATA") == "1"
+    errs, on = [], os.environ.get("PC_ARCH_DATA", "1") == "1"
     d = json.loads((ROOT / "data" / "site.json").read_text(encoding="utf-8"))
     text = lambda h: " ".join(unescape(re.sub(r"<[^>]+>", " ", h)).split())
     month = lambda iso: date.fromisoformat(str(iso)[:10]).strftime("%b %Y")

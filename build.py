@@ -3770,6 +3770,26 @@ def met_checks(r):
     return " ".join(k for k, f, _ in SELLER_CHECKS if r.get(f))
 
 
+# Filters by how a substance is sold and its form (architecture step 9; owner, 11 Nov 2026): the values come from
+# site.json "filters" (tools/pull_data.py, w2 block 32), shown as chips in the filter look (nav-parts.md). A chip only
+# narrows the rows already on the page: the state lives in the hash, never in a path or query (site map rules 3.7).
+FILTERS = DATA.get("filters") or {}
+FILTER_GROUPS = [("regulation", "sold", "Sold as", {"fda_approved": "FDA approved", "compounded": "Compounded",
+                                                    "not_stated": "Clinic, type not stated", "research_use_only": "Research use",
+                                                    "supplement": "Supplement", "cosmetic": "Cosmetic"}),
+                 ("route", "form", "Form", {"injection": "Injection", "oral": "Oral", "topical": "Topical", "nasal": "Nasal"})]
+
+
+def filter_tokens(kind, slug, extra=()):
+    """The chip keys a row matches ("sold-compounded form-oral"), from the filter data of a substance or a seller."""
+    f = (FILTERS.get(kind) or {}).get(slug) or {}
+    return [f"{p}-{v}" for g, p, _, _ in FILTER_GROUPS for v in f.get(g, [])] + list(extra)
+
+
+def filter_values(group):
+    return [v for v in (FILTERS.get("values") or {}).get(group, []) if v in dict((g, w) for g, _, _, w in FILTER_GROUPS)[group]]
+
+
 def clinic_subs(r):
     return sorted({p["substance_slug"] for p in clinic_plan_rows(r) if p.get("substance_slug")})
 
@@ -3803,6 +3823,16 @@ def sellers_filter(shops, clinics):
         f'<button type="button" class="year-chip" data-check="{k}" data-filter="check" data-value="{k}" data-nc="{sum(bool(r.get(f)) for r in clinics)}" data-ns="{sum(bool(r.get(f)) for r in shops)}" aria-pressed="false">'
         f'{t} <span class="chip-n">{sum(bool(r.get(f)) for r in shops)}</span></button>'
         for k, f, t in SELLER_CHECKS)
+    tok = {id(r): filter_tokens("sellers", r["seller_slug"]) for r in shops + clinics}
+    groups = ""
+    for g, pre, label, words in FILTER_GROUPS:
+        bs = "".join(
+            f'<button type="button" class="year-chip" data-check="{pre}-{v}" data-filter="{pre}" data-value="{v}" '
+            f'data-nc="{sum(f"{pre}-{v}" in tok[id(r)] for r in clinics)}" data-ns="{sum(f"{pre}-{v}" in tok[id(r)] for r in shops)}" aria-pressed="false">'
+            f'{words[v]} <span class="chip-n">{sum(f"{pre}-{v}" in tok[id(r)] for r in shops)}</span></button>'
+            for v in filter_values(g))
+        if bs and any(tok.values()):
+            groups += f'\n      <div class="year-chips" role="group" aria-labelledby="sellers-{pre}"><span id="sellers-{pre}">{label}</span>{bs}</div>'
     # phones (owner task 3 Nov 2026, the 390px walkthrough): the filters fold behind one "Filter" button, the count beside it
     return f"""<div class="letters-filter sellers-filter" hidden>
       <div class="filter-bar"><button type="button" class="btn btn-line btn-sm filter-toggle" aria-expanded="false" aria-controls="sellers-fbody">Filter</button></div>
@@ -3814,7 +3844,7 @@ def sellers_filter(shops, clinics):
       <span class="sf-field sort-clinics">{state_filter("clinics", "clinics")}</span>
       <div class="sf-field sort-clinics"><label for="clinics-sort">Sort</label><select class="input" id="clinics-sort" data-filter="sort"><option value="checks">Most checks</option><option value="low">Lowest monthly price</option></select></div>
       <span class="sf-break" aria-hidden="true"></span>
-      <div class="year-chips" role="group" aria-labelledby="sellers-checks"><span id="sellers-checks">Checks met</span>{chips}</div>
+      <div class="year-chips" role="group" aria-labelledby="sellers-checks"><span id="sellers-checks">Checks met</span>{chips}</div>{groups}
       </div>
       <p class="small" id="sellers-n" aria-live="polite"></p>
     </div>"""
@@ -3865,7 +3895,8 @@ any=false,j=0,R=cl?crows:rows,T=cl?ct:tb;
 segs.forEach(function(b){b.setAttribute('aria-pressed',b.getAttribute('data-type')===type?'true':'false');});
 if(secC)secC.hidden=!cl;if(secS)secS.hidden=cl;
 [].forEach.call(f.querySelectorAll('.sort-shops'),function(x){x.hidden=cl;});[].forEach.call(f.querySelectorAll('.sort-clinics'),function(x){x.hidden=!cl;});
-chips.forEach(function(x){x.hidden=cl&&x.getAttribute('data-check')==='lab';x.querySelector('.chip-n').textContent=x.getAttribute(cl?'data-nc':'data-ns');});
+chips.forEach(function(x){var v=x.getAttribute(cl?'data-nc':'data-ns');x.hidden=cl&&x.getAttribute('data-check')==='lab';x.querySelector('.chip-n').textContent=v;
+x.disabled=v==='0'&&x.getAttribute('aria-pressed')!=='true';});
 var cks=on();any=!!(s||u||k||cks.length);
 R.sort(SORT[cl?cs.value:so.value]).forEach(function(r){T.tBodies[0].appendChild(r);var ok=hit(r,s,u,k,cks);
 r.hidden=!ok||(!cl&&!open&&!any&&j>=FIRST);if(ok)j++;r.style.opacity=1;});
@@ -3907,7 +3938,7 @@ def sellers_index():
     me = sys.modules[__name__]
     more_cls = ' class="more"'
     strs = "".join(
-        f'<tr{more_cls if i >= SELLERS_FIRST else ""} data-c="{met_checks(r)}" data-s="{r["score"]}" data-subs="{" ".join(shop_subs(r))}"'
+        f'<tr{more_cls if i >= SELLERS_FIRST else ""} data-c="{" ".join([met_checks(r)] + filter_tokens("sellers", r["seller_slug"])).strip()}" data-s="{r["score"]}" data-subs="{" ".join(shop_subs(r))}"'
         f' data-p="{r.get("product_count") or 0}" data-m="{compare_ppm(r)[0] if compare_ppm(r)[0] is not None else ""}"'
         f' data-n="{escape(seller_name(r).lower())}" data-t="{r.get("first_seen") or ""}">'
         f'<td><span class="cell-pic">{parts.tile(r["seller_slug"], seller_base(seller_name(r)), 40, shop=True)}<a class="name" href="/sellers/{r["seller_slug"]}/">{seller_name(r)}</a></span></td>'
@@ -3964,7 +3995,7 @@ def clinics_directory(clinics):
     for r in clinics:
         plans = clinic_plan_rows(r)
         low = min((float(p["price_monthly"]) for p in plans), default=None)
-        trs.append(f'<tr{state_attrs(r["seller_slug"])} data-c="{met_checks(r)}" data-s="{r["score"]}" data-subs="{" ".join(clinic_subs(r))}" data-low="{low if low is not None else ""}">'
+        trs.append(f'<tr{state_attrs(r["seller_slug"])} data-c="{" ".join([met_checks(r)] + filter_tokens("sellers", r["seller_slug"])).strip()}" data-s="{r["score"]}" data-subs="{" ".join(clinic_subs(r))}" data-low="{low if low is not None else ""}">'
                    f'<td><span class="cell-pic">{parts.tile(r["seller_slug"], seller_base(seller_name(r)), 40, seller=r)}<a class="name" href="/sellers/{r["seller_slug"]}/">{seller_name(r)}</a></span></td>'
                    f'<td data-l="What it prescribes">{escape(subs_words(sorted(clinic_subs(r), key=lambda x: sub_label(x).lower())))}</td>'
                    f'<td class="num" data-l="From">{usd(low) + "/mo" if low is not None else "unknown"}</td>'
@@ -4643,9 +4674,9 @@ def shop_checks(r):
 
 
 # Owner task 24 (9 Nov 2026; peptide-data spec 0025): the lab mark and the price history (design/pages/nav-parts.md,
-# peptide.md "Substance page parts for the new types") are drawn only with PC_ARCH_DATA=1; without it nothing visible
-# changes. Each reads its view from site.json and is left out while the view is empty.
-ARCH = os.environ.get("PC_ARCH_DATA") == "1"
+# peptide.md "Substance page parts for the new types"). On by default from 11 Nov 2026 (owner, queue block 24: make them
+# live); PC_ARCH_DATA=0 turns them off. Each reads its view from site.json and is left out while the view is empty.
+ARCH = os.environ.get("PC_ARCH_DATA", "1") == "1"
 COA_REPORTS = DATA.get("coa_reports") or []
 PRICE_HISTORY = DATA.get("price_history") or []
 PLAN_PRICE_HISTORY = DATA.get("plan_price_history") or []
@@ -5208,10 +5239,20 @@ def pep_means(slug):
 PEP_FILTERS = [("approved", "Approved"), ("cosmetic", "Cosmetic"), ("not", "Not approved")]
 PEPTIDES_JS = """<script>
 (function(){var t=document.getElementById('pep-table'),f=document.querySelector('.pep-filter');if(!t||!f)return;f.hidden=false;
-var n=document.getElementById('pep-n'),rows=[].slice.call(t.querySelectorAll('tbody tr'));
-function draw(){var on={},c=0;f.querySelectorAll('.year-chip').forEach(function(b){on[b.getAttribute('data-group')]=b.getAttribute('aria-pressed')==='true';});
-rows.forEach(function(r){var s=on[r.getAttribute('data-group')];r.hidden=!s;if(s)c++;});n.textContent=c+' of '+rows.length+' shown.';}
-f.addEventListener('click',function(e){var b=e.target.closest('.year-chip');if(!b)return;b.setAttribute('aria-pressed',b.getAttribute('aria-pressed')==='true'?'false':'true');draw();});
+var n=document.getElementById('pep-n'),rows=[].slice.call(t.querySelectorAll('tbody tr')),no=document.getElementById('pep-none'),
+nw=[].slice.call(document.querySelectorAll('.pep-narrow'));nw.forEach(function(x){x.hidden=false;});
+var ks=[].slice.call(document.querySelectorAll('.pep-narrow .year-chip')),h=new URLSearchParams(location.hash.slice(1)).get('f');
+// the narrowing chips keep their state in the hash only (f=sold-compounded,form-oral; site map rules 3.7)
+if(h)ks.forEach(function(b){if(h.split(',').indexOf(b.getAttribute('data-check'))>=0)b.setAttribute('aria-pressed','true');});
+function draw(){var on={},c=0,p=ks.filter(function(b){return b.getAttribute('aria-pressed')==='true';}).map(function(b){return b.getAttribute('data-check');});
+f.querySelectorAll('.year-chip').forEach(function(b){on[b.getAttribute('data-group')]=b.getAttribute('aria-pressed')==='true';});
+rows.forEach(function(r){var tk=' '+(r.getAttribute('data-c')||'')+' ',s=on[r.getAttribute('data-group')]&&p.every(function(k){return tk.indexOf(' '+k+' ')>=0;});r.hidden=!s;if(s)c++;});
+n.textContent=c+' of '+rows.length+' shown.';if(no){no.hidden=c>0;t.closest('.tbl-wrap').hidden=c===0;}
+var u=location.pathname+location.search+(p.length?'#f='+p.join(','):'');if(u!==location.pathname+location.search+location.hash)history.replaceState(null,'',u);}
+function tog(e){var b=e.target.closest('.year-chip');if(!b||b.disabled)return;b.setAttribute('aria-pressed',b.getAttribute('aria-pressed')==='true'?'false':'true');draw();}
+f.addEventListener('click',tog);nw.forEach(function(x){x.addEventListener('click',tog);});
+var rs=document.getElementById('pep-reset');if(rs)rs.addEventListener('click',function(e){e.preventDefault();ks.forEach(function(b){b.setAttribute('aria-pressed','false');});
+f.querySelectorAll('.year-chip').forEach(function(b){b.setAttribute('aria-pressed','true');});draw();});
 draw();})();
 </script>"""
 
@@ -5388,6 +5429,11 @@ def peptides_index():
              pep_means(x), pep_low(x)) for x in PEPTIDE_SLUGS]
     rows += [(f"{pep_name(x)} (cream or serum)", x, "cosmetic", r["chip"], r["status"], r["note"][0].upper() + r["note"][1:] + ".",
               "none shown") for x, r in PEP_COSMETIC_TOO.items()]
+    # a cream or serum row is sold as a cosmetic and put on the skin; every other row takes its substance's filter data
+    # a row whose status is Cosmetic also counts as sold as a cosmetic, so "Show: Cosmetic" and "Sold as: Cosmetic" agree
+    tok = lambda t: (["sold-cosmetic", "form-topical"] if t[0].endswith("(cream or serum)")
+                     else filter_tokens("substances", t[1], ["sold-cosmetic"] if t[2] == "cosmetic" and "cosmetic" not in
+                                        ((FILTERS.get("substances") or {}).get(t[1]) or {}).get("regulation", []) else []))
     rows.sort(key=lambda t: t[0].lower())
     letter = lambda name: name[0].upper() if name[0].isalpha() else "#"
     firsts = {}
@@ -5395,7 +5441,7 @@ def peptides_index():
         firsts.setdefault(letter(t[0]), t)
     anchor = lambda t: f' id="az-{letter(t[0]).lower()}"' if firsts[letter(t[0])] is t else ""
     trs = "".join(
-        f'<tr data-group="{grp}"{anchor(t)}>'
+        f'<tr data-group="{grp}" data-c="{" ".join(tok(t))}"{anchor(t)}>'
         f'<td><a class="name" href="/peptides/{x}/">{escape(name)}</a></td>'
         f'<td data-l="Status"><span class="chip chip-{chip}">{label}</span></td>'
         f'<td data-l="What it means">{sentence}</td><td class="num" data-l="Lowest price">{low}</td></tr>'
@@ -5404,6 +5450,12 @@ def peptides_index():
     counts = {k: sum(t[2] == k for t in rows) for k, _ in PEP_FILTERS}
     chips = "".join(f'<button type="button" class="year-chip" data-group="{k}" data-filter="group" data-value="{k}" aria-pressed="true">{w} <span>{counts[k]}</span></button>'
                     for k, w in PEP_FILTERS if counts[k])
+    narrow = ""
+    for g, pre, label, words in FILTER_GROUPS:
+        bs = "".join(f'<button type="button" class="year-chip" data-check="{pre}-{v}" aria-pressed="false"{" disabled" if not k else ""}>{words[v]} <span>{k}</span></button>'
+                     for v in filter_values(g) for k in [sum(f"{pre}-{v}" in tok(t) for t in rows)])
+        if bs and any(tok(t) for t in rows):
+            narrow += f'\n    <div class="year-chips pep-narrow" role="group" aria-labelledby="pep-{pre}" hidden><span id="pep-{pre}">{label}</span>{bs}</div>'
     checked = max(pep_checked(x) for x in PEPTIDE_SLUGS)
     return f"""
 <section class="section letters-hd">
@@ -5416,7 +5468,9 @@ def peptides_index():
 <section class="band-2" id="peptides-list">
   <div class="wrap">
     <nav class="year-chips az-jump" aria-label="Jump to a letter">{jump}</nav>
-    <div class="year-chips pep-filter" role="group" aria-labelledby="pep-show" hidden><span id="pep-show">Show</span>{chips}<p class="small" id="pep-n" aria-live="polite"></p></div>
+    <div class="year-chips pep-filter" role="group" aria-labelledby="pep-show" hidden><span id="pep-show">Show</span>{chips}</div>{narrow}
+    <p class="small" id="pep-n" aria-live="polite"></p>
+    <p class="small" id="pep-none" hidden>Nothing matches these filters. <a href="#peptides-list" id="pep-reset">Clear filters</a></p>
     <div class="tbl-wrap"><table class="tbl tbl-cards tbl-peptides" id="pep-table"><caption class="vh">Peptides A to Z with their FDA status</caption>
       <thead><tr><th scope="col">Substance</th><th scope="col">Status</th><th scope="col">What it means</th><th scope="col">Lowest price</th></tr></thead>
       <tbody>{trs}</tbody>
