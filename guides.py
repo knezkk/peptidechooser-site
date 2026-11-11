@@ -165,7 +165,7 @@ GROUPS = [
      "desc": "Compounded peptides are made by a pharmacy on a prescription and are not FDA approved. Which peptides that covers, the HHS policy, and clinic prices.",
      "line": "Peptides a pharmacy makes on prescription: the HHS policy and clinic prices."},
     # Wave C (queue block 23, 11 Nov 2026): a draft until the owner's ODOBRENO SEO and the go-live task.
-    {"slug": "injections", "path": "/injections/", "crumb": "Peptide injections", "draft": True,
+    {"slug": "injections", "path": "/injections/", "crumb": "Peptide injections", "draft": True, "needs": "approved_db",
      "title": "Peptide injections: which are FDA approved | Peptide Chooser",
      "h1": "Peptide injections: which are approved, and which are not.",
      "desc": "Which peptide injections are FDA approved, which a pharmacy may make on prescription, and why research-use vials are not for use in people.",
@@ -2941,6 +2941,8 @@ def pages(b):
                for g in GUIDES}
     start = sorted(GUIDES, key=lambda g: (-inbound[g["slug"]], GUIDES.index(g)))[:START_HERE]
     for g in GROUPS:  # group pages in the guide layout: their own address and breadcrumb (Home / <Group>)
+        if g.get("needs") and not b.DATA.get(g["needs"]):  # its table and source come from this data; without it no page
+            continue
         out.append((g["path"], g["path"].strip("/") + "/index.html", g["title"], g["desc"], guide_body(b, g),
                     article_schema(b, g) + b.faq_schema(FAQ.get(g["slug"], [])), [(g["path"], g["crumb"])]))
     return [("/learn/", "learn/index.html", LEARN_TITLE, LEARN_DESC.format(n=spelled(len(GUIDES))), learn_body(b, mins, start), "", [("/learn/", "Learn")])] + out
