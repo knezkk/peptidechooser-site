@@ -40,7 +40,8 @@ jobs:
         run: |
           if [ "$(python3 tools/og.py --missing --count)" != "0" ]; then
             pip install -q playwright==1.49.1
-            python3 -m playwright install --with-deps chromium >/dev/null
+            # browser only, from Playwright: no apt, no system font packages; the fonts are in tools/og-fonts (owner, 11 Nov 2026)
+            python3 -m playwright install chromium >/dev/null
             python3 tools/og.py --missing
             python3 build.py
           fi
@@ -56,7 +57,8 @@ jobs:
       - name: check-layout
         run: |
           npm i --no-save playwright@1.49.1 >/dev/null
-          npx playwright install --with-deps chromium >/dev/null
+          # browser only, no apt: the runner image already has Chromium's libraries (owner, 11 Nov 2026)
+          npx playwright install chromium >/dev/null
           node tools/check_layout.js
       # the book's Lighthouse rule (layout.md): Home, /weight-loss/ and one seller page at 90 or more on all four categories
       - name: check-lighthouse
