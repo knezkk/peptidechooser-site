@@ -16,7 +16,7 @@ The look the site already draws (`.crumbs` in `assets/site.css`), written down a
 
 One look for every list that can be narrowed (/sellers/, /peptides/, /fda-warning-letters/, a group page, /labs/, /tools/), built from the Letters filter and Filter fold parts in `bundle.css`:
 - **Row:** labelled controls on one row from 900px, `space-3` apart: "Filter by name" (input with `btn-line btn-sm` "Clear" inside it), then at most three labelled selects (label above in `small` 600 `ink`, control 44px, `radius-control`, `line-strong` border), then one segmented control when the list has two kinds (`seg`, `seg-b`, `aria-pressed`).
-- **Chips:** toggles in the year-chip part, each with its count in tabular figures ("No FDA letter 41"); a chip with count 0 stays, disabled, so the row never jumps.
+- **Chips:** toggles in the year-chip part, each with its count in tabular figures ("No FDA letter 41"); a chip with count 0 stays, disabled, so the row never jumps. **Disabled look:** no fill (the band shows through), a 1.5px `line` border in place of `line-strong`, name and count in `ink-muted`, no hover, default cursor; it carries the `disabled` attribute, so it is skipped by Tab and announced as unavailable.
 - **Count line:** "N of M shown." in `small` `ink-2` right under the row, `aria-live="polite"`; "Clear filters" as a text link beside it once anything differs from the default.
 - **Empty result:** the table area says "Nothing matches these filters." and the "Clear filters" link; never an empty table frame.
 - **State:** only in the URL hash, only values that differ from the default, written with `replaceState`. A filter never makes a new path or query string, the canonical never changes, and no filtered state is in the sitemap (rule 3.7).
