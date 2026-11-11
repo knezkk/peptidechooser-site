@@ -211,3 +211,11 @@ ODOBRENO SEO - Karlo - 10. 11. 2026 - PR #169 wave B compare pages
 /compare/somatropin-vs-tesamorelin/ 51938e0a2b21
 /peptides/cagrilintide/ cfe2843cb75f
 /peptides/liraglutide/ 1c0a89c8eb77
+
+ODOBRENO SEO - Karlo - 11. 11. 2026 - PR #173
+/ 3213338667ef
+ODOBRENO SEO - Karlo - 11. 11. 2026 - PR #174
+/injections/ 92205a7d2ead
+
+ODOBRENO SEO - Karlo - 11. 11. 2026 - epitalon-vs-nad-plus description
+/compare/epitalon-vs-nad-plus/ 1e6107cc2b19
