@@ -216,3 +216,6 @@ ODOBRENO SEO - Karlo - 11. 11. 2026 - PR #173
 / 3213338667ef
 ODOBRENO SEO - Karlo - 11. 11. 2026 - PR #174
 /injections/ 92205a7d2ead
+
+ODOBRENO SEO - Karlo - 11. 11. 2026 - epitalon-vs-nad-plus description
+/compare/epitalon-vs-nad-plus/ 1e6107cc2b19
