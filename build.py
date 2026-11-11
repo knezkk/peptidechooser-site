@@ -4695,14 +4695,16 @@ def month_year(iso):
 def lab_mark(r):
     """The lab mark (nav-parts.md): "Lab report · <Lab> · <Mon YYYY>", the newest report we hold for this listing; nothing
     for a listing without one or for a clinic. A lab with an indexed page would link it; none is built yet, so the chip
-    names the report's source in its title (never a link to a shop)."""
+    names the report's source in its title (never a link to a shop). A report without its lab's name (a shop's own report,
+    source q_vendor_coa) makes no mark: the mark always names the lab, or there is none (owner, 11 Nov 2026)."""
     if not ARCH or r.get("product_id") is None or is_clinic(PROFILES.get(r["seller_slug"]) or SELLERS.get(r["seller_slug"]) or {}):
         return ""
-    found = [c for c in COA_REPORTS if c.get("product_id") == r["product_id"] and c["seller_slug"] == r["seller_slug"] and c.get("coa_date")]
+    found = [c for c in COA_REPORTS if c.get("product_id") == r["product_id"] and c["seller_slug"] == r["seller_slug"] and c.get("coa_date")
+             and (c.get("lab_name") or "").strip()]
     if not found:
         return ""
     c = max(found, key=lambda c: c["coa_date"])
-    text = " · ".join(x for x in ("Lab report", c.get("lab_name") or "", month_year(c["coa_date"])) if x)
+    text = " · ".join(("Lab report", c["lab_name"].strip(), month_year(c["coa_date"])))
     return f' <span class="chip chip-lab" title="Source: {escape(c.get("source_url") or "")}">{escape(text)}</span>'
 
 
