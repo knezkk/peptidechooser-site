@@ -219,3 +219,6 @@ ODOBRENO SEO - Karlo - 11. 11. 2026 - PR #174
 
 ODOBRENO SEO - Karlo - 11. 11. 2026 - epitalon-vs-nad-plus description
 /compare/epitalon-vs-nad-plus/ 1e6107cc2b19
+
+ODOBRENO SEO - Karlo - 11. 11. 2026 - PR #177 (filter chip words on /peptides/ and /sellers/, lab mark; titles, H1 and descriptions unchanged)
+/peptides/ d0802d0eb830
