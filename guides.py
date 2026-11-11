@@ -142,20 +142,17 @@ GUIDES = [
      "h1": "Best peptides for weight loss: approved, compounded and research-use.",
      "desc": "Semaglutide and tirzepatide are FDA-approved peptides for weight loss. Compounded versions and retatrutide, with clinic prices and FDA status.",
      "line": "The approved shots, the compounded copies and retatrutide: trials, status, prices."},
-    # owner queue block 13 (wave A, 8 Nov 2026): a draft until the address move (task 4C) is live; "draft" keeps it out of
-    # every build unless PC_DRAFTS=1 is set, so merging this file publishes nothing. Going live: drop "draft" after the
-    # owner's ODOBRENO SEO for its title, H1, description and text.
+    # owner queue block 13 (wave A, 8 Nov 2026); live with wave A (queue block 18, 10 Nov 2026), after the owner's ODOBRENO SEO
     {"slug": "peptides-vs-steroids", "title": "Peptides vs steroids: what each is and what is legal",
      "h1": "Peptides vs steroids: what each one is, and what the law says.",
      "desc": "Anabolic steroids are man-made testosterone; the peptides sold for muscle act on growth hormone. FDA status, evidence in people and the risks of each.",
-     "line": "Steroids and muscle peptides side by side: what they are, status, evidence, risks.",
-     "draft": True},
+     "line": "Steroids and muscle peptides side by side: what they are, status, evidence, risks."},
 ]
 if not os.environ.get("PC_DRAFTS"):
     GUIDES = [g for g in GUIDES if not g.get("draft")]
 # Group pages in the guide layout (design/pages/group.md, Group page, Guide layout; owner queue block 15, 9 Nov 2026): built
-# by the guide template at their own address, with the group's substance table after the short answer. Drafts only: they
-# join the build with PC_DRAFTS=1 and go live after the owner's ODOBRENO SEO.
+# by the guide template at their own address, with the group's substance table after the short answer. Live with wave A
+# (queue block 18, 10 Nov 2026), after the owner's ODOBRENO SEO.
 GROUPS = [
     {"slug": "fda-approved", "path": "/fda-approved/", "crumb": "FDA approved peptides",
      "title": "FDA approved peptides: the full list | Peptide Chooser",
@@ -167,13 +164,23 @@ GROUPS = [
      "h1": "Prescription peptides: what a pharmacy may make, and who sells it.",
      "desc": "Compounded peptides are made by a pharmacy on a prescription and are not FDA approved. Which peptides that covers, the HHS policy, and clinic prices.",
      "line": "Peptides a pharmacy makes on prescription: the HHS policy and clinic prices."},
-] if os.environ.get("PC_DRAFTS") else []
+]
 
 
 def rx_group_line():
     """The 503A guide's link to /prescription/ (group.md: both link to each other), only when the group page is built."""
     return (' Our <a href="/prescription/">prescription peptides</a> page lists the ones a pharmacy may make today, with '
             'the online clinics that sell them.') if any(g["slug"] == "prescription" for g in GROUPS) else ""
+
+
+def group_pages_line():
+    """The legal guide's link to both group pages (queue block 18, wave A): the parent of a group is Home, and this guide,
+    linked from /learn/, keeps each group three clicks from Home (site map rules 4.2)."""
+    built = {g["slug"] for g in GROUPS}
+    if not {"fda-approved", "prescription"} <= built:
+        return ""
+    return ('\n<p>Our <a href="/fda-approved/">FDA approved peptides</a> and <a href="/prescription/">prescription peptides</a> '
+            'pages list the first two kinds, with their sources.</p>')
 # Home's card shows the first six with "All guides" under them (owner task 2 Nov 2026: the first six when space is tight)
 HOME_CARD = 6
 # The related strip: guides on the same topic first, then the rest, at most RELATED_MAX (pages.md, Guide)
@@ -1302,6 +1309,12 @@ def rx_slugs(b):
             and (b.pep_status(x)["label"] == "Pharmacy-made" or x in hhs or x in clinic)]
 
 
+def group_rows(b, slug):
+    """The substances in a group page's own table (Home's By approval card counts them; home.md)."""
+    slugs = approved_slugs(b) if slug == "fda-approved" else rx_slugs(b) if slug == "prescription" else []
+    return [x for x in slugs if x in b.PEPTIDE_SLUGS or b.hand_legal(x)]
+
+
 def g_fda_approved(b, f, N):
     """/fda-approved/ (group page, guide layout; owner queue block 15): the approved substances from our database, those
     that are not peptides marked, what approval means, and where they are sold. No paid link (rule 4.5)."""
@@ -1544,7 +1557,7 @@ def g_legal(b, f, N):
 <li><strong>Pharmacy-made (compounded).</strong> A pharmacy makes the medicine for one patient with a prescription. It is not FDA approved, and the FDA does not check its safety, effectiveness or quality before it is sold.{N('fda-compounding')}{ex("Pharmacy-made")}</li>
 <li><strong>Cosmetics.</strong> Serums and creams with peptides. They do not need FDA approval before they are sold.{N('legal-5')}{f" On our legal table: {and_list(cos)}." if cos else ""}</li>
 <li><strong>Research-use.</strong> Powders and vials sold "for research only". They are not approved for use in people.{N('drugsfda-hair')}{ex("Not approved")}</li>
-</ul>
+</ul>{group_pages_line()}
 
 <h2>What are the 503A lists?</h2>
 <p>Section 503A of the federal drug law covers ordinary pharmacies. A pharmacy may make a medicine from a raw ingredient only if that ingredient is allowed, for example because it is on the FDA's 503A bulks list.{N('fda-503a')}</p>

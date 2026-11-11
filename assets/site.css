@@ -641,6 +641,10 @@ body:has(.home-sec) .site-foot { margin-top: 0; }
 .home-sec .sec-hd { padding-bottom: var(--space-3); margin-bottom: var(--space-4); }
 .home-sec .sec-hd > div { width: 100%; }
 .home-sec .sec-hd p { max-width: 58ch; font-size: var(--ui-size); line-height: 1.5; }
+/* By approval (home.md, Compare by goal; ODOBRENO DIZAJN - Karlo - 10. 11. 2026, PR 171): 40px under the goal cards,
+   the group icon in ink on paper-2 in the goal card's panel */
+.home-sec .grp-hd { margin-top: calc(var(--space-6) + var(--space-2)); }
+.grp-pic { --gt: var(--paper-2); --g: var(--ink); }
 .letter-card { padding: var(--space-3) var(--space-4); }
 #letters .sec-act, #learn .sec-act { margin-top: var(--space-3); }
 #legal .legal-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }

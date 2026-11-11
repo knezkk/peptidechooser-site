@@ -187,6 +187,30 @@ def goal_price(b, g):
     return (f"from {b.per_mg(min(vals))}/mg", "research-use only") if vals else ("", "")
 
 
+def by_approval(b):
+    """By approval (home.md, Compare by goal; ODOBRENO DIZAJN - Karlo - 10. 11. 2026 - PR #171): one group card per live,
+    indexable group page in the group list's order, its icon on paper-2 in place of the photo and "N substances" from the
+    group page's own table. Never drawn before a group page is built."""
+    built = {p[0] for p in b.PAGES}
+    cards = []
+    for g in guides.GROUPS:
+        n = len(guides.group_rows(b, g["slug"]))
+        if g["path"] not in built or g["path"] in b.NOINDEX or not n:
+            continue
+        cards.append(f'<li><a class="goal-card" href="{g["path"]}"><span class="goal-pic grp-pic">'
+                     f'<svg class="goal-art" width="56" height="56" viewBox="0 0 56 56" aria-hidden="true"><use href="{parts.ART}#group-{g["slug"]}"/></svg></span>'
+                     f'<span class="goal-name">{GROUP_NAMES.get(g["slug"], g["crumb"])}</span><span class="small">{b.plural(n, "substance")}</span></a></li>')
+    if not cards:
+        return ""
+    return f"""
+    <div class="sec-hd grp-hd"><div><h3>By approval</h3><p>The same substances, grouped by what the FDA allows.</p></div></div>
+    <ul class="goal-cards">{"".join(cards)}</ul>"""
+
+
+# The group card's name on Home (home.md): shorter than the page's breadcrumb.
+GROUP_NAMES = {"fda-approved": "FDA approved", "prescription": "Prescription and compounded"}
+
+
 def goals_section(b):
     cards = []
     for g in b.CHOOSER_GOALS:
@@ -201,7 +225,7 @@ def goals_section(b):
 <section class="section home-sec" id="compare">
   <div class="wrap">
     <div class="sec-hd"><div><h2>Compare by goal</h2><p>{num_word(len(b.CHOOSER_GOALS))} goals, the same rule on each: the FDA-approved option first, then what people buy instead, with its real status.</p></div></div>
-    <ul class="goal-cards">{"".join(cards)}</ul>
+    <ul class="goal-cards">{"".join(cards)}</ul>{by_approval(b)}
   </div>
 </section>"""
 
