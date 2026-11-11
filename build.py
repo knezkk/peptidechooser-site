@@ -5717,10 +5717,11 @@ def cmp_title(base, *tails):
 
 
 def cmp_fit(parts):
-    """A description from parts, 110 to 160 characters: parts are added while they fit."""
+    """A description from parts, 110 to 160 characters: parts are added while they fit. A date is measured with a
+    two-digit day, so the same parts fit on the 9th and on the 11th and the words do not change with the day (tier 1)."""
     out = parts[0]
     for x in parts[1:]:
-        if len(out) + 1 + len(x) <= 160:
+        if len(out) + 1 + len(re.sub(r"\b(\d) ([A-Z][a-z]{2} \d{4})", r"0\1 \2", x)) <= 160:
             out += " " + x
     return out
 
