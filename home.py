@@ -200,6 +200,13 @@ def by_approval(b):
         cards.append(f'<li><a class="goal-card" href="{g["path"]}"><span class="goal-pic grp-pic">'
                      f'<svg class="goal-art" width="56" height="56" viewBox="0 0 56 56" aria-hidden="true"><use href="{parts.ART}#group-{g["slug"]}"/></svg></span>'
                      f'<span class="goal-name">{GROUP_NAMES.get(g["slug"], g["crumb"])}</span><span class="small">{b.plural(n, "substance")}</span></a></li>')
+    for g in b.LIST_GROUPS:  # list-layout groups (/bioregulators/) after the guide-layout ones, in the group list's order
+        n = len(b.list_members(g))
+        if g["path"] not in built or g["path"] in b.NOINDEX or not n:
+            continue
+        cards.append(f'<li><a class="goal-card" href="{g["path"]}"><span class="goal-pic grp-pic">'
+                     f'<svg class="goal-art" width="56" height="56" viewBox="0 0 56 56" aria-hidden="true"><use href="{parts.ART}#group-{g["slug"]}"/></svg></span>'
+                     f'<span class="goal-name">{GROUP_NAMES.get(g["slug"], g["crumb"])}</span><span class="small">{b.plural(n, "substance")}</span></a></li>')
     if not cards:
         return ""
     return f"""
@@ -208,7 +215,8 @@ def by_approval(b):
 
 
 # The group card's name on Home (home.md): shorter than the page's breadcrumb.
-GROUP_NAMES = {"fda-approved": "FDA approved", "prescription": "Prescription and compounded"}
+GROUP_NAMES = {"fda-approved": "FDA approved", "prescription": "Prescription and compounded", "injections": "Injections",
+               "bioregulators": "Bioregulators"}
 
 
 def goals_section(b):

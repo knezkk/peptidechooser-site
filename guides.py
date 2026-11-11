@@ -164,8 +164,8 @@ GROUPS = [
      "h1": "Prescription peptides: what a pharmacy may make, and who sells it.",
      "desc": "Compounded peptides are made by a pharmacy on a prescription and are not FDA approved. Which peptides that covers, the HHS policy, and clinic prices.",
      "line": "Peptides a pharmacy makes on prescription: the HHS policy and clinic prices."},
-    # Wave C (queue block 23, 11 Nov 2026): a draft until the owner's ODOBRENO SEO and the go-live task.
-    {"slug": "injections", "path": "/injections/", "crumb": "Peptide injections", "draft": True, "needs": "approved_db",
+    # Wave C (queue block 23, 11 Nov 2026); live from 11 Nov 2026 (owner: waves C and D go live).
+    {"slug": "injections", "path": "/injections/", "crumb": "Peptide injections", "needs": "approved_db",
      "title": "Peptide injections: which are FDA approved | Peptide Chooser",
      "h1": "Peptide injections: which are approved, and which are not.",
      "desc": "Which peptide injections are FDA approved, which a pharmacy may make on prescription, and why research-use vials are not for use in people.",
@@ -1326,6 +1326,18 @@ def group_rows(b, slug):
     return [x for x in slugs if x in b.PEPTIDE_SLUGS or b.hand_legal(x)]
 
 
+def more_groups(b):
+    """/fda-approved/ links its sibling group pages once they are built (site map rules 4: a group page is linked from
+    Home's By approval row and from /fda-approved/; owner, 11 Nov 2026)."""
+    links = []
+    if any(g["slug"] == "injections" for g in GROUPS) and b.DATA.get("approved_db"):
+        links.append('<a href="/injections/">peptide injections</a> page sorts the injectable ones into approved, pharmacy-made and research use')
+    for lg in b.LIST_GROUPS:
+        if lg["slug"] == "bioregulators" and b.list_members(lg):
+            links.append('<a href="/bioregulators/">bioregulator peptides</a> page lists the Khavinson peptides with their status')
+    return f"\n<p>Our {', and our '.join(links)}.</p>" if links else ""
+
+
 def g_fda_approved(b, f, N):
     """/fda-approved/ (group page, guide layout; owner queue block 15): the approved substances from our database, those
     that are not peptides marked, what approval means, and where they are sold. No paid link (rule 4.5)."""
@@ -1368,7 +1380,7 @@ def g_fda_approved(b, f, N):
 <p>We show prices and checks; a goal page compares each medicine with the other options for the same goal.</p>
 
 <h2>What is not on this list?</h2>
-<p>Pharmacy-made copies and research-use peptides. Our <a href="/prescription/">prescription peptides</a> page lists the ones a pharmacy may make, and <a href="/learn/are-peptides-legal-in-the-us/">Are peptides legal in the US?</a> explains every kind.</p>"""
+<p>Pharmacy-made copies and research-use peptides. Our <a href="/prescription/">prescription peptides</a> page lists the ones a pharmacy may make, and <a href="/learn/are-peptides-legal-in-the-us/">Are peptides legal in the US?</a> explains every kind.</p>{more_groups(b)}"""
     nxt = (("/peptides/", "See every peptide's status"), ("/learn/are-peptides-legal-in-the-us/", "Are peptides legal? guide"))
     faq = ("FDA approved peptides", [
         ("Which peptides are FDA approved?",
