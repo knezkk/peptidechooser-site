@@ -164,7 +164,15 @@ GROUPS = [
      "h1": "Prescription peptides: what a pharmacy may make, and who sells it.",
      "desc": "Compounded peptides are made by a pharmacy on a prescription and are not FDA approved. Which peptides that covers, the HHS policy, and clinic prices.",
      "line": "Peptides a pharmacy makes on prescription: the HHS policy and clinic prices."},
+    # Wave C (queue block 23, 11 Nov 2026): a draft until the owner's ODOBRENO SEO and the go-live task.
+    {"slug": "injections", "path": "/injections/", "crumb": "Peptide injections", "draft": True,
+     "title": "Peptide injections: which are FDA approved | Peptide Chooser",
+     "h1": "Peptide injections: which are approved, and which are not.",
+     "desc": "Which peptide injections are FDA approved, which a pharmacy may make on prescription, and why research-use vials are not for use in people.",
+     "line": "Injectable peptides: what is approved, what a pharmacy makes, and what is research use only."},
 ]
+if not os.environ.get("PC_DRAFTS"):
+    GROUPS = [g for g in GROUPS if not g.get("draft")]
 
 
 def rx_group_line():
@@ -197,7 +205,7 @@ TOPIC = {"is-bpc-157-legal": "legal", "are-peptides-safe": "legal", "how-to-read
          "peptide-seller-checks-by-the-numbers": "data", "ozempic-vs-wegovy-price": "glp1", "finasteride-vs-minoxidil": "hair",
          "what-research-use-only-means": "legal",
          "best-peptides-for-weight-loss": "glp1", "peptides-vs-steroids": "body", "fda-approved": "legal",
-         "prescription": "buying"}
+         "prescription": "buying", "injections": "legal"}
 RELATED_MAX = 5
 
 LEARN_TITLE = "Peptide guides in plain words | Peptide Chooser"
@@ -441,6 +449,9 @@ def known_sources(b, f):
     for r in b.PLANS:
         k[f"plan-{r['seller_slug']}-{r['plan_slug']}"] = (f"{b.seller_base(r['seller_name'])}, {r['plan_name']}, {nice(r['last_seen'])}",
                                                           r["pricing_url"], "text")
+    if b.DATA.get("approved_db"):
+        k["db-approved"] = (f"Peptide Chooser database: approved products from Drugs@FDA with their route, checked {nice(checked(b))}",
+                            "/fda-approved/", "own")
     if b.PEPTIDE_SLUGS:
         k["db-peptides"] = (f"Peptide Chooser, Peptides A to Z: the FDA status of every substance we track, checked {nice(checked(b))}", "/peptides/", "own")
     # our own pages (the seller guide): How we rate, the sellers list and each seller's page
@@ -1311,7 +1322,7 @@ def rx_slugs(b):
 
 def group_rows(b, slug):
     """The substances in a group page's own table (Home's By approval card counts them; home.md)."""
-    slugs = approved_slugs(b) if slug == "fda-approved" else rx_slugs(b) if slug == "prescription" else []
+    slugs = {"fda-approved": approved_slugs, "prescription": rx_slugs, "injections": injection_slugs}.get(slug, lambda b: [])(b)
     return [x for x in slugs if x in b.PEPTIDE_SLUGS or b.hand_legal(x)]
 
 
@@ -1411,6 +1422,76 @@ def g_prescription(b, f, N):
         ("Can I get BPC-157 on prescription?",
          "Since 30 Oct 2026 HHS says it does not intend to act against licensed pharmacies that compound BPC-157 for one patient "
          "on a prescription, under 10 conditions. That is not FDA approval."),
+    ])
+    return short, body, nxt, faq
+
+
+INJECTABLE_ROUTES = {"SUBCUTANEOUS", "INJECTION", "INTRAMUSCULAR", "INTRAVENOUS"}
+PLAN_INJECTION = {"injection", "subcutaneous", "sc_or_im"}
+
+
+def injection_slugs(b):
+    """The /injections/ table: approved substances with a product listed in Drugs@FDA as an injection (our database's
+    approved products and their route)."""
+    inj = {r["substance_slug"] for r in b.DATA.get("approved_db") or [] if (r.get("route") or "").upper() in INJECTABLE_ROUTES}
+    return [x for x in approved_slugs(b) if x in inj]
+
+
+def g_injections(b, f, N):
+    """/injections/ (group page, guide layout; queue block 23, wave C, 11 Nov 2026): the approved injections from Drugs@FDA,
+    what a pharmacy makes as an injection, and that research-use vials are not for use in people. No shop link, no dose,
+    no paid link (rule 4.5)."""
+    slugs = injection_slugs(b)
+    table, rows = b.group_table(slugs, "FDA-approved peptide injections we track")
+    known = [x for x in ("semaglutide", "tirzepatide", "tesamorelin", "somatropin") if x in rows] or rows[:4]
+    names = and_list([b.pep_name(x).lower() if b.pep_name(x).isalpha() else b.pep_name(x) for x in known])
+    short = (f"Some peptides are FDA-approved medicines given by injection, such as {names}; each is approved for a stated "
+             f"use and sold on prescription.{N('db-approved')}{N('fda-approval')} Research-use peptides sold in vials are "
+             f"labelled not for use in people, and none has an approved product.{N('legal-7')}")
+    comp = sorted({r["substance_slug"] for r in b.PLANS if r.get("route") in PLAN_INJECTION and r.get("regulatory_group") == "compounded"
+                   and r.get("substance_slug") in b.PEPTIDE_SLUGS and b.pep_group(b.pep_status(r["substance_slug"])) != "cosmetic"
+                   and not b.not_peptide(r["substance_slug"])},
+                  key=lambda x: b.pep_name(x).lower())
+    link = lambda x: f'<a href="/peptides/{x}/">{b.pep_name(x)}</a>' if x not in b.PEP_THIN else b.pep_name(x)
+    ruo = sorted({p["substance_slug"] for p in b.PRODUCTS if p.get("route") == "injection" and p.get("regulatory_group") == "research_use_only"
+                  and b.pep_group(b.pep_status(p["substance_slug"])) == "not"})
+    plans = [r for r in b.PLANS if r["substance_slug"] in rows and r.get("route") in PLAN_INJECTION
+             and r.get("regulatory_group") == "fda_approved" and r.get("price_monthly") is not None]
+    low = min(plans, key=lambda r: (float(r["price_monthly"]), r["seller_name"])) if plans else None
+    sold = (f"<p>{b.plural(len(plans), 'plan')} at {b.plural(len({r['seller_slug'] for r in plans}), 'online clinic')} we track "
+            f"carry an approved injection; the cheapest is {plan_words(b, low, N(pkey(low)))}.</p>") if low else ""
+    hhs = (f"<p>{b.hhs_sentence('BPC-157, TB-500, Epitalon, MOTS-c, KPV or Semax')}{N('legal-13')} The policy names a route for "
+           f"each; for some it is an injection under the skin or into a muscle. Our <a href=\"/prescription/\">prescription peptides</a> "
+           f"page lists all six with their routes.</p>") if b.HHS else ""
+    body = f"""
+<h2>Which peptide injections are FDA approved?</h2>
+<p>These substances have an approved product that Drugs@FDA lists as an injection. Each name opens its page, with its brands and its source.{N('db-approved')}</p>
+{table}
+
+<h2>What does FDA approved mean for an injection?</h2>
+<p>Approval is for one product and a stated use: its maker sent the FDA its trial data, and the FDA found that the benefits outweigh the known risks for that use.{N('fda-approval')} Tesamorelin, for example, is approved only to reduce belly fat in adults with HIV and lipodystrophy.{N('label-egrifta')}</p>
+
+<h2>Which peptide injections does a pharmacy make?</h2>
+""" + (f"<p>The online clinics we track sell pharmacy-made (compounded) injections of {and_list([link(x) for x in comp])}.{N('db-peptides')} "
+       f"A compounded medicine is not FDA approved, and the FDA does not check its safety, effectiveness or quality before it is sold.{N('fda-compounding')}</p>"
+       if comp else f"<p>A compounded medicine is made by a pharmacy for one patient on a prescription. It is not FDA approved.{N('fda-compounding')}</p>") + f"""
+{hhs}
+<h2>Are research-use peptide vials meant to be injected?</h2>
+<p>No. Research-use shops sell them labelled for laboratory research and not for use in people, and none of these peptides has an approved product.{N('legal-7')}</p>
+<p>We track {b.plural(len(ruo), 'substance')} that research-use shops sell in vials.{N('db-sellers')} Each substance's page shows its status and source; we never send readers to those shops.</p>
+
+<h2>How do people get an approved injection?</h2>
+<p>On prescription, from a doctor or an online clinic.</p>
+{sold}
+<p>Our <a href="/fda-approved/">FDA approved peptides</a> page lists every approved medicine we track, injection or not.</p>"""
+    nxt = (("/fda-approved/", "FDA approved peptides"), ("/learn/what-research-use-only-means/", "What research use only means"))
+    faq = ("peptide injections", [
+        ("Which peptide injections are FDA approved?",
+         f"Of the substances we track, these have an approved product listed as an injection in Drugs@FDA: {and_list([b.pep_name(x) for x in rows])}." if rows else ""),
+        ("Are research-use peptide vials safe to inject?",
+         "They are labelled not for use in people, and none of them has an approved product."),
+        ("Is a compounded peptide injection FDA approved?",
+         "No. A pharmacy makes it on a prescription, and the FDA does not check its safety, effectiveness or quality before it is sold."),
     ])
     return short, body, nxt, faq
 
@@ -2626,7 +2707,8 @@ TEXTS = {"is-bpc-157-legal": g_bpc, "are-peptides-safe": g_safe, "how-to-read-a-
          "ozempic-vs-wegovy-price": g_oz_weg, "finasteride-vs-minoxidil": g_fin_minox,
          "what-research-use-only-means": g_ruo, "peptide-seller-checks-by-the-numbers": g_by_numbers,
          "best-peptides-for-weight-loss": g_wl, "peptides-vs-steroids": g_steroids,
-         "fda-approved": g_fda_approved, "prescription": g_prescription}
+         "fda-approved": g_fda_approved, "prescription": g_prescription,
+         "injections": g_injections}
 
 
 GUIDE_DATES = {}
