@@ -1606,7 +1606,7 @@ def clinic_window(g, p):
     option, brand plans first, then compounded, each cheapest first. The clinic's name opens our page on it; its one action is
     btn-wait "See plans" until the data carries its paid link (clinic_row_act), and only then btn-action "Visit <Name>"."""
     # what is not compounded first (brand, generic and other), so the first row is the button's price; each cheapest first
-    rows = sorted(option_plans(g, p), key=lambda r: (r.get("product_kind") == "compounded", clinic_order(r)))
+    rows = sorted(option_plans(g, p), key=lambda r: (paid_rank(r["seller_slug"]), r.get("product_kind") == "compounded", clinic_order(r)))
     key, named, trs = clinic_key(g, p), set(), []
     otc = needs_rx(p) is False
     for r in rows:
@@ -1820,6 +1820,45 @@ def approved_instead(g):
     gd = next((x for x in guides.GUIDES if x["slug"] == g.get("approved_instead_guide")), None)
     linkable = any(row_plan(g, p) and p.get("substance") or (has_window(p) and window_kind(p) in COSMETIC_KINDS) for p in g["peptides"])
     return f'<p class="opt-instead">What is approved instead: <a href="/learn/{gd["slug"]}/">{gd["title"]}</a></p>' if gd and not linkable else ""
+
+
+def has_paid(slug):
+    """A seller with a paid link (site.paid_links, `paid_url` on its profile)."""
+    return bool((PROFILES.get(slug) or {}).get("paid_url"))
+
+
+def seller_score(slug):
+    sc = (PROFILES.get(slug) or SELLERS.get(slug) or {}).get("score")
+    return sc if sc is not None else -1
+
+
+def paid_rank(slug):
+    """The order of every list of sellers or clinics (owner, queue block 33, 11 Nov 2026): sellers with a paid link
+    first, then those without; in each, the five-check score high to low. The list's own order breaks a tie."""
+    return (not has_paid(slug), -seller_score(slug))
+
+
+def option_group(g, p):
+    """An option row's group (owner, queue block 33): 1 its button reaches a clinic with a paid link; 2 not FDA approved
+    (compounded, cosmetic, research-use) without one; 3 every other row (FDA approved, no paid clinic or no price)."""
+    paid = [r for r in option_plans(g, p) if has_paid(r["seller_slug"])]
+    if paid:
+        return 1, -max(seller_score(r["seller_slug"]) for r in paid), min(float(r["price_monthly"]) for r in paid)
+    rp = row_plan(g, p)
+    price = float(rp["price_monthly"]) if rp and rp.get("price_monthly") is not None else float("inf")
+    return (3 if approved_row(p) and p.get("plan_kind") != "compounded" else 2), 0, price
+
+
+def order_options():
+    """Every goal's option rows in the owner's order (queue block 33): group 1, 2, 3; in a group the best score among its
+    paid clinics, then the lowest monthly price, then the order in data/site.json. build.py sorts; the data stays as it is."""
+    for g in ALL_GOALS + [s for s in SUBPAGES if s.get("peptides")]:
+        idx = {id(p): i for i, p in enumerate(g["peptides"])}
+        g["peptides"].sort(key=lambda p: (*option_group(g, p), idx[id(p)]))
+
+
+# before any page is drawn: some pages are built while this module loads
+order_options()
 
 
 GOAL_PANELS = {}  # goal slug -> its step 2 panel, for /windows/goal-<slug>.json
@@ -2298,9 +2337,9 @@ HERO_COUNTS = (f" {_ns} shop{'' if _ns == 1 else 's'}, {f'{_nc} online clinic' +
 # Home (pages.md, Home; the "Home v2" sketch, 3 Nov 2026): the hero with the chooser and the label legend, then the
 # sections home.py fills in at the markers once every helper exists.
 HOME_LEDE = ((HERO_COUNTS.strip() + " ") if HERO_COUNTS else "") + \
-    "FDA-approved options first, research-use peptides with their real status, every price dated."
-HOME_DESC = ("Find the right option for your goal and where to get it at the best price. FDA-approved options first, "
-             "research-use peptides with their real status.")
+    "Research-use peptides with their real status, every price dated."
+HOME_DESC = ("Find the right option for your goal and where to get it at the best price. Research-use peptides with "
+             "their real status.")
 HOME = f"""
 <section class="hero hero-clinic">
   <div class="wrap">
@@ -2708,6 +2747,7 @@ def clinic_section(g, rows):
     to our clinic page until a paid link exists per seller (clinic_row_act). Stacked cards on phones (bundle.css, Clinic table)."""
     if not rows:
         return ""
+    rows = sorted(rows, key=lambda r: paid_rank(r["seller_slug"]))  # the caller's order (cheapest first) breaks a tie
     newest = max(r["last_seen"] for r in rows)
     trs, named = [], set()
     for i, r in enumerate(rows):
@@ -2724,7 +2764,7 @@ def clinic_section(g, rows):
     return f"""
 <section class="band-2" id="clinics" data-state-root>
   <div class="wrap">
-    <div class="sec-hd"><div><h2>Online clinic prices</h2><p>{plural(len(rows), "plan")} at the online clinics we track, cheapest first.</p></div></div>
+    <div class="sec-hd"><div><h2>Online clinic prices</h2><p>{plural(len(rows), "plan")} at the online clinics we track: clinics with a paid link first, then the most checks, then the lowest price.</p></div></div>
     <div class="clinic-filter">{state_filter()}</div>{STATE_N}
     <div class="tbl-wrap"><table class="tbl tbl-cards tbl-clinics">
       <thead><tr><th scope="col">Clinic</th><th scope="col">Plan</th><th scope="col">What it is</th><th scope="col">Per month</th><th scope="col"><span class="vh">Action</span></th></tr></thead>
@@ -2795,6 +2835,7 @@ def clinic_order(r):
     return (0 if k in ("brand", "generic") else 1 if k == "compounded" else 2, float(r["price_monthly"]), r["seller_name"], r["plan_name"])
 
 
+
 # The clinic filter (pages.md, Category, Clinic prices; the Letters filter parts): kind, form and "No FDA letter" hide rows by
 # their data- attributes; the count line says how many show. Without JavaScript the filter stays hidden and every row shows.
 CLINIC_FILTER_JS = """<script>
@@ -2818,7 +2859,7 @@ def goal_clinic_section(g, rows):
     (clinic_row_act). Above it the clinic filter. Stacked cards on phones (bundle.css, Clinic table)."""
     if not rows:
         return ""
-    rows = sorted(rows, key=clinic_order)
+    rows = sorted(rows, key=lambda r: (paid_rank(r["seller_slug"]), clinic_order(r)))
     newest = max(r["last_seen"] for r in rows)
     trs, named = [], set()
     for i, r in enumerate(rows):
@@ -2851,7 +2892,7 @@ def goal_clinic_section(g, rows):
       <tbody>{"".join(trs)}</tbody>
     </table></div>
     {f'<p class="clinics-more" hidden><button type="button" class="btn btn-line" id="clinics-all">Show all {len(rows)}</button></p>{CLINICS_JS}' if len(rows) > CLINICS_FIRST else ""}
-    <p class="small" style="margin-top:12px">Brand plans first, then compounded, each cheapest first. Prices are the clinics' published monthly prices on {nice_date(newest)}. A clinic with an FDA warning letter is still listed; the letter is public record.</p>
+    <p class="small" style="margin-top:12px">Clinics with a paid link first, then the most checks; then brand plans before compounded, cheapest first. Prices are the clinics' published monthly prices on {nice_date(newest)}. A clinic with an FDA warning letter is still listed; the letter is public record.</p>
     {COMPARE_LINK}
   </div>
 </section>{CLINIC_FILTER_JS}"""
@@ -3372,10 +3413,11 @@ def company_ledger(r):
 
 
 def similar_sellers(r, n=3):
-    """Three sellers of the same kind with the closest score, then the most products, then by name."""
+    """Three sellers of the same kind: with a paid link first, then the highest score (owner, queue block 33), then the
+    most products, then by name."""
     group = CLINIC_PROFILES if r["seller_slug"] in CLINIC_PROFILES else SHOPS
     same = [x for x in group.values() if x["seller_slug"] != r["seller_slug"] and x.get("seller_kind") == r.get("seller_kind")]
-    same.sort(key=lambda x: (abs((x.get("score") or 0) - (r.get("score") or 0)), -(x.get("product_count") or 0), seller_name(x).lower()))
+    same.sort(key=lambda x: (*paid_rank(x["seller_slug"]), -(x.get("product_count") or 0), seller_name(x).lower()))
     return same[:n]
 
 
@@ -3750,7 +3792,7 @@ def compare_ppm(r):
 
 
 def sellers_order(x):
-    return (-(x.get("score") if x.get("score") is not None else -1), -(x.get("product_count") or 0), seller_name(x).lower())
+    return (not has_paid(x["seller_slug"]), -(x.get("score") if x.get("score") is not None else -1), -(x.get("product_count") or 0), seller_name(x).lower())
 
 
 # Filters and sort on /sellers/ (pages.md, Sellers; owner task 2 Nov 2026): with JavaScript, one filter block above the
@@ -3934,7 +3976,7 @@ ACT_TH = '<th scope="col"><span class="vh">Our page</span></th>'
 def sellers_index():
     """/sellers/ (pages.md, Sellers; owner task w2, 3 Nov 2026): two tabs, the online clinics first, then the shops."""
     shops = sorted(SHOPS.values(), key=sellers_order)
-    clinics = sorted(CLINIC_PROFILES.values(), key=lambda r: (-(r.get("score") or 0), seller_name(r).lower()))
+    clinics = sorted(CLINIC_PROFILES.values(), key=lambda r: (*paid_rank(r["seller_slug"]), seller_name(r).lower()))
     me = sys.modules[__name__]
     more_cls = ' class="more"'
     strs = "".join(
@@ -4453,7 +4495,9 @@ def pep_answer(slug, first=None):
         out.append(f'<a href="#letters">{plural(n, "FDA warning letter")}</a> name{"s" if n == 1 else ""} it.')
     p = (first or pep_low_plan(slug)) if pep_group(s) == "approved" else None
     if p:
-        out.append(f'The first plan below, the lowest {"compounded plan" if p.get("product_kind") == "compounded" else "monthly plan, whose kind the seller does not say," if p.get("product_kind") == "not_stated" else "monthly plan that is not compounded"} at the online clinics we track, is {usd(p["price_monthly"])} '
+        # "The first plan below" only while the cheapest stands first: a clinic with a paid link may stand above it (block 33)
+        top = WHERE_TOP.get(slug, True)
+        out.append(f'{"The first plan below, the" if top else "The"} lowest {"compounded plan" if p.get("product_kind") == "compounded" else "monthly plan, whose kind the seller does not say," if p.get("product_kind") == "not_stated" else "monthly plan that is not compounded"} at the online clinics we track{"," if top else ""} is {usd(p["price_monthly"])} '
                    f'({clinic_link(p["seller_slug"], seller_base(p["seller_name"]), True)}, {clean(p["plan_name"])}), checked {nice_date(p["last_seen"])}.')
     return out
 
@@ -4882,6 +4926,9 @@ def shop_rank(r):
     return (-(sc if sc is not None else -1), r.get("price_per_mg") is None, r.get("price_per_mg") or 0, r["seller_slug"])
 
 
+WHERE_TOP = {}  # slug -> the cheapest plan stands first in "Where to get it" (pep_answer's wording)
+
+
 def pep_where(slug):
     """"Where to get it", the substance page's first block (pages.md, Peptide; owner task 3 Nov 2026): an approved medicine's
     three cheapest clinic plans (brand first, then compounded), each with btn-wait "See plans", and the compare pair with the
@@ -4894,7 +4941,12 @@ def pep_where(slug):
         plans = [r for r in pep_plans(slug) if r["seller_slug"] in PROFILES]
         # a plan covering several medicines leads only when it is the brand medicine or its generic (owner answer Q1 A,
         # 8 Nov 2026: Oak's "GLP-1 Treatments" never leads /peptides/tirzepatide/); it stays in the table with its note
-        plans = sorted(plans, key=lambda r: (no_lead(r), r.get("product_kind") == "compounded", float(r["price_monthly"]), r["seller_name"]))[:3]
+        low_key = lambda r: (no_lead(r), r.get("product_kind") == "compounded", float(r["price_monthly"]), r["seller_name"])
+        plans = sorted(plans, key=low_key)[:3]
+        cheapest = plans[0] if plans else None
+        # the three cheapest, clinics with a paid link first (owner, queue block 33)
+        plans = sorted(plans, key=lambda r: (paid_rank(r["seller_slug"]), low_key(r)))
+        WHERE_TOP[slug] = not plans or plans[0] is cheapest
         named = set()
         for r in plans:
             kind = '<span class="chip chip-warn">Compounded</span>' if r.get("product_kind") == "compounded" else ""
@@ -4902,7 +4954,8 @@ def pep_where(slug):
                          f'<span class="sub">{explain_brand(r["plan_name"], named)}{kind}</span></span>'
                          f'<span class="where-price"><span class="num">{usd(r["price_monthly"])}/mo</span>{plan_letter(r)}</span>'
                          f'{clinic_button(r["seller_slug"], "See plans", plan=r)}</li>')
-        first = plans[0] if plans and not no_lead(plans[0]) else None
+        # the short answer names the cheapest of the three, wherever it stands
+        first = cheapest if cheapest and not no_lead(cheapest) else None
         # the pair pages are built after the substance pages: cmp_links_in fills the marker (or drops it)
         foot = f"<!--pair-foot:{slug}-->"
     elif grp == "not" and pep_clinic_plans(slug):
@@ -4910,7 +4963,7 @@ def pep_where(slug):
         # on a substance that is not an approved drug", ODOBRENO DIZAJN - Karlo - 8. 11. 2026 - PR #142): the three cheapest
         # clinic plans with their kind chip and the table button, then one line to the shops table; no shop is listed here
         named = set()
-        for r in pep_clinic_plans(slug)[:3]:
+        for r in sorted(pep_clinic_plans(slug)[:3], key=lambda r: paid_rank(r["seller_slug"])):
             chip, label = kind_chip(r)
             lines.append(f'<li><span class="where-who">{clinic_link(r["seller_slug"], seller_base(r["seller_name"]))}'
                          f'<span class="sub">{explain_brand(r["plan_name"], named)}<span class="chip chip-{chip}">{label}</span></span></span>'
@@ -4942,7 +4995,7 @@ def pep_where(slug):
         # nothing to list: the block still says so, from data (owner task 3 Nov 2026: every substance page has it)
         none = ("No clinic plan we track carries it yet." if grp == "approved" else "No shop we track lists it yet.")
         return f'<div class="panel-line pep-where" id="where"><h2>Where to get it</h2><p class="small">{none}</p></div>', None
-    lede = ("The cheapest plans at the online clinics we track, brand first." if grp == "approved" else
+    lede = ("The cheapest plans at the online clinics we track, clinics with a paid link first." if grp == "approved" else
             "Serums and creams from the shops we track." if grp == "cosmetic" else
             "The best-checked shops first. Research-use shops; every name opens our review.")
     return (f'<div class="panel-line pep-where" id="where"><h2>Where to get it</h2><p class="small">{lede}</p>'
@@ -5349,7 +5402,7 @@ def list_group_page(g):
                 f'<td class="num" data-l="From">{per_mg(min(low)) + "/mg" if low else "unknown"}</td>'
                 f'<td data-l="Checks">{check_bar(r)}</td><td data-l="FDA letters">{home.where_letters(me, r)}</td>'
                 f'<td class="act"><a class="btn btn-line btn-sm" href="/sellers/{r["seller_slug"]}/">Our review</a></td></tr>')
-    clinics = [r for r in CLINIC_PROFILES.values() if set(clinic_subs(r)) & set(rows)]
+    clinics = sorted((r for r in CLINIC_PROFILES.values() if set(clinic_subs(r)) & set(rows)), key=sellers_order)
     def clinic_tr(r):
         plans = [p for p in clinic_plan_rows(r) if p.get("substance_slug") in rows and p.get("price_monthly") is not None]
         low = min((float(p["price_monthly"]) for p in plans), default=None)
