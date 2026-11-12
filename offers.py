@@ -119,7 +119,8 @@ def others_section(b, seller, sub):
                      and not b.plan_is_blend(p) and p["seller_slug"] in b.PROFILES),
                     key=lambda p: (float(p["price_monthly"]), p["seller_name"])):
         best.setdefault(p["seller_slug"], p)
-    rows = list(best.values())[:3]
+    # the three cheapest, clinics with a paid link first (owner, queue block 33)
+    rows = sorted(list(best.values())[:3], key=lambda p: b.paid_rank(p["seller_slug"]))
     if not rows:
         return ""
     s = sub_name(b, sub)

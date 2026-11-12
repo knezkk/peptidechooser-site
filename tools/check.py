@@ -1930,7 +1930,58 @@ def check_addresses(P):
     return errs
 
 
-CHECKS = {"words": check_words, "seo": check_seo, "schema": check_schema, "parts": check_parts, "data": check_data, "book": check_book, "events": check_events, "logic": check_logic, "rules33": check_rules33, "addresses": check_addresses, "arch": check_arch, "arch-switch": check_arch_switch, "offers": check_offers, "kept-sellers": check_kept_sellers, "wave-b": check_wave_b}
+def check_paid_first(P):
+    """Owner, queue block 33 (11 Nov 2026): one order everywhere. In every default-sorted list of sellers or clinics (a clinic
+    window, a clinic table, /sellers/, Home's seller list, "Where to get it", "Similar sellers", a group page) no seller
+    without a paid link stands above one with a paid link; and on every goal page and Home no option row of a later group
+    stands above one of an earlier group (1 its window holds a clinic with a paid link, 2 not FDA approved without one,
+    3 FDA approved without one). A paid link is `paid_url` on the seller's profile in data/site.json."""
+    errs = []
+    d = json.loads((ROOT / "data" / "site.json").read_text(encoding="utf-8"))
+    paid = {r["seller_slug"] for r in d.get("seller_profiles") or [] if r.get("paid_url")}
+    if not paid:
+        return errs
+    lists = re.compile(r'<table class="tbl\b(?![^"]*tbl-plans)[^"]*\b(?:tbl-window|tbl-clinics|tbl-sellers|tbl-where|tbl-sold)\b[^"]*">(.*?)</table>'
+                       r'|<ul class="where-list">(.*?)</ul>|<nav class="seller-similar"[^>]*>(.*?)</nav>', re.S)
+    seller = re.compile(r'href="/(?:sellers|out)/([a-z0-9-]+)/')
+    wins = {}
+    for f in (DIST / "windows").glob("*.json"):
+        wins[f.stem] = json.loads(f.read_text(encoding="utf-8")).get("html") or ""
+    # the guides' price tables stay cheapest first: their titles and descriptions say so (block 33, owner question 1)
+    pages = ([(name, (DIST / name).read_text(encoding="utf-8")) for name in P if not name.startswith("learn/")]
+             + [(f"windows/{k}.json", v) for k, v in wins.items()])
+    for name, html in pages:
+        for m in lists.finditer(html):
+            body = next(g for g in m.groups() if g is not None)
+            seen_unpaid = None
+            for row in re.findall(r"<tr\b.*?</tr>|<li\b.*?</li>", body, re.S):
+                s = seller.search(row)
+                if not s:
+                    continue
+                if s.group(1) not in paid:
+                    seen_unpaid = seen_unpaid or s.group(1)
+                elif seen_unpaid:
+                    errs.append(f"{name}: {s.group(1)} (paid link) stands below {seen_unpaid} (no paid link)")
+                    break
+        for ul in re.findall(r'<ul class="opts">(.*?)</ul>(?=\s*(?:<p class="opt-instead"|<a class="btn|<p class="small"|</div>|$))', html, re.S):
+            last = 1
+            for li in re.findall(r'<li class="opt">.*?(?=<li class="opt">|$)', ul, re.S):
+                key = re.search(r'data-dlg="([^"]+)"', li)
+                win = ""
+                if key:
+                    inline = re.search(rf'<dialog[^>]*id="{re.escape(key.group(1))}".*?</dialog>', html, re.S)
+                    win = inline.group(0) if inline else wins.get(key.group(1), "")
+                head = re.search(r"<summary.*?</summary>", li, re.S)
+                grp = 1 if set(seller.findall(win)) & paid else 3 if head and "chip chip-ok" in head.group(0) else 2
+                if grp < last:
+                    name_ = re.sub(r"<[^>]+>", "", re.search(r'<span class="name">(.*?)</span>', li, re.S).group(1)) if '<span class="name">' in li else "?"
+                    errs.append(f"{name}: option row {name_} (group {grp}) stands below a row of group {last}")
+                    break
+                last = grp
+    return errs
+
+
+CHECKS = {"words": check_words, "seo": check_seo, "schema": check_schema, "parts": check_parts, "data": check_data, "book": check_book, "events": check_events, "logic": check_logic, "rules33": check_rules33, "addresses": check_addresses, "arch": check_arch, "arch-switch": check_arch_switch, "offers": check_offers, "kept-sellers": check_kept_sellers, "wave-b": check_wave_b, "paid-first": check_paid_first}
 
 # Plan names against their form (owner task w2, 3 Nov 2026): a clinic's own plan name can name another form than the
 # plan's `dosage_form` ("Ozempic Pill" for a pen). The site cannot change data, so this only warns, never fails, and the

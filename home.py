@@ -37,11 +37,11 @@ def seller_kind(b, r):
 
 
 def where_order(b, r):
-    """Online clinics first, then shops (owner answer Q1 a, 3 Nov 2026); in each group most checks first, then most plans or
-    products, then name."""
+    """Sellers with a paid link first (owner, queue block 33, 11 Nov 2026), then online clinics, then shops (owner answer
+    Q1 a, 3 Nov 2026); in each group most checks first, then most plans or products, then name."""
     clinic = seller_kind(b, r) == "clinic"
     size = len(b.clinic_plan_rows(r)) if clinic else (r.get("product_count") or 0)
-    return (0 if clinic else 1, -(r.get("score") if r.get("score") is not None else -1), -size, b.seller_name(r).lower())
+    return (not b.has_paid(r["seller_slug"]), 0 if clinic else 1, -(r.get("score") if r.get("score") is not None else -1), -size, b.seller_name(r).lower())
 
 
 def where_line(b, r):

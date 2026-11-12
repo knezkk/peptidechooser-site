@@ -21,11 +21,13 @@ The parts more than one page uses: buttons, option rows, tiles, drawings, the bo
 
 Everything else is a text link in `action` green. A partner without an affiliate program gets `btn-line` "Read review", never green. A "research use only" seller gets no button at all: one row with a `chip-neutral` "Not approved", no price, no link.
 
-## Option rows (shared by Home and the goal pages)
+## Option rows (Home, goal pages)
 
 **Option rows (Home step 2 and the goal pages; layout D, owner brief 5 Nov 2026; ODOBRENO DIZAJN and ODOBRENO SEO - Karlo - 5. 11. 2026).** Collapsed, a row has two lines and the button column. Line 1: "<name> · <what it does in plain words>" (`line_one` in data/site.json, Tier 1; a middle dot, as on the buttons, because the book bans em and en dashes); it may wrap on Home and on phones. Line 2: one status chip and the prescription fact in words (`rx_word`: "on prescription", "no prescription", "research use only", "at clinics"). No seller fact (FDA letter, clinic count) on the collapsed row, those live in the opened row, the window and seller rows. The price stands only on the button: "Buy from $X/mo · N clinics", research-use "From $X/mg · N shops", cosmetic "From $X · N products"; a row with no button has it in its CTA text ("From $X/mo at any pharmacy, no prescription"). Opened, the row shows the sentence (`plain`, Tier 1) with its footnote, then the does, status and how lines with their sources. Rows are one height from 900px (112px). Phones: line 1, the chip under it when it does not fit, the button at full width. Decision cards: no price in the sentence when the button has it, and the status chip alone.
 
 **Also on option rows.** A goal none of whose rows has a clinic or cosmetic button (Muscle, Healing, Energy) ends its list with "What is approved instead: <guide>" from `approved_instead_guide`; no clinic row is invented. On Home the rows never say "we do not link" (the label legend says it once). Home holds only the first goal's rows; the others load from `/windows/goal-<slug>.json` when chosen (without JavaScript only the first goal shows).
+
+**Order:** [windows.md](windows.md).
 
 ## Pictures and the clinic window (landing v3 package, owner decisions 4 Nov 2026; ODOBRENO SEO and ODOBRENO DIZAJN - Karlo - 4. 11. 2026)
 
