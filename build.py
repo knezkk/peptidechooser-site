@@ -47,11 +47,12 @@ if os.environ.get("PC_DRAFTS") and (ROOT / "data" / "drafts.json").exists():
     # Group pages in the list layout (group.md, List layout; owner queue block 20, wave D): a group's members are the
     # database's substances of its class (site.substances.substance_class). A member without a database status gets the
     # group's checked status as its own hand row: no page of its own, shown only in the group's table.
-    DATA["list_groups"] = _drafts.get("list_groups", [])
-    _with_db = {r["substance_slug"] for r in DATA.get("legal_db") or []}
-    for _lg in DATA["list_groups"]:
-        DATA["legal"]["rows"] += [dict(_lg["status"], peptide=s["canonical_name"], substances=[s["substance_slug"]], no_page=True, goal_only=True)
-                                  for s in DATA.get("substances") or [] if s.get("substance_class") == _lg["class"] and s["substance_slug"] not in _with_db]
+    DATA["list_groups"] = (DATA.get("list_groups") or []) + _drafts.get("list_groups", [])
+# Live list-layout groups sit in site.json (/bioregulators/ from 11 Nov 2026, owner: waves C and D go live), drafts join above.
+_with_db = {r["substance_slug"] for r in DATA.get("legal_db") or []}
+for _lg in DATA.get("list_groups") or []:
+    DATA["legal"]["rows"] += [dict(_lg["status"], peptide=s["canonical_name"], substances=[s["substance_slug"]], no_page=True, goal_only=True)
+                              for s in DATA.get("substances") or [] if s.get("substance_class") == _lg["class"] and s["substance_slug"] not in _with_db]
 # The HHS compounding policy of 30 Oct 2026 is worded once, in legal.hhs_policy (owner queue block 4, 7 Nov 2026): every
 # {hhs_<key>} in the data is that entry's text, so no page types its own version.
 HHS = DATA["legal"].get("hhs_policy") or {}
@@ -5280,7 +5281,7 @@ def group_table(slugs, caption):
             f'<th scope="col">Lowest price</th></tr></thead><tbody>{trs}</tbody></table></div>'), rows
 
 
-LIST_GROUPS = DATA.get("list_groups") or []  # drafts only (PC_DRAFTS=1)
+LIST_GROUPS = DATA.get("list_groups") or []  # live ones in site.json, drafts with PC_DRAFTS=1
 GROUP_SHOPS_FIRST = 10  # with JavaScript the shops table shows its first ten and "Show all N" (as /sellers/)
 
 
@@ -5511,7 +5512,7 @@ if PEPTIDE_SLUGS:
         PAGES.append((f"/peptides/{_x}/", f"peptides/{_x}/index.html", pep_title(_x), pep_description(_x), pep_page(_x), faq_schema(pep_faq_pairs(_x)),
                       [("/peptides/", "Peptides"), (f"/peptides/{_x}/", pep_short(_x))]))
 
-for _g in LIST_GROUPS:  # drafts only (PC_DRAFTS=1): list-layout group pages (group.md), after the substance pages they link
+for _g in LIST_GROUPS:  # list-layout group pages (group.md), after the substance pages they link
     if list_members(_g):
         PAGES.append((_g["path"], _g["path"].strip("/") + "/index.html", _g["title"], _g["description"], list_group_page(_g),
                       item_list_schema(_g["crumb"], [(pep_name(x), f"{SITE}/peptides/{x}/" if x in PEPTIDE_SLUGS and x not in PEP_THIN else f"{SITE}{_g['path']}")

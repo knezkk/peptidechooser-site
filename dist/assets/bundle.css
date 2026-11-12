@@ -267,6 +267,9 @@ html:not(.nav-js) .nav-side{display:none}
 .year-chip span{font-weight:400;color:var(--ink-2)}
 .year-chip:hover{background:var(--neutral-tint)}
 .year-chip[aria-pressed="true"]{background:var(--clinic-tint);border-color:var(--clinic);color:var(--clinic-text)}
+/* a chip with count 0 (Filter look, nav-parts.md): stays in its place, reads as off: no fill, the light line, muted text, no hover */
+.year-chip:disabled,.year-chip:disabled:hover{background:transparent;border-color:var(--line);color:var(--ink-muted);cursor:default}
+.year-chip:disabled span{color:var(--ink-muted)}
 .year-chip[aria-pressed="true"] span{color:var(--clinic-text)}
 .year-chip:focus-visible{outline:3px solid var(--clinic);outline-offset:2px}
 /* Letter jump (/peptides/, owner UX audit B16, 3 Nov 2026): the year chip as a link to the first row of each letter */
