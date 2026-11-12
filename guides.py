@@ -673,7 +673,7 @@ def g_glp1(b, f, N):
     prices = (f"""<h2>What do they cost at online clinics?</h2>
 <p>The cheapest monthly plan of each kind at the online clinics we track, with the care fee some clinics add each month:</p>
 <ul>{"".join(rows)}</ul>
-<p>Prices are the clinics' own published prices on the date in the source. Our <a href="/weight-loss/">weight loss page</a> lists every plan we track, cheapest first, with each clinic's FDA letters.</p>""") if rows else ""
+<p>Prices are the clinics' own published prices on the date in the source. Our <a href="/weight-loss/">weight loss page</a> lists every plan we track, with each clinic's FDA letters.</p>""") if rows else ""
     june = (f"""<h2>What happened in June 2026?</h2>
 <p>In June 2026 the FDA sent {f['june']} warning letters to online clinics and telehealth companies on our letters page, {'all' if f['june_day_n'] == f['june'] else f['june_day_n']} of them on {nice(f['june_day'])}.{N('db-letters')} Their subject, as the FDA filed it, is "False &amp; Misleading Claims/Misbranded (Telehealth)": the FDA said the clinics' websites made claims about their products that it believes break the law.</p>
 <p>Altogether, {f['tele_letters']} of the {f['letters']} letters on our letters page went to telehealth companies.{N('db-letters')} A letter is not a ban: a clinic with one can keep selling while it answers the FDA. We list the clinic and the date of its newest letter next to its prices.</p>""") if f["june"] else ""
