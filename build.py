@@ -610,10 +610,18 @@ OPERATOR_LINE = (f"Peptide Chooser is operated by {OPERATOR['name']}, {OPERATOR[
 
 ORG_SCHEMA = f"""<script type="application/ld+json">
 {{"@context":"https://schema.org","@graph":[
-{{"@type":"Organization","@id":"{SITE}/#org","name":"Peptide Chooser","url":"{SITE}/","logo":"{SITE}/assets/icon-512.png","email":"{EMAIL}","legalName":"{OPERATOR['name']}","address":{{"@type":"PostalAddress","streetAddress":"{OPERATOR['street']}","addressLocality":"{OPERATOR['city']}","addressRegion":"{OPERATOR['region']}","postalCode":"{OPERATOR['zip']}","addressCountry":"{OPERATOR['country']}"}}}},
+{{"@type":"Organization","@id":"{SITE}/#org","name":"Peptide Chooser","url":"{SITE}/","logo":"{SITE}/assets/icon-512.png","email":"{EMAIL}"}},
 {{"@type":"WebSite","@id":"{SITE}/#site","url":"{SITE}/","name":"Peptide Chooser","publisher":{{"@id":"{SITE}/#org"}}}}
 ]}}
 </script>"""
+
+# The company's legal name and address go on /about/ only, under the same #org id, so search engines join them with Home's
+# Organization; Home sits at its 60 KB limit (tools/check.py) and the visible line in the footer names the company anyway.
+ABOUT_SCHEMA = ('<script type="application/ld+json">' + json.dumps({"@context": "https://schema.org", "@type": "Organization",
+    "@id": f"{SITE}/#org", "name": "Peptide Chooser", "url": f"{SITE}/", "legalName": OPERATOR["name"],
+    "address": {"@type": "PostalAddress", "streetAddress": OPERATOR["street"], "addressLocality": OPERATOR["city"],
+                "addressRegion": OPERATOR["region"], "postalCode": OPERATOR["zip"], "addressCountry": OPERATOR["country"]}},
+    separators=(",", ":")) + "</script>")
 
 
 def breadcrumb_schema(items):
@@ -4176,7 +4184,7 @@ PAGES = [
     ("/", "index.html", "Best peptides by goal, compared | Peptide Chooser",
      HOME_DESC, HOME, ORG_SCHEMA, None),
     ("/about/", "about/index.html", "About Peptide Chooser",
-     "Peptide Chooser is an independent site that compares peptide products and sellers for people in the United States.", ABOUT, "", [("/about/", "About")]),
+     "Peptide Chooser is an independent site that compares peptide products and sellers for people in the United States.", ABOUT, ABOUT_SCHEMA, [("/about/", "About")]),
     ("/how-we-rate/", "how-we-rate/index.html", "How we rate peptide products and sellers | Peptide Chooser",
      "The checks Peptide Chooser runs on every peptide seller (lab reports for shops, FDA letters, company, legal pages, fresh prices) and how goal pages are built.", HOW, "", [("/how-we-rate/", "How we rate")]),
     ("/contact/", "contact/index.html", "Contact | Peptide Chooser",
