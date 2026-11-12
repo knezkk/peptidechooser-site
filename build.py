@@ -2319,7 +2319,7 @@ HOME_DESC = ("Find the right option for your goal and where to get it at the bes
 HOME = f"""
 <section class="hero hero-clinic">
   <div class="wrap">
-    <h1 class="hero-h1">Find the right option for your goal, and where to get it at the best price.</h1>
+    <h1 class="hero-h1">Peptides by goal: find the right option for your goal, and where to get it at the best price.</h1>
     <p class="hero-lede">{HOME_LEDE}</p>
     <div class="chooser flow" id="goals">
       <div class="flow-hd fh-goal"><span class="step-n" aria-hidden="true">1</span><h2 id="step-goal">Choose a goal</h2></div>
