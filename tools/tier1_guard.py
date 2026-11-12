@@ -222,8 +222,9 @@ def data_description(path, old, new):
 
 
 def slugged(name):
-    # an apostrophe is dropped, as the database's slugs drop it ("Physician's Choice" -> physicians-choice, 12 Nov 2026)
-    return re.sub(r"[^a-z0-9]+", "-", re.sub(r"['\u2019]", "", name.lower()).replace("+", " plus ")).strip("-")
+    """A name as the database slugs it: an apostrophe is dropped, not a break ("Physician's Choice" is physicians-choice)."""
+    name = re.sub(r"['\u2019]", "", name.lower().replace("+", " plus "))
+    return re.sub(r"[^a-z0-9]+", "-", name).strip("-")
 
 
 def section_of(path):
