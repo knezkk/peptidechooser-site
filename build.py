@@ -417,15 +417,6 @@ NAV_GOAL_GROUPS = [("Hair and skin", ("hair", "skin")), ("Weight", ("weight-loss
 LEARN_TOPICS = [("hair", "Hair"), ("glp1", "GLP-1"), ("legal", "Legal"), ("buying", "Buying"), ("data", "Data"), ("body", "Body")]
 
 
-def goal_from(g):
-    """"from $10/mo" for the goal's cheapest price: its checked price (the Home price source), else its cheapest
-    FDA-approved clinic plan; None when the data has neither."""
-    if g["slug"] in PRICE_REF:
-        return f'${g["price_from_usd"]}/mo'
-    plan = cheapest_plan(g)
-    return f'{usd(plan["price_monthly"])}/mo' if plan else None
-
-
 def nav_link(path, href, label, sub="", attrs=""):
     cur = ' aria-current="page"' if href == path else ""
     sub = f'<span class="nav-sub">{sub}</span>' if sub else ""
@@ -454,7 +445,9 @@ def nav_cats(path):
 
     def goal_link(sl):
         g = goals[sl]
-        return nav_link(path, f"/{sl}/", g["label"], plural(len(g["peptides"]), "option") + (f", from {goal_from(g)}" if goal_from(g) else ""), ev("goal_pick", goal=sl))
+        low = goal_low(g)
+        said = {"clinic": "clinics from", "research": "shops from"}.get(low["kind"], "from") if low else ""
+        return nav_link(path, f"/{sl}/", g["label"], plural(len(g["peptides"]), "option") + (f", {said} {low['price']}" if low else ""), ev("goal_pick", goal=sl))
 
     def col(groups):
         out = "".join(f'<p class="nav-h">{head}</p><ul>{"".join(goal_link(x) for x in slugs if x in goals)}</ul>'
@@ -831,7 +824,7 @@ def compounded_subs(g, p):
     return set(p.get("plan_substances") or []) or {x["substance"] for x in g["peptides"] if x.get("substance") and x["status"].startswith("FDA approved")}
 
 
-def row_plan(g, p):
+def _row_plan(g, p):
     """The plan behind an option row's "Online clinics from" line on a goal with clinic plans: an FDA-approved row, the
     cheapest brand plan (branded or oral_branded) of its substance; the compounded row (`plan_kind`), the cheapest
     compounded plan of the goal's approved substances. On a goal without clinic plans, an FDA-approved row with a
@@ -866,7 +859,7 @@ plan_key = lambda r: f'{r["seller_slug"]}-{r["plan_slug"]}'
 EXTRA_PLANS = {}
 for _g in ALL_GOALS + SUBPAGES:
     _rows = goal_plans(_g)
-    for _r in [row_plan(_g, _p) for _p in _g["peptides"]] + _rows[:1]:
+    for _r in [_row_plan(_g, _p) for _p in _g["peptides"]] + _rows[:1]:
         if _r and _r is not GOAL_PLANS.get(_g["slug"]):
             EXTRA_PLANS.setdefault(plan_key(_r), _r)
 _n1 = _n0 + len(GOAL_PLANS)
@@ -1553,10 +1546,14 @@ def how_line(p):
 
 # A row whose data has no listing says so where the button would be, by its kind (owner, 4 Nov 2026), never an empty space.
 NO_LISTING_TEXTS = {"otc": "Any pharmacy, no prescription", "rx": "On prescription; no clinic prices yet",
-                    "cosmetic": "Sold in creams and serums; no prices checked", "research": "No listings yet"}
+                    "cosmetic": "Sold in creams and serums; no prices checked", "research": "No listings yet",
+                    "scalp": "No scalp product listed yet"}
 
 
 def no_listing_text(p):
+    # the hair goal's scalp row never opens face or body creams (owner answer 2 b to block 34, 12 Nov 2026)
+    if id(p) in SCALP_OPTIONS:
+        return NO_LISTING_TEXTS["scalp"]
     if is_cosmetic(p):
         return NO_LISTING_TEXTS["cosmetic"]
     if needs_rx(p) is False:
@@ -1596,6 +1593,29 @@ def option_plans(g, p):
     return [r for r in priced if r.get("product_kind") in BRAND_KINDS and row_fits(p, r) and on_goal(g, r, plan_subs(r))
             and (p.get("other_use_ok") or not other_use(g, r))
             and plan_fits(p, r) and form_fits(p, r, strict=False)]
+
+
+def row_plan(g, p):
+    """The plan behind an option row's "Online clinics from" line, the same plan its button names (queue block 34, audit of
+    11 Nov 2026: /libido/ Testosterone said "from $60/mo (Hone Health)" while its button said "Buy from $115/mo"; Bremelanotide
+    said "from $199/mo (RxSpan MD)" next to "no clinic prices yet"): _row_plan's plan when the row's window holds it, else the
+    window's cheapest; None when the window is empty, so a row never names a price its button does not open."""
+    rp = _row_plan(g, p)
+    rows = option_plans(g, p) if rp else []
+    if not rows:
+        return None
+    return rp if any(r is rp for r in rows) else min(rows, key=lambda r: (float(r["price_monthly"]), r["seller_name"]))
+
+
+# The plans row_plan names that _row_plan did not get a source for (the window's cheapest): numbered after the others.
+for _g in ALL_GOALS + SUBPAGES:
+    for _p in _g["peptides"]:
+        _r = row_plan(_g, _p)
+        if _r and _r is not GOAL_PLANS.get(_g["slug"]) and plan_key(_r) not in EXTRA_PLANS:
+            EXTRA_PLANS[plan_key(_r)] = _r
+            EXTRA_REF[plan_key(_r)] = max(list(EXTRA_REF.values()) + list(PLAN_REF.values()) + [_n1]) + 1
+            SOURCES_HOME += (f'<li id="src-plan-{plan_key(_r)}">{seller_base(_r["seller_name"])}, {_r["plan_name"]}, {nice_date(_r["last_seen"])}: '
+                             f'<a href="{_r["pricing_url"]}" rel="nofollow">{_r["pricing_url"]}</a></li>')
 
 
 def clinic_key(g, p):
@@ -1738,6 +1758,35 @@ def window_low(p):
     else:
         vals = vial_ppm(r for s in subs_of(p) for r in PRODUCTS if r["substance_slug"] == s and r["seller_slug"] not in CLINIC_PROFILES)
     return (min(vals) if vals else None), n
+
+
+def off_goal(p):
+    """An option whose approval is for another use than the page's goal (queue block 34, audit of 11 Nov 2026): its own lines say
+    "not for" (the Ozempic tablets on /weight-loss/pills/, tesamorelin on /muscle/), or the data marks it `off_goal` (testosterone
+    on /libido/ and /muscle/: approved only for low testosterone from a medical condition). A top card never names it."""
+    said = " ".join(p.get(k) or "" for k in ("line_one", "plain", "status_plain"))
+    return bool(p.get("off_goal") or re.search(r"\bnot for\b", said, re.I))
+
+
+def goal_low(g):
+    """The goal's one "from" price (queue block 34): the lowest price its page shows, in the page's own unit, for the header
+    menu, the Home goal card and the goal page. Clinic plans first (its clinic table and every option row's window: "from $25/mo",
+    the lowest clinic price; owner's assistant, 11 Nov 2026: one rule, said in the label), else its cosmetic window ("from $24.95
+    a product"), else its research-use windows ("from $1.28/mg"). A dict (price, kind, plan) or None when the page shows none."""
+    subs = (g.get("clinic_table") or {}).get("substances") or []
+    table = clinic_plans(g) or [r for r in PLANS if on_goal(g, r, subs) and r.get("price_monthly") is not None]
+    shown = table + [r for p in g["peptides"] for r in option_plans(g, p)]
+    if shown:
+        r = min(shown, key=lambda r: (float(r["price_monthly"]), r["seller_name"], r["plan_name"]))
+        return {"price": f'{usd(r["price_monthly"])}/mo', "kind": "clinic", "plan": r}
+    for kinds, fmt in ((COSMETIC_KINDS, lambda v, p: f'{money(v)} a {"bottle" if cosmetic_word(p) == "serum" else "product"}'),
+                       (("research",), lambda v, p: f"{per_mg(v)}/mg")):
+        lows = [(window_low(p)[0], p) for p in g["peptides"] if has_window(p) and window_kind(p) in kinds]
+        lows = [x for x in lows if x[0] is not None]
+        if lows:
+            v, p = min(lows, key=lambda x: x[0])
+            return {"price": fmt(v, p), "kind": "cosmetic" if kinds == COSMETIC_KINDS else "research", "plan": None}
+    return None
 
 
 def plan_clinics(g, p, rp):
@@ -2947,10 +2996,22 @@ def decide_cards(g):
     """The goal page's decision cards (pages.md, Category; owner task 3 Nov 2026), in place of the price pad: Best approved,
     Cheapest, No prescription. Every number from data; a card whose data is missing is left out."""
     cards = []
-    # Best approved: the FDA-approved option with the most clinics, its cheapest plan that is not compounded
+    # Best approved: the FDA-approved option with the most clinics, its cheapest plan that is not compounded; never an option
+    # approved for another use (off_goal; queue block 34). A goal's `best_approved` (its substance) names the approved option
+    # for the page's own search (/libido/: bremelanotide, Vyleesi, the one approved for low desire), with or without a plan.
     best = None
+    named = next((p for p in g["peptides"] if g.get("best_approved") and p.get("substance") == g["best_approved"]
+                  and approved_row(p) and not off_goal(p)), None)
+    if named and not row_plan(g, named):
+        on_page = named["substance"] in PEPTIDE_SLUGS
+        page, label = (f'/peptides/{named["substance"]}/', "FDA status and sources") if on_page else ("/learn/", "Read the guides")
+        cards.append(decide_card("Best approved", named["name"], status_chip(named), no_listing_text(named),
+                                 f'<span class="pick-act"><a class="btn btn-wait btn-sm" href="{page}" data-card="{card_slug("Best approved")}">{label}</a></span>',
+                                 option_picture(named, None)))
     for p in g["peptides"]:
-        if not (approved_row(p) and p.get("top_pick", True) and needs_rx(p) is not False):
+        if not (approved_row(p) and p.get("top_pick", True) and needs_rx(p) is not False) or off_goal(p) or cards:
+            continue
+        if named and p is not named:
             continue
         rp = row_plan(g, p)
         if not rp or rp.get("product_kind") == "compounded":
@@ -2965,13 +3026,15 @@ def decide_cards(g):
                                  f'At online clinics{plan_src(g, rp)}',
                                  clinic_open(g, p, rp), option_picture(p, rp)))
     # Cheapest: the lowest monthly price among the goal's plans, labelled with its kind
-    plans = goal_plans(g)
-    if plans and not (best and plans[0] is best[1]):
-        c, name = plans[0], seller_base(plans[0]["seller_name"])
+    # (queue block 34: the cheapest plan an option for the page's goal opens; a plan only an off-goal row opens, the Ozempic pill on
+    # /weight-loss/pills/, stays in its row and the table; its chip says what the plan is: "Generic" for a generic, not "Brand")
+    fit = [x for x in sorted(g["peptides"], key=lambda x: x.get("plan_kind") != "compounded") if not off_goal(x)]
+    c = next((r for r in goal_plans(g) if any(any(o is r for o in option_plans(g, x)) for x in fit)), None)
+    if c and not (best and c is best[1]):
+        name = seller_base(c["seller_name"])
         k = plan_kind(c)
-        chip = ('<span class="chip chip-warn">Compounded, not FDA approved</span>' if k == "compounded" else
-                '<span class="chip chip-ok">Brand</span>' if k in ("brand", "generic") else plan_chip(g, c))
-        opens = next((b for b in (clinic_open(g, x, None, c) for x in sorted(g["peptides"], key=lambda x: x.get("plan_kind") != "compounded") if any(r is c for r in option_plans(g, x))) if b), "")
+        chip = '<span class="chip chip-warn">Compounded, not FDA approved</span>' if k == "compounded" else plan_chip(g, c)
+        opens = next((b for b in (clinic_open(g, x, None, c) for x in fit if any(r is c for r in option_plans(g, x))) if b), "")
         if opens:  # a plan no option row opens (compounded sermorelin on /muscle/) stays in the clinic table, without a card
             cards.append(decide_card("Cheapest", clean(c["plan_name"]), chip,
                                      f'At {name}{plan_src(g, c)}{plan_letter(c)}',

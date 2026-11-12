@@ -168,23 +168,17 @@ segs.forEach(function(x){x.addEventListener('click',function(){segs.forEach(func
 # ---------------------------------------------------------------- Compare by goal
 
 def goal_price(b, g):
-    """A goal card's price and its one-word source: the cheapest clinic plan for the goal (any plan on a goal with its
-    own clinic plans, else the goal's cheapest plan that is not compounded, else a compounded one), else the lowest
-    price per mg at research-use shops for the goal's research-use options. (price, source) or ("", "")."""
-    plans = b.clinic_plans(g) if g.get("clinic_plans") else []
-    if not plans:
-        subs = {p["substance"] for p in g["peptides"] if p.get("substance")}
-        found = [r for r in b.PLANS if b.on_goal(g, r, subs) and r.get("price_monthly") is not None]
-        plans = sorted(found, key=lambda r: (r.get("product_kind") == "compounded", float(r["price_monthly"]), r["seller_name"]))
-    if plans:
-        p = min(plans, key=lambda r: (float(r["price_monthly"]), r["seller_name"])) if g.get("clinic_plans") else plans[0]
+    """A goal card's price and its one-word source, from build.goal_low (queue block 34: the menu, this card and the goal page
+    show one "from" price): the lowest clinic plan the goal page shows, else its cosmetic or research-use window's lowest.
+    (price, source) or ("", "")."""
+    low = b.goal_low(g)
+    if not low:
+        return "", ""
+    p = low["plan"]
+    if p:
         sub = subs_short(b, [p["substance_slug"]], 1) if p.get("substance_slug") else ""
-        return f'from {b.usd(p["price_monthly"])}/mo', (f"compounded {sub}" if p.get("product_kind") == "compounded" else f"{sub}, clinic").strip(", ")
-    subs = {s for p in g["peptides"] if not b.approved_row(p) and p.get("chip") != "info" for s in b.subs_of(p)}
-    subs -= {s for s in subs if b.pep_status(s) and b.pep_group(b.pep_status(s)) == "approved"}  # never an approved medicine
-    # the lowest price per mg of a vial any shop lists for those substances, inside the /compare/ band (task 33: vials only)
-    vals = b.vial_ppm(r for r in b.PRODUCTS if r["seller_slug"] in b.SHOPS and r["substance_slug"] in subs)
-    return (f"from {b.per_mg(min(vals))}/mg", "research-use only") if vals else ("", "")
+        return f'from {low["price"]}', (f"compounded {sub}" if p.get("product_kind") == "compounded" else f"{sub}, clinic").strip(", ")
+    return f'from {low["price"]}', ("research-use only" if low["kind"] == "research" else "cosmetic")
 
 
 def by_approval(b):
