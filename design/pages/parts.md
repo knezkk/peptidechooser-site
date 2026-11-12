@@ -6,7 +6,7 @@ The parts more than one page uses: buttons, option rows, tiles, drawings, the bo
 
 | Button | Only for | Label pattern | Max per |
 |---|---|---|---|
-| `btn-action` (green) | A paid outbound link to a partner, through `/out/<name>/` with `rel="sponsored"` | "Visit <Clinic> · $X/mo", "Visit <Clinic>" | one per table row or option row; always with "Paid link" under it, in a table or window inside it as its second line. Before a clinic pays us there is no green button at all: `btn-wait` to our own page takes its place, and no page says "No paid link yet" (Home v2, 3 Nov 2026; `tools/check.py`) |
+| `btn-action` (green) | A paid link via `/out/<name>/`, `rel="sponsored noopener"`, new tab ([windows.md](windows.md)) | "Visit <Clinic> · $X/mo", "Visit <Clinic>" | one per table or option row; always with "Paid link" under it, in a table or window inside it as its second line. Before a clinic pays us there is no green button: `btn-wait` to our own page takes its place, and no page says "No paid link yet" (Home v2, 3 Nov 2026; `tools/check.py`) |
 | `btn-ink` | The site's own main action | "Compare hair options", "Search" | one per section; one in the header |
 | `btn-line` | A second choice next to an ink or action button, or a quiet action alone | "Read our Hims review", "How we rate", "Prices at 10 shops" (opens the seller window) | one per group |
 | `btn-sm` | Any of the above inside a table row | as above | one action + one line per row |
