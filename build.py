@@ -279,6 +279,7 @@ document.addEventListener('click',function(e){try{var t=e.target;if(!t||!t.close
 var a=t.closest('a[href]'),el=t.closest('[data-ev]'),c=t.closest('[data-card]'),f=t.closest('button[data-filter]'),r=t.closest('#hs-list a,#sp-results a');
 if(a&&/(^|\.)fda\.gov$/.test(a.hostname))send('outbound_fda',{letter:letter(a)});
 if(c&&t.closest('a,button')&&!t.closest('.ref'))send('decision_card_click',{card:c.getAttribute('data-card')});
+var gp=t.closest('#nav-p-goal .nav-col a[href]');if(gp)send('goal_pick',{goal:gp.pathname.split('/')[1]});
 if(r){var k=r.querySelector('.chip');send('search',{query_length:typed(r.closest('#hs-list')?'#hs-q':'#sp-q'),result_type:k?k.textContent.toLowerCase():'other'});}
 if(f&&!(f.classList.contains('seg-b')&&f.getAttribute('aria-pressed')==='true'))send('filter_change',{filter:f.getAttribute('data-filter'),value:f.getAttribute('data-value')});
 if(el&&el.tagName!=='FORM'&&el.getAttribute('aria-pressed')!=='true'){var o=own(el),n=el.getAttribute('data-ev');
@@ -331,7 +332,7 @@ else if(e.key==='Escape'&&!list.hidden){e.preventDefault();e.stopPropagation();c
 document.addEventListener('click',function(e){if(!f.contains(e.target))close();});})();
 </script>"""
 GSAP = "https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5"
-MOTION_JS = f"""<script defer src="{GSAP}/gsap.min.js"></script>
+MOTION_INLINE = f"""<script defer src="{GSAP}/gsap.min.js"></script>
 <script defer src="{GSAP}/ScrollTrigger.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded',function(){{
@@ -352,6 +353,11 @@ ScrollTrigger.batch(sel,{{start:'top 92%',once:true,
 onEnter:function(els){{els=els.filter(function(el){{return getComputedStyle(el).opacity!=='1';}});if(els.length)gsap.fromTo(els,{{opacity:0,y:rise}},{{opacity:1,y:0,duration:ms('reveal'),ease:'power2.out',stagger:ms('stagger'),overwrite:true}});}}}});
 }});
 </script>"""
+# The motion script goes to one cached file (owner, 13 Nov 2026: Home at its 60 KB limit; it was 1.7 KB inline on every page).
+# Deferred scripts run in document order before DOMContentLoaded, so it still runs after GSAP and still catches that event.
+MOTION_CODE = re.search(r"<script>\n(.*)</script>$", MOTION_INLINE, re.S).group(1)
+MOTION_JS = (f'<script defer src="{GSAP}/gsap.min.js"></script>\n<script defer src="{GSAP}/ScrollTrigger.min.js"></script>\n'
+             '<script defer src="/assets/motion.js"></script>')
 
 # Public Sans served from our own site (owner answer Q1 a, 2 Nov 2026; SIL Open Font License, assets/fonts/OFL.txt): one
 # variable file per character set, the Latin one preloaded, so the first paint waits on no other server.
@@ -447,7 +453,7 @@ def nav_cats(path):
         g = goals[sl]
         low = goal_low(g)
         said = {"clinic": "clinics from", "research": "shops from"}.get(low["kind"], "from") if low else ""
-        return nav_link(path, f"/{sl}/", g["label"], plural(len(g["peptides"]), "option") + (f", {said} {low['price']}" if low else ""), ev("goal_pick", goal=sl))
+        return nav_link(path, f"/{sl}/", g["label"], plural(len(g["peptides"]), "option") + (f", {said} {low['price']}" if low else ""))  # goal_pick: nav.js reads the goal from the link (13 Nov 2026, Home's 60 KB)
 
     def col(groups):
         out = "".join(f'<p class="nav-h">{head}</p><ul>{"".join(goal_link(x) for x in slugs if x in goals)}</ul>'
@@ -6508,6 +6514,7 @@ def main():
     for k, html in GOAL_PANELS.items():
         (DIST / "windows" / f"goal-{k}.json").write_text(json.dumps({"html": html}), encoding="utf-8")
     (DIST / "assets" / "nav.js").write_text(NAV_SCRIPT + STATE_SCRIPT + EVENTS_SCRIPT, encoding="utf-8")
+    (DIST / "assets" / "motion.js").write_text(MOTION_CODE, encoding="utf-8")
     if home.JS:
         # Home carries the header search in its cached file too (queue block 21: the wave B goals took Home past 60 KB)
         search = SEARCH_JS.strip()[len("<script>"):-len("</script>")]
