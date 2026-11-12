@@ -1373,7 +1373,7 @@ def check_events(P):
             place = re.search(r'data-ev-placement="([^"]+)"', t)
             if ('data-ev="paid_link_click"' not in t or not slug or f'data-ev-partner="{slug.group(1)}"' not in t
                     or not place or place.group(1) not in ("option row", "clinic table", "window", "seller page", "decision card")
-                    or 'rel="sponsored"' not in t):
+                    or "sponsored" not in (re.search(r'rel="([^"]*)"', t) or [None, ""])[1].split()):
                 errs.append(f"{name}: /out/ link without partner, placement or rel=sponsored: {t[:160]}")
         for t in tag("btn-wait", html):
             if "data-ev=" not in t and "data-card=" not in t:
@@ -1982,6 +1982,25 @@ def check_paid_first(P):
     return errs
 
 
+def check_paid_tab(P):
+    """Owner, queue block 35 (12 Nov 2026): every link to /out/<name>/ on every built page and window opens in a new tab:
+    target="_blank" and rel with "sponsored" and "noopener" (never "noreferrer"), and says so to screen readers."""
+    errs = []
+    files = [(n, (DIST / n).read_text(encoding="utf-8")) for n in P]
+    files += [(f"windows/{f.name}", json.loads(f.read_text(encoding="utf-8")).get("html") or "") for f in (DIST / "windows").glob("*.json")]
+    for name, html in files:
+        if name.startswith("out/"):
+            continue
+        for a in re.findall(r'<a\b[^>]*href="/out/[^"]*"[^>]*>.*?</a>', html, re.S):
+            tag = a.split(">", 1)[0]
+            rel = (re.search(r'rel="([^"]*)"', tag) or [None, ""])[1].split()
+            if 'target="_blank"' not in tag or "sponsored" not in rel or "noopener" not in rel or "noreferrer" in rel:
+                errs.append(f"{name}: a paid link that does not open in a new tab with rel sponsored noopener: {tag[:120]}")
+            elif 'aria-describedby="new-tab"' not in tag or not (name.startswith("windows/") or 'id="new-tab" hidden>Opens in a new tab<' in html):
+                errs.append(f"{name}: a paid link without its spoken \"Opens in a new tab\" (aria-describedby new-tab): {tag[:120]}")
+    return errs
+
+
 def check_goal_prices(P):
     """Queue block 34 (audit of 11 Nov 2026). (a) Each goal's "from" price is one figure: the header menu, the Home goal card
     and the goal page's lowest shown price agree, in the same unit. The page's lowest is its lowest clinic monthly price (the
@@ -2042,7 +2061,7 @@ def check_goal_prices(P):
     return errs
 
 
-CHECKS = {"words": check_words, "seo": check_seo, "schema": check_schema, "parts": check_parts, "data": check_data, "book": check_book, "events": check_events, "logic": check_logic, "rules33": check_rules33, "addresses": check_addresses, "arch": check_arch, "arch-switch": check_arch_switch, "offers": check_offers, "kept-sellers": check_kept_sellers, "wave-b": check_wave_b, "paid-first": check_paid_first, "goal-prices": check_goal_prices}
+CHECKS = {"words": check_words, "seo": check_seo, "schema": check_schema, "parts": check_parts, "data": check_data, "book": check_book, "events": check_events, "logic": check_logic, "rules33": check_rules33, "addresses": check_addresses, "arch": check_arch, "arch-switch": check_arch_switch, "offers": check_offers, "kept-sellers": check_kept_sellers, "wave-b": check_wave_b, "paid-first": check_paid_first, "goal-prices": check_goal_prices, "paid-tab": check_paid_tab}
 
 # Plan names against their form (owner task w2, 3 Nov 2026): a clinic's own plan name can name another form than the
 # plan's `dosage_form` ("Ozempic Pill" for a pen). The site cannot change data, so this only warns, never fails, and the
