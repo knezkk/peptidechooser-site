@@ -1708,8 +1708,9 @@ def check_arch_switch(P):
     d = json.loads((ROOT / "data" / "site.json").read_text(encoding="utf-8"))
     text = lambda h: " ".join(unescape(re.sub(r"<[^>]+>", " ", h)).split())
     month = lambda iso: date.fromisoformat(str(iso)[:10]).strftime("%b %Y")
-    marks = {" · ".join(x for x in ("Lab report", c.get("lab_name") or "", month(c["coa_date"])) if x)
-             for c in d.get("coa_reports") or [] if c.get("coa_date")}
+    # a mark always names its lab (owner, 11 Nov 2026): a report without a lab name is no mark
+    marks = {" · ".join(("Lab report", c["lab_name"].strip(), month(c["coa_date"])))
+             for c in d.get("coa_reports") or [] if c.get("coa_date") and (c.get("lab_name") or "").strip()}
     for name in P:
         html = (DIST / name).read_text(encoding="utf-8")
         labs = re.findall(r'<span class="chip chip-lab"[^>]*>([^<]*)</span>', html)
@@ -1718,7 +1719,9 @@ def check_arch_switch(P):
             errs.append(f"{name}: a lab mark or a price history without PC_ARCH_DATA=1")
             continue
         for x in labs:
-            if unescape(x) not in marks:
+            if not re.fullmatch(r"Lab report · .+ · [A-Z][a-z]{2} \d{4}", unescape(x)):
+                errs.append(f"{name}: lab mark '{unescape(x)}' does not name its lab")
+            elif unescape(x) not in marks:
                 errs.append(f"{name}: lab mark '{unescape(x)}' is not a lab report in the data")
         for tr in re.findall(r'<table class="[^"]*tbl-clinics[^"]*">.*?</table>', html, re.S):
             if "chip-lab" in tr:
