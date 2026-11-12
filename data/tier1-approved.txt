@@ -227,3 +227,4 @@ ODOBRENO SEO - Karlo - 11. 11. 2026 - PR #178
 
 ODOBRENO SEO - Karlo - 11. 11. 2026 - PR #182
 / 6dc520730e8d
+ODOBRENO SEO - Karlo - 12. 11. 2026 - PR #187 (company behind the site: footer, /about/, /contact/, /disclosure/, /privacy/; titles, H1 and descriptions unchanged)
