@@ -1449,11 +1449,7 @@ def subs_of(p):
 def window_kind(p):
     """"scalp" for a cosmetic option on the hair goal (its window lists scalp products only), "cosmetic" for another
     cosmetic option, else "research"."""
-    # a scalp row with no listing named for hair or scalp opens the same cosmetic listings as /skin/ (queue block 34: Home's GHK-Cu
-    # serum said "no prices checked" while /skin/ listed 10 prices); it narrows to scalp products once the data has one
-    if not is_cosmetic(p):
-        return "research"
-    return "scalp" if id(p) in SCALP_OPTIONS and any(seller_rows(s, "scalp") for s in subs_of(p)) else "cosmetic"
+    return ("scalp" if id(p) in SCALP_OPTIONS else "cosmetic") if is_cosmetic(p) else "research"
 
 
 def window_key(p):
@@ -1527,10 +1523,14 @@ def how_line(p):
 
 # A row whose data has no listing says so where the button would be, by its kind (owner, 4 Nov 2026), never an empty space.
 NO_LISTING_TEXTS = {"otc": "Any pharmacy, no prescription", "rx": "On prescription; no clinic prices yet",
-                    "cosmetic": "Sold in creams and serums; no prices checked", "research": "No listings yet"}
+                    "cosmetic": "Sold in creams and serums; no prices checked", "research": "No listings yet",
+                    "scalp": "No scalp product listed yet"}
 
 
 def no_listing_text(p):
+    # the hair goal's scalp row never opens face or body creams (owner answer 2 b to block 34, 12 Nov 2026)
+    if id(p) in SCALP_OPTIONS:
+        return NO_LISTING_TEXTS["scalp"]
     if is_cosmetic(p):
         return NO_LISTING_TEXTS["cosmetic"]
     if needs_rx(p) is False:
