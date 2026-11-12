@@ -937,6 +937,21 @@ def plan_letter(r):
         return f' <a class="chip chip-warn chip-link" href="{letter_href(r["seller_slug"])}">FDA letter {nice_date(r["last_fda_letter_date"])}</a>'
     return ""
 
+def is_pharmacy(slug, name=""):
+    """A pharmacy among the plan sellers (owner queue block 25, 12 Nov 2026: "Online clinics from $149/mo (NovoCare Pharmacy)"
+    called a pharmacy a clinic): its kind says pharmacy, or its own name ends in "Pharmacy" (the database files NovoCare
+    Pharmacy as telehealth). A line whose cheapest seller is one says "clinics and pharmacies", the book's words for the mix."""
+    r = PROFILES.get(slug) or SELLERS.get(slug) or {}
+    k = r.get("seller_kind") or ""
+    return ("PHARMACY" in k and "CLINIC" not in k and "TELEHEALTH" not in k) or seller_base(name or r.get("seller_name") or "").endswith(" Pharmacy")
+
+
+def clinic_word(rows, cap=False):
+    """"online clinics", or "online clinics and pharmacies" when a pharmacy is among the plan rows given."""
+    w = "online clinics and pharmacies" if any(is_pharmacy(r["seller_slug"], r.get("seller_name")) for r in rows) else "online clinics"
+    return w[0].upper() + w[1:] if cap else w
+
+
 
 def plan_line(g, cls, r=None):
     """"Online clinics from $25/mo (Strut Health)" with its footnote: the goal's plan, or the plan row given; "" when
@@ -945,7 +960,7 @@ def plan_line(g, cls, r=None):
     if not r:
         return ""
     sid, n = plan_ref(g, r)
-    return (f'<span class="{cls}">Online clinics from {usd(r["price_monthly"])}/mo ({clinic_link(r["seller_slug"], seller_base(r["seller_name"]), True)})'
+    return (f'<span class="{cls}">{clinic_word([r], True)} from {usd(r["price_monthly"])}/mo ({clinic_link(r["seller_slug"], seller_base(r["seller_name"]), True)})'
             f'<sup><a class="ref" href="#{sid}" aria-label="Source {n}">{n}</a></sup>{plan_letter(r)}</span>')
 
 # Numbers from the database (tools/pull_data.py writes these keys when SITE_DATABASE_URL is set). Without them the
@@ -2346,7 +2361,7 @@ HOME_DESC = ("Find the right option for your goal and where to get it at the bes
 HOME = f"""
 <section class="hero hero-clinic">
   <div class="wrap">
-    <h1 class="hero-h1">Find the right option for your goal, and where to get it at the best price.</h1>
+    <h1 class="hero-h1">Peptides by goal: find the right option for your goal, and where to get it at the best price.</h1>
     <p class="hero-lede">{HOME_LEDE}</p>
     <div class="chooser flow" id="goals">
       <div class="flow-hd fh-goal"><span class="step-n" aria-hidden="true">1</span><h2 id="step-goal">Choose a goal</h2></div>
@@ -2589,7 +2604,11 @@ def category_page(g):
 # Questions on a goal page (SEO round c, group 2, queue block 9): the searches "peptides for skin", "best peptides for
 # muscle growth" and the like, answered from the goal's approved texts and its option rows; no new claim.
 GOAL_FAQ = {"skin", "muscle", "weight-loss", "hair", "growth-hormone", "sleep", "energy", "weight-loss-pills",
-            "weight-loss-new-drugs", "testosterone"}  # all after "hair": wave A and B (queue blocks 18 and 21)
+            "weight-loss-new-drugs", "testosterone",  # all after "hair": wave A and B (queue blocks 18 and 21)
+            "recovery", "libido", "longevity", "menopause"}  # owner queue block 25, 12 Nov 2026 (SEO audit 11 Nov)
+# The words a question uses when the goal's main search does not read as a plural subject ("What are the best pt 141?"):
+# the page's own H1 words (owner queue block 25).
+FAQ_QUERY = {"libido": "peptides for sex drive", "longevity": "peptides for longevity", "menopause": "menopause treatments"}
 
 
 def goal_price_word(g, p):
@@ -2611,7 +2630,7 @@ def goal_price_word(g, p):
 def goal_faq_pairs(g):
     if g["slug"] not in GOAL_FAQ or not g.get("main_query"):
         return []
-    mq, opts = g["main_query"], g["peptides"]
+    mq, opts = mq_cap(g), g["peptides"]
     first = re.split(r"(?<=\.)\s", g["short_answer"], 1)[0]
     pairs = [(f"What are the best {mq}?",
               f"{first} The options on this page: " + "; ".join(f'{p["name"]}, {p["line_one"]}' for p in opts) + ".")]
@@ -2640,7 +2659,7 @@ def goal_faq(g):
 
 
 def mq_cap(g):
-    return g["main_query"]
+    return FAQ_QUERY.get(g["slug"], g["main_query"])
 
 
 # Like with like (owner UX audit A26, 3 Nov 2026: a pair compared a pill with an injection): a plan's form from its
@@ -3125,6 +3144,7 @@ def kind_words(r):
 
 def is_clinic(r):
     return kind_words(r)[0] == "online clinic"
+
 
 
 def per_mg_range(lo, hi):
@@ -4500,7 +4520,7 @@ def pep_answer(slug, first=None):
     if p:
         # "The first plan below" only while the cheapest stands first: a clinic with a paid link may stand above it (block 33)
         top = WHERE_TOP.get(slug, True)
-        out.append(f'{"The first plan below, the" if top else "The"} lowest {"compounded plan" if p.get("product_kind") == "compounded" else "monthly plan, whose kind the seller does not say," if p.get("product_kind") == "not_stated" else "monthly plan that is not compounded"} at the online clinics we track{"," if top else ""} is {usd(p["price_monthly"])} '
+        out.append(f'{"The first plan below, the" if top else "The"} lowest {"compounded plan" if p.get("product_kind") == "compounded" else "monthly plan, whose kind the seller does not say," if p.get("product_kind") == "not_stated" else "monthly plan that is not compounded"} at the {clinic_word([p])} we track{"," if top else ""} is {usd(p["price_monthly"])} '
                    f'({clinic_link(p["seller_slug"], seller_base(p["seller_name"]), True)}, {clean(p["plan_name"])}), checked {nice_date(p["last_seen"])}.')
     return out
 

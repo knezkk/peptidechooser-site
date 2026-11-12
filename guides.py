@@ -1470,7 +1470,9 @@ def g_injections(b, f, N):
     plans = [r for r in b.PLANS if r["substance_slug"] in rows and r.get("route") in PLAN_INJECTION
              and r.get("regulatory_group") == "fda_approved" and r.get("price_monthly") is not None]
     low = min(plans, key=lambda r: (float(r["price_monthly"]), r["seller_name"])) if plans else None
-    sold = (f"<p>{b.plural(len(plans), 'plan')} at {b.plural(len({r['seller_slug'] for r in plans}), 'online clinic')} we track "
+    nsel = len({r['seller_slug'] for r in plans})
+    where = (f"{nsel} {b.clinic_word(plans)}" if b.clinic_word(plans) != "online clinics" else b.plural(nsel, 'online clinic'))
+    sold = (f"<p>{b.plural(len(plans), 'plan')} at {where} we track "
             f"carry an approved injection; the cheapest is {plan_words(b, low, N(pkey(low)))}.</p>") if low else ""
     hhs = (f"<p>{b.hhs_sentence('BPC-157, TB-500, Epitalon, MOTS-c, KPV or Semax')}{N('legal-13')} The policy names a route for "
            f"each; for some it is an injection under the skin or into a muscle. Our <a href=\"/prescription/\">prescription peptides</a> "
