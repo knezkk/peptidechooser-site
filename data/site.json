@@ -267,7 +267,12 @@
       ],
       "short": "Skin",
       "panel_title": "Skin: wrinkles and firmness",
-      "for": "For fine lines, loss of firmness and dull skin: what a prescription cream does, and what a peptide serum can and cannot do."
+      "for": "For fine lines, loss of firmness and dull skin: what a prescription cream does, and what a peptide serum can and cannot do.",
+      "clinic_table": {
+        "substances": [
+          "ghk-cu"
+        ]
+      }
     },
     {
       "slug": "weight-loss",
@@ -575,7 +580,8 @@
             10
           ],
           "line_one": "gel or shot for low testosterone",
-          "rx_word": "on prescription"
+          "rx_word": "on prescription",
+          "off_goal": true
         }
       ],
       "short": "Muscle and hormones",
@@ -641,7 +647,13 @@
       ],
       "short": "Recovery and joints",
       "panel_title": "Healing, injuries and joints",
-      "for": "For tendon, joint and injury healing: the peptides people inject for this, and why none is approved."
+      "for": "For tendon, joint and injury healing: the peptides people inject for this, and why none is approved.",
+      "clinic_table": {
+        "substances": [
+          "bpc-157",
+          "tb-500"
+        ]
+      }
     },
     {
       "slug": "libido",
@@ -725,7 +737,8 @@
             10
           ],
           "line_one": "gel or shot for low testosterone",
-          "rx_word": "on prescription"
+          "rx_word": "on prescription",
+          "off_goal": true
         },
         {
           "name": "Enclomiphene",
@@ -817,7 +830,8 @@
           "text": "FDA drug label for Addyi (flibanserin), Indications and Usage, through openFDA, effective 22 Dec 2025",
           "url": "https://api.fda.gov/drug/label.json?search=openfda.brand_name:%22ADDYI%22"
         }
-      ]
+      ],
+      "best_approved": "bremelanotide"
     },
     {
       "slug": "longevity",
