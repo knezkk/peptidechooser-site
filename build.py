@@ -591,6 +591,7 @@ def page(path, title, description, body, schema="", crumb=None):
   </div>
 </footer>
 {COOKIE_BAR}
+{NEW_TAB_NOTE}
 {NAV_JS}
 {"" if path == "/" else SEARCH_JS}
 {MOTION_JS}
@@ -901,6 +902,13 @@ def seller_closed_chip(slug):
 def paid_href(seller_slug, paid):
     """`paid_url` holds the /out/ path from site.paid_links; never a seller's own address."""
     return paid if paid.startswith("/out/") else f"/out/{seller_slug}/"
+
+
+# A paid link opens in a new tab, our page stays in the first (owner, queue block 35, 12 Nov 2026): rel "sponsored noopener",
+# never "noreferrer", so the network still sees our page; a screen reader hears it, nothing visible changes.
+PAID_ATTRS = ' target="_blank" rel="sponsored noopener" aria-describedby="new-tab"'
+NEW_TAB = ""  # said by aria-describedby: a hidden text inside the button escaped the scrolling tables at 768px (check_layout.js)
+NEW_TAB_NOTE = '<span id="new-tab" hidden>Opens in a new tab</span>'
 
 
 PLACEMENTS = ("option row", "clinic table", "window", "seller page", "decision card")
@@ -1277,8 +1285,8 @@ def clinic_button(seller_slug, label, small="Our clinic page", plan=None, paid_o
     paid = (plan or {}).get("paid_url") or r.get("paid_url")
     if paid_ok and paid:
         tail = label.split(" · ", 1)[1] if " · " in label else ""
-        return (f'<span class="pick-act"><a class="btn btn-action btn-sm" href="{paid_href(seller_slug, paid)}"{paid_ev(seller_slug, paid, placement)} rel="sponsored">'
-                f'Visit {seller_base(r["seller_name"])}{" · " + tail if tail else ""}'
+        return (f'<span class="pick-act"><a class="btn btn-action btn-sm" href="{paid_href(seller_slug, paid)}"{paid_ev(seller_slug, paid, placement)}{PAID_ATTRS}>'
+                f'Visit {seller_base(r["seller_name"])}{" · " + tail if tail else ""}{NEW_TAB}'
                 + ('<span class="paid">Paid link</span></a></span>' if in_table else '</a><span class="paid">Paid link</span></span>'))
     return (f'<span class="pick-act"><a class="btn btn-wait btn-sm" href="/sellers/{seller_slug}/"{plans_ev(seller_slug, plan)}>{label}</a>'
             f'{"" if in_table else f"""<span class="paid">{small}</span>"""}</span>')
@@ -2802,7 +2810,7 @@ def clinic_row_act(r, placement="clinic table"):
     owner decision 4 Nov 2026); otherwise btn-wait "See plans" to our clinic page."""
     name, paid = seller_base(r["seller_name"]), r.get("paid_url") or PROFILES.get(r["seller_slug"], {}).get("paid_url")
     if paid:
-        return (f'<span class="pick-act"><a class="btn btn-action btn-sm" href="{paid_href(r["seller_slug"], paid)}"{paid_ev(r["seller_slug"], paid, placement)} rel="sponsored">Visit {name}'
+        return (f'<span class="pick-act"><a class="btn btn-action btn-sm" href="{paid_href(r["seller_slug"], paid)}"{paid_ev(r["seller_slug"], paid, placement)}{PAID_ATTRS}>Visit {name}{NEW_TAB}'
                 '<span class="paid">Paid link</span></a></span>')
     if r["seller_slug"] not in PROFILES:
         return ""
@@ -3822,8 +3830,8 @@ def seller_action(r):
                    if plans else "")
         if not r.get("paid_url"):
             return compare
-        return (f'<div class="seller-pair">{compare}<span class="pick-act"><a class="btn btn-action" href="{paid_href(r["seller_slug"], r["paid_url"])}"{paid_ev(r["seller_slug"], r["paid_url"], "seller page")} rel="sponsored">'
-                f'Visit {seller_base(seller_name(r))}</a><span class="paid">Paid link</span></span></div>')
+        return (f'<div class="seller-pair">{compare}<span class="pick-act"><a class="btn btn-action" href="{paid_href(r["seller_slug"], r["paid_url"])}"{paid_ev(r["seller_slug"], r["paid_url"], "seller page")}{PAID_ATTRS}>'
+                f'Visit {seller_base(seller_name(r))}{NEW_TAB}</a><span class="paid">Paid link</span></span></div>')
     return f'<a class="btn btn-ink" href="/compare/?a=s.{r["seller_slug"]}"{ev("compare_pick", kind="seller")}>Compare with another shop</a>'
 
 
@@ -4148,6 +4156,10 @@ NOT_FOUND = f"""
 <ul class="nf-links">{"".join(f'<li><a href="{u}">{t}</a></li>' for u, t, ok in _NF_MORE if ok)}</ul>
 </div></section>
 """
+
+# Home sits at its 60 KB limit (tools/check.py): its source indentation goes (queue block 35, 12 Nov 2026: the spoken "opens in a
+# new tab" on its paid link tipped it over); a line break stays where the indent was, so nothing on the page moves.
+HOME = re.sub(r"\n[ \t]+", "\n", HOME)
 
 PAGES = [
     ("/", "index.html", "Best peptides by goal, compared | Peptide Chooser",
