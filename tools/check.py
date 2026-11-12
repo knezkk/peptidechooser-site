@@ -20,7 +20,8 @@ import paid  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
 NO_LISTING_TEXTS = ("Any pharmacy, no prescription", "at any pharmacy, no prescription", "On prescription; no clinic prices yet",
-                    "Sold in creams and serums; no prices checked", "No listings yet")
+                    "Sold in creams and serums; no prices checked", "No listings yet",
+                    "No scalp product listed yet")
 DIST = ROOT / "dist"
 SITE = "https://peptidechooser.com"
 
@@ -1981,7 +1982,67 @@ def check_paid_first(P):
     return errs
 
 
-CHECKS = {"words": check_words, "seo": check_seo, "schema": check_schema, "parts": check_parts, "data": check_data, "book": check_book, "events": check_events, "logic": check_logic, "rules33": check_rules33, "addresses": check_addresses, "arch": check_arch, "arch-switch": check_arch_switch, "offers": check_offers, "kept-sellers": check_kept_sellers, "wave-b": check_wave_b, "paid-first": check_paid_first}
+def check_goal_prices(P):
+    """Queue block 34 (audit of 11 Nov 2026). (a) Each goal's "from" price is one figure: the header menu, the Home goal card
+    and the goal page's lowest shown price agree, in the same unit. The page's lowest is its lowest clinic monthly price (the
+    clinic table and every "Buy from" button), else its cosmetic window's lowest ("From $X a product"), else its lowest price
+    per mg; a goal page with none, a menu and a card with none. (b) No top card ("Best approved", "Cheapest", "No prescription")
+    names an option whose own lines say "not for" (approved for another use) or that data/site.json marks `off_goal`."""
+    errs = []
+    if "index.html" not in P:
+        return errs
+    home = (DIST / "index.html").read_text(encoding="utf-8")
+    d = json.loads((ROOT / "data" / "site.json").read_text(encoding="utf-8"))
+    money = lambda t: re.sub(r"\.00\b", "", t.replace(",", ""))
+    for g in d.get("goals") or []:
+        name = f'{g["slug"]}/index.html'
+        if not g.get("page") or name not in P:
+            continue
+        html = (DIST / name).read_text(encoding="utf-8")
+        clin = [float(x.replace(",", "")) for x in re.findall(r'data-l="Per month"[^>]*>(?:<[^>]+>)*\$([\d,.]+)', "".join(
+                    re.findall(r'<table class="tbl[^"]*tbl-clinics[^"]*">.*?</table>', html, re.S)))]
+        clin += [float(x.replace(",", "")) for x in re.findall(r"Buy from \$([\d,.]+)/mo", html)]
+        cos = [float(x.replace(",", "")) for x in re.findall(r"From \$([\d,.]+) a (?:product|bottle)", html)]
+        mg = [float(x.replace(",", "")) for x in re.findall(r"From \$([\d,.]+)/mg", html)]
+        low = (f"{min(clin):g}/mo" if clin else f"{min(cos):g} a" if cos else f"{min(mg):g}/mg" if mg else None)
+        m = re.search(rf'<a href="/{g["slug"]}/"[^>]*><span class="nav-l">[^<]*</span><span class="nav-sub">([^<]*)</span>', home)
+        menu = re.search(r"from \$([\d,.]+(?:/mo|/mg| a))", m.group(1)) if m else None
+        c = re.search(rf'href="/{g["slug"]}/"(?:(?!</a>).)*?goal-price">from \$([\d,.]+(?:/mo|/mg| a))', home, re.S)
+        got = {"menu": menu and money(menu.group(1)), "Home card": c and money(c.group(1))}
+        for where, v in got.items():
+            if v is not None and low is not None:
+                num, unit = re.match(r"([\d.]+)(.*)", v).groups()
+                if f"{float(num):g}{unit}" != low:
+                    errs.append(f'{g["slug"]}: {where} says from ${v}, the goal page\'s lowest is ${low}')
+            elif (v is None) != (low is None):
+                errs.append(f'{g["slug"]}: {where} {"has no price" if v is None else "says from $" + v}, the goal page {"shows from $" + low if low else "shows none"}')
+    for name in P:
+        html = (DIST / name).read_text(encoding="utf-8")
+        deck = re.search(r'<ul class="decide">(.*?)</ul>', html, re.S)
+        if not deck:
+            continue
+        g = next((x for x in (d.get("goals") or []) + (d.get("subpages") or [])
+                  if name == (x.get("path") or f'/{x["slug"]}/').strip("/") + "/index.html"), None)
+        rows = {}
+        for li in re.findall(r'<li class="opt">.*?</li>\s*(?=<li class="opt">|</ul>)', html, re.S):
+            nm = re.search(r'<span class="name">(.*?)</span>', li)
+            dlg = re.search(r'data-dlg="([^"]+)"', li)
+            said = " ".join(re.findall(r'<span class="opt-one">.*?</span></span>|<p class="opt-plain">.*?</p>|<p class="opt-status">.*?</p>', li, re.S))
+            bad = bool(re.search(r"\bnot for\b", re.sub(r"<[^>]+>", " ", said), re.I))
+            if g:
+                bad = bad or any(p.get("off_goal") and p["name"] == unescape(nm.group(1)) for p in g["peptides"])
+            if nm:
+                rows[unescape(nm.group(1))] = bad
+            if dlg:
+                rows[dlg.group(1)] = rows.get(dlg.group(1), False) or bad
+        for card in re.findall(r'<li class="panel-line decide-card" data-card="([^"]+)">.*?<h2>(.*?)</h2>(.*?)</li>', deck.group(1), re.S):
+            dlg = re.search(r'data-dlg="([^"]+)"', card[2])
+            if rows.get(unescape(card[1])) or (dlg and rows.get(dlg.group(1))):
+                errs.append(f"{name}: the {card[0]} card names {unescape(card[1])}, an option approved for another use")
+    return errs
+
+
+CHECKS = {"words": check_words, "seo": check_seo, "schema": check_schema, "parts": check_parts, "data": check_data, "book": check_book, "events": check_events, "logic": check_logic, "rules33": check_rules33, "addresses": check_addresses, "arch": check_arch, "arch-switch": check_arch_switch, "offers": check_offers, "kept-sellers": check_kept_sellers, "wave-b": check_wave_b, "paid-first": check_paid_first, "goal-prices": check_goal_prices}
 
 # Plan names against their form (owner task w2, 3 Nov 2026): a clinic's own plan name can name another form than the
 # plan's `dosage_form` ("Ozempic Pill" for a pen). The site cannot change data, so this only warns, never fails, and the
