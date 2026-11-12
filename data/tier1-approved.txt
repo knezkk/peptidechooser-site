@@ -225,4 +225,7 @@ ODOBRENO SEO - Karlo - 11. 11. 2026 - PR #177 (filter chip words on /peptides/ a
 ODOBRENO SEO - Karlo - 11. 11. 2026 - PR #178
 /bioregulators/ ecfcb6e736f9
 
+ODOBRENO SEO - Karlo - 11. 11. 2026 - PR #182
+/ 6dc520730e8d
+
 ODOBRENO SEO - Karlo - 12. 11. 2026 - PR #184 (one "from" price per goal, top card picks, rows name the button's plan, clinic tables on /recovery/ and /skin/; owner in the terminal)
