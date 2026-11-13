@@ -280,13 +280,13 @@ var a=t.closest('a[href]'),el=t.closest('[data-ev]'),c=t.closest('[data-card]'),
 if(a&&/(^|\.)fda\.gov$/.test(a.hostname))send('outbound_fda',{letter:letter(a)});
 if(c&&t.closest('a,button')&&!t.closest('.ref'))send('decision_card_click',{card:c.getAttribute('data-card')});
 var gp=t.closest('#nav-p-goal .nav-col a[href]');if(gp)send('goal_pick',{goal:gp.pathname.split('/')[1]});
-if(r){var k=r.querySelector('.chip');send('search',{query_length:typed(r.closest('#hs-list')?'#hs-q':'#sp-q'),result_type:k?k.textContent.toLowerCase():'other'});}
+if(r){var k=r.querySelector('.chip');send('search_query',{query_length:typed(r.closest('#hs-list')?'#hs-q':'#sp-q'),result_type:k?k.textContent.toLowerCase():'other'});}
 if(f&&!(f.classList.contains('seg-b')&&f.getAttribute('aria-pressed')==='true'))send('filter_change',{filter:f.getAttribute('data-filter'),value:f.getAttribute('data-value')});
 if(el&&el.tagName!=='FORM'&&el.getAttribute('aria-pressed')!=='true'){var o=own(el),n=el.getAttribute('data-ev');
 if(n==='paid_link_click'){o.transport_type='beacon';if(c)o.placement='decision card';}send(n,o);}
 }catch(x){}},true);
 document.addEventListener('change',function(e){try{var i=e.target;if(i&&i.getAttribute&&i.getAttribute('data-filter')&&i.tagName!=='BUTTON')send('filter_change',{filter:i.getAttribute('data-filter'),value:i.getAttribute('data-value')||i.value});}catch(x){}},true);
-document.addEventListener('submit',function(e){try{var f=e.target;if(f.matches('.head-search,#sp-form')){var n=f.querySelector('input').value.trim().length;if(n)send('search',{query_length:n,result_type:'page'});}
+document.addEventListener('submit',function(e){try{var f=e.target;if(f.matches('.head-search,#sp-form')){var n=f.querySelector('input').value.trim().length;if(n)send('search_query',{query_length:n,result_type:'page'});}
 else if(f.getAttribute('data-ev')==='newsletter_submit')send('newsletter_submit',{});}catch(x){}},true);})();
 """
 # one cached file for every page instead of 4 KB inline on each (Home stays under its 60 KB check with the card menu)
@@ -299,16 +299,22 @@ SEARCH_FORM = ('<form class="head-search" role="search" action="/search/" method
                '<label class="vh" for="hs-q">Search a peptide or seller</label>'
                '<input class="input" id="hs-q" name="q" type="search" placeholder="Search a peptide or seller" autocomplete="off" '
                'role="combobox" aria-expanded="false" aria-controls="hs-list" aria-autocomplete="list">'
-               '<ul class="search-list" id="hs-list" role="listbox" aria-label="Search results" hidden></ul></form>')
+               '<ul class="search-list" id="hs-list" role="listbox" aria-label="Search results" hidden></ul>'
+               '<p class="vh search-n" role="status" aria-live="polite"></p></form>')
 SEARCH_JS = """<script>
 (function(){var idx=null,wait=[],ORDER={Goal:0,Peptide:1,Seller:2,Clinic:3,Comparison:4,Guide:5,Page:6};
 function load(cb){if(idx)return cb(idx);wait.push(cb);if(wait.length>1)return;
 fetch('/search-index.json').then(function(r){return r.json();}).then(function(d){idx=d;var w=wait;wait=[];w.forEach(function(f){f(d);});}).catch(function(){wait=[];});}
 function c(s){return String(s||'').toLowerCase().replace(/[^a-z0-9]+/g,'');}
+function near(a,b,m){if(Math.abs(a.length-b.length)>m)return false;var p=[],i,j;for(j=0;j<=b.length;j++)p[j]=j;
+for(i=1;i<=a.length;i++){var q=[i],lo=i;for(j=1;j<=b.length;j++){q[j]=Math.min(p[j]+1,q[j-1]+1,p[j-1]+(a[i-1]===b[j-1]?0:1));if(q[j]<lo)lo=q[j];}if(lo>m)return false;p=q;}return p[b.length]<=m;}
+function fuzzy(f,k){if(k.length<4)return 0;var m=k.length>6?2:1,ws=String(f).toLowerCase().split(/[^a-z0-9]+/).filter(Boolean);
+for(var i=0;i<ws.length;i++){var w=c(ws.slice(i).join(''));if(near(k,w.slice(0,k.length),m)||near(k,w.slice(0,k.length+1),m))return 0.5;}return 0;}
 function score(f,k){var cf=c(f);if(cf.indexOf(k)===0)return 3;var ws=String(f).toLowerCase().split(/[^a-z0-9]+/).filter(Boolean);
-for(var i=1;i<ws.length;i++){if(c(ws.slice(i).join('')).indexOf(k)===0)return 2;}return cf.indexOf(k)>=0?1:0;}
+for(var i=1;i<ws.length;i++){if(c(ws.slice(i).join('')).indexOf(k)===0)return 2;}return cf.indexOf(k)>=0?1:fuzzy(f,k);}
 function find(d,q,n){var k=c(q);if(!k)return[];var out=[];
-d.forEach(function(e){var s=score(e.name,k)*2;(e.aliases||[]).forEach(function(a){s=Math.max(s,score(a,k)*2-1);});if(s>0)out.push([s,e]);});
+d.forEach(function(e){var s=score(e.name,k);s=s>=1?s*2:s;(e.aliases||[]).forEach(function(a){var x=score(a,k);s=Math.max(s,x>=1?x*2-1:x*0.8);});if(s>0)out.push([s,e]);});
+if(out.filter(function(x){return x[0]>=1;}).length>=3)out=out.filter(function(x){return x[0]>=1;});
 out.sort(function(x,y){return y[0]-x[0]||ORDER[x[1].type]-ORDER[y[1].type]||x[1].name.length-y[1].name.length||(x[1].name<y[1].name?-1:1);});
 return out.slice(0,n).map(function(x){return x[1];});}
 function row(e,tab){var li=document.createElement('li'),a=document.createElement('a');a.href=e.url;if(!tab)a.tabIndex=-1;
@@ -317,17 +323,22 @@ li.appendChild(a);return li;}
 window.pcSearch={load:load,find:find,row:row};
 var f=document.querySelector('.head-search');if(!f)return;var inp=f.querySelector('input'),list=f.querySelector('.search-list'),res=[],act=-1;
 function close(){list.hidden=true;inp.setAttribute('aria-expanded','false');inp.removeAttribute('aria-activedescendant');act=-1;}
-function draw(){var v=inp.value.trim();if(!v){close();return;}load(function(d){if(inp.value.trim()!==v)return;res=find(d,v,8);list.textContent='';act=-1;
+var said=f.querySelector('.search-n'),G={Peptide:'Peptides',Goal:'Goals',Clinic:'Sellers',Seller:'Sellers',Comparison:'Guides',Guide:'Guides',Page:'Guides'},GO=['Peptides','Goals','Sellers','Guides'];
+function draw(){var v=inp.value.trim();if(!v){close();return;}load(function(d){if(inp.value.trim()!==v)return;
+var all=find(d,v,40),by={};all.forEach(function(e){var g=G[e.type]||'Guides';(by[g]=by[g]||[]).push(e);});
+res=[];GO.forEach(function(g){(by[g]||[]).slice(0,4).forEach(function(e){res.push(e);});});res=res.slice(0,10);list.textContent='';act=-1;
 inp.removeAttribute('aria-activedescendant');
 if(!res.length){var li=document.createElement('li');li.className='search-none';li.textContent='No match. Press Enter to search every page.';list.appendChild(li);}
-res.forEach(function(e,i){var li=row(e);li.id='hs-o'+i;li.setAttribute('role','option');li.setAttribute('aria-selected','false');list.appendChild(li);});
+var last='';res.forEach(function(e,i){var g=G[e.type]||'Guides';if(g!==last){var h=document.createElement('li');h.className='search-none search-group';h.setAttribute('role','presentation');h.textContent=g;list.appendChild(h);last=g;}
+var li=row(e);li.id='hs-o'+i;li.setAttribute('role','option');li.setAttribute('aria-selected','false');list.appendChild(li);});
+if(said)said.textContent=res.length?res.length+(res.length===1?' result':' results')+', use the arrow keys':'No match';
 list.hidden=false;inp.setAttribute('aria-expanded','true');});}
 function mark(i){var o=list.querySelectorAll('[role=option]');if(!o.length)return;act=(i+o.length)%o.length;
 for(var j=0;j<o.length;j++)o[j].setAttribute('aria-selected',j===act?'true':'false');inp.setAttribute('aria-activedescendant',o[act].id);o[act].scrollIntoView({block:'nearest'});}
 inp.addEventListener('input',draw);inp.addEventListener('focus',function(){load(function(){});if(inp.value.trim())draw();});
 inp.addEventListener('keydown',function(e){if(e.key==='ArrowDown'){e.preventDefault();if(list.hidden)draw();else mark(act+1);}
 else if(e.key==='ArrowUp'){e.preventDefault();if(!list.hidden)mark(act-1);}
-else if(e.key==='Enter'&&!list.hidden&&act>=0&&res[act]){e.preventDefault();if(window.pcEv)pcEv('search',{query_length:inp.value.trim().length,result_type:String(res[act].type).toLowerCase()});location.href=res[act].url;}
+else if(e.key==='Enter'&&!list.hidden&&act>=0&&res[act]){e.preventDefault();if(window.pcEv)pcEv('search_query',{query_length:inp.value.trim().length,result_type:String(res[act].type).toLowerCase()});location.href=res[act].url;}
 else if(e.key==='Escape'&&!list.hidden){e.preventDefault();e.stopPropagation();close();}});
 document.addEventListener('click',function(e){if(!f.contains(e.target))close();});})();
 </script>"""
@@ -4261,7 +4272,9 @@ def search_index():
             continue
         g = goal_pages.get(path)
         if g:
-            out.append({"type": "Goal", "name": g["label"], "aliases": sorted({g["name"], g["short"], g["slug"].replace("-", " ")} - {g["label"]}),
+            # its options' names too (queue block 36): "Viagra" finds Sex drive, where sildenafil has no page of its own
+            opts = {p["name"] for p in g["peptides"]} | {p["name"] for sp in SUBPAGES if sp.get("parent") == g["slug"] for p in sp["peptides"]}
+            out.append({"type": "Goal", "name": g["label"], "aliases": sorted(({g["name"], g["short"], g["slug"].replace("-", " ")} | opts) - {g["label"]}),
                         "url": path, "line": f"Goal page: {plural(len(g['peptides']), 'option')} with FDA status and prices"})
         else:
             kind = ("Comparison" if re.match(r"/compare/[^/]+-vs-[^/]+/$", path) else
