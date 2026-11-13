@@ -214,7 +214,7 @@ html:not(.motion) .fig3d-layer { transition: none; }
 .flow .opt > .pick-act { margin-top: 0; padding-top: 0; align-items: stretch; width: var(--cta-width); grid-column: 2; }
 .flow .opt > .pick-act .btn { width: 100%; padding: 0 8px; white-space: nowrap; }
 .flow .opt > .pick-act .paid { text-align: center; text-wrap: balance; }
-.flow-compare .goal-for { margin-bottom: 4px; font-size: var(--small-size); }
+.flow-compare .goal-for { margin-bottom: 4px; font-size: var(--small-size); max-width: none; } /* runs the full width (owner, 13 Nov 2026) */
 /* The goal's intro (goals[].intro): always in full, the width of the step 2 panel (owner package 4 Nov 2026, A1). */
 .goal-intro { margin: 0 0 10px; max-width: none; font-size: var(--small-size); line-height: 1.45; color: var(--ink-2); }
 .flow-hd .goal-t { font-weight: 700; }
