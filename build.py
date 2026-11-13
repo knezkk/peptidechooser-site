@@ -3953,7 +3953,7 @@ def shop_subs(r):
     return sorted({s["substance_slug"] for s in SELLER_SUBS.get(r["seller_slug"], []) if s.get("substance_slug")})
 
 
-def sellers_filter(shops, clinics):
+def sellers_filter(shops, clinics, tabs=""):
     """The filter block above the shops: substances the shops list (from seller_substances) and the clinics' plans
     carry, most shops first."""
     n_shop, n_clinic = {}, {}
@@ -3988,26 +3988,41 @@ def sellers_filter(shops, clinics):
             for v in filter_values(g))
         if bs and any(tok.values()):
             groups += f'\n      <div class="year-chips" role="group" aria-labelledby="sellers-{pre}"><span id="sellers-{pre}">{label}</span>{bs}</div>'
-    # phones (owner task 3 Nov 2026, the 390px walkthrough): the filters fold behind one "Filter" button, the count beside it
-    return f"""<div class="letters-filter sellers-filter" hidden>
-      <div class="filter-bar"><button type="button" class="btn btn-line btn-sm filter-toggle" aria-expanded="false" aria-controls="sellers-fbody">Filter</button></div>
-      <div class="filter-body" id="sellers-fbody">
-      <div class="sf-field sf-name"><label for="sellers-q">Filter by name</label><span class="sf-q"><input class="input" id="sellers-q" type="text" autocomplete="off" data-filter="name" data-value="text"><button type="button" class="sf-clear" id="sellers-clear">Clear</button></span></div>
+    # Filter layout A (owner pick 13 Nov 2026; parts.md, Filter toolbar): one row with the tabs, the name search, Sort and
+    # "Filters"; the rest in a panel under it; the active filters as pills (CF_JS).
+    return f"""<div class="letters-filter sellers-filter cf" hidden>
+      <div class="cf-bar">{tabs}
+      <div class="sf-field sf-name"><label class="vh" for="sellers-q">Filter by name</label><span class="sf-q"><input class="input" id="sellers-q" type="text" autocomplete="off" placeholder="Filter by name" data-filter="name" data-value="text"><button type="button" class="sf-clear" id="sellers-clear">Clear</button></span></div>
+      <div class="sf-field sf-sort sort-shops"><label for="sellers-sort">Sort</label><select class="input" id="sellers-sort" data-filter="sort">{sorts}</select></div>
+      <div class="sf-field sf-sort sort-clinics"><label for="clinics-sort">Sort</label><select class="input" id="clinics-sort" data-filter="sort"><option value="checks">Most checks</option><option value="low">Lowest monthly price</option></select></div>
+      <button type="button" class="btn btn-line cf-btn" aria-expanded="false" aria-controls="sellers-fbody">Filters <span class="cf-count"></span></button>
+      <p class="small cf-n" id="sellers-n" aria-live="polite"></p>
+      </div>
+      <div class="cf-pills" aria-label="Active filters" role="group"></div>
+      <div class="cf-panel" id="sellers-fbody" hidden>
       <div class="sf-field"><label for="sellers-sub">Substance</label><select class="input" id="sellers-sub" data-filter="substance"><option value="">Any substance</option>{opts}</select></div>
-      <div class="sf-field"><label for="sellers-min">Minimum checks</label><select class="input" id="sellers-min" data-filter="min_checks">{mins}</select></div>
-      <div class="sf-field sort-shops"><label for="sellers-sort">Sort</label><select class="input" id="sellers-sort" data-filter="sort">{sorts}</select></div>
       <span class="sf-field sort-clinics">{state_filter("clinics", "clinics")}</span>
-      <div class="sf-field sort-clinics"><label for="clinics-sort">Sort</label><select class="input" id="clinics-sort" data-filter="sort"><option value="checks">Most checks</option><option value="low">Lowest monthly price</option></select></div>
-      <span class="sf-break" aria-hidden="true"></span>
+      <div class="sf-field"><label for="sellers-min">Minimum checks</label><select class="input" id="sellers-min" data-filter="min_checks">{mins}</select></div>
       <div class="year-chips" role="group" aria-labelledby="sellers-checks"><span id="sellers-checks">Checks met</span>{chips}</div>{groups}
       </div>
-      <p class="small" id="sellers-n" aria-live="polite"></p>
     </div>"""
 
 
-FILTER_FOLD_JS = """<script>
-(function(){document.querySelectorAll('.filter-toggle').forEach(function(b){var p=document.getElementById(b.getAttribute('aria-controls'));if(!p)return;
-b.addEventListener('click',function(){var o=b.getAttribute('aria-expanded')!=='true';b.setAttribute('aria-expanded',o?'true':'false');p.classList.toggle('open',o);});});})();
+CF_JS = """<script>
+// Filter layout A (parts.md, Filter toolbar): "Filters" opens the panel; every filter that is on shows as a pill with "remove",
+// "Clear all" from two; the count sits on the button. Reads the panel's selects (off their first option) and pressed chips.
+(function(){[].forEach.call(document.querySelectorAll('.cf'),function(f){var b=f.querySelector('.cf-btn'),p=f.querySelector('.cf-panel'),
+x=f.querySelector('.cf-pills'),k=f.querySelector('.cf-count');if(!b||!p)return;b.hidden=false;
+b.addEventListener('click',function(){var o=b.getAttribute('aria-expanded')!=='true';b.setAttribute('aria-expanded',o?'true':'false');p.hidden=!o;});
+function on(){var a=[];[].forEach.call(p.querySelectorAll('select'),function(s){var w=s.closest('label,.sf-field');var h=w&&w.closest('[hidden]');if(s.selectedIndex<1||(h&&h!==p))return;
+var l=w&&w.querySelector('label,span');a.push({t:(l?l.textContent.trim()+': ':'')+s.options[s.selectedIndex].text.replace(/ \\(.*\\)$/,''),
+c:function(){s.selectedIndex=0;s.dispatchEvent(new Event('change',{bubbles:true}));}});});
+[].forEach.call(p.querySelectorAll('.year-chip[aria-pressed="true"]'),function(c){if(!c.hidden)a.push({t:c.firstChild.textContent.trim(),c:function(){c.click();}});});return a;}
+function pill(t,cls,go){var e=document.createElement('button');e.type='button';e.className=cls;e.innerHTML=t;e.addEventListener('click',function(){go();setTimeout(function(){draw();(x.querySelector('button')||b).focus();});});x.appendChild(e);}
+function draw(){var a=on();k.textContent=a.length||'';x.innerHTML='';a.forEach(function(o){pill(o.t.replace(/&/g,'&amp;').replace(/</g,'&lt;')+' <span class="rm">remove</span>','cf-pill',o.c);});
+if(a.length>1)pill('Clear all','cf-clear',function(){a.forEach(function(o){o.c();});});}
+function later(){setTimeout(draw);}f.addEventListener('change',later);f.addEventListener('click',function(e){if(e.target.closest('.year-chip,.seg-b,.sf-clear'))later();});
+window.addEventListener('hashchange',later);document.addEventListener('pc-state',later);draw();});})();
 </script>"""
 SELLERS_INDEX_JS = """<script>
 // The sellers index (pages.md, Sellers; owner task w2, 3 Nov 2026): two tabs, clinics first, one filter block for both; the
@@ -4129,15 +4144,15 @@ def sellers_index():
 </section>
 <section class="band-2" id="sellers-list">
   <div class="wrap">
-    <div class="sellers-top">{tabs}
-    {sellers_filter(shops, clinics)}</div>
+    <div class="sellers-top">
+    {sellers_filter(shops, clinics, tabs)}</div>
     {clinics_directory(clinics)}{shops_sec}
     {COMPARE_LINK}
     <p class="small" style="margin-top:16px">Checks are facts we hold about the seller, not a safety or quality grade. <a href="/how-we-rate/">How we rate</a></p>
   </div>
 </section>
 {SELLERS_INDEX_JS}
-{FILTER_FOLD_JS}
+{CF_JS}
 """
 
 
@@ -5640,8 +5655,16 @@ def peptides_index():
 <section class="band-2" id="peptides-list">
   <div class="wrap">
     <nav class="year-chips az-jump" aria-label="Jump to a letter">{jump}</nav>
-    <div class="year-chips pep-filter" role="group" aria-labelledby="pep-show" hidden><span id="pep-show">Show</span>{chips}</div>{narrow}
-    <p class="small" id="pep-n" aria-live="polite"></p>
+    <div class="cf pep-cf">
+      <div class="cf-bar">
+        <div class="year-chips pep-filter" role="group" aria-labelledby="pep-show" hidden><span id="pep-show">Show</span>{chips}</div>
+        <button type="button" class="btn btn-line cf-btn" aria-expanded="false" aria-controls="pep-fbody" hidden>Filters <span class="cf-count"></span></button>
+        <p class="small cf-n" id="pep-n" aria-live="polite"></p>
+      </div>
+      <div class="cf-pills" aria-label="Active filters" role="group"></div>
+      <div class="cf-panel" id="pep-fbody" hidden>{narrow}
+      </div>
+    </div>
     <p class="small" id="pep-none" hidden>Nothing matches these filters. <a href="#peptides-list" id="pep-reset">Clear filters</a></p>
     <div class="tbl-wrap"><table class="tbl tbl-cards tbl-peptides" id="pep-table"><caption class="vh">Peptides A to Z with their FDA status</caption>
       <thead><tr><th scope="col">Substance</th><th scope="col">Status</th><th scope="col">What it means</th><th scope="col">Lowest price</th></tr></thead>
@@ -5650,6 +5673,7 @@ def peptides_index():
   </div>
 </section>
 {PEPTIDES_JS}
+{CF_JS}
 """
 
 

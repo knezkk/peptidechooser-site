@@ -65,8 +65,16 @@ try{if(localStorage.getItem('pc-consent')==='yes')pcLoadGA();}catch(e){}
 <section class="band-2" id="peptides-list">
   <div class="wrap">
     <nav class="year-chips az-jump" aria-label="Jump to a letter"><a class="year-chip" href="#az-a">A</a><a class="year-chip" href="#az-b">B</a><a class="year-chip" href="#az-e">E</a><a class="year-chip" href="#az-g">G</a><a class="year-chip" href="#az-h">H</a><a class="year-chip" href="#az-k">K</a><a class="year-chip" href="#az-m">M</a><a class="year-chip" href="#az-p">P</a><a class="year-chip" href="#az-r">R</a><a class="year-chip" href="#az-s">S</a><a class="year-chip" href="#az-t">T</a></nav>
-    <div class="year-chips pep-filter" role="group" aria-labelledby="pep-show" hidden><span id="pep-show">Show</span><button type="button" class="year-chip" data-group="approved" data-filter="group" data-value="approved" aria-pressed="true">Approved <span>5</span></button><button type="button" class="year-chip" data-group="cosmetic" data-filter="group" data-value="cosmetic" aria-pressed="true">Cosmetic <span>3</span></button><button type="button" class="year-chip" data-group="not" data-filter="group" data-value="not" aria-pressed="true">Not approved <span>8</span></button></div>
-    <p class="small" id="pep-n" aria-live="polite"></p>
+    <div class="cf pep-cf">
+      <div class="cf-bar">
+        <div class="year-chips pep-filter" role="group" aria-labelledby="pep-show" hidden><span id="pep-show">Show</span><button type="button" class="year-chip" data-group="approved" data-filter="group" data-value="approved" aria-pressed="true">Approved <span>5</span></button><button type="button" class="year-chip" data-group="cosmetic" data-filter="group" data-value="cosmetic" aria-pressed="true">Cosmetic <span>3</span></button><button type="button" class="year-chip" data-group="not" data-filter="group" data-value="not" aria-pressed="true">Not approved <span>8</span></button></div>
+        <button type="button" class="btn btn-line cf-btn" aria-expanded="false" aria-controls="pep-fbody" hidden>Filters <span class="cf-count"></span></button>
+        <p class="small cf-n" id="pep-n" aria-live="polite"></p>
+      </div>
+      <div class="cf-pills" aria-label="Active filters" role="group"></div>
+      <div class="cf-panel" id="pep-fbody" hidden>
+      </div>
+    </div>
     <p class="small" id="pep-none" hidden>Nothing matches these filters. <a href="#peptides-list" id="pep-reset">Clear filters</a></p>
     <div class="tbl-wrap"><table class="tbl tbl-cards tbl-peptides" id="pep-table"><caption class="vh">Peptides A to Z with their FDA status</caption>
       <thead><tr><th scope="col">Substance</th><th scope="col">Status</th><th scope="col">What it means</th><th scope="col">Lowest price</th></tr></thead>
@@ -91,6 +99,22 @@ f.addEventListener('click',tog);nw.forEach(function(x){x.addEventListener('click
 var rs=document.getElementById('pep-reset');if(rs)rs.addEventListener('click',function(e){e.preventDefault();ks.forEach(function(b){b.setAttribute('aria-pressed','false');});
 f.querySelectorAll('.year-chip').forEach(function(b){b.setAttribute('aria-pressed','true');});draw();});
 draw();})();
+</script>
+<script>
+// Filter layout A (parts.md, Filter toolbar): "Filters" opens the panel; every filter that is on shows as a pill with "remove",
+// "Clear all" from two; the count sits on the button. Reads the panel's selects (off their first option) and pressed chips.
+(function(){[].forEach.call(document.querySelectorAll('.cf'),function(f){var b=f.querySelector('.cf-btn'),p=f.querySelector('.cf-panel'),
+x=f.querySelector('.cf-pills'),k=f.querySelector('.cf-count');if(!b||!p)return;b.hidden=false;
+b.addEventListener('click',function(){var o=b.getAttribute('aria-expanded')!=='true';b.setAttribute('aria-expanded',o?'true':'false');p.hidden=!o;});
+function on(){var a=[];[].forEach.call(p.querySelectorAll('select'),function(s){var w=s.closest('label,.sf-field');var h=w&&w.closest('[hidden]');if(s.selectedIndex<1||(h&&h!==p))return;
+var l=w&&w.querySelector('label,span');a.push({t:(l?l.textContent.trim()+': ':'')+s.options[s.selectedIndex].text.replace(/ \(.*\)$/,''),
+c:function(){s.selectedIndex=0;s.dispatchEvent(new Event('change',{bubbles:true}));}});});
+[].forEach.call(p.querySelectorAll('.year-chip[aria-pressed="true"]'),function(c){if(!c.hidden)a.push({t:c.firstChild.textContent.trim(),c:function(){c.click();}});});return a;}
+function pill(t,cls,go){var e=document.createElement('button');e.type='button';e.className=cls;e.innerHTML=t;e.addEventListener('click',function(){go();setTimeout(function(){draw();(x.querySelector('button')||b).focus();});});x.appendChild(e);}
+function draw(){var a=on();k.textContent=a.length||'';x.innerHTML='';a.forEach(function(o){pill(o.t.replace(/&/g,'&amp;').replace(/</g,'&lt;')+' <span class="rm">remove</span>','cf-pill',o.c);});
+if(a.length>1)pill('Clear all','cf-clear',function(){a.forEach(function(o){o.c();});});}
+function later(){setTimeout(draw);}f.addEventListener('change',later);f.addEventListener('click',function(e){if(e.target.closest('.year-chip,.seg-b,.sf-clear'))later();});
+window.addEventListener('hashchange',later);document.addEventListener('pc-state',later);draw();});})();
 </script>
 
 </main>

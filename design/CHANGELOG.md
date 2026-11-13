@@ -4,6 +4,7 @@ Newest row first.
 
 | Date | Change | Approved |
 |---|---|---|
+| 13 Nov 2026 | Filter toolbar, layout A, on /sellers/ and /peptides/ (nav-parts.md, new sections Filter toolbar and Select; sellers-list.md; bundle.css `.cf-*` and `select.input`; site.css layout): one row with tabs, search, Sort and "Filters"; the rest in a panel; filters on as pills with "remove" and "Clear all"; the 16px chevron on every select. The Filter fold is gone. | Waits for ODOBRENO DIZAJN and ODOBRENO SEO (owner picked A in w4's terminal, 13 Nov 2026) |
 | 13 Nov 2026 | Home's size limit 60 KB to 64 KB (home.md; tools/check.py check-parts), so the company line (#187) and the paid clinics' logos (#188) fit. | ODOBRENO PRAVILA - Karlo - 13. 11. 2026 - Home 64 KB |
 | 12 Nov 2026 | Real logos for 17 clinics with a paid link (Seller tile rule in parts.md: the brand's own upload or brand kit, source and check date in `data/seller_logos.json`); Strut Health's logo back, logo entries follow seller moves (w4, PR #188). | ODOBRENO DIZAJN - Karlo - 12. 11. 2026 - PR #188 |
 | 12 Nov 2026 | Paid links open in a new tab: `target="_blank"`, `rel="sponsored noopener"`, a hidden "Opens in a new tab" (windows.md, new section; parts.md, btn-action row). No visible change. | Owner, queue block 35 (PR #186); no visible change, no Tier 1 text |
