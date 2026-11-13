@@ -14,14 +14,27 @@ The look the site already draws (`.crumbs` in `assets/site.css`), written down a
 
 ## Filter look (every list page; site map rules 3.7)
 
-One look for every list that can be narrowed (/sellers/, /peptides/, /fda-warning-letters/, a group page, /labs/, /tools/), built from the Letters filter and Filter fold parts in `bundle.css`:
+One look for every list that can be narrowed (/sellers/, /peptides/, /fda-warning-letters/, a group page, /labs/, /tools/), built from the Letters filter and Filter toolbar parts in `bundle.css`:
 - **Row:** labelled controls on one row from 900px, `space-3` apart: "Filter by name" (input with `btn-line btn-sm` "Clear" inside it), then at most three labelled selects (label above in `small` 600 `ink`, control 44px, `radius-control`, `line-strong` border), then one segmented control when the list has two kinds (`seg`, `seg-b`, `aria-pressed`).
 - **Chips:** toggles in the year-chip part, each with its count in tabular figures ("No FDA letter 41"); a chip with count 0 stays, disabled, so the row never jumps. **Disabled look:** no fill (the band shows through), a 1.5px `line` border in place of `line-strong`, name and count in `ink-muted`, no hover, default cursor; it carries the `disabled` attribute, so it is skipped by Tab and announced as unavailable.
 - **Count line:** "N of M shown." in `small` `ink-2` right under the row, `aria-live="polite"`; "Clear filters" as a text link beside it once anything differs from the default.
 - **Empty result:** the table area says "Nothing matches these filters." and the "Clear filters" link; never an empty table frame.
 - **State:** only in the URL hash, only values that differ from the default, written with `replaceState`. A filter never makes a new path or query string, the canonical never changes, and no filtered state is in the sitemap (rule 3.7).
 - **Without JavaScript:** the controls are hidden and every row shows.
-- **Phones:** the Filter fold: "Filter" (`btn-line`) and the count on one line; the controls open under it.
+- **Phones and wide screens on /sellers/ and /peptides/:** the Filter toolbar below (it replaces the Filter fold, 13 Nov 2026).
+
+## Filter toolbar, layout A (/sellers/, /peptides/; owner pick 13 Nov 2026, w4 mock-up; ODOBRENO DIZAJN - Karlo - 13. 11. 2026 - PR #191)
+
+- **One row** (`cf-bar`, `space-3` apart): the tabs or the "Show" chips, "Filter by name" (label for screen readers only, placeholder "Filter by name", "Clear" inside the field), "Sort" with its label inline, and a `btn-line` "Filters" with the number of filters on in an ink badge (22px, `radius` 11px, 13px 700 white); the count line right-aligned. While open the button shows `aria-expanded="true"` and turns `clinic-tint`, `clinic` border, `clinic-text`.
+- **Panel** (`cf-panel`, opens under the row): `paper-2`, 1px `line` border, `radius-panel`, 16px padding; the selects (Substance, Your state, Minimum checks) in three columns from 641px, one below; each chip group on its own line.
+- **Filters that are on** (`cf-pills`, under the row): one pill each, `clinic-tint`, 1.5px `clinic` border, `radius-chip`, 44px high (layout.md, Touch), 14px 700 `clinic-text`: a select as "<its label>: <value>", a chip by its name, then the word "remove" (400, underlined; no x icon). From two pills, "Clear all" as a text button. Removing moves focus to the next pill, else to "Filters".
+- **Phones (640px and under):** tabs full width; the search full width with "Clear" beside it (44px); Sort and "Filters" side by side; the count line under them; the panel opens in place, one column.
+- **/peptides/:** no name search; the "Show" chips stay in the row, "Sold as" and "Form" go in the panel.
+- **Without JavaScript:** the row's controls and the panel are hidden and every row shows, as before.
+
+## Select (every select on the site)
+
+`appearance: none`; the option rows' chevron (2.5px `ink` stroke) drawn 16px, 12px from the right edge; 40px right padding; 44px minimum height.
 
 ## Lab mark (substance, seller, seller offer and lab pages)
 

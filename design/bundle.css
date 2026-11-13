@@ -485,10 +485,22 @@ a.legal-card:hover{border-color:var(--clinic)}
 .jump{display:none}
 @media (max-width:640px){.jump{display:flex;flex-wrap:wrap;align-items:center;gap:0 16px;margin:8px 0 16px}
 .jump span{font-weight:600;font-size:var(--small-size);color:var(--ink-2)}.jump a{display:inline-flex;align-items:center;min-height:var(--touch)}}
-/* Filter fold (pages.md, Sellers; owner task 3 Nov 2026, the 390px walkthrough): under 640px a filter block folds
-   behind one btn-line "Filter" (aria-expanded), the count line stays under it; from 641px the button is not drawn. */
-.filter-toggle{display:none}
-@media (max-width:640px){.filter-toggle{display:inline-flex}.filter-body:not(.open){display:none}.filter-bar{margin:0 0 8px}}
+/* Filter toolbar, layout A (parts.md, Filter toolbar; owner pick 13 Nov 2026): one row with the tabs, the name search, Sort
+   and a btn-line "Filters" with the count of filters on; the rest in a paper-2 panel under it; filters on as pills. */
+.cf-btn{gap:8px}
+.cf-btn[hidden]{display:none}
+.cf-btn[aria-expanded="true"],.cf-btn[aria-expanded="true"]:hover{background:var(--clinic-tint);border-color:var(--clinic);color:var(--clinic-text)}
+.cf-count{display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:22px;padding:0 6px;border-radius:11px;background:var(--ink);color:var(--white);font-size:13px;font-weight:700}
+.cf-count:empty{display:none}
+.cf-panel{padding:16px;border:1px solid var(--line);border-radius:var(--radius-panel);background:var(--paper-2)}
+.cf-panel[hidden],.cf-pills:empty{display:none}
+.cf-pills{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.cf-pill{min-height:var(--touch);padding:0 12px;border:1.5px solid var(--clinic);border-radius:var(--radius-chip);background:var(--clinic-tint);color:var(--clinic-text);font:700 14px var(--font-text);cursor:pointer}
+.cf-pill .rm{font-weight:400;text-decoration:underline;margin-left:6px}
+.cf-clear{min-height:var(--touch);padding:0 4px;border:0;background:none;color:var(--ink);font:400 14px var(--font-text);text-decoration:underline;cursor:pointer}
+.cf-pill:focus-visible,.cf-clear:focus-visible{outline:3px solid var(--clinic);outline-offset:2px}
+/* Select (parts.md, Select): every select draws the option rows' chevron (2.5px ink stroke) at 16px, 12px from the right. */
+select.input{appearance:none;-webkit-appearance:none;background:var(--white) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Cpath d='M4 6l4 4 4-4' fill='none' stroke='%230f1d2b' stroke-width='2.5' stroke-linecap='square'/%3E%3C/svg%3E") no-repeat right 12px center/16px 16px;padding-right:40px;min-height:var(--touch)}
 /* Goal page v2 (pages.md, Category; owner task 3 Nov 2026, UX audit 11.2 and 12). Decision cards: up to three panel-line
    cards in one row from 900px (stacked below): the card's question in small ink-2, the option's name, its chips, the price
    from data in bold with its source line, and one button at the foot. They replace the ℞ price pad. */
