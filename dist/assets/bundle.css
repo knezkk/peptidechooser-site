@@ -719,3 +719,7 @@ p.not-in{margin:4px 0 0}
 .ph-label{font:400 12px var(--font-text);fill:var(--ink-2)}
 .ph-now{font:600 12px var(--font-text);fill:var(--ink)}
 @media (max-width:640px){.price-hist{max-height:120px}}
+
+/* Header search results, group heading (nav-parts.md, Header search results; w2 block 36) */
+.search-group{padding:10px 12px 2px;font:600 12px/1.4 var(--font-text);color:var(--ink-2)}
+.search-group ~ .search-group{border-top:1px solid var(--line)}
