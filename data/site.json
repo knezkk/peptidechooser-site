@@ -71,7 +71,7 @@
           "substance": "ghk-cu"
         },
         {
-          "name": "Injectable peptides sold for hair",
+          "name": "Peptides sold for hair growth",
           "kind": "Research-labeled vials",
           "fda": "Not approved",
           "fda_chip": "neutral",
@@ -118,7 +118,7 @@
       "intro": "Finasteride and minoxidil are the only FDA-approved options. Copper peptide serums are cosmetics; injectable peptides sold for hair are not approved for any use.",
       "peptides": [
         {
-          "name": "Finasteride 1 mg",
+          "name": "Finasteride",
           "plain": "A daily pill on prescription. It slows hair loss in most men by lowering the hormone that shrinks hair follicles.",
           "status": "FDA approved",
           "chip": "ok",
@@ -128,7 +128,7 @@
           "price": "hair",
           "substance": "finasteride",
           "proven_alternative": true,
-          "line_one": "daily pill that slows hair loss",
+          "line_one": "1 mg daily pill that slows hair loss",
           "rx_word": "on prescription"
         },
         {
@@ -151,7 +151,7 @@
           "rx_word": "no prescription"
         },
         {
-          "name": "Compounded minoxidil spray",
+          "name": "Compounded minoxidil",
           "plain": "A minoxidil spray mixed by a pharmacy, prescribed by an online clinic. Not FDA approved.",
           "status": "Not FDA approved; pharmacy-made",
           "chip": "warn",
@@ -166,7 +166,7 @@
           "rx_word": "on prescription"
         },
         {
-          "name": "GHK-Cu copper peptide serum",
+          "name": "GHK-Cu",
           "plain": "A cosmetic serum for the scalp, no prescription. Sold for thinning hair, backed by lab studies only.",
           "status": "Cosmetic, no approval needed",
           "chip": "info",
@@ -174,11 +174,11 @@
           "how": "Sold in shops, no prescription.",
           "status_plain": "Cosmetic: legal to sell, nobody checked that it works.",
           "substance": "ghk-cu",
-          "line_one": "cosmetic scalp serum",
+          "line_one": "cosmetic copper peptide scalp serum",
           "rx_word": "no prescription"
         },
         {
-          "name": "Injectable peptides sold for hair",
+          "name": "Peptides sold for hair growth",
           "plain": "BPC-157, GHK-Cu and TB-500 in vials labelled for lab use. Not approved; no evidence in people for hair.",
           "status": "Not approved for any use",
           "chip": "neutral",
@@ -190,7 +190,7 @@
             "ghk-cu",
             "tb-500"
           ],
-          "line_one": "research-use vials",
+          "line_one": "research-use injectable vials",
           "rx_word": "research use only"
         }
       ],
@@ -217,7 +217,7 @@
       "intro": "Peptide creams and serums are cosmetics: legal to sell without approval, and judged on their own studies, which are small. The proven prescription option for wrinkles is tretinoin.",
       "peptides": [
         {
-          "name": "Tretinoin cream",
+          "name": "Tretinoin",
           "plain": "A cream you use at night, on prescription. It reduces fine wrinkles over months; can irritate at first.",
           "status": "FDA approved",
           "chip": "ok",
@@ -229,7 +229,7 @@
           "rx_word": "on prescription"
         },
         {
-          "name": "GHK-Cu copper peptide",
+          "name": "GHK-Cu",
           "plain": "A cosmetic serum or cream, no prescription. Sold for firmer-looking skin, tested only in small studies.",
           "status": "Cosmetic, no approval needed",
           "chip": "info",
@@ -237,7 +237,7 @@
           "how": "Shops, no prescription.",
           "status_plain": "Cosmetic.",
           "substance": "ghk-cu",
-          "line_one": "cosmetic serum or cream",
+          "line_one": "cosmetic copper peptide serum or cream",
           "rx_word": "no prescription"
         },
         {
@@ -358,7 +358,7 @@
           "rx_word": "research use only"
         },
         {
-          "name": "Foundayo (orforglipron)",
+          "name": "Orforglipron (Foundayo)",
           "plain": "A daily pill on prescription for adults with obesity, or overweight with a weight-related health problem. Not a peptide.",
           "status": "FDA approved",
           "chip": "ok",
@@ -375,7 +375,7 @@
           "rx_word": "on prescription"
         },
         {
-          "name": "Cagrilintide with semaglutide (CagriSema)",
+          "name": "CagriSema (cagrilintide with semaglutide)",
           "plain": "Cagrilintide is in trials combined with semaglutide (CagriSema). Not approved; Drugs@FDA lists no product with it.",
           "status": "Not approved; still in trials",
           "chip": "neutral",
@@ -952,7 +952,7 @@
       "intro": "The FDA-approved options are estradiol, alone or with progesterone, and one non-hormonal pill. Compounded hormones are not FDA approved.",
       "peptides": [
         {
-          "name": "Estradiol (pill, patch or gel)",
+          "name": "Estradiol",
           "plain": "An estrogen taken as a pill, patch or gel, FDA approved for hot flashes due to menopause.",
           "status": "FDA approved",
           "chip": "ok",
@@ -1373,7 +1373,7 @@
           "rx_word": "on prescription"
         },
         {
-          "name": "Pharmacy-made testosterone",
+          "name": "Compounded testosterone",
           "plain": "A cream or gel mixed by a pharmacy, from online clinics on prescription. Not an FDA-approved product.",
           "status": "Not FDA approved; pharmacy-made",
           "chip": "warn",
@@ -1519,7 +1519,7 @@
           "rx_word": "on prescription"
         },
         {
-          "name": "Foundayo (orforglipron)",
+          "name": "Orforglipron (Foundayo)",
           "plain": "A daily pill on prescription for adults with obesity, or overweight with a weight-related health problem. Not a peptide.",
           "status": "FDA approved",
           "chip": "ok",
@@ -1642,7 +1642,7 @@
       "panel_title": "New weight loss drugs",
       "peptides": [
         {
-          "name": "Foundayo (orforglipron)",
+          "name": "Orforglipron (Foundayo)",
           "plain": "A daily pill on prescription for adults with obesity, or overweight with a weight-related health problem. Not a peptide.",
           "status": "FDA approved",
           "chip": "ok",
@@ -1674,7 +1674,7 @@
           "rx_word": "research use only"
         },
         {
-          "name": "Cagrilintide with semaglutide (CagriSema)",
+          "name": "CagriSema (cagrilintide with semaglutide)",
           "plain": "Cagrilintide is in trials combined with semaglutide (CagriSema). Not approved; Drugs@FDA lists no product with it.",
           "status": "Not approved; still in trials",
           "chip": "neutral",
@@ -2246,22 +2246,22 @@
   "glossary": [
     {
       "term": "FDA approved",
-      "text": "the FDA checked that it works and is safe for this use, and every batch is inspected. Prescription unless marked otherwise.",
+      "text": "the FDA checked that it works and is safe for this use. Prescription unless marked otherwise.",
       "chip": "ok"
     },
     {
       "term": "Cosmetic",
-      "text": "legal to sell without approval; nobody has to prove it works. Fine on your skin, no claims beyond looks.",
+      "text": "sold for looks, with no FDA approval needed; nobody has to prove it works.",
       "chip": "info"
     },
     {
       "term": "Not FDA approved, pharmacy-made",
-      "text": "a licensed pharmacy mixes it for you on prescription. Legal in limited cases; no batch testing by the FDA.",
+      "text": "a licensed pharmacy mixes it for you on prescription. Legal in limited cases; the FDA does not test it.",
       "chip": "warn"
     },
     {
       "term": "Not approved",
-      "text": "no approved product exists. Shops sell it \"for research\". Buying it is not a crime for you, but nobody has checked what is in the vial. We never link to these shops.",
+      "text": "no approved product exists. Shops sell it \"for research\"; buying it is not a crime, but nobody checks what is in the vial. We never link to these shops.",
       "chip": "neutral"
     },
     {
