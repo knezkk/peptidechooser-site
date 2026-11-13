@@ -4,6 +4,7 @@ Newest row first.
 
 | Date | Change | Approved |
 |---|---|---|
+| 13 Nov 2026 | Home's size limit 60 KB to 64 KB (home.md; tools/check.py check-parts), so the company line (#187) and the paid clinics' logos (#188) fit. | ODOBRENO PRAVILA - Karlo - 13. 11. 2026 - Home 64 KB |
 | 12 Nov 2026 | Real logos for 17 clinics with a paid link (Seller tile rule in parts.md: the brand's own upload or brand kit, source and check date in `data/seller_logos.json`); Strut Health's logo back, logo entries follow seller moves (w4, PR #188). | ODOBRENO DIZAJN - Karlo - 12. 11. 2026 - PR #188 |
 | 12 Nov 2026 | Paid links open in a new tab: `target="_blank"`, `rel="sponsored noopener"`, a hidden "Opens in a new tab" (windows.md, new section; parts.md, btn-action row). No visible change. | Owner, queue block 35 (PR #186); no visible change, no Tier 1 text |
 | 11 Nov 2026 | One order everywhere, paid link first (owner, queue block 33; w2 PR #182): parts.md, the order of option rows (paid, then not approved, then the rest; best paid score, lowest price, data order); windows.md, the order of sellers and clinics (paid first by score, then the rest by score; research-use windows by score; guides' price tables stay cheapest first, owner answer Q1 a). Home drops "FDA-approved options first" (Q2 a). No new part. | ODOBRENO DIZAJN - Karlo - 11. 11. 2026 - PR #182; ODOBRENO SEO - Karlo - 11. 11. 2026 - PR #182 |
