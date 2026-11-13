@@ -1883,7 +1883,11 @@ def check_wave_b(P):
     # By goal: the menu on Home holds every goal page in the data and links only pages that exist
     home = (DIST / "index.html").read_text(encoding="utf-8") if (DIST / "index.html").exists() else ""
     menu = re.search(r'id="nav-p-goal">(.*?)(?:aria-controls="nav-p-|$)', home, re.S)
-    menu_goals = set(re.findall(r'href="/([a-z0-9-]+)/" data-ev="goal_pick"', menu.group(1))) if menu else set()
+    # the menu's goal links carry no event attributes since 13 Nov 2026: nav.js sends goal_pick from the link itself
+    menu_goals = set(re.findall(r'<a href="/([a-z0-9-]+)/"(?: aria-current="page")?><span class="nav-l">', menu.group(1))) if menu else set()
+    nav_js = (DIST / "assets" / "nav.js").read_text(encoding="utf-8") if (DIST / "assets" / "nav.js").exists() else ""
+    if menu_goals and "send('goal_pick'" not in nav_js:
+        errs.append("assets/nav.js: the By goal menu's goal_pick event is missing")
     for g in d["goals"]:
         if g.get("page") and (DIST / g["slug"] / "index.html").exists() and g["slug"] not in menu_goals:
             errs.append(f"index.html: the goal page /{g['slug']}/ is missing from the By goal menu (NAV_GOAL_GROUPS)")
