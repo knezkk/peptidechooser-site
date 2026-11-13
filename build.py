@@ -1239,8 +1239,11 @@ def offer_link(seller, sub, text):
 # A real logo (pages.md, Seller tile): the entry in data/seller_logos.json and the brand's file in assets/logos/, both, never a shop.
 # A tool has no seller page: its logo is used only in the Tools block. An entry with neither a page nor a tool waits for its seller.
 TOOL_LOGOS = {}
-for _slug, _logo in json.loads((ROOT / "data" / "seller_logos.json").read_text(encoding="utf-8")).items():
-    _file = next((f for f in (ROOT / "assets" / "logos" / f"{_slug}.{e}" for e in ("svg", "png")) if f.exists()), None)
+# Entries and files keep the slug they were saved under; a seller that moved (site.seller_redirects) finds its logo by the
+# old one, so Strut Health (strut-health-strut-health-llc -> strut-health) keeps its logo after the move.
+for _key, _logo in json.loads((ROOT / "data" / "seller_logos.json").read_text(encoding="utf-8")).items():
+    _slug = SELLER_MOVES.get(_key, _key)
+    _file = next((f for f in (ROOT / "assets" / "logos" / f"{_key}.{e}" for e in ("svg", "png")) if f.exists()), None)
     if _file and _slug in CLINIC_PROFILES:
         CLINIC_PROFILES[_slug].update(_logo, logo_path=f"/assets/logos/{_file.name}")
     elif _file and _slug in {t["seller_slug"] for g in DATA.get("goals") or [] for t in g.get("tools") or []} and _slug not in SHOPS:
