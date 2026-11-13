@@ -918,8 +918,8 @@ def check_parts(P):
             errs.append(f"index.html: {size // 1024} KB, over the 64 KB limit")
         text = re.sub(r"<dialog.*?</dialog>|<script.*?</script>|<[^>]+>", " ", home, flags=re.S)
         said = re.findall(r"\b[Ww]e (?:do not|don't|never) link\b", text)
-        legend = re.search(r'<dl class="glossary-list">(.*?)</dl>', home, re.S)
-        in_legend = len(re.findall(r"\b[Ww]e (?:do not|don't|never) link\b", legend.group(1))) if legend else 0
+        legend = re.search(r'<dl class="glossary-list">(.*?)</dl>|<div class="tip-defs" hidden>(.*?)</div>', home, re.S)
+        in_legend = len(re.findall(r"\b[Ww]e (?:do not|don't|never) link\b", legend.group(1) or legend.group(2))) if legend else 0
         if len(said) != 1 or in_legend != 1:
             errs.append(f"index.html: 'we do not link' said {len(said)} times ({in_legend} in the label legend); want once, in the legend")
     # "We do not link" once per page (owner decision C1, 3 Nov 2026; audit C12): the phrase family ("we do not link", "we
@@ -940,8 +940,8 @@ def check_parts(P):
         if name in ("how-we-rate/index.html", "disclosure/index.html"):
             ok = said
         elif name == "index.html":
-            legend = re.search(r'<dl class="glossary-list">(.*?)</dl>', t, re.S)
-            ok = min(1, len(nolink.findall(legend.group(1)))) if legend else 0
+            legend = re.search(r'<dl class="glossary-list">(.*?)</dl>|<div class="tip-defs" hidden>(.*?)</div>', t, re.S)
+            ok = min(1, len(nolink.findall(legend.group(1) or legend.group(2)))) if legend else 0  # the legend, or the tooltip texts that replaced it
         elif re.fullmatch(r"sellers/[^/]+/index\.html", name):
             ok = sum(len(nolink.findall(x)) for x in re.findall(r'<p class="small legit-close">(.*?)</p>', t, re.S))
             # a clinic with a paid link never says it has none (owner, 5 Nov 2026)

@@ -205,7 +205,7 @@ def by_approval(b):
         return ""
     return f"""
     <div class="sec-hd grp-hd"><div><h3>By approval</h3><p>The same substances, grouped by what the FDA allows.</p></div></div>
-    <ul class="goal-cards">{"".join(cards)}</ul>"""
+    <ul class="goal-cards grp-cards">{"".join(cards)}</ul>"""
 
 
 # The group card's name on Home (home.md): shorter than the page's breadcrumb.
