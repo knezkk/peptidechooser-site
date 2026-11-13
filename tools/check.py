@@ -798,7 +798,9 @@ def check_parts(P):
             errs.append(f"search-index.json: does not parse ({e})")
             idx = []
         for e in idx:
-            if set(e) != {"type", "name", "aliases", "url", "line"} or e.get("type") not in ("Goal", "Peptide", "Seller", "Clinic", "Comparison", "Guide", "Page") \
+            # "pop" (queue block 37): an optional whole-number search weight; the line is one short status (44 characters at most)
+            if set(e) - {"pop"} != {"type", "name", "aliases", "url", "line"} or not isinstance(e.get("pop", 0), int) \
+                    or len(e.get("line") or "") > 44 or e.get("type") not in ("Goal", "Peptide", "Seller", "Clinic", "Comparison", "Guide", "Page") \
                     or not e.get("name") or not e.get("line"):
                 errs.append(f"search-index.json: bad entry {e}")
                 continue
