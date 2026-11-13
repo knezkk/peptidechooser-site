@@ -117,7 +117,8 @@ for(var i=1;i<ws.length;i++){if(c(ws.slice(i).join('')).indexOf(k)===0)return 2;
 function find(d,q,n){var k=c(q);if(!k)return[];var out=[];
 d.forEach(function(e){var s=score(e.name,k);s=s>=1?s*2:s;(e.aliases||[]).forEach(function(a){var x=score(a,k);s=Math.max(s,x>=1?x*2-1:x*0.8);});if(s>0)out.push([s,e]);});
 if(out.filter(function(x){return x[0]>=1;}).length>=3)out=out.filter(function(x){return x[0]>=1;});
-out.sort(function(x,y){return y[0]-x[0]||ORDER[x[1].type]-ORDER[y[1].type]||x[1].name.length-y[1].name.length||(x[1].name<y[1].name?-1:1);});
+function lv(s){return s>=5?2:s>=1?1:0;}
+out.sort(function(x,y){return lv(y[0])-lv(x[0])||(y[1].pop||0)-(x[1].pop||0)||y[0]-x[0]||ORDER[x[1].type]-ORDER[y[1].type]||x[1].name.length-y[1].name.length||(x[1].name<y[1].name?-1:1);});
 return out.slice(0,n).map(function(x){return x[1];});}
 function row(e,tab){var li=document.createElement('li'),a=document.createElement('a');a.href=e.url;if(!tab)a.tabIndex=-1;
 [['search-name',e.name],['chip chip-neutral',e.type],['search-line',e.line]].forEach(function(p){var s=document.createElement('span');s.className=p[0];s.textContent=p[1];a.appendChild(s);});

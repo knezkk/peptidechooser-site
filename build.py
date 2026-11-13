@@ -315,7 +315,8 @@ for(var i=1;i<ws.length;i++){if(c(ws.slice(i).join('')).indexOf(k)===0)return 2;
 function find(d,q,n){var k=c(q);if(!k)return[];var out=[];
 d.forEach(function(e){var s=score(e.name,k);s=s>=1?s*2:s;(e.aliases||[]).forEach(function(a){var x=score(a,k);s=Math.max(s,x>=1?x*2-1:x*0.8);});if(s>0)out.push([s,e]);});
 if(out.filter(function(x){return x[0]>=1;}).length>=3)out=out.filter(function(x){return x[0]>=1;});
-out.sort(function(x,y){return y[0]-x[0]||ORDER[x[1].type]-ORDER[y[1].type]||x[1].name.length-y[1].name.length||(x[1].name<y[1].name?-1:1);});
+function lv(s){return s>=5?2:s>=1?1:0;}
+out.sort(function(x,y){return lv(y[0])-lv(x[0])||(y[1].pop||0)-(x[1].pop||0)||y[0]-x[0]||ORDER[x[1].type]-ORDER[y[1].type]||x[1].name.length-y[1].name.length||(x[1].name<y[1].name?-1:1);});
 return out.slice(0,n).map(function(x){return x[1];});}
 function row(e,tab){var li=document.createElement('li'),a=document.createElement('a');a.href=e.url;if(!tab)a.tabIndex=-1;
 [['search-name',e.name],['chip chip-neutral',e.type],['search-line',e.line]].forEach(function(p){var s=document.createElement('span');s.className=p[0];s.textContent=p[1];a.appendChild(s);});
@@ -4276,6 +4277,19 @@ NOINDEX = {"/search/"}
 TYPE_ORDER = {"Goal": 0, "Peptide": 1, "Seller": 2, "Clinic": 3, "Comparison": 4, "Guide": 5, "Page": 6}
 
 
+# the most searched first (queue block 37, owner 13 Nov 2026): no Search Console impressions per substance yet, so the
+# owner's fixed list of the big ones, first = heaviest; an entry without a weight is 0
+SEARCH_POP = ["semaglutide", "tirzepatide", "bpc-157", "ghk-cu", "bremelanotide", "finasteride", "minoxidil", "nad",
+              "sermorelin", "tb-500"]
+# one short line under each result (queue block 37): a status, never a legal sentence; anything longer is cut with an ellipsis
+SEARCH_LINE_MAX = 44
+SEARCH_STATUS = {"Not approved": "Not approved: research use"}
+
+
+def search_line(s):
+    return s if len(s) <= SEARCH_LINE_MAX else s[:SEARCH_LINE_MAX - 1].rsplit(" ", 1)[0].rstrip(",:;") + "\u2026"
+
+
 def search_index():
     """{type, name, aliases, url, line} per page we have (not /search/ or the seller pages, which are Seller entries), per
     substance with a database status and per seller page. `line` is one plain line: the goal page, the substance's status,
@@ -4290,27 +4304,30 @@ def search_index():
             # its options' names too (queue block 36): "Viagra" finds Sex drive, where sildenafil has no page of its own
             opts = {p["name"] for p in g["peptides"]} | {p["name"] for sp in SUBPAGES if sp.get("parent") == g["slug"] for p in sp["peptides"]}
             out.append({"type": "Goal", "name": g["label"], "aliases": sorted(({g["name"], g["short"], g["slug"].replace("-", " ")} | opts) - {g["label"]}),
-                        "url": path, "line": f"Goal page: {plural(len(g['peptides']), 'option')} with FDA status and prices"})
+                        "url": path, "line": f"Goal page, {plural(len(g['peptides']), 'option')}"})
         else:
             kind = ("Comparison" if re.match(r"/compare/[^/]+-vs-[^/]+/$", path) else
                     "Guide" if path.startswith("/learn/") and path != "/learn/" else "Page")
-            line = desc.split(". ")[0].rstrip(".") + "."
             out.append({"type": kind, "name": "Home" if path == "/" else title.replace(" | Peptide Chooser", ""), "aliases": [],
-                        "url": path, "line": f"{kind}: {line}" if kind != "Page" else line})
+                        "url": path, "line": "Site page" if kind == "Page" else kind})
     for slug in PEPTIDE_SLUGS:  # a substance goes to its own page (owner task 2 Nov 2026)
         s = pep_status(slug)
         names = {r["peptide"] for r in LEGAL["rows"] if slug in (r.get("substances") or [])}
         names |= {p["name"] for g in ALL_GOALS for p in g["peptides"] if subs_of(p) == [slug]}
         names |= {sub_label(slug), slug.replace("-", " ")}
         out.append({"type": "Peptide", "name": s["name"], "aliases": sorted(names - {s["name"]}),
-                    "url": f"/peptides/{slug}/", "line": f"{s['label']}: {s['sentence']}"
-                    + (f' FDA listing: "{s["listing"]}".' if s.get("listing") else "")})
+                    "url": f"/peptides/{slug}/", "line": SEARCH_STATUS.get(s["label"], s["label"])})
     for r in sorted(CLINIC_PROFILES.values(), key=sellers_order):
         out.append({"type": "Clinic", "name": seller_name(r), "aliases": [r["domain"]] if r.get("domain") else [],
-                    "url": f"/sellers/{r['seller_slug']}/", "line": f"Online clinic, {card_count(r)}, {score_of(r)} of {out_of(r)} checks"})
+                    "url": f"/sellers/{r['seller_slug']}/", "line": f"Online clinic, {score_of(r)} of {out_of(r)} checks"})
     for r in sorted(SHOPS.values(), key=sellers_order):
         out.append({"type": "Seller", "name": seller_name(r), "aliases": [r["domain"]] if r.get("domain") else [],
                     "url": f"/sellers/{r['seller_slug']}/", "line": f"{kind_words(r)[1]}, {r['score']} of {len(SCORE_CHECKS)} checks"})
+    for e in out:
+        e["line"] = search_line(e["line"])
+        slug = e["url"].strip("/").split("/")[-1]
+        if e["type"] == "Peptide" and slug in SEARCH_POP:
+            e["pop"] = len(SEARCH_POP) - SEARCH_POP.index(slug)
     return sorted(out, key=lambda e: (TYPE_ORDER[e["type"]], e["name"].lower()))
 
 
