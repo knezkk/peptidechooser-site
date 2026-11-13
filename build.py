@@ -1917,7 +1917,8 @@ def option_rows(g, lazy=False):
         if lazy:
             how, status = unsaid(how), (unsaid(status) if NO_LINK_SAID.search(status) else status)
         # one status chip next to the name; no seller fact on the row (pages/parts.md, Option rows, 5 Nov 2026)
-        rows.append(f'<li class="opt"><details class="opt-more"><summary class="opt-sum">{option_picture(p, rp)}<span class="opt-m" aria-hidden="true"></span>{opt_head(p)}</summary>'
+        head = opt_head(p) if not lazy else tip_chips(opt_head(p)).replace('<span class="name">', '<span class="name tip-o">', 1)
+        rows.append(f'<li class="opt"><details class="opt-more"><summary class="opt-sum">{option_picture(p, rp)}<span class="opt-m" aria-hidden="true"></span>{head}</summary>'
                     f'<div class="opt-body">{opt_line(g, p, rp, "p")}<p class="opt-does">{p["does"]}{refs(p, slug, price=not pad)}</p>'
                     f'<p class="opt-status">{status}</p><p class="opt-how">{how}{cost}</p>{"" if lazy else opt_facts(g, p)}</div></details>{opt_action(g, p, rp, lazy, pad)}</li>')
     return rows
@@ -1980,7 +1981,7 @@ def rail():
     for i, g in enumerate(CHOOSER_GOALS):
         slug, hide = g["slug"], "" if i == 0 else " hidden"
         chips.append(f'<button type="button" class="goal-item" data-goal="{slug}"{ev("goal_pick", goal=slug)} aria-pressed="{"true" if i == 0 else "false"}" '
-                     f'aria-controls="opts-{slug}"><span>{g["label"]}</span><span class="small">{len(g["peptides"])} options</span></button>')
+                     f'aria-controls="opts-{slug}"><span>{g["label"]}</span><span class="small">{plural(len(g["peptides"]), "option")}</span></button>')
         rows = option_rows(g, lazy=True)
         link = (f'<a class="btn btn-ink" href="/{slug}/">Compare {g["short"].lower()} options</a>' if g.get("page") else
                 '<p class="small">Full comparison for this goal is not published yet. The legal status above is current as of ' + CHECKED + '.</p>')
@@ -2318,7 +2319,6 @@ LETTERS_PAGE = f"""
 {LETTERS_PAGE_JS}
 """ if LETTERS_ALL else ""
 FIGURE = figure_3d()
-GOAL_CHIPS, STEP_COMPARE, GOAL_TITLES = rail()
 def chip_title(t):
     return f'<span class="chip chip-{t["chip"]}">{t["term"]}</span>' if t.get("chip") else t["term"]
 
@@ -2326,6 +2326,41 @@ def chip_title(t):
 # Each label's title carries the chip the option rows use for that status (`chip` in data/site.json); "Is it safe?" has none.
 GLOSSARY = "".join(
     f'<div><dt>{chip_title(t)}</dt><dd>{t["text"]}</dd></div>' for t in DATA["glossary"])
+
+# Home's label explanations (owner video 13 Nov 2026): each status chip in the option rows shows its label's text from
+# data/site.json glossary on hover, keyboard focus and tap; the texts sit once on the page, hidden, and each chip points to
+# its text with aria-describedby, so a screen reader reads it without the script. A label with no chip has no place to show.
+TIP_CHIPS = {t["chip"] for t in DATA["glossary"] if t.get("chip")}
+TIP_DEFS = "".join(f'<p id="tip-{t["chip"]}"><strong>{t["term"]}:</strong> {t["text"]}</p>' for t in DATA["glossary"] if t.get("chip"))
+
+
+def tip_chips(html):
+    """Home's option rows: a status chip with a label text becomes a tooltip trigger (focusable, described by its text)."""
+    return re.sub(r'<span class="chip chip-([a-z]+)">', lambda m: (f'<span class="chip chip-{m[1]} tip-t" tabindex="0" aria-describedby="tip-{m[1]}">'
+                  if m[1] in TIP_CHIPS else m[0]), html)
+
+
+# One tooltip for Home (one part, tokens only, no library): a status chip shows its label's text; an option's name shows
+# the row's own "what it does" line, on screens with hover, under the whole row. Below the trigger, or above when there is no room; Esc, a
+# click elsewhere or leaving closes it; it floats, so nothing moves.
+TIP_JS = """<script>
+(function(){var tip=document.createElement('div'),cur=null,at0=0,touch=false,hov=window.matchMedia&&matchMedia('(hover: hover)').matches;
+tip.id='pc-tip';tip.className='pc-tip';tip.setAttribute('role','tooltip');tip.hidden=true;document.body.appendChild(tip);
+function fill(t){if(t.classList.contains('tip-t')){var d=document.getElementById(t.getAttribute('aria-describedby'));tip.innerHTML=d?d.innerHTML:'';return !!d;}
+var o=t.closest('.opt'),d=o&&o.querySelector('.opt-does');if(!d)return false;var c=d.cloneNode(true);c.querySelectorAll('sup').forEach(function(x){x.remove();});
+tip.textContent=c.textContent.trim();return !!tip.textContent;}
+function show(t){if(cur===t)return;if(!fill(t))return hide();cur=t;at0=Date.now();tip.hidden=false;var r=(t.classList.contains('tip-o')?t.closest('.opt-sum'):t).getBoundingClientRect(),w=tip.offsetWidth,h=tip.offsetHeight,
+x=Math.max(16,Math.min(r.left,document.documentElement.clientWidth-w-16)),y=r.bottom+8;if(y+h>innerHeight-8&&r.top-h-8>0)y=r.top-h-8;
+tip.style.left=(x+scrollX)+'px';tip.style.top=(y+scrollY)+'px';}
+function hide(){cur=null;tip.hidden=true;}
+function at(e){var t=e.target.closest&&e.target.closest('.tip-t,.tip-o');return t&&(t.classList.contains('tip-t')||hov)?t:null;}
+document.addEventListener('pointerdown',function(e){touch=e.pointerType==='touch';},true);
+document.addEventListener('mouseover',function(e){if(touch)return;var t=at(e);if(t)show(t);else if(cur&&!cur.contains(e.target))hide();});
+document.addEventListener('focusin',function(e){var t=e.target.closest('.tip-t')||(hov&&!touch&&e.target.matches('.opt-sum')&&e.target.querySelector('.tip-o'));if(t)show(t);else hide();});
+document.addEventListener('click',function(e){var t=e.target.closest('.tip-t');if(t){e.preventDefault();if(cur===t&&Date.now()-at0>400)hide();else show(t);}else if(cur)hide();});
+document.addEventListener('keydown',function(e){if(e.key==='Escape'&&cur)hide();});})();
+</script>"""
+GOAL_CHIPS, STEP_COMPARE, GOAL_TITLES = rail()
 
 # The seller window (pages.md, Home): with JavaScript the windows hide until "Compare N sellers" opens one as a modal
 # dialog (Esc and "Close" are the dialog's own; a click on the dimmed area outside closes it; focus returns to the button).
@@ -2466,10 +2501,7 @@ HOME = f"""
 <section class="hero-more">
   <div class="wrap">
     <p class="what-is"><strong>What is a peptide?</strong> A short chain of amino acids. Some are approved medicines (semaglutide, bremelanotide), some are cosmetics in creams, and many are sold online with no approval and no testing. This site tells you which is which, what it costs, and what the proven alternative is.</p>
-    <section class="glossary" aria-labelledby="glossary-h">
-      <h2 id="glossary-h">What the labels mean</h2>
-      <dl class="glossary-list">{GLOSSARY}</dl>
-    </section>
+    <div class="tip-defs" hidden>{TIP_DEFS}</div>
   </div>
 </section>
 <!--home:where-->
@@ -2483,6 +2515,7 @@ HOME = f"""
 {FIG_JS}
 {MAP_JS}
 {SELLERS_JS}
+{TIP_JS}
 """
 
 CORRECTIONS = f"""

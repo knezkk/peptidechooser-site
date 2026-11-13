@@ -131,3 +131,20 @@ fetch(src).then(function(r){return r.json();}).then(function(j){document.querySe
 var n=document.getElementById(b.getAttribute('data-dlg'));n.querySelectorAll('tbody > tr').forEach(function(t){t.style.opacity='1';});
 if(window.pcState)pcState();n.showModal();}).catch(function(){location.href=b.href;});return;}
 var d=e.target.closest('.sellers-dlg');if(d&&e.target===d)d.close();});})();
+
+
+(function(){var tip=document.createElement('div'),cur=null,at0=0,touch=false,hov=window.matchMedia&&matchMedia('(hover: hover)').matches;
+tip.id='pc-tip';tip.className='pc-tip';tip.setAttribute('role','tooltip');tip.hidden=true;document.body.appendChild(tip);
+function fill(t){if(t.classList.contains('tip-t')){var d=document.getElementById(t.getAttribute('aria-describedby'));tip.innerHTML=d?d.innerHTML:'';return !!d;}
+var o=t.closest('.opt'),d=o&&o.querySelector('.opt-does');if(!d)return false;var c=d.cloneNode(true);c.querySelectorAll('sup').forEach(function(x){x.remove();});
+tip.textContent=c.textContent.trim();return !!tip.textContent;}
+function show(t){if(cur===t)return;if(!fill(t))return hide();cur=t;at0=Date.now();tip.hidden=false;var r=(t.classList.contains('tip-o')?t.closest('.opt-sum'):t).getBoundingClientRect(),w=tip.offsetWidth,h=tip.offsetHeight,
+x=Math.max(16,Math.min(r.left,document.documentElement.clientWidth-w-16)),y=r.bottom+8;if(y+h>innerHeight-8&&r.top-h-8>0)y=r.top-h-8;
+tip.style.left=(x+scrollX)+'px';tip.style.top=(y+scrollY)+'px';}
+function hide(){cur=null;tip.hidden=true;}
+function at(e){var t=e.target.closest&&e.target.closest('.tip-t,.tip-o');return t&&(t.classList.contains('tip-t')||hov)?t:null;}
+document.addEventListener('pointerdown',function(e){touch=e.pointerType==='touch';},true);
+document.addEventListener('mouseover',function(e){if(touch)return;var t=at(e);if(t)show(t);else if(cur&&!cur.contains(e.target))hide();});
+document.addEventListener('focusin',function(e){var t=e.target.closest('.tip-t')||(hov&&!touch&&e.target.matches('.opt-sum')&&e.target.querySelector('.tip-o'));if(t)show(t);else hide();});
+document.addEventListener('click',function(e){var t=e.target.closest('.tip-t');if(t){e.preventDefault();if(cur===t&&Date.now()-at0>400)hide();else show(t);}else if(cur)hide();});
+document.addEventListener('keydown',function(e){if(e.key==='Escape'&&cur)hide();});})();

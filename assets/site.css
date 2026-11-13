@@ -760,3 +760,31 @@ body:has(.home-sec) .site-foot { margin-top: 0; }
 
 /* /sources/: a page title link in a source group is a tap target (44px) on phones, also when it fits on one line (w3, PR 152). */
 @media (max-width:640px){ .src-group h3 a { display: inline-flex; align-items: center; min-height: 44px; } }
+
+/* Home, full width (owner video 13 Nov 2026, w4; the book lines are in w1's queue): every section fills the container at
+   every size, the hero is shorter and the sellers come sooner. Only the breakpoints in layout.md. */
+.hero-more { padding: var(--space-5) 0; }
+.hero-more .what-is { max-width: none; margin: 0; }
+.home-sec .sec-hd p { max-width: none; }
+/* Home's sellers use the Filter toolbar, layout A, as /sellers/ (owner, 13 Nov 2026, round 2). */
+.where-filter.cf { display: block; margin: 0 0 var(--space-3); }
+.cf-panel .sf-field .input { width: 100%; }
+@media (max-width: 640px) { .cf-bar .seg { flex: 1 1 100%; } }
+@media (min-width: 641px) { #compare .grp-cards { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+@media (min-width: 641px) and (max-width: 1099px) { #compare .goal-cards:not(.grp-cards) { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+@media (min-width: 1100px) {
+  #compare .goal-cards:not(.grp-cards) { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+  .hero-clinic .flow .opt { min-height: 84px; } /* one line for the name, one for the label: equal rows, no empty second line */
+}
+/* 1100 to 1599px: a narrower figure column and a wider list, so every goal name sits on one line (the list sets the hero's height) */
+@media (min-width: 1100px) and (max-width: 1599px) {
+  .hero-clinic .flow { grid-template-columns: 122px 248px minmax(0, 1fr); } /* the options column keeps its main width (714px at 1440) */
+  .hero-clinic .goal-item { min-height: 40px; padding: 8px 12px; }
+}
+/* The tooltip (one part): a status chip's label text, an option name's "what it does"; it floats, nothing moves. */
+.pc-tip { position: absolute; z-index: 60; max-width: min(38ch, calc(100vw - 32px)); padding: 10px 12px; background: var(--ink); color: var(--white); border-radius: var(--radius-control); box-shadow: var(--shadow-card); font-size: var(--small-size); line-height: 1.45; pointer-events: none; }
+.pc-tip[hidden] { display: none; }
+.pc-tip strong { color: var(--white); }
+.tip-t { cursor: help; }
+.tip-t:focus-visible { outline: 3px solid var(--clinic); outline-offset: 2px; }
+@media (hover: hover) { .tip-o { text-decoration: underline dotted var(--line-strong); text-underline-offset: 3px; } }
