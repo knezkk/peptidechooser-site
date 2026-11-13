@@ -23,12 +23,13 @@ One look for every list that can be narrowed (/sellers/, /peptides/, /fda-warnin
 - **Without JavaScript:** the controls are hidden and every row shows.
 - **Phones and wide screens on /sellers/ and /peptides/:** the Filter toolbar below (it replaces the Filter fold, 13 Nov 2026).
 
-## Filter toolbar, layout A (/sellers/, /peptides/; owner pick 13 Nov 2026, w4 mock-up; ODOBRENO DIZAJN - Karlo - 13. 11. 2026 - PR #191)
+## Filter toolbar, layout A (/sellers/, /peptides/, Home's Where to get it; owner pick 13 Nov 2026, w4 mock-up; ODOBRENO DIZAJN - Karlo - 13. 11. 2026 - PR #191)
 
 - **One row** (`cf-bar`, `space-3` apart): the tabs or the "Show" chips, "Filter by name" (label for screen readers only, placeholder "Filter by name", "Clear" inside the field), "Sort" with its label inline, and a `btn-line` "Filters" with the number of filters on in an ink badge (22px, `radius` 11px, 13px 700 white); the count line right-aligned. While open the button shows `aria-expanded="true"` and turns `clinic-tint`, `clinic` border, `clinic-text`.
 - **Panel** (`cf-panel`, opens under the row): `paper-2`, 1px `line` border, `radius-panel`, 16px padding; the selects (Substance, Your state, Minimum checks) in three columns from 641px, one below; each chip group on its own line.
 - **Filters that are on** (`cf-pills`, under the row): one pill each, `clinic-tint`, 1.5px `clinic` border, `radius-chip`, 44px high (layout.md, Touch), 14px 700 `clinic-text`: a select as "<its label>: <value>", a chip by its name, then the word "remove" (400, underlined; no x icon). From two pills, "Clear all" as a text button. Removing moves focus to the next pill, else to "Filters".
 - **Phones (640px and under):** tabs full width; the search full width with "Clear" beside it (44px); Sort and "Filters" side by side; the count line under them; the panel opens in place, one column.
+- **Home, Where to get it** (w4, PR #193): the All / Online clinics / Research-use shops tabs, the name search and "Filters" in the row (no Sort: the table keeps clinics first, then checks); Substance and Minimum checks in the panel; the same pills.
 - **/peptides/:** no name search; the "Show" chips stay in the row, "Sold as" and "Form" go in the panel.
 - **Without JavaScript:** the row's controls and the panel are hidden and every row shows, as before.
 
