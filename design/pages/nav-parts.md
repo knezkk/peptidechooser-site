@@ -36,6 +36,14 @@ One look for every list that can be narrowed (/sellers/, /peptides/, /fda-warnin
 
 `appearance: none`; the option rows' chevron (2.5px `ink` stroke) drawn 16px, 12px from the right edge; 40px right padding; 44px minimum height.
 
+## Tooltip (Home option rows; owner video 13 Nov 2026, w4 PR #193)
+
+An `ink` panel with white `small` text, `radius-control`, `shadow-card`, at most 38ch wide, 8px under its trigger (above when there is no room); it floats, so nothing moves. Triggers: a status chip (focusable, `aria-describedby` its label text; hover, focus, tap) and an option name on hover screens (the row's "what it does" line, under the whole row). Esc or a click elsewhere closes it. Tokens only, no library; the script is in the cached `/assets/home.js`.
+
+## Header search results (w2, queue block 36, PR #192)
+
+Results grouped under headings "Peptides", "Goals", "Sellers" (clinics and shops), "Guides" (comparisons, guides, pages), at most 4 per group and 10 in all. A group heading (`.search-group`, `li role="presentation"`): 10px 12px 2px padding, 600 12px `ink-2`, a 1px `line` top border from the second group on. Typo tolerance (one letter wrong from 4 letters, two from 7) only when fewer than 3 exact matches. The count is spoken (`role="status"`), never shown. The measurement event is `search_query` (was `search`; same parameters: query_length, result_type).
+
 ## Lab mark (substance, seller, seller offer and lab pages)
 
 A lab-label chip for a lab report (COA) we hold, in the chip family (4px corners, at least 24px tall, 12px 700):

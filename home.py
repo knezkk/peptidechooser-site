@@ -125,13 +125,18 @@ def where_section(b):
 <section class="section home-sec" id="where">
   <div class="wrap">
     <div class="sec-hd"><div><h2>Where to buy peptides</h2><p>{n} sellers, each with background checks. Online clinics prescribe and ship medicines; research-use shops sell vials labeled for lab use. Every name opens our page on that seller.</p></div></div>
-    <form class="where-filter" hidden onsubmit="return false">
-      <div class="where-f"><label for="where-sub">Substance</label><select class="input" id="where-sub" data-filter="substance"><option value="">Any</option>{opts}</select></div>
-      <div class="seg" role="group" aria-label="Type">{seg}</div>
-      <div class="where-f"><label for="where-min">Checks</label><select class="input" id="where-min" data-filter="min_checks">{mins}</select></div>
-      <div class="where-f where-q"><label for="where-q">Seller name</label><input class="input" id="where-q" type="text" autocomplete="off" data-filter="name" data-value="text"></div>
+    <form class="where-filter cf" hidden onsubmit="return false">
+      <div class="cf-bar"><div class="seg" role="group" aria-label="Type">{seg}</div>
+      <div class="sf-field sf-name"><label class="vh" for="where-q">Filter by name</label><span class="sf-q"><input class="input" id="where-q" type="text" autocomplete="off" placeholder="Filter by name" data-filter="name" data-value="text"><button type="button" class="sf-clear" id="where-clear">Clear</button></span></div>
+      <button type="button" class="btn btn-line cf-btn" aria-expanded="false" aria-controls="where-fbody">Filters <span class="cf-count"></span></button>
+      <p class="small cf-n where-n" id="where-n" aria-live="polite">Showing {min(WHERE_FIRST, n)} of {n} · online clinics first, then by checks</p>
+      </div>
+      <div class="cf-pills" aria-label="Active filters" role="group"></div>
+      <div class="cf-panel" id="where-fbody" hidden>
+      <div class="sf-field"><label for="where-sub">Substance</label><select class="input" id="where-sub" data-filter="substance"><option value="">Any</option>{opts}</select></div>
+      <div class="sf-field"><label for="where-min">Minimum checks</label><select class="input" id="where-min" data-filter="min_checks">{mins}</select></div>
+      </div>
     </form>
-    <p class="small where-n" id="where-n" aria-live="polite">Showing {min(WHERE_FIRST, n)} of {n} · online clinics first, then by checks</p>
     <div class="tbl-wrap"><table class="tbl tbl-cards tbl-where" id="where-table"><caption class="vh">Sellers, online clinics first, then by checks</caption>
       <thead><tr><th scope="col">Seller</th><th scope="col">Type</th><th scope="col">Checks</th><th scope="col">From</th><th scope="col">FDA letters</th><th scope="col"><span class="vh">Action</span></th></tr></thead>
       <tbody>{body}</tbody>
@@ -140,7 +145,8 @@ def where_section(b):
     <p class="sec-act"><a class="btn btn-ink" id="where-all" href="/sellers/">See all {n} sellers</a></p>
   </div>
 </section>
-{WHERE_JS.replace("FIRST_N", str(WHERE_FIRST))}"""
+{WHERE_JS.replace("FIRST_N", str(WHERE_FIRST))}
+{b.CF_JS}"""
     return html, json.dumps(data, separators=(",", ":"))
 
 
@@ -161,7 +167,8 @@ var h=[];if(u)h.push('substance='+u);if(k)h.push('min='+k);if(t)h.push('type='+t
 all.href='/sellers/'+(h.length?'#'+h.join('&'):'');}
 function ch(){if(rows)return draw();fetch('/sellers/home.json').then(function(r){return r.json();}).then(function(d){rows=d;draw();});}
 f.hidden=false;[sb,mn].forEach(function(x){x.addEventListener('change',ch);});q.addEventListener('input',ch);
-segs.forEach(function(x){x.addEventListener('click',function(){segs.forEach(function(y){y.setAttribute('aria-pressed',y===x?'true':'false');});ch();});});})();
+segs.forEach(function(x){x.addEventListener('click',function(){segs.forEach(function(y){y.setAttribute('aria-pressed',y===x?'true':'false');});ch();});});
+var cl=document.getElementById('where-clear');if(cl)cl.addEventListener('click',function(){q.value='';ch();q.focus();});})();
 </script>"""
 
 
@@ -205,7 +212,7 @@ def by_approval(b):
         return ""
     return f"""
     <div class="sec-hd grp-hd"><div><h3>By approval</h3><p>The same substances, grouped by what the FDA allows.</p></div></div>
-    <ul class="goal-cards">{"".join(cards)}</ul>"""
+    <ul class="goal-cards grp-cards">{"".join(cards)}</ul>"""
 
 
 # The group card's name on Home (home.md): shorter than the page's breadcrumb.
