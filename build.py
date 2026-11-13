@@ -1969,7 +1969,7 @@ def rail():
     for i, g in enumerate(CHOOSER_GOALS):
         slug, hide = g["slug"], "" if i == 0 else " hidden"
         chips.append(f'<button type="button" class="goal-item" data-goal="{slug}"{ev("goal_pick", goal=slug)} aria-pressed="{"true" if i == 0 else "false"}" '
-                     f'aria-controls="opts-{slug}"><span>{g["label"]}</span><span class="small">{len(g["peptides"])} options</span></button>')
+                     f'aria-controls="opts-{slug}"><span>{g["label"]}</span><span class="small">{plural(len(g["peptides"]), "option")}</span></button>')
         rows = option_rows(g, lazy=True)
         link = (f'<a class="btn btn-ink" href="/{slug}/">Compare {g["short"].lower()} options</a>' if g.get("page") else
                 '<p class="small">Full comparison for this goal is not published yet. The legal status above is current as of ' + CHECKED + '.</p>')
