@@ -590,6 +590,7 @@ def page(path, title, description, body, schema="", crumb=None):
       <div>
         <a class="brand" href="/"><img src="/assets/logo-dark.svg" alt="" width="50" height="20">Peptide Chooser</a>
         <p>An independent comparison site for the United States that sells nothing and is not medical advice: talk to a doctor before starting any treatment.</p>
+        <p>{OPERATOR_LINE}</p>
       </div>
       {foot_cols()}
     </div>
@@ -606,12 +607,27 @@ def page(path, title, description, body, schema="", crumb=None):
 """
 
 
+# The company behind the site (owner queue block 26, 12 Nov 2026): Florida Division of Corporations (Sunbiz), document
+# L21000493639, status active, principal address as below, read 12 Nov 2026. No names of people, no phone number.
+OPERATOR = {"name": "Flywheel Solutions, LLC", "street": "81990 Overseas Highway, Ste. 202", "city": "Islamorada",
+            "region": "FL", "zip": "33036", "country": "US"}
+OPERATOR_LINE = (f"Peptide Chooser is operated by {OPERATOR['name']}, {OPERATOR['street']}, {OPERATOR['city']}, "
+                 f"{OPERATOR['region']} {OPERATOR['zip']}, USA.")
+
 ORG_SCHEMA = f"""<script type="application/ld+json">
 {{"@context":"https://schema.org","@graph":[
 {{"@type":"Organization","@id":"{SITE}/#org","name":"Peptide Chooser","url":"{SITE}/","logo":"{SITE}/assets/icon-512.png","email":"{EMAIL}"}},
 {{"@type":"WebSite","@id":"{SITE}/#site","url":"{SITE}/","name":"Peptide Chooser","publisher":{{"@id":"{SITE}/#org"}}}}
 ]}}
 </script>"""
+
+# The company's legal name and address go on /about/ only, under the same #org id, so search engines join them with Home's
+# Organization; Home sits at its 60 KB limit (tools/check.py) and the visible line in the footer names the company anyway.
+ABOUT_SCHEMA = ('<script type="application/ld+json">' + json.dumps({"@context": "https://schema.org", "@type": "Organization",
+    "@id": f"{SITE}/#org", "name": "Peptide Chooser", "url": f"{SITE}/", "legalName": OPERATOR["name"],
+    "address": {"@type": "PostalAddress", "streetAddress": OPERATOR["street"], "addressLocality": OPERATOR["city"],
+                "addressRegion": OPERATOR["region"], "postalCode": OPERATOR["zip"], "addressCountry": OPERATOR["country"]}},
+    separators=(",", ":")) + "</script>")
 
 
 def breadcrumb_schema(items):
@@ -1229,8 +1245,11 @@ def offer_link(seller, sub, text):
 # A real logo (pages.md, Seller tile): the entry in data/seller_logos.json and the brand's file in assets/logos/, both, never a shop.
 # A tool has no seller page: its logo is used only in the Tools block. An entry with neither a page nor a tool waits for its seller.
 TOOL_LOGOS = {}
-for _slug, _logo in json.loads((ROOT / "data" / "seller_logos.json").read_text(encoding="utf-8")).items():
-    _file = next((f for f in (ROOT / "assets" / "logos" / f"{_slug}.{e}" for e in ("svg", "png")) if f.exists()), None)
+# Entries and files keep the slug they were saved under; a seller that moved (site.seller_redirects) finds its logo by the
+# old one, so Strut Health (strut-health-strut-health-llc -> strut-health) keeps its logo after the move.
+for _key, _logo in json.loads((ROOT / "data" / "seller_logos.json").read_text(encoding="utf-8")).items():
+    _slug = SELLER_MOVES.get(_key, _key)
+    _file = next((f for f in (ROOT / "assets" / "logos" / f"{_key}.{e}" for e in ("svg", "png")) if f.exists()), None)
     if _file and _slug in CLINIC_PROFILES:
         CLINIC_PROFILES[_slug].update(_logo, logo_path=f"/assets/logos/{_file.name}")
     elif _file and _slug in {t["seller_slug"] for g in DATA.get("goals") or [] for t in g.get("tools") or []} and _slug not in SHOPS:
@@ -2496,6 +2515,8 @@ ABOUT = f"""
 <li>We do not give personal medical advice or dosing instructions.</li>
 <li>We do not accept payment for a higher rating or position.</li>
 </ul>
+<h2>Who runs this site</h2>
+<p>{OPERATOR_LINE}</p>
 <h2>Who writes this site</h2>
 <p>Pages are written and checked by the {AUTHOR}. We have no medical reviewer yet; until we do, every claim links to its source and no page gives dosing advice.</p>
 <h2>How we make money</h2>
@@ -2554,6 +2575,7 @@ CONTACT = f"""
 <li>Press and partnerships.</li>
 </ul>
 <p>We cannot answer personal medical questions. For advice about your health, please speak to a licensed clinician.</p>
+<p>{OPERATOR_LINE}</p>
 </div></section>
 """
 
@@ -2574,7 +2596,7 @@ DISCLOSURE = f"""
 <h2>No sales</h2>
 <p>We do not manufacture, sell or ship any product.</p>
 <h2>Questions</h2>
-<p>Email <a href="mailto:{EMAIL}">{EMAIL}</a>.</p>
+<p>{OPERATOR_LINE} Email <a href="mailto:{EMAIL}">{EMAIL}</a>.</p>
 </div></section>
 """
 
@@ -2588,7 +2610,7 @@ PRIVACY = f"""
 <section class="page"><div class="wrap prose">
 <h1>Privacy policy</h1>
 <p class="small meta">Last updated {PRIVACY_UPDATED}</p>
-<p>This policy explains what information Peptide Chooser ("we") collects when you visit peptidechooser.com and how we use it.</p>
+<p>This policy explains what information Peptide Chooser ("we") collects when you visit peptidechooser.com and how we use it. {OPERATOR_LINE}</p>
 <h2>Information we collect</h2>
 <ul>
 <li><strong>Email you send us.</strong> If you contact us, we receive your email address and whatever you include in your message. We use it only to reply.</li>
@@ -4171,7 +4193,7 @@ PAGES = [
     ("/", "index.html", "Best peptides by goal, compared | Peptide Chooser",
      HOME_DESC, HOME, ORG_SCHEMA, None),
     ("/about/", "about/index.html", "About Peptide Chooser",
-     "Peptide Chooser is an independent site that compares peptide products and sellers for people in the United States.", ABOUT, "", [("/about/", "About")]),
+     "Peptide Chooser is an independent site that compares peptide products and sellers for people in the United States.", ABOUT, ABOUT_SCHEMA, [("/about/", "About")]),
     ("/how-we-rate/", "how-we-rate/index.html", "How we rate peptide products and sellers | Peptide Chooser",
      "The checks Peptide Chooser runs on every peptide seller (lab reports for shops, FDA letters, company, legal pages, fresh prices) and how goal pages are built.", HOW, "", [("/how-we-rate/", "How we rate")]),
     ("/contact/", "contact/index.html", "Contact | Peptide Chooser",

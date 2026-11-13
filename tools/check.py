@@ -894,7 +894,7 @@ def check_parts(P):
             if n != 1:
                 errs.append(f"{name}: {n} author lines (want one: '<team>. Checked <date>.' in p.small.meta)")
     # Home v2 (pages/home.md, Home; owner task 3 Nov 2026): each section under the hero ends with its one action (at most one
-    # btn-ink and one btn-line outside its tables: the letters section's pair is the most); the page stays under 60 KB
+    # btn-ink and one btn-line outside its tables: the letters section's pair is the most); the page stays under 64 KB (owner, ODOBRENO PRAVILA - Karlo - 13. 11. 2026 - Home 64 KB)
     # (the price windows load on demand); "we do not link" is said once, in the label legend.
     if "index.html" in P:
         home = (DIST / "index.html").read_text(encoding="utf-8")
@@ -914,8 +914,8 @@ def check_parts(P):
         for sid in sorted(set(re.findall(r'href="#(src-[^"]+)"', home + panels))):
             errs.append(f"index.html: source link #{sid} points into Home, which lists no sources")
         size = len(home.encode("utf-8"))
-        if size > 60 * 1024:
-            errs.append(f"index.html: {size // 1024} KB, over the 60 KB limit")
+        if size > 64 * 1024:
+            errs.append(f"index.html: {size // 1024} KB, over the 64 KB limit")
         text = re.sub(r"<dialog.*?</dialog>|<script.*?</script>|<[^>]+>", " ", home, flags=re.S)
         said = re.findall(r"\b[Ww]e (?:do not|don't|never) link\b", text)
         legend = re.search(r'<dl class="glossary-list">(.*?)</dl>', home, re.S)
