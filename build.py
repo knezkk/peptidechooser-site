@@ -2433,14 +2433,19 @@ HERO_COUNTS = (f" {_ns} shop{'' if _ns == 1 else 's'}, {f'{_nc} online clinic' +
 
 # Home (pages.md, Home; the "Home v2" sketch, 3 Nov 2026): the hero with the chooser and the label legend, then the
 # sections home.py fills in at the markers once every helper exists.
-HOME_LEDE = ((HERO_COUNTS.strip() + " ") if HERO_COUNTS else "") + \
-    "Research-use peptides with their real status, every price dated."
+# The year in Home's title and H1 (owner, 13 Nov 2026: "2026" now, "2027" in January). One line to change; the change is
+# Tier 1 and needs its own ODOBRENO SEO.
+SEO_YEAR = "2026"
+HOME_H1 = f"Best peptides in {SEO_YEAR}, compared by goal"
+# Under the H1 (owner's words, 13 Nov 2026): what the site does, then the live counts on their own line.
+HOME_LEDE = "Find the right peptide for your goal and where to buy it at the best price." + \
+    (f"<br>{HERO_COUNTS.strip()}" if HERO_COUNTS else "")
 HOME_DESC = ("Find the right option for your goal and where to get it at the best price. Research-use peptides with "
              "their real status.")
 HOME = f"""
 <section class="hero hero-clinic">
   <div class="wrap">
-    <h1 class="hero-h1">Peptides by goal: find the right option for your goal, and where to get it at the best price.</h1>
+    <h1 class="hero-h1">{HOME_H1}</h1>
     <p class="hero-lede">{HOME_LEDE}</p>
     <div class="chooser flow" id="goals">
       <div class="flow-hd fh-goal"><span class="step-n" aria-hidden="true">1</span><h2 id="step-goal">Choose a goal</h2></div>
@@ -4205,7 +4210,7 @@ NOT_FOUND = f"""
 HOME = re.sub(r"\n[ \t]+", "\n", HOME)
 
 PAGES = [
-    ("/", "index.html", "Best peptides by goal, compared | Peptide Chooser",
+    ("/", "index.html", f"{HOME_H1} | Peptide Chooser",
      HOME_DESC, HOME, ORG_SCHEMA, None),
     ("/about/", "about/index.html", "About Peptide Chooser",
      "Peptide Chooser is an independent site that compares peptide products and sellers for people in the United States.", ABOUT, ABOUT_SCHEMA, [("/about/", "About")]),

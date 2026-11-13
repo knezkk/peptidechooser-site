@@ -124,7 +124,7 @@ def where_section(b):
     html = f"""
 <section class="section home-sec" id="where">
   <div class="wrap">
-    <div class="sec-hd"><div><h2>Where to get it: {n} sellers, each with background checks</h2><p>Online clinics prescribe and ship medicines; research-use shops sell vials labeled for lab use. Every name opens our page on that seller.</p></div></div>
+    <div class="sec-hd"><div><h2>Where to buy peptides</h2><p>{n} sellers, each with background checks. Online clinics prescribe and ship medicines; research-use shops sell vials labeled for lab use. Every name opens our page on that seller.</p></div></div>
     <form class="where-filter" hidden onsubmit="return false">
       <div class="where-f"><label for="where-sub">Substance</label><select class="input" id="where-sub" data-filter="substance"><option value="">Any</option>{opts}</select></div>
       <div class="seg" role="group" aria-label="Type">{seg}</div>
