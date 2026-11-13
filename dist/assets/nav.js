@@ -66,6 +66,7 @@ document.addEventListener('click',function(e){try{var t=e.target;if(!t||!t.close
 var a=t.closest('a[href]'),el=t.closest('[data-ev]'),c=t.closest('[data-card]'),f=t.closest('button[data-filter]'),r=t.closest('#hs-list a,#sp-results a');
 if(a&&/(^|\.)fda\.gov$/.test(a.hostname))send('outbound_fda',{letter:letter(a)});
 if(c&&t.closest('a,button')&&!t.closest('.ref'))send('decision_card_click',{card:c.getAttribute('data-card')});
+var gp=t.closest('#nav-p-goal .nav-col a[href]');if(gp)send('goal_pick',{goal:gp.pathname.split('/')[1]});
 if(r){var k=r.querySelector('.chip');send('search',{query_length:typed(r.closest('#hs-list')?'#hs-q':'#sp-q'),result_type:k?k.textContent.toLowerCase():'other'});}
 if(f&&!(f.classList.contains('seg-b')&&f.getAttribute('aria-pressed')==='true'))send('filter_change',{filter:f.getAttribute('data-filter'),value:f.getAttribute('data-value')});
 if(el&&el.tagName!=='FORM'&&el.getAttribute('aria-pressed')!=='true'){var o=own(el),n=el.getAttribute('data-ev');
