@@ -97,8 +97,30 @@ COLOR = {t["name"]: t["value"] for t in TOKENS["color"]["tokens"]}
 
 
 def nice_date(iso):
-    d = date.fromisoformat(iso)
-    return f"{d.day} {d.strftime('%b %Y')}"
+    """US date (queue block 38, owner 14 Nov 2026): "Nov 13, 2026"."""
+    d = date.fromisoformat(str(iso)[:10])
+    return f"{d.strftime('%b')} {d.day}, {d.year}"
+
+
+# The one date helper for written dates (queue block 38, rule 11.8 changed 14 Nov 2026): every "13 Nov 2026" and
+# "22 April 2025" a page shows, also in text from the data or the database, becomes "Nov 13, 2026" and "April 22, 2025";
+# "23 and 24 July 2026" becomes "July 23 and 24, 2026". Month-only dates ("Oct 2026") and ISO dates stay as they are.
+_US_MONTH = r"(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|June?|July?|Aug(?:ust)?|Sept?(?:ember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)"
+_DAY_FIRST = re.compile(rf"\b(\d{{1,2}})((?: and | to |-|\u2013)\d{{1,2}})? ({_US_MONTH})(\.?) (\d{{4}})\b")
+
+
+def us_dates(text):
+    return _DAY_FIRST.sub(lambda m: f"{m[3]}{m[4]} {m[1]}{m[2] or ''}, {m[5]}", text)
+
+
+def us_dates_dist():
+    """Rewrites the built pages, the goal windows and the search index once, after everything is written."""
+    for f in [*DIST.rglob("*.html"), *(DIST / "windows").glob("*.json"), DIST / "search-index.json"]:
+        if f.exists():
+            t = f.read_text(encoding="utf-8")
+            u = us_dates(t)
+            if u != t:
+                f.write_text(u, encoding="utf-8")
 
 
 CHECKED = nice_date(DATA["checked"])
@@ -4745,7 +4767,7 @@ def pep_description(slug):
     """110 to 160 characters from the same facts: status, the price, the goal pages, the check date."""
     s, n = pep_status(slug), pep_short(slug)
     # the HHS policy's long note does not fit a description; its short form does (legal.hhs_policy.meta)
-    parts = [f'{n}{f" ({NAMES[slug][0]})" if NAMES.get(slug) else ""}: {s["label"]}, {HHS["meta"] if HHS and s["sentence"] in (HHS["note"], HHS["note_many"]) else s.get("meta") or s["sentence"]}.']
+    parts = [us_dates(f'{n}{f" ({NAMES[slug][0]})" if NAMES.get(slug) else ""}: {s["label"]}, {HHS["meta"] if HHS and s["sentence"] in (HHS["note"], HHS["note_many"]) else s.get("meta") or s["sentence"]}.')]
     low = pep_low_shop(slug)
     plan = pep_low_plan(slug) if pep_group(s) == "approved" else None
     if low:
@@ -4765,15 +4787,15 @@ def pep_description(slug):
         parts.append(f'Approved brand{"s" if len(brands) > 1 else ""}: {", ".join(brands[:3])}.')
     # too short for the 110-character rule (vardenafil, task 26, 9 Nov 2026: no goal page, no brand or generic plan): the clinic
     # table's own count line, a fact the page shows
-    if len(" ".join(parts + ["Checked 30 Sep 2026.", "We compare and never sell."])) < 110 and pep_plans(slug):
+    if len(" ".join(parts + ["Checked Sep 30, 2026.", "We compare and never sell."])) < 110 and pep_plans(slug):
         parts.append(f'{plural(len(pep_plans(slug)), "plan")} at the online clinics we track.')
     parts.append(f"Checked {nice_date(pep_checked(slug))}.")
     parts.append("We compare and never sell.")
     out = parts[0]
     for x in parts[1:]:
-        # the date is measured at its widest ("30 Sep 2026"), so a short date never adds the sentence
+        # the date is measured at its widest ("Sep 30, 2026"), so a short date never adds the sentence
         # and a long one never drops it: the words of the description stay the same from day to day
-        fit = len("Checked 30 Sep 2026.") if x.startswith("Checked ") else len(x)
+        fit = len("Checked Sep 30, 2026.") if x.startswith("Checked ") else len(x)
         if len(out) + 1 + fit <= 160:
             out += " " + x
     return out
@@ -6661,6 +6683,7 @@ def main():
                 (DIST / "windows" / f"{clinic_key(g, p)}.json").write_text(json.dumps({"html": clinic_window(g, p)}), encoding="utf-8")
     (DIST / "search-index.json").write_text(json.dumps(search_index(), ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
     write_sitemaps()
+    us_dates_dist()
     # every profile the site holds, so a seller that leaves the data later keeps its page (GONE, owner task 25)
     (DIST / "seller-archive.json").write_text(json.dumps({"sellers": {k: {kk: vv for kk, vv in v.items() if kk not in ("gone", "paid_url")}
                                                                       | {"archived_on": v.get("archived_on") or DATA_CHECKED[:10]}

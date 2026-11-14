@@ -236,6 +236,10 @@ ODOBRENO SEO - Karlo - 12. 11. 2026 - PR #187 (company behind the site: footer, 
 ODOBRENO SEO - Karlo - 13. 11. 2026 - PR #192 (header search: group headings Peptides, Goals, Sellers, Guides; spoken count; one-line statuses "Not approved: research use", "Goal page, N options", "Comparison", "Guide", "Site page", "Online clinic, X of Y checks"; titles, H1 and descriptions unchanged; owner in the terminal)
 ODOBRENO SEO - Karlo - 13. 11. 2026 - PR #195 (Home title and H1 "Best peptides in 2026, compared by goal", line under the H1, Where to buy peptides, 10 option names, label texts; typed in the terminal)
 / 31a26471ff59
+ODOBRENO SEO - Karlo - 14. 11. 2026 - PR #199 (US dates site-wide: 129 descriptions with the date format only, 4 with a new last sentence: epitalon, curex, happy-head, mangorx; 301 for /compare/finasteride-vs-minoxidil/ and /compare/bpc-157-vs-tb-500/; titles and H1 unchanged; owner in the terminal)
+/peptides/epitalon/ d2672b5cb0dd
+ODOBRENO SEO - Karlo - 14. 11. 2026 - PR #199 epitalon (new last sentence "Checked Nov 11, 2026."; typed in the w1 terminal)
+/peptides/epitalon/ d2672b5cb0dd
 ODOBRENO SEO - Karlo - 14. 11. 2026 - block 29 (Home description; /learn/fda-warning-letters-peptides/ title and description; /sellers/lost-coast-aminos/ description; typed in the terminal. The Lost Coast title waits: "legit" is allowed only in the seller H2)
 / 1154867ab37b
 /learn/fda-warning-letters-peptides/ 4a9487b57850

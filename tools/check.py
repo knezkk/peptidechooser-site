@@ -94,7 +94,7 @@ class Text(HTMLParser):
 PEP_SIGNALS = {"goal page": r'id="evidence"', "shop table": r'class="tbl (?:tbl-compact )?tbl-cards tbl-sold">.*?<tbody><tr>',
                "clinic plan": r'class="tbl (?:tbl-compact )?tbl-cards tbl-clinics">.*?<tbody><tr', "FDA letter": r'tbl-pep-letters">.*?<tbody><tr>',
                "guide": r'id="guides-h"', "approved brand": r"<li><span>Approved brands</span>"}
-AUTHOR_LINE = re.compile(r'<p class="small meta"><a href="/about/">Peptide Chooser editorial team</a>\. Checked \d{1,2} [A-Z][a-z]{2,8} \d{4}\.</p>')
+AUTHOR_LINE = re.compile(r'<p class="small meta"><a href="/about/">Peptide Chooser editorial team</a>\. Checked [A-Z][a-z]{2,8} \d{1,2}, \d{4}\.</p>')
 
 
 def page_path(name):
@@ -379,7 +379,7 @@ def paid_rule():
             {r["paid_url"]: r["seller_slug"] for r in profiles + (d.get("plans") or []) if r.get("paid_url")})
 
 
-CLOSED_CHIP = r'<a class="chip chip-ok chip-link" href="https://www\.fda\.gov/[^"]+" rel="nofollow">Closed by FDA \d{1,2} [A-Z][a-z]{2} \d{4}</a>'
+CLOSED_CHIP = r'<a class="chip chip-ok chip-link" href="https://www\.fda\.gov/[^"]+" rel="nofollow">Closed by FDA [A-Z][a-z]{2} \d{1,2}, \d{4}</a>'
 
 
 def paid_rule_errs(name, html, rule):
@@ -566,7 +566,7 @@ def check_parts(P):
             errs.append(f"sellers/{slug}/index.html: clinic page says 'we never link to the shop'")
     # The Legal pages line on a seller page (owner task 3 Nov 2026; pages/seller.md, Seller): only the five states' wordings, in
     # the Background check card (the fact alone) and in the legit list ("<state>: <fact>").
-    date = r"(?: \(\d{1,2} [A-Z][a-z]{2} \d{4}\))?"
+    date = r"(?: \([A-Z][a-z]{2} \d{1,2}, \d{4}\))?"
     could = rf"Could not check: the site (?:blocks our crawler|did not answer){date}\."
     missing = r"Missing: [a-z, ]+ page\."
     legal_ok = re.compile(rf"(?:Met: )?Terms, privacy and refund pages found\.|(?:Not met: )?{missing}|{could}"
@@ -720,7 +720,7 @@ def check_parts(P):
             card = re.search(r'<div class="board check-card".*?<ul class="check-chips">(.*?)</ul>', html, re.S)
             if not card or len(re.findall(r'class="chip chip-(?:ok|neutral) mark-(?:yes|no)"', card.group(1))) != want:
                 errs.append(f"{name}: Background check card without its {want} marks")
-            elif re.search(r"\d{1,2} [A-Z][a-z]{2} \d{4}", re.sub(r"<[^>]+>", " ", card.group(1))):
+            elif re.search(r"[A-Z][a-z]{2} \d{1,2}, \d{4}", re.sub(r"<[^>]+>", " ", card.group(1))):
                 errs.append(f"{name}: a date in the Background check card's check rows")
             if len(re.findall(r'class="chip chip-(?:ok|neutral) mark-(?:yes|no)"', main.group(1) if main else "")) != want:
                 errs.append(f"{name}: the check marks appear outside the card")
@@ -1745,8 +1745,8 @@ def check_arch_switch(P):
 
 
 def _parse_day(s):
-    """"8 Nov 2026" as a date."""
-    return datetime.strptime(" ".join(s.split()), "%d %b %Y").date()
+    """"Nov 8, 2026" as a date (US dates, queue block 38)."""
+    return datetime.strptime(" ".join(s.split()), "%b %d, %Y").date()
 
 
 def check_kept_sellers(P):
@@ -2067,7 +2067,18 @@ def check_goal_prices(P):
     return errs
 
 
-CHECKS = {"words": check_words, "seo": check_seo, "schema": check_schema, "parts": check_parts, "data": check_data, "book": check_book, "events": check_events, "logic": check_logic, "rules33": check_rules33, "addresses": check_addresses, "arch": check_arch, "arch-switch": check_arch_switch, "offers": check_offers, "kept-sellers": check_kept_sellers, "wave-b": check_wave_b, "paid-first": check_paid_first, "goal-prices": check_goal_prices, "paid-tab": check_paid_tab}
+def check_us_dates(P):
+    """Owner, queue block 38 (14 Nov 2026), rule 11.8: every written date is US style, "Nov 13, 2026". Fails any day-first
+    date ("13 Nov 2026", "22 April 2025") left on a built page, a goal window or in the search index."""
+    pat = re.compile(r"\b\d{1,2}(?: and \d{1,2})? (?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.? \d{4}\b")
+    files = [(n, (DIST / n).read_text(encoding="utf-8")) for n in P]
+    files += [(f"windows/{f.name}", f.read_text(encoding="utf-8")) for f in (DIST / "windows").glob("*.json")]
+    if (DIST / "search-index.json").exists():
+        files.append(("search-index.json", (DIST / "search-index.json").read_text(encoding="utf-8")))
+    return [f"{name}: day-first date {m.group()!r} (write it as Nov 13, 2026)" for name, html in files for m in pat.finditer(html)]
+
+
+CHECKS = {"words": check_words, "seo": check_seo, "schema": check_schema, "parts": check_parts, "data": check_data, "book": check_book, "events": check_events, "logic": check_logic, "rules33": check_rules33, "addresses": check_addresses, "arch": check_arch, "arch-switch": check_arch_switch, "offers": check_offers, "kept-sellers": check_kept_sellers, "wave-b": check_wave_b, "paid-first": check_paid_first, "goal-prices": check_goal_prices, "paid-tab": check_paid_tab, "us-dates": check_us_dates}
 
 # Plan names against their form (owner task w2, 3 Nov 2026): a clinic's own plan name can name another form than the
 # plan's `dosage_form` ("Ozempic Pill" for a pen). The site cannot change data, so this only warns, never fails, and the
