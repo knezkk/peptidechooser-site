@@ -333,7 +333,7 @@ def checked(b):
 
 def nice(iso):
     d = date.fromisoformat(iso[:10])
-    return f"{d.day} {d.strftime('%b %Y')}"
+    return f"{d.strftime('%b')} {d.day}, {d.year}"  # US date, as build.nice_date (queue block 38)
 
 
 def home_card():
