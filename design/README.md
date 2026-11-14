@@ -85,6 +85,7 @@ Every text pair is 6.4:1 or better (ink-2 on paper-2 7.2:1, clinic on paper 6.7:
 - **Reviewer line.** Until a named medical reviewer exists, the standfirst says "Every claim links to its source. Prices checked <date>." Add a named reviewer only when the person and credentials are real.
 - **Creators.** Only group A from the YouTube research (DeLauer, Williamson, Stillson MD). Group B needs a conflict-of-interest label; group X is never shown.
 - **Sources block.** Every peptide and clinic page ends with a numbered "Sources" list: FDA label, FDA policy page, court filing or study, each with the date it was current.
+- **Dates (rule 11.8, owner, 14 Nov 2026).** Dates are US style: Nov 13, 2026; Checked Nov 13, 2026; a range July 23 and 24, 2026. Month-only dates stay (Oct 2026); schema, sitemap lastmod and feeds stay ISO or RFC 822. build.py nice_date and us_dates write them; tools/check.py us-dates fails any day-first date. Dates in the book's own history notes are records, not samples, and stay as written.
 - **Notice bar on phones.** Keep only the first sentence; the "How we make money" link moves to the footer trust row.
 
 **Scores** (owner decision C9, 3 Nov 2026): a shop is checked on five facts and shows "N of 5"; an online clinic publishes no lab reports, is checked on four and shows "N of 4". A score is never compared across the two kinds (pages.md, Seller). Waits for ODOBRENO PRAVILA.
