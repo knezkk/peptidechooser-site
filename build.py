@@ -2487,7 +2487,11 @@ HOME_H1 = f"Best peptides in {SEO_YEAR}, compared by goal"
 # Under the H1 (owner's words, 13 Nov 2026): what the site does, then the live counts on their own line.
 HOME_LEDE = "Find the right peptide for your goal and where to buy it at the best price." + \
     (f"<br>{HERO_COUNTS.strip()}" if HERO_COUNTS else "")
-HOME_DESC = ("Find the right option for your goal and where to get it at the best price. Research-use peptides with "
+# Home's description (owner, ODOBRENO SEO - Karlo - 14. 11. 2026 - block 29): the counts and date from data, as in the hero;
+# without them the plain line stays.
+HOME_DESC = (f"Compare the best peptides by goal: FDA status and the lowest price at {_nc} online clinics and {_ns} shops, "
+             f"checked {PULLED}. We compare; we never sell." if _nc and _ns and PULLED else
+             "Find the right option for your goal and where to get it at the best price. Research-use peptides with "
              "their real status.")
 HOME = f"""
 <section class="hero hero-clinic">
@@ -3404,9 +3408,22 @@ def clinic_description(r):
     return next((t for t in tries if 150 <= len(t) <= 160), next((t for t in tries if len(t) <= 160), tries[-1]))
 
 
+# Shops whose description leads with what a searcher wants to verify (owner, ODOBRENO SEO - Karlo - 14. 11. 2026 - block 29:
+# Lost Coast Aminos first, ranked in the top 10 with no clicks; other shops keep the short-answer form until the owner decides).
+SHOP_DESC_CHECKS = {"lost-coast-aminos"}
+
+
 def seller_description(r):
     """Meta description: the short answer's first two sentences; a third, fourth... joins while the text is under the
     110 characters tools/check.py asks for and stays within 160."""
+    low = r.get("price_per_mg_min")
+    if (r["seller_slug"] in SHOP_DESC_CHECKS and r.get("product_count") and r.get("substance_count")
+            and low is not None and low >= 0.01):
+        d = (f"{seller_name(r)} sells {plural(r['product_count'], 'research-use peptide product')} across "
+             f"{plural(r['substance_count'], 'substance')}, from {per_mg(low)}/mg. See its lab reports, FDA letters and our "
+             "five background checks.")
+        if len(d) <= 160:
+            return d
     out = ""
     for s in short_answer(r):
         nxt = f"{out} {s}".strip()
