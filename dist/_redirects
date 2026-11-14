@@ -1,4 +1,5 @@
 # Server redirects on Cloudflare Pages (301), task 4C (site map rules, section 8).
+/compare/bpc-157-vs-tb-500/ /learn/bpc-157-vs-tb-500/ 301
 /compare/finasteride-vs-minoxidil/ /learn/finasteride-vs-minoxidil/ 301
 /learn/best-peptides-for-hair-growth/ /learn/peptides-for-hair-loss-what-works/ 301
 /learn/fda-warning-letters-peptides-2026/ /learn/fda-warning-letters-peptides/ 301
