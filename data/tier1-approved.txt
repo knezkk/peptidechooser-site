@@ -252,3 +252,5 @@ ODOBRENO SEO - Karlo - 14. 11. 2026 - Lost Coast title "reviews" (typed in the t
 ODOBRENO SEO - Karlo - 15. 11. 2026 - PR #200 Home (Home description with the counts and date of 15 Nov 2026; typed in the w1 terminal; NextGenPeps not approved, owner queue block 10: w2 checks its data)
 / f77356c24b29
 ODOBRENO SEO - Karlo - 15. 11. 2026 - NextGenPeps description (template wording with its new counts and price; typed in the terminal)
+ODOBRENO SEO - Karlo - 15. 11. 2026 - NextGenPeps real price ("It lists 63 products across 60 substances; prices from $0.063/mg."; price checked by w2 in PR #206; typed in the w1 terminal)
+/sellers/nextgenpeps-nextgenpeps-llc/ 02029e09dd5a
