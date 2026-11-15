@@ -4,6 +4,7 @@ Newest row first.
 
 | Date | Change | Approved |
 |---|---|---|
+| 15 Nov 2026 | Seller page H1: a long name wraps onto a second line instead of being cut with an ellipsis (seller.md; site.css `.seller-id h1`), so "Shed (formerly ShedRx) review" shows in full at 1440. | ODOBRENO DIZAJN - Karlo - 15. 11. 2026 - PR #205 (typed in the w1 terminal); owner queue block 10 |
 | 15 Nov 2026 | "legit" in seller titles: a /sellers/<slug>/ title may read "<Name> Reviews <year>: Is It Legit? ..." (name first; "Is <Name> legit?" at the start stays out). every-page.md ("legit", the exceptions), seller.md (title pattern); tools/check.py LEGIT_TITLE with test cases. No title uses it yet. | ODOBRENO PRAVILA - Karlo - 14. 11. 2026 - legit in seller titles (typed in the w3 terminal); owner queue block 9 |
 | 14 Nov 2026 | README, Content rules: rule 11.8, US dates (Nov 13, 2026; Checked Nov 13, 2026; ranges July 23 and 24, 2026; month-only, ISO and feed dates unchanged), as built in w2's PR #199. Date samples in pages/*.md were already `<date>` placeholders; the one written sample (goal.md, a source label) now reads "read Nov 4, 2026". History dates stay. Record only, no new look. | Built under ODOBRENO SEO - Karlo - 14. 11. 2026 - PR #199; owner queue block 8 |
 | 13 Nov 2026 | nav-parts.md, Filter toolbar: Home's Where to get it uses it too (tabs, search, Filters; Substance and Minimum checks in the panel), as built in w4's PR #193. Record only, no new look. | Built under ODOBRENO DIZAJN - Karlo - 13. 11. 2026 - PR #194, #193, #192 |
