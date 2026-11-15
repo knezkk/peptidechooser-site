@@ -240,6 +240,20 @@ ODOBRENO SEO - Karlo - 14. 11. 2026 - PR #199 (US dates site-wide: 129 descripti
 /peptides/epitalon/ d2672b5cb0dd
 ODOBRENO SEO - Karlo - 14. 11. 2026 - PR #199 epitalon (new last sentence "Checked Nov 11, 2026."; typed in the w1 terminal)
 /peptides/epitalon/ d2672b5cb0dd
+ODOBRENO SEO - Karlo - 14. 11. 2026 - block 29 (Home description; /learn/fda-warning-letters-peptides/ title and description; /sellers/lost-coast-aminos/ description; typed in the terminal. The Lost Coast title waits: "legit" is allowed only in the seller H2)
+/ 1154867ab37b
+/learn/fda-warning-letters-peptides/ 4a9487b57850
+/sellers/lost-coast-aminos/ d4ce097c8c4f
+/ f41d38b7b53d
+/ f77356c24b29
+/ b1824c584788
+ODOBRENO SEO - Karlo - 14. 11. 2026 - Lost Coast title "reviews" (typed in the terminal)
+/sellers/lost-coast-aminos/ 066bcf296ebe
+ODOBRENO SEO - Karlo - 15. 11. 2026 - PR #200 Home (Home description with the counts and date of 15 Nov 2026; typed in the w1 terminal; NextGenPeps not approved, owner queue block 10: w2 checks its data)
+/ f77356c24b29
+ODOBRENO SEO - Karlo - 15. 11. 2026 - NextGenPeps description (template wording with its new counts and price; typed in the terminal)
+ODOBRENO SEO - Karlo - 15. 11. 2026 - NextGenPeps real price ("It lists 63 products across 60 substances; prices from $0.063/mg."; price checked by w2 in PR #206; typed in the w1 terminal)
+/sellers/nextgenpeps-nextgenpeps-llc/ 02029e09dd5a
 ODOBRENO SEO - Karlo - 14. 11. 2026 - block 30 (titles "<Name> reviews 2026: is it legit? Prices and FDA checks" and descriptions on 9 affiliate clinic pages; WellMedr line "WellMedr now brands itself welludr."; typed in the terminal. Shed waits for w2 name change)
 /sellers/bmimd/ ae45b0c0d7f8
 /sellers/coreage-rx/ c1d19b73ff37
