@@ -264,3 +264,29 @@ ODOBRENO SEO - Karlo - 14. 11. 2026 - block 30 (titles "<Name> reviews 2026: is 
 /sellers/skinnyrx/ 63434b6291e8
 /sellers/wellmedr/ 0cdd1dc77233
 /sellers/wisp/ d3fd2b7b13ed
+ODOBRENO SEO - Karlo - 15. 11. 2026 - PR #203 (Shed (formerly ShedRx): /sellers/shedrx/ title "Shed (formerly ShedRx) review | Peptide Chooser", H1 and description; /compare/alan-meds-vs-shedrx/ title, H1, description; /out/shedrx/ title; owner in the terminal)
+ODOBRENO SEO - Karlo - 15. 11. 2026 - PR #203 (the same rename on the live compare pages with Shed, as the deploy builds them, and the seller page; owner in the terminal)
+/sellers/shedrx/ bffb5a576221
+/compare/alloy-vs-shedrx/ 49cebe58fc31
+/compare/direct-meds-vs-shedrx/ 43788ac8c88f
+/compare/fifty-410-vs-shedrx/ 7f9c10dc87ed
+/compare/measured-vs-shedrx/ dcb5e42b5017
+/compare/mochi-health-vs-shedrx/ 9855340a1d47
+/compare/shedrx-vs-zappy-health/ 2d2ec2543200
+/compare/shedrx-vs-zealthy/ 58e91d5850c4
+ODOBRENO SEO - Karlo - 15. 11. 2026 - PR #203 Shed on 8 pages (Shed (formerly ShedRx) on /sellers/shedrx/ and 7 compare pages, compare titles "prices and checks"; typed in the w1 terminal)
+/compare/alloy-vs-shedrx/ 49cebe58fc31
+/compare/direct-meds-vs-shedrx/ 43788ac8c88f
+/compare/fifty-410-vs-shedrx/ 7f9c10dc87ed
+/compare/measured-vs-shedrx/ dcb5e42b5017
+/compare/mochi-health-vs-shedrx/ 9855340a1d47
+/compare/shedrx-vs-zappy-health/ 2d2ec2543200
+/compare/shedrx-vs-zealthy/ 58e91d5850c4
+/sellers/shedrx/ bffb5a576221
+ODOBRENO SEO - Karlo - 15. 11. 2026 - PR #203 compare descriptions (owner's choice a: one "compounded" for both medicines when the description would pass 160 characters; typed in the w1 terminal)
+/compare/direct-meds-vs-shedrx/ bb961cc534ec
+/compare/fifty-410-vs-shedrx/ 98eabd928c14
+/compare/measured-vs-shedrx/ c0d9468c26df
+/compare/mochi-health-vs-shedrx/ ea540cc49a32
+/compare/shedrx-vs-zappy-health/ d1f6f352e37f
+/compare/shedrx-vs-zealthy/ 5325901ca098
