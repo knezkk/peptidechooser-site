@@ -3410,6 +3410,10 @@ RULE8 = json.loads((Path(__file__).parent / "data" / "rule8.json").read_text(enc
 def seller_title(r):
     """Title (Tier 1): the full pattern, shortened step by step to the 60 characters tools/check.py allows, always ending in
     "| Peptide Chooser" (owner queue block 5, round a, 7 Nov 2026): the middle words shorten, the brand stays."""
+    if r["seller_slug"] in REVIEW_DESC or r["seller_slug"] in REVIEW_TITLE_ONLY:
+        n = seller_name(r)
+        t = f"{n} reviews {SEO_YEAR}: is it legit? Prices and FDA checks"
+        return t if len(t) <= 60 else f"{n} reviews {SEO_YEAR}: is it legit?"
     kept = RULE8.get(f'/sellers/{r["seller_slug"]}/')
     if kept:
         return kept["title"]
@@ -3425,11 +3429,58 @@ def seller_title(r):
     return next((t for t in tries if len(t) <= 60), last)
 
 
+# Affiliate clinics people search as "<brand> reviews" and "is <brand> legit" (owner, ODOBRENO SEO - Karlo - 14. 11. 2026 -
+# block 30): the title "<Name> reviews <year>: is it legit? Prices and FDA checks" and the approved description per clinic.
+# Each description is fixed words with the facts filled in from data at build time; a missing fact or a text over 160
+# characters falls back to clinic_description. tools/check.py allows "legit" in these titles (w1 block 9).
+# Title only, no new description (ODOBRENO SEO - Karlo - 14. 11. 2026 - block 30: "Shed (formerly ShedRx) reviews 2026:
+# is it legit?" once the database carries the name, done in PR #203).
+REVIEW_TITLE_ONLY = {"shedrx"}
+REVIEW_DESC = {
+    "wellmedr": "{name} (now branded welludr.) prescribes {subs} online. {letter}; {checks} of our checks met. See its plans and every check.",
+    "direct-meds": "{name} prescribes {subs} online: {plans}. {letter}. See the plans and our {out} checks.",
+    "coreage-rx": "{name} prescribes {subs} online: {plans}. {letter}; {checks} of our checks met. See every plan and check.",
+    "embody": "{name} prescribes {subs} online: {plans}. {letter}; {checks} of our checks met. See the plans and checks.",
+    "wisp": "{name} prescribes {subs} online: {plans}. {letter}; {checks} of our checks met. See the plan, the care fee and every check.",
+    "bmimd": "{name} prescribes {subs} online: {plans}. {letter}; {checks} of our checks met. See every plan and what we could not check.",
+    "curex": "{name} prescribes {subs} online: {plans}, {care}. {letter}; {checks} of our checks met. See the details.",
+    "peter-md": "{name} prescribes {subs} online: {plans}. {letter}; {checks} of our checks met. See every plan and what we could not check.",
+    "skinnyrx": "{name} prescribes {subs} online: {plans}, {care}. {letter}; {checks} of our checks met.",
+}
+# The clinic's own new brand, said once in its short answer (owner, block 30); the page keeps the name people search.
+BRAND_NOW = {"wellmedr": "WellMedr now brands itself welludr."}
+
+
+def review_description(r):
+    t = REVIEW_DESC.get(r["seller_slug"])
+    plans = clinic_plan_rows(r)
+    if not t or not plans or not r.get("score_checked_on") or r.get("fda_letter_count") is None:
+        return None
+    subs = sorted({sub_label(p["substance_slug"]).lower() for p in plans if p["substance_slug"]})
+    if not subs:
+        return None
+    n = r["fda_letter_count"]
+    fee = plans[0].get("membership_fee_monthly")
+    d = t.format(
+        name=seller_name(r),
+        subs=and_list(subs) if len(subs) <= 2 else f"{len(subs)} medicines",
+        plans=(f"1 plan at {usd(plans[0]['price_monthly'])}/mo" if len(plans) == 1
+               else f"{len(plans)} plans from {usd(plans[0]['price_monthly'])}/mo"),
+        care="care fee not known" if fee is None else "no care fee" if float(fee) == 0 else f"{usd(fee)}/mo care included",
+        letter=("No FDA warning letter" if not n else f"1 FDA warning letter ({nice_date(newest_letter(r))})" if n == 1
+                else f"{n} FDA warning letters (newest {nice_date(newest_letter(r))})"),
+        checks=f"{score_of(r)} of {out_of(r)}", out=out_of(r))
+    return d if len(d) <= 160 else None
+
+
 def clinic_description(r):
     """Clinic meta description (owner task 2 Nov 2026: 150 to 160 characters), from data. Facts in a fixed order (the
     clinic and every medicine it prescribes, the lowest monthly price with its care fee, the FDA letters, the check date,
     the tracking date); the first version from 150 to 160 characters wins, trying the clinic's short name and "N medicines"
     before dropping facts from the end. Never a partial list of medicines."""
+    rd = review_description(r)
+    if rd:
+        return rd
     plans, base = clinic_plan_rows(r), seller_base(seller_name(r))
     subs = sorted({sub_label(p["substance_slug"]) for p in plans if p["substance_slug"]}, key=str.lower)
     n = r.get("fda_letter_count") or 0
@@ -3728,6 +3779,8 @@ def clinic_answer(r):
         out.append(f"Company named in an FDA letter: {clean(r['entity_name'])}.")
     else:
         out.append("No registered company found.")
+    if BRAND_NOW.get(r["seller_slug"]):
+        out.append(BRAND_NOW[r["seller_slug"]])
     return out
 
 
