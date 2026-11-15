@@ -6470,7 +6470,10 @@ def cmp_clinic_page(a, b, subs):
                     "Prices are the clinics' published monthly prices. Checks are facts we hold about the clinic, not a safety or quality grade.",
                     verdict, nxt)
     what = " and ".join(f"compounded {s}" for s in subs)
-    desc = cmp_fit([f"{na} vs {nb} for {what}: monthly price, care fee, FDA warning letters and four background checks.",
+    first = f"{na} vs {nb} for {what}: monthly price, care fee, FDA warning letters and four background checks."
+    if len(first) > 160:  # a long clinic name ("Shed (formerly ShedRx)", queue block 39): "compounded" once
+        first = f"{na} vs {nb} for compounded {' and '.join(subs)}: monthly price, care fee, FDA warning letters and four background checks."
+    desc = cmp_fit([first,
                     answer[-1], f"Checked {nice_date(checked)}."])
     if len(desc) < 110:
         desc = cmp_fit([desc, "We compare and never sell."])
