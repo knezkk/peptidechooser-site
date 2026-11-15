@@ -310,7 +310,7 @@ html:not(.motion) .fig3d-layer { transition: none; }
 .seller-similar li { padding: 4px 0; color: var(--ink-2); }
 @media (min-width: 900px) {
   .seller-head { grid-template-columns: minmax(0, 1fr) auto; align-items: start; }
-  .seller-id h1 { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .seller-id h1 { overflow-wrap: anywhere; text-wrap: balance; }
   .seller-score { justify-content: flex-end; }
   .seller-body { grid-template-columns: minmax(0, 8fr) minmax(0, 4fr); gap: var(--space-6); align-items: start; }
   .seller-side { display: block; position: sticky; top: var(--space-5); }
