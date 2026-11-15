@@ -264,3 +264,12 @@ ODOBRENO SEO - Karlo - 15. 11. 2026 - PR #203 (the same rename on the live compa
 /compare/mochi-health-vs-shedrx/ 9855340a1d47
 /compare/shedrx-vs-zappy-health/ 2d2ec2543200
 /compare/shedrx-vs-zealthy/ 58e91d5850c4
+ODOBRENO SEO - Karlo - 15. 11. 2026 - PR #203 Shed on 8 pages (Shed (formerly ShedRx) on /sellers/shedrx/ and 7 compare pages, compare titles "prices and checks"; typed in the w1 terminal)
+/compare/alloy-vs-shedrx/ 49cebe58fc31
+/compare/direct-meds-vs-shedrx/ 43788ac8c88f
+/compare/fifty-410-vs-shedrx/ 7f9c10dc87ed
+/compare/measured-vs-shedrx/ dcb5e42b5017
+/compare/mochi-health-vs-shedrx/ 9855340a1d47
+/compare/shedrx-vs-zappy-health/ 2d2ec2543200
+/compare/shedrx-vs-zealthy/ 58e91d5850c4
+/sellers/shedrx/ bffb5a576221
