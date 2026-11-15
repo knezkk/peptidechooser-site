@@ -29,6 +29,28 @@ AUTHOR = "Peptide Chooser editorial team"
 
 # SITE_JSON points at another data file (a local preview with database rows); the deploy always reads data/site.json.
 DATA = json.loads(Path(os.environ.get("SITE_JSON") or ROOT / "data" / "site.json").read_text(encoding="utf-8"))
+# A seller's display name from data/seller_names.json (queue block 39): set on every row that carries its slug, so pages,
+# windows, the search index and the paid links all read the same name; the slug stays.
+SELLER_NAMES = ({k: v["name"] for k, v in json.loads((ROOT / "data" / "seller_names.json").read_text(encoding="utf-8"))["sellers"].items()}
+                if (ROOT / "data" / "seller_names.json").exists() else {})
+
+
+SELLER_DB_NAMES = {}  # the database name of a renamed seller, for addresses built from a name (compare pages)
+
+
+def _rename_sellers(x):
+    if isinstance(x, dict):
+        if x.get("seller_slug") in SELLER_NAMES and "seller_name" in x:
+            SELLER_DB_NAMES.setdefault(x["seller_slug"], x["seller_name"])
+            x["seller_name"] = SELLER_NAMES[x["seller_slug"]]
+        for v in x.values():
+            _rename_sellers(v)
+    elif isinstance(x, list):
+        for v in x:
+            _rename_sellers(v)
+
+
+_rename_sellers(DATA)
 # Draft pages (owner queue block 14, wave B, 8 Nov 2026): goals, legal rows and their sources in data/drafts.json join the
 # data only when PC_DRAFTS=1, so a merge publishes nothing; going live moves an entry into site.json after ODOBRENO SEO.
 if os.environ.get("PC_DRAFTS") and (ROOT / "data" / "drafts.json").exists():
@@ -780,7 +802,8 @@ GOAL_PLANS = {g["slug"]: cheapest_plan(g) for g in ALL_GOALS}
 GOAL_PLANS = {k: v for k, v in GOAL_PLANS.items() if v}
 _n0 = len(LEGAL["sources"]) + len(LIVE_GOALS) + len(OPT_SOURCES)
 PLAN_REF = {slug: _n0 + i + 1 for i, slug in enumerate(GOAL_PLANS)}
-seller_base = lambda name: re.sub(r"\s*\(.*\)", "", name).strip()  # "Strut Health (Strut Health, LLC)" -> "Strut Health"
+# "Strut Health (Strut Health, LLC)" -> "Strut Health"; "Shed (formerly ShedRx)" stays (queue block 39)
+seller_base = lambda name: re.sub(r"\s*\((?!formerly )[^)]*\)", "", name).strip()
 SOURCES_HOME += "".join(f'<li id="src-plan-{slug}">{seller_base(r["seller_name"])}, {r["plan_name"]}, {nice_date(r["last_seen"])}: '
                         f'<a href="{r["pricing_url"]}" rel="nofollow">{r["pricing_url"]}</a></li>' for slug, r in GOAL_PLANS.items())
 
@@ -5884,6 +5907,12 @@ def cmp_clinic_name(slug):
     return seller_base(PROFILES[slug]["seller_name"])
 
 
+def cmp_url_name(slug):
+    """A clinic's part of a compare address: from its database name, so a new display name (data/seller_names.json)
+    never moves a live page (site map rules 3.2)."""
+    return cmp_slugify(seller_base(SELLER_DB_NAMES.get(slug) or PROFILES[slug]["seller_name"]))
+
+
 # The sitemap index (site map rules 4.4; owner task 23, 8 Nov 2026): sitemap.xml points to one file per page type, and each
 # URL carries the date its visible content last changed. dist/lastmod.json keeps each page's visible-text fingerprint and
 # that date; the deploy fetches the live copy into LIVE_LASTMOD (tools/live_sitemap.py), so an unchanged page keeps its
@@ -5973,7 +6002,7 @@ def cmp_clinic_pairs():
     out = {}
     for sub in CMP_CLINIC_SUBS:
         clinics = sorted({r["seller_slug"] for r in PLANS if r["seller_slug"] in CLINIC_PROFILES and cmp_clinic_plan(r["seller_slug"], sub)},
-                         key=lambda x: cmp_slugify(cmp_clinic_name(x)))
+                         key=cmp_url_name)
         for i, a in enumerate(clinics):
             for b in clinics[i + 1:]:
                 out.setdefault((a, b), []).append(sub)
@@ -5986,7 +6015,7 @@ def cmp_clinic_pairs():
 
 
 def cmp_path(a, b, clinic=False):
-    name = (lambda x: cmp_slugify(cmp_clinic_name(x))) if clinic else (lambda x: x)
+    name = cmp_url_name if clinic else (lambda x: x)
     return f"/compare/{name(a)}-vs-{name(b)}/"
 
 
@@ -6441,7 +6470,10 @@ def cmp_clinic_page(a, b, subs):
                     "Prices are the clinics' published monthly prices. Checks are facts we hold about the clinic, not a safety or quality grade.",
                     verdict, nxt)
     what = " and ".join(f"compounded {s}" for s in subs)
-    desc = cmp_fit([f"{na} vs {nb} for {what}: monthly price, care fee, FDA warning letters and four background checks.",
+    first = f"{na} vs {nb} for {what}: monthly price, care fee, FDA warning letters and four background checks."
+    if len(first) > 160:  # a long clinic name ("Shed (formerly ShedRx)", queue block 39): "compounded" once
+        first = f"{na} vs {nb} for compounded {' and '.join(subs)}: monthly price, care fee, FDA warning letters and four background checks."
+    desc = cmp_fit([first,
                     answer[-1], f"Checked {nice_date(checked)}."])
     if len(desc) < 110:
         desc = cmp_fit([desc, "We compare and never sell."])
