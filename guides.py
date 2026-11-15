@@ -2940,10 +2940,32 @@ def learn_body(b, mins, start):
 """
 
 
+def letters_meta(b):
+    """The letters guide's title and description from the same data its short answer uses (owner, ODOBRENO SEO - Karlo -
+    14. 11. 2026 - block 29): this year's letter count and the three substances named most. None until the data has
+    this year's letters, and then the guide keeps its plain title and description."""
+    f = facts(b)
+    year = (f["letters_on"] or b.DATA_CHECKED)[:4]
+    n = sum((r.get("letter_date") or "").startswith(year) for r in b.LETTERS_ALL)
+    subs = Counter({s: sum((x.get("letter_date") or "").startswith(year) for x in v) for s, v in b.LETTER_SUBS.items()})
+    top = [s for s, c in subs.most_common() if c][:3]
+    if not n or len(top) < 3:
+        return None
+    low = lambda x: x if any(ch.isdigit() or ch == "+" for ch in x) or x.isupper() else x.lower()
+    names = ", ".join(low(b.pep_short(s)) for s in top)
+    return (f"FDA warning letters to peptide sellers in {year}: all {n}",
+            f"The {n} FDA warning letters to peptide sellers and online clinics in {year}, by month and substance ({names}), "
+            "and what each asks.")
+
+
 def pages(b):
     """/learn/ and the guides as build.py PAGES rows: (path, file, title, description, body, schema, crumb). The guides
     are built first: /learn/ needs their read times and "Start here", the three guides the most other pages link to
     (pages already built and the guides themselves, a page counted once per guide)."""
+    lm = letters_meta(b)
+    if lm:
+        g = next(g for g in GUIDES if g["slug"] == "fda-warning-letters-peptides")
+        g["title"], g["desc"] = lm
     out = []
     for g in GUIDES:
         path = f"/learn/{g['slug']}/"

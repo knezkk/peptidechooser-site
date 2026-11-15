@@ -121,14 +121,23 @@ LEGIT_CLOSE_CLINIC = ("These are the facts we hold; we do not call any seller le
 LEGIT_CLOSE_PAID = "These are the facts we hold; we do not call any seller legit or safe."
 
 
-def legit_allowed(name, text, h2s):
-    """`text` with the allowed "legit" uses removed: only on a seller page, only the H2s that match exactly, and the
-    closing sentence."""
+# The title exception (ODOBRENO PRAVILA - Karlo - 14. 11. 2026 - legit in seller titles; owner queue block 9): a
+# /sellers/<slug>/ page's <title> may read "<Name> Reviews <year>: Is It Legit? ...", the name first (check-parts keeps
+# "title starts with the seller's name", so "Is <Name> legit? ..." at the start still fails).
+LEGIT_TITLE = re.compile(r"[^\s:<>][^:<>]{0,79} Reviews 20\d\d: (Is It Legit\?)", re.I)
+
+
+def legit_allowed(name, text, h2s, title=""):
+    """`text` with the allowed "legit" uses removed: only on a seller page, only the H2s that match exactly, the
+    closing sentence, and the "Is It Legit?" of a title in the allowed pattern."""
     if not (name.startswith("sellers/") and name != "sellers/index.html"):
         return text
     for h in h2s:
         if LEGIT_H2.fullmatch(h.strip()):
             text = text.replace(h.strip(), " ")
+    m = LEGIT_TITLE.match(title.strip())
+    if m:
+        text = text.replace(title.strip(), title.strip()[:m.start(1)] + " " + title.strip()[m.end(1):], 1)
     return text.replace(LEGIT_CLOSE, " ").replace(LEGIT_CLOSE_CLINIC, " ").replace(LEGIT_CLOSE_PAID, " ")
 
 
@@ -137,6 +146,16 @@ def legit_cases():
     errs = []
     bad = lambda name, text, h2s: bool(re.search(r"\blegit\b", legit_allowed(name, text, h2s), re.I))
     h = "Is Iron Aminos legit? What we can check"
+    t = "WellMedr Reviews 2026: Is It Legit? Prices & FDA Checks"
+    bad_t = lambda name, title: bool(re.search(r"\blegit\b", legit_allowed(name, f"{title} Met: 4 checks.", [], title), re.I))
+    for name, title, want in (
+            ("sellers/wellmedr/index.html", t, False),                                             # the allowed title
+            ("sellers/wellmedr/index.html", "Is WellMedr legit? Prices & FDA Checks", True),       # "Is <Name> legit?" first
+            ("sellers/wellmedr/index.html", "WellMedr is legit: Prices & FDA Checks", True),       # a claim in the title
+            ("hair/index.html", t, True),                                                          # off a seller page
+            ("sellers/index.html", t, True)):                                                      # the sellers index
+        if bad_t(name, title) != want:
+            errs.append(f"legit title exception test failed: {name}: {title!r}")
     for name, text, h2s, want in (
             ("sellers/iron-aminos/index.html", f"{h} Met: 192 lab reports.", [h], False),       # the H2 on a seller page
             ("sellers/iron-aminos/index.html", f"x {LEGIT_CLOSE}", [], False),                  # the closing sentence
@@ -152,7 +171,7 @@ def legit_cases():
 def check_words(P):
     errs = legit_cases()
     for name, p in P.items():
-        text = legit_allowed(name, " ".join(p.parts), [t for tag, t in p.h if tag == "h2"])
+        text = legit_allowed(name, " ".join(p.parts), [t for tag, t in p.h if tag == "h2"], p.title)
         for pat in BANNED_WORDS:
             for m in re.finditer(pat, text, re.I):
                 errs.append(f"{name}: banned word '{m.group(0)}'")
