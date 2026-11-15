@@ -1,0 +1,11 @@
+{
+  "rule": "A seller's display name when it differs from the name in the database (queue block 39, owner 15 Nov 2026). build.py puts it on every row of that seller after the data loads; the slug never changes (site map rules, 3.2). A name with \"(formerly X)\" keeps its brackets; other brackets (legal names) are still dropped.",
+  "sellers": {
+    "shedrx": {
+      "name": "Shed (formerly ShedRx)",
+      "source_url": "https://tryshed.com/",
+      "checked": "2026-11-14",
+      "note": "shedrx.com answers 302 to tryshed.com; the site title reads \"Shed | Online GLP-1 Weight Loss, Vitality, and Wellness\"."
+    }
+  }
+}
