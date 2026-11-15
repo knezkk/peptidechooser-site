@@ -37,7 +37,7 @@ JSON-LD in build.py on every page: Organization (name, url, logo) and WebSite on
 
 ## Rules that apply to every page
 
-- **"legit", one exception** (owner decision 2 Nov 2026; for the rulebook with ODOBRENO PRAVILA): "legit" stays banned as a claim; the only allowed place is a seller page's H2 "Is <Name> legit? What we can check", in question form, and the fixed closing sentence under it. `tools/check.py` fails the word anywhere else and tests both cases on every run.
+- **"legit", the exceptions** (owner decision 2 Nov 2026; title: ODOBRENO PRAVILA - Karlo - 14. 11. 2026 - legit in seller titles): banned as a claim, except on a seller page: the H2 "Is <Name> legit? What we can check", its closing sentence, and the title "<Name> Reviews <year>: Is It Legit? ..." (seller.md). `tools/check.py` tests each case.
 
 - **Shops and clinics are not mixed** (owner task 2 Nov 2026; peptide-data decision 26): a shop lists products (`product_count > 0`), an online clinic only plans (`product_count` 0). Every list of shops takes shops only: the "Prices at N shops" windows and their counts, Home's "Sellers we track" ("shops"), the shop table and counts on /sellers/, the seller list on /compare/ (clinics are there as plans), the guide counts ("shops we check"). In search a clinic is its own type, chip "Clinic", leading to its page. `tools/check.py` fails a build with a clinic inside a price window.
 
