@@ -254,6 +254,17 @@ ODOBRENO SEO - Karlo - 15. 11. 2026 - PR #200 Home (Home description with the co
 ODOBRENO SEO - Karlo - 15. 11. 2026 - NextGenPeps description (template wording with its new counts and price; typed in the terminal)
 ODOBRENO SEO - Karlo - 15. 11. 2026 - NextGenPeps real price ("It lists 63 products across 60 substances; prices from $0.063/mg."; price checked by w2 in PR #206; typed in the w1 terminal)
 /sellers/nextgenpeps-nextgenpeps-llc/ 02029e09dd5a
+ODOBRENO SEO - Karlo - 14. 11. 2026 - block 30 (titles "<Name> reviews 2026: is it legit? Prices and FDA checks" and descriptions on 9 affiliate clinic pages; WellMedr line "WellMedr now brands itself welludr."; typed in the terminal. Shed waits for w2 name change)
+/sellers/bmimd/ ae45b0c0d7f8
+/sellers/coreage-rx/ c1d19b73ff37
+/sellers/curex/ 18fa8aa1eff8
+/sellers/direct-meds/ 6aa2284138c5
+/sellers/embody/ afc4dc5d6d75
+/sellers/peter-md/ 1b0398f4d96f
+/sellers/skinnyrx/ 63434b6291e8
+/sellers/wellmedr/ 0cdd1dc77233
+/sellers/wisp/ d3fd2b7b13ed
+/sellers/shedrx/ 4c7457f168e6
 ODOBRENO SEO - Karlo - 15. 11. 2026 - PR #203 (Shed (formerly ShedRx): /sellers/shedrx/ title "Shed (formerly ShedRx) review | Peptide Chooser", H1 and description; /compare/alan-meds-vs-shedrx/ title, H1, description; /out/shedrx/ title; owner in the terminal)
 ODOBRENO SEO - Karlo - 15. 11. 2026 - PR #203 (the same rename on the live compare pages with Shed, as the deploy builds them, and the seller page; owner in the terminal)
 /sellers/shedrx/ bffb5a576221
