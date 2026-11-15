@@ -291,3 +291,7 @@ ODOBRENO SEO - Karlo - 15. 11. 2026 - PR #203 compare descriptions (owner's choi
 /compare/mochi-health-vs-shedrx/ ea540cc49a32
 /compare/shedrx-vs-zappy-health/ d1f6f352e37f
 /compare/shedrx-vs-zealthy/ 5325901ca098
+ODOBRENO SEO - Karlo - 15. 11. 2026 - PR #206 (NextGenPeps description with "prices from $0.063/mg", option a: the price is real; Step One Ventures "prices from $0.02/mg" under the new price rule; owner in the terminal)
+/sellers/nextgenpeps-nextgenpeps-llc/ 02029e09dd5a
+/sellers/nextgenpeps-nextgenpeps-llc/ 8f829e2e7bce
+/sellers/step-one-ventures/ 917b41c64410

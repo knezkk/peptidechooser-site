@@ -36,10 +36,13 @@ class Numbers(unittest.TestCase):
                                   "Zealthy is an online clinic. 2 plans from $151/mo, plus $135/mo care. 3 FDA warning letters, the newest 8 Jun 2026."))
 
     def test_count_with_its_plural(self):
-        self.assertTrue(self.same("1 plan from $158/mo. 1 FDA warning letter.", "6 plans from $70/mo. 2 FDA warning letters."))
+        self.assertTrue(self.same("1 plan from $158/mo. 1 FDA warning letter.", "6 plans from $158/mo. 2 FDA warning letters."))
+        # a changed price stops (ODOBRENO PRAVILA - Karlo - 15. 11. 2026 - guard numbers, PR #206)
+        self.assertFalse(self.same("1 plan from $158/mo. 1 FDA warning letter.", "6 plans from $70/mo. 2 FDA warning letters."))
 
     def test_date_and_price(self):
-        self.assertTrue(self.same("Checked 19 Oct 2026. From $0.13/mg.", "Checked 5 Nov 2026. From $1,299.50/mg."))
+        self.assertTrue(self.same("Checked 19 Oct 2026. From $0.13/mg.", "Checked 5 Nov 2026. From $0.13/mg."))
+        self.assertFalse(self.same("Checked 19 Oct 2026. From $0.13/mg.", "Checked 5 Nov 2026. From $1,299.50/mg."))
 
     def test_words_stop(self):
         self.assertFalse(self.same("Not approved. Checked 19 Oct 2026.", "FDA approved. Checked 19 Oct 2026."))

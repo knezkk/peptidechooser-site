@@ -3,7 +3,12 @@
 
 Run in the deploy after the last build: every built page's <title>, meta description and first H1 against the same page on
 the live site. Words stop the deploy; numbers and data-born pages pass and are listed (owner answer, 5 Nov 2026):
-- a page that differs only in digits, dates, prices or counts (the same words with other numbers) passes;
+- a page that differs only in counts or dates (the same words with other counts or dates) passes; a changed price stops
+  (owner queue block 40, 15 Nov 2026, ODOBRENO PRAVILA - guard numbers);
+- an approved text also covers the same words with other counts or dates: the approval line's hash is taken with the counts
+  and dates blanked (an exact hash from before still counts for its exact text);
+- a shop page's meta description passes by rule when both texts are made only of the build's fixed shop sentences (build.py,
+  short_answer) for the same shop and differ only in counts and dates; its prices must stay the same;
 - a new page under /sellers/, /compare/ or /peptides/ passes when its title and H1 are ones a live page of that section already
   has and every sentence of its description is one a live page of that section already uses, names, numbers and substances aside;
 - a page that left the build passes when its URL is now a redirect to a page that is built;
@@ -172,14 +177,23 @@ def approvals():
     return ok
 
 
-def numbers_masked(text):
-    text = PRICE.sub("<price>", DATE.sub("<date>", text))
+def numbers_masked(text, prices=True):
+    """Dates, counts and (unless prices=False) prices blanked; with prices=False a price stays as it is written."""
+    text = DATE.sub("<date>", text)
+    # a kept price is written as one word ("<price_9_80>"), so the count blanking below does not touch its digits
+    text = PRICE.sub("<price>", text) if prices else PRICE.sub(lambda m: "<price" + re.sub(r"\W", "_", m.group()[1:]).join("_>"), text)
     return PLURAL.sub(r"\1", COUNT.sub("<n>", text))
 
 
 def only_numbers(old, new):
-    """The same words with other numbers."""
-    return all(numbers_masked(old[k]) == numbers_masked(new[k]) for k in FIELDS)
+    """The same words with other counts or dates; the same prices (owner queue block 40, 15 Nov 2026)."""
+    return all(numbers_masked(old[k], prices=False) == numbers_masked(new[k], prices=False) for k in FIELDS)
+
+
+def shape_stamp(page):
+    """The approval hash of a text with its counts and dates blanked: an approval covers the same words with other counts or
+    dates, never another price (owner queue block 40)."""
+    return stamp({k: numbers_masked(page[k], prices=False) for k in FIELDS})
 
 
 # The seller description's fixed sentences (build.py, clinic_description), in the order the build writes them. Each holds data
@@ -193,6 +207,47 @@ DESCRIPTION_TEMPLATE = (
     ("checks", re.compile(rf"\d+ of \d+ checks met(?: on {_D})?\.")),
     ("since", re.compile(rf"Tracked since {_D}\.")),
 )
+
+
+# The shop description's fixed sentences (build.py, short_answer and LEGIT_TAIL), in order. A shop's slots are counts and
+# dates only (owner queue block 40): the prices in the text must be the same in the live and the built description.
+SHOP_TEMPLATE = (
+    ("shop", re.compile(r"(?P<name>.+?) is a (?:research-use peptide shop|supplement and cosmetics shop|pharmacy|seller)(?: in [A-Z][\w ,]+)?\.")),
+    ("lists", re.compile(r"It lists \d+ products? across \d+ substances?(?:; prices from \$[\d,.]+/mg)?\.")),
+    ("labs", re.compile(rf"(?:Lab reports: \d+, the newest dated {_D}|No lab reports found in the last 12 months)\.")),
+    ("letters", re.compile(rf"(?:No FDA warning letter|\d+ FDA warning letters?, the newest on {_D})\.")),
+    ("company", re.compile(r"(?:Registered company: [^.]+|Company named in an FDA letter: [^.]+|No registered company found)\.")),
+    ("legit", re.compile(r"Is it legit\?")),
+    ("checks", re.compile(r"See the five checks\.")),
+)
+
+
+def template_slots(text, template, first):
+    """(name, the template's sentence kinds in order) when every sentence is one of the template's; else None."""
+    kinds, name, at = [], None, 0
+    for sentence in re.findall(r".+?[.?](?=\s+[A-Z0-9]|$)", text):
+        sentence = sentence.strip()
+        for i, (kind, pat) in enumerate(template[at:], at):
+            m = pat.fullmatch(sentence)
+            if m:
+                if kind == first:
+                    name = m.group("name")
+                kinds.append(kind)
+                at = i + 1
+                break
+        else:
+            return None
+    return (name, kinds) if kinds and kinds[0] == first else None
+
+
+def shop_description(path, old, new):
+    """A shop page whose description changed only in counts and dates of the fixed shop sentences (a later sentence may
+    come or go with the 160-character fit), its prices the same, title and H1 the same words."""
+    if section_of(path)[0] != "sellers" or not all(numbers_masked(old[k], prices=False) == numbers_masked(new[k], prices=False)
+                                                   for k in ("title", "h1")):
+        return False
+    a, b = template_slots(old["description"], SHOP_TEMPLATE, "shop"), template_slots(new["description"], SHOP_TEMPLATE, "shop")
+    return bool(a and b and a[0] == b[0] and PRICE.findall(old["description"]) == PRICE.findall(new["description"]))
 
 
 def description_slots(text):
@@ -358,14 +413,16 @@ def main():
             passes = "follows its section's template" if follows_template(path, page, live, facts) else None
             changes.append((path, "new page", GONE, page, passes))
         else:
-            why = "numbers only" if only_numbers(old, page) else "data slots of the seller description" if data_description(path, old, page) else None
+            why = ("counts or dates only" if only_numbers(old, page) else "data slots of the seller description" if data_description(path, old, page)
+                   else "counts and dates of the shop description" if shop_description(path, old, page) else None)
             changes.append((path, "changed", old, page, why))
     for path in gone:
         old = live_page(path)[1]
         target = redirect_target(path)
         passes = f"redirects to {target}" if target in pages else None
         changes.append((path, "left the build", old if isinstance(old, dict) else GONE, GONE, passes))
-    state = {c[0]: f"passes, {c[4]}" if c[4] else "approved" if (c[0], stamp(c[3])) in ok else "NOT APPROVED" for c in changes}
+    state = {c[0]: f"passes, {c[4]}" if c[4] else "approved" if {(c[0], stamp(c[3])), (c[0], shape_stamp(c[3]))} & ok else "NOT APPROVED"
+             for c in changes}
     open_ = [c for c in changes if state[c[0]] == "NOT APPROVED"]
     passed = sum(1 for c in changes if c[4])
 
@@ -379,7 +436,7 @@ def main():
     if open_:
         report.append("\nTo approve after the owner's phrase, put these lines under it, in the commit message or in data/tier1-approved.txt:")
         report.append("ODOBRENO SEO - Karlo - <date>")
-        report += [f"{path} {stamp(new)}" for path, _, _, new, _ in open_]
+        report += [f"{path} {shape_stamp(new)}" for path, _, _, new, _ in open_]
     if unread:
         report.append(f"\nCould not read {len(unread)} live page(s), so the guard cannot say what changed: " + ", ".join(unread[:20]))
     if paths is None:
