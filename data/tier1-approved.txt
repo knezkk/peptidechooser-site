@@ -249,7 +249,6 @@ ODOBRENO SEO - Karlo - 14. 11. 2026 - block 29 (Home description; /learn/fda-war
 / b1824c584788
 ODOBRENO SEO - Karlo - 14. 11. 2026 - Lost Coast title "reviews" (typed in the terminal)
 /sellers/lost-coast-aminos/ 066bcf296ebe
-ODOBRENO SEO - Karlo - 15. 11. 2026 - PR #200 Home and NextGenPeps (Home description with the counts and date of 15 Nov 2026; NextGenPeps description with "; prices from"; typed in the w1 terminal)
+ODOBRENO SEO - Karlo - 15. 11. 2026 - PR #200 Home (Home description with the counts and date of 15 Nov 2026; typed in the w1 terminal; NextGenPeps not approved, owner queue block 10: w2 checks its data)
 / f77356c24b29
 ODOBRENO SEO - Karlo - 15. 11. 2026 - NextGenPeps description (template wording with its new counts and price; typed in the terminal)
-/sellers/nextgenpeps-nextgenpeps-llc/ 02029e09dd5a
