@@ -170,6 +170,15 @@ GROUPS = [
      "h1": "Peptide injections: which are approved, and which are not.",
      "desc": "Which peptide injections are FDA approved, which a pharmacy may make on prescription, and why research-use vials are not for use in people.",
      "line": "Injectable peptides: what is approved, what a pharmacy makes, and what is research use only."},
+    # Wave D (queue block 31, 16 Nov 2026; owner 11 Nov 2026: the guide layout, its Google results are guides). A draft
+    # until the owner's ODOBRENO SEO; built only when the data has supplement listings (supp_rows). The description is
+    # data-built (supp_meta).
+    {"slug": "supplements", "path": "/supplements/", "crumb": "Peptide supplements", "draft": True,
+     "needs": lambda b: bool(supp_rows(b)),
+     "title": "Peptide supplements: what is sold and FDA status",
+     "h1": "Peptide supplements: what is sold, and what the FDA checks.",
+     "desc": "Peptides sold as supplements: which shops we track sell them, from what price, and why the FDA does not approve any supplement before it is sold.",
+     "line": "Collagen and the other peptides sold as supplements: who sells them, and what the FDA checks."},
 ]
 if not os.environ.get("PC_DRAFTS"):
     GROUPS = [g for g in GROUPS if not g.get("draft")]
@@ -205,7 +214,7 @@ TOPIC = {"is-bpc-157-legal": "legal", "are-peptides-safe": "legal", "how-to-read
          "peptide-seller-checks-by-the-numbers": "data", "ozempic-vs-wegovy-price": "glp1", "finasteride-vs-minoxidil": "hair",
          "what-research-use-only-means": "legal",
          "best-peptides-for-weight-loss": "glp1", "peptides-vs-steroids": "body", "fda-approved": "legal",
-         "prescription": "buying", "injections": "legal"}
+         "prescription": "buying", "injections": "legal", "supplements": "buying"}
 RELATED_MAX = 5
 
 LEARN_TITLE = "Peptide guides in plain words | Peptide Chooser"
@@ -235,6 +244,9 @@ SOURCES = {
                          "https://www.fda.gov/consumers/consumer-updates/caution-bodybuilding-products-can-be-risky"),
     "fda-glp1-supply": ("FDA, FDA clarifies policies for compounders as national GLP-1 supply begins to stabilize",
                         "https://www.fda.gov/drugs/drug-alerts-and-statements/fda-clarifies-policies-compounders-national-glp-1-supply-begins-stabilize"),
+    # /supplements/ (queue block 31, 16 Nov 2026): what a supplement is, that the FDA does not approve one before it is sold
+    "fda-supplements": ("FDA, Questions and Answers on Dietary Supplements, current as of 27 Aug 2026",
+                        "https://www.fda.gov/food/information-consumers-using-dietary-supplements/questions-and-answers-dietary-supplements"),
     "fda-bulk-risks": ("FDA, Certain Bulk Drug Substances for Use in Compounding that May Present Significant Safety Risks, current as of 22 Apr 2026",
                        "https://www.fda.gov/drugs/human-drug-compounding/certain-bulk-drug-substances-use-compounding-may-present-significant-safety-risks"),
     "fda-letters": ("FDA, About Warning and Close-Out Letters, current as of 20 Mar 2024",
@@ -1466,7 +1478,7 @@ def g_injections(b, f, N):
                   key=lambda x: b.pep_name(x).lower())
     link = lambda x: f'<a href="/peptides/{x}/">{b.pep_name(x)}</a>' if x not in b.PEP_THIN else b.pep_name(x)
     ruo = sorted({p["substance_slug"] for p in b.PRODUCTS if p.get("route") == "injection" and p.get("regulatory_group") == "research_use_only"
-                  and b.pep_group(b.pep_status(p["substance_slug"])) == "not"})
+                  and b.pep_status(p["substance_slug"]) and b.pep_group(b.pep_status(p["substance_slug"])) == "not"})
     plans = [r for r in b.PLANS if r["substance_slug"] in rows and r.get("route") in PLAN_INJECTION
              and r.get("regulatory_group") == "fda_approved" and r.get("price_monthly") is not None]
     low = min(plans, key=lambda r: (float(r["price_monthly"]), r["seller_name"])) if plans else None
@@ -1508,6 +1520,118 @@ def g_injections(b, f, N):
          "No. A pharmacy makes it on a prescription, and the FDA does not check its safety, effectiveness or quality before it is sold."),
     ])
     return short, body, nxt, faq
+
+
+SWALLOWED_FORMS = {"capsule", "tablet", "powder", "liquid", "gummy", "softgel", "drink"}
+NOT_SWALLOWED = {"cream": "cream", "serum": "serum", "lotion": "lotion", "gel": "gel", "topical": "topical",
+                 "nasal_spray": "nasal spray"}
+
+
+def supp_rows(b):
+    """The listings our database sells as supplements (site.products, regulatory_group supplement): each shop's cheapest
+    listing per substance (tools/pull_data.py keeps them)."""
+    return [p for p in b.PRODUCTS if p.get("regulatory_group") == "supplement" and p.get("price_usd") is not None]
+
+
+def supp_not_peptide(b, x):
+    """Not a peptide by the database: its status row, or its substance row (NAD+ is a coenzyme)."""
+    return b.not_peptide(x) or any(s.get("is_peptide") is False for s in b.DATA.get("substances") or [] if s["substance_slug"] == x)
+
+
+def supp_name(b, x):
+    """The status name, else the database's substance name (site.substances.canonical_name)."""
+    if b.pep_status(x):
+        return b.pep_name(x)
+    return next((s["canonical_name"] for s in b.DATA.get("substances") or [] if s["substance_slug"] == x), x)
+
+
+def g_supplements(b, f, N):
+    """/supplements/ (group page, guide layout; queue block 31, wave D, 16 Nov 2026): the peptides sold as supplements in
+    our data, what the FDA says a supplement is and does not check, and the shops by name with links to their pages on our
+    site only. No dose, no health claim, no shop link, no paid link (guide layout, rule 4.5; decision 0a B)."""
+    rows = supp_rows(b)
+    by = {}
+    for p in rows:
+        by.setdefault(p["substance_slug"], []).append(p)
+    order = sorted(by, key=lambda x: (-len({p["seller_slug"] for p in by[x]}), supp_name(b, x).lower()))
+    shops = sorted({p["seller_slug"]: p["seller_name"] for p in rows}.items(), key=lambda kv: kv[1].lower())
+    top = order[0]
+    ntop = len({p["seller_slug"] for p in by[top]})
+    approved = [x for x in order if b.pep_status(x) and b.pep_group(b.pep_status(x)) == "approved"]
+    short = (f"A dietary supplement is a product you swallow, labelled as a supplement, and the FDA does not approve "
+             f"supplements before they are sold.{N('fda-supplements')} Of the {b.plural(len(shops), 'shop')} we track that "
+             f"sell peptides as supplements, {ntop} sell {supp_name(b, top).lower()}, the one we find most often.{N('db-sellers')}")
+
+    def status(x):
+        s = b.pep_status(x)
+        return (f'<span class="chip chip-{s["chip"]}">{escape(s["label"])}</span>' if s
+                else '<span class="chip chip-neutral">Supplement</span>')
+
+    def name(x):
+        n = escape(supp_name(b, x))
+        return (f'<a class="name" href="/peptides/{x}/">{n}</a>' if x in b.PEPTIDE_SLUGS and x not in b.PEP_THIN
+                else f'<span class="name">{n}</span>')
+    np_chip = ' <span class="chip chip-neutral">Not a peptide</span>'
+    low = lambda x: min(by[x], key=lambda p: (float(p["price_usd"]), p["seller_name"]))
+    trs = "".join(
+        f'<tr><td>{name(x)}{np_chip if supp_not_peptide(b, x) else ""}</td><td data-l="Status">{status(x)}</td>'
+        f'<td class="num" data-l="Shops">{len({p["seller_slug"] for p in by[x]})}</td>'
+        f'<td class="num" data-l="Lowest listed price">{b.usd(low(x)["price_usd"])}</td></tr>' for x in order)
+    table = (f'<div class="tbl-wrap"><table class="tbl tbl-cards tbl-peptides"><caption class="vh">Peptides sold as supplements</caption>'
+             f'<thead><tr><th scope="col">Substance</th><th scope="col">Status</th><th scope="col">Shops</th>'
+             f'<th scope="col">Lowest listed price</th></tr></thead><tbody>{trs}</tbody></table></div>')
+    applied = sorted({NOT_SWALLOWED[p["form"]] for p in rows if p.get("form") in NOT_SWALLOWED})
+    worded = (f"<p>Some shops we track list {and_list([w + 's' for w in applied])} among their supplements.{N('db-sellers')} "
+              f"For cosmetic peptides in creams and serums, see our <a href=\"/skin/\">skin page</a>.</p>") if applied else ""
+    ruo = [x for x in ("bpc-157", "tb-500") if x in by]
+    nruo = len({p["seller_slug"] for x in ruo for p in by[x]})
+    ruo_block = (f"""
+<h2>Can BPC-157 be sold as a supplement?</h2>
+<p>{spelled(nruo)} {'shop' if nruo == 1 else 'shops'} we track {'sells' if nruo == 1 else 'sell'} {and_list([b.pep_short(x) for x in ruo])} as {'a supplement' if len(ruo) == 1 else 'supplements'}, most often in capsules.{N('db-sellers')} {'It has' if len(ruo) == 1 else 'Neither has'} an FDA-approved product for any use.{N('db-peptides')} For BPC-157, the FDA says it found little or no safety information for use in people.{N('fda-bulk-risks')}</p>
+<p>Our guide <a href="/learn/is-bpc-157-legal/">Is BPC-157 legal in the US?</a> has what the FDA and HHS decided.</p>
+""" if ruo else "")
+    link = lambda s, n: f'<a href="/sellers/{s}/">{escape(n)}</a>' if s in b.PROFILES else escape(n)
+    body = f"""
+<h2>Which peptides are sold as supplements?</h2>
+<p>These substances are sold as supplements by the shops we track. Each price is one product as listed, so pack sizes differ; a name with its own page opens it.{N('db-sellers')}</p>
+{table}
+
+<h2>Is a peptide supplement FDA approved?</h2>
+<p>No supplement is. The FDA has no authority to approve a supplement before it is sold, and a maker does not have to show the FDA its safety evidence first; the maker is responsible for that.{N('fda-supplements')}</p>
+<p>The FDA does not approve a supplement's label claims either. A claim about the body needs a note on the label that the FDA has not checked it, and a product sold as a treatment for a disease counts as a drug under the law.{N('fda-supplements')}</p>
+""" + (f"<p>{and_list([supp_name(b, x) for x in approved])} {'is' if len(approved) == 1 else 'are'} in an FDA-approved medicine, but a supplement is not that medicine.{N('db-peptides')}</p>\n" if approved else "") + f"""
+<h2>Are creams and nasal sprays supplements?</h2>
+<p>No. A supplement must be swallowed, as a pill, capsule, powder or liquid; a product put on the skin or breathed in is not a supplement.{N('fda-supplements')}</p>
+{worded}{ruo_block}
+<h2>Where are peptide supplements sold?</h2>
+<p>At these {b.plural(len(shops), 'shop')}, each with its page and its checks on our site: {and_list([link(s, n) for s, n in shops])}.{N('db-sellers')}</p>
+<p>This page names the shops and carries no link to their own sites.</p>"""
+    nxt = (("/sellers/", "See every seller's checks"), ("/learn/are-peptides-legal-in-the-us/", "Are peptides legal? guide"))
+    faq = ("peptide supplements", [
+        ("Are peptide supplements FDA approved?",
+         "No. The FDA does not approve any supplement before it is sold; the maker is responsible for its safety."),
+        ("Which peptide supplement is sold most?",
+         f"In our data, {supp_name(b, top).lower()}: {ntop} of the {b.plural(len(shops), 'shop')} we track that sell peptide supplements list it."),
+        ("Is a peptide cream or nasal spray a supplement?",
+         "No. A supplement must be swallowed; a product put on the skin or breathed in is not one."),
+    ])
+    return short, body, nxt, faq
+
+
+def supp_meta(b):
+    """/supplements/'s description from data (Tier 1, queue block 31): the three substances the most shops sell and the
+    shop count, or None (the fixed description stays)."""
+    rows = supp_rows(b)
+    if not rows:
+        return None
+    by = {}
+    for p in rows:
+        by.setdefault(p["substance_slug"], set()).add(p["seller_slug"])
+    top = sorted(by, key=lambda x: (-len(by[x]), supp_name(b, x).lower()))[:3]
+    names = and_list([supp_name(b, x) if supp_name(b, x).isupper() or any(c.isdigit() for c in supp_name(b, x)) else supp_name(b, x).lower() for x in top])
+    d = (f"{names[0].upper() + names[1:]} sold as supplements at {len({p['seller_slug'] for p in rows})} shops: "
+         "the lowest prices, and why the FDA approves no supplement before it is sold.")
+    return d if len(d) <= 160 else None
 
 
 def g_steroids(b, f, N):
@@ -2722,7 +2846,7 @@ TEXTS = {"is-bpc-157-legal": g_bpc, "are-peptides-safe": g_safe, "how-to-read-a-
          "what-research-use-only-means": g_ruo, "peptide-seller-checks-by-the-numbers": g_by_numbers,
          "best-peptides-for-weight-loss": g_wl, "peptides-vs-steroids": g_steroids,
          "fda-approved": g_fda_approved, "prescription": g_prescription,
-         "injections": g_injections}
+         "injections": g_injections, "supplements": g_supplements}
 
 
 GUIDE_DATES = {}
@@ -2966,6 +3090,10 @@ def pages(b):
     if lm:
         g = next(g for g in GUIDES if g["slug"] == "fda-warning-letters-peptides")
         g["title"], g["desc"] = lm
+    sm = supp_meta(b)
+    for g in GROUPS:
+        if g["slug"] == "supplements" and sm:
+            g["desc"] = sm
     out = []
     for g in GUIDES:
         path = f"/learn/{g['slug']}/"
@@ -2977,7 +3105,8 @@ def pages(b):
                for g in GUIDES}
     start = sorted(GUIDES, key=lambda g: (-inbound[g["slug"]], GUIDES.index(g)))[:START_HERE]
     for g in GROUPS:  # group pages in the guide layout: their own address and breadcrumb (Home / <Group>)
-        if g.get("needs") and not b.DATA.get(g["needs"]):  # its table and source come from this data; without it no page
+        need = g.get("needs")  # its table and source come from this data; without it no page
+        if need and not (need(b) if callable(need) else b.DATA.get(need)):
             continue
         out.append((g["path"], g["path"].strip("/") + "/index.html", g["title"], g["desc"], guide_body(b, g),
                     article_schema(b, g) + b.faq_schema(FAQ.get(g["slug"], [])), [(g["path"], g["crumb"])]))
