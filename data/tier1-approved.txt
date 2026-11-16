@@ -295,3 +295,5 @@ ODOBRENO SEO - Karlo - 15. 11. 2026 - PR #206 (NextGenPeps description with "pri
 /sellers/nextgenpeps-nextgenpeps-llc/ 02029e09dd5a
 /sellers/nextgenpeps-nextgenpeps-llc/ 8f829e2e7bce
 /sellers/step-one-ventures/ 917b41c64410
+ODOBRENO SEO - Karlo - 16. 11. 2026 - PR #209 (/supplements/: title, H1, description and every sentence in the PR table; typed in the terminal. The description is data-built: a new hash under this phrase when the shop count or the top three change)
+/supplements/ cdb9829ebab0

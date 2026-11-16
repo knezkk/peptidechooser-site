@@ -170,11 +170,11 @@ GROUPS = [
      "h1": "Peptide injections: which are approved, and which are not.",
      "desc": "Which peptide injections are FDA approved, which a pharmacy may make on prescription, and why research-use vials are not for use in people.",
      "line": "Injectable peptides: what is approved, what a pharmacy makes, and what is research use only."},
-    # Wave D (queue block 31, 16 Nov 2026; owner 11 Nov 2026: the guide layout, its Google results are guides). A draft
-    # until the owner's ODOBRENO SEO; built only when the data has supplement listings (supp_rows). The description is
-    # data-built (supp_meta).
-    {"slug": "supplements", "path": "/supplements/", "crumb": "Peptide supplements", "draft": True,
-     "needs": lambda b: bool(supp_rows(b)),
+    # Wave D (queue block 31, 16 Nov 2026; owner 11 Nov 2026: the guide layout, its Google results are guides; ODOBRENO
+    # SEO - Karlo - 16. 11. 2026 - PR #209). Built only once the data carries the supplement shops (SUPP_MIN_SHOPS; the
+    # pull of 16 Nov kept 4 of 23, w2 request). The description is data-built (supp_meta).
+    {"slug": "supplements", "path": "/supplements/", "crumb": "Peptide supplements",
+     "needs": lambda b: len({p["seller_slug"] for p in supp_rows(b)}) >= SUPP_MIN_SHOPS,
      "title": "Peptide supplements: what is sold and FDA status",
      "h1": "Peptide supplements: what is sold, and what the FDA checks.",
      "desc": "Peptides sold as supplements: which shops we track sell them, from what price, and why the FDA does not approve any supplement before it is sold.",
@@ -1522,7 +1522,7 @@ def g_injections(b, f, N):
     return short, body, nxt, faq
 
 
-SWALLOWED_FORMS = {"capsule", "tablet", "powder", "liquid", "gummy", "softgel", "drink"}
+SUPP_MIN_SHOPS = 10  # fewer shops than this is a pull that drops the supplement listings, not the market
 NOT_SWALLOWED = {"cream": "cream", "serum": "serum", "lotion": "lotion", "gel": "gel", "topical": "topical",
                  "nasal_spray": "nasal spray"}
 
