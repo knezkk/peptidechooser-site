@@ -265,6 +265,18 @@ def keep_products(all_rows, subs, n=10):
     return out + [r for r in all_rows if r.get("paid_url") and r["substance_slug"] in subs and not any(r is x for x in out)]
 
 
+def keep_supplements(all_rows):
+    """Supplement listings as their own bucket, site.json "supplement_products" (queue block 42, 16 Nov 2026; w3's /supplements/
+    guide): each supplement shop's cheapest listing per substance, for every substance it sells (regulatory_group "supplement"),
+    so collagen and the other supplement-only substances reach the site. Apart from "products", so no supplement shop is
+    counted as a research-use shop in a price window."""
+    key = lambda r: (r["price_per_mg"] is None, r["price_per_mg"] or 0, r["price_usd"] is None, r["price_usd"] or 0, r["product_name"])
+    best = {}
+    for r in sorted((r for r in all_rows if r.get("regulatory_group") == "supplement"), key=key):
+        best.setdefault((r["seller_slug"], r["substance_slug"]), r)
+    return [r for _, r in sorted(best.items())]
+
+
 def letters_rows(n=8):
     """The newest FDA warning letters, at most n, one row per letter and seller: letters matched to a seller by domain or
     address (a name-only match is left out), newest first, from site.fda_letters (owner, 1 Nov 2026)."""
@@ -355,6 +367,8 @@ def main():
         f"{optional_columns('products', 'product_id', 'variant_id', 'regulatory_group', 'route')} from site.products")
     add_cosmetic_links(products)
     d["products"] = keep_products(products, substances(d))
+    # its own key, so the research-use windows, shop counts and seller lists stay as they are (queue block 42)
+    d["supplement_products"] = keep_supplements(products)
     used = {r["seller_slug"] for r in d["products"]}
     sellers = rows(
         "select seller_slug, seller_name, domain, seller_kind, legal_entity_name, registry_state, legal_entity_source_url, "

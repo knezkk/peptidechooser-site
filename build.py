@@ -1201,6 +1201,9 @@ def figure_3d(variant=BODY_DEFAULT):
 # listing, ten per substance). The seller window (pages.md, Home) shows them with their background check; seller names
 # are plain text and nothing in the window links to a seller (owner, 31 Oct 2026; tools/check.py enforces it).
 PRODUCTS = DATA.get("products") or []
+# Supplement listings (site.json "supplement_products", tools/pull_data.py keep_supplements; queue block 42, 16 Nov 2026): each
+# supplement shop's cheapest listing per substance, kept apart from PRODUCTS so they never enter a research-use window or count.
+SUPPLEMENTS = DATA.get("supplement_products") or []
 SELLERS = {r["seller_slug"]: r for r in DATA.get("sellers") or []}
 # Seller pages (pages.md, Seller): one per seller in site.seller_profile, through tools/pull_data.py
 PROFILES = {r["seller_slug"]: r for r in DATA.get("seller_profiles") or []}
