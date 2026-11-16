@@ -2048,6 +2048,12 @@ def check_goal_prices(P):
         clin += [float(x.replace(",", "")) for x in re.findall(r"Buy from \$([\d,.]+)/mo", html)]
         cos = [float(x.replace(",", "")) for x in re.findall(r"From \$([\d,.]+) a (?:product|bottle)", html)]
         mg = [float(x.replace(",", "")) for x in re.findall(r"From \$([\d,.]+)/mg", html)]
+        # (c) queue block 41, 16 Nov 2026: the clinic table, and so the "from" price, lists only the goal's own options
+        own = {s for x in g.get("peptides") or [] for s in ([x["substance"]] if x.get("substance") else [])
+               + list(x.get("substances") or []) + list(x.get("plan_substances") or [])}
+        for t in re.findall(r'<table class="tbl[^"]*tbl-clinics[^"]*">.*?</table>', html, re.S):
+            for s in sorted(set(re.findall(r'<tr[^>]* data-s="([^"]*)"', t)) - own):
+                errs.append(f'{g["slug"]}: the clinic table lists {s or "a plan"}, which is not one of the goal\'s options')
         low = (f"{min(clin):g}/mo" if clin else f"{min(cos):g} a" if cos else f"{min(mg):g}/mg" if mg else None)
         m = re.search(rf'<a href="/{g["slug"]}/"[^>]*><span class="nav-l">[^<]*</span><span class="nav-sub">([^<]*)</span>', home)
         menu = re.search(r"from \$([\d,.]+(?:/mo|/mg| a))", m.group(1)) if m else None
