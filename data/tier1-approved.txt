@@ -297,3 +297,4 @@ ODOBRENO SEO - Karlo - 15. 11. 2026 - PR #206 (NextGenPeps description with "pri
 /sellers/step-one-ventures/ 917b41c64410
 ODOBRENO SEO - Karlo - 16. 11. 2026 - PR #209 (/supplements/: title, H1, description and every sentence in the PR table; typed in the terminal. The description is data-built: a new hash under this phrase when the shop count or the top three change)
 /supplements/ cdb9829ebab0
+ODOBRENO SEO - Karlo - 16. 11. 2026 - /supplements/ links (Home By approval card "Peptide supplements" with its count, and on /fda-approved/ "Our peptide supplements page lists the peptides sold as supplements."; typed in the terminal; no title, description or H1 changes)

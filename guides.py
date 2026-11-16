@@ -1334,6 +1334,8 @@ def rx_slugs(b):
 
 def group_rows(b, slug):
     """The substances in a group page's own table (Home's By approval card counts them; home.md)."""
+    if slug == "supplements":  # its table lists every substance sold as a supplement, with or without a status
+        return sorted({p["substance_slug"] for p in supp_rows(b)})
     slugs = {"fda-approved": approved_slugs, "prescription": rx_slugs, "injections": injection_slugs}.get(slug, lambda b: [])(b)
     return [x for x in slugs if x in b.PEPTIDE_SLUGS or b.hand_legal(x)]
 
@@ -1344,6 +1346,9 @@ def more_groups(b):
     links = []
     if any(g["slug"] == "injections" for g in GROUPS) and b.DATA.get("approved_db"):
         links.append('<a href="/injections/">peptide injections</a> page sorts the injectable ones into approved, pharmacy-made and research use')
+    supp = next((g for g in GROUPS if g["slug"] == "supplements"), None)
+    if supp and supp["needs"](b):  # ODOBRENO SEO - Karlo - 16. 11. 2026 - /supplements/ links
+        links.append('<a href="/supplements/">peptide supplements</a> page lists the peptides sold as supplements')
     for lg in b.LIST_GROUPS:
         if lg["slug"] == "bioregulators" and b.list_members(lg):
             links.append('<a href="/bioregulators/">bioregulator peptides</a> page lists the Khavinson peptides with their status')
