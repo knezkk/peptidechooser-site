@@ -295,6 +295,11 @@ ODOBRENO SEO - Karlo - 15. 11. 2026 - PR #206 (NextGenPeps description with "pri
 /sellers/nextgenpeps-nextgenpeps-llc/ 02029e09dd5a
 /sellers/nextgenpeps-nextgenpeps-llc/ 8f829e2e7bce
 /sellers/step-one-ventures/ 917b41c64410
+ODOBRENO SEO - Karlo - 16. 11. 2026 - PR #209 (/supplements/: title, H1, description and every sentence in the PR table; typed in the terminal. The description is data-built: a new hash under this phrase when the shop count or the top three change)
+/supplements/ cdb9829ebab0
+ODOBRENO SEO - Karlo - 16. 11. 2026 - /supplements/ links (Home By approval card "Peptide supplements" with its count, and on /fda-approved/ "Our peptide supplements page lists the peptides sold as supplements."; typed in the terminal; no title, description or H1 changes)
 ODOBRENO SEO - Karlo - 16. 11. 2026 - Lost Coast Aminos and Peptidology prices (Lost Coast Aminos "from $0.029/mg", Peptidology "prices from $2.75/mg", daily data of 16 Nov 2026; owner in the terminal)
 /sellers/lost-coast-aminos/ ce96bc257c4f
 /sellers/peptidology/ f00388f82e2b
+ODOBRENO SEO - Karlo - 16. 11. 2026 - testosterone page (new substance page from the data of 16 Nov 2026: title "Testosterone: FDA status, prices and where it is sold", H1 "Testosterone", description as built; owner in the terminal)
+/peptides/testosterone/ 6e9484551b14

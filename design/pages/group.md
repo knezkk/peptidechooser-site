@@ -8,9 +8,9 @@ Substances grouped by approval, route or class. A group page is made only when i
 
 **Group icons** (w4 block 7; ODOBRENO DIZAJN - Karlo - 9. 11. 2026, PR #150): `assets/art.svg` `group-<slug>`, one per group page: /fda-approved/ a stamp with a check, /prescription/ the ℞ pad, /supplements/ a capsule, /topical/ a drop over skin, /injections/ a vial (never a needle), /bioregulators/ a chain of three units. The goal drawings' style (one 2px line, round caps, 56 grid, readable at 34px), always in `ink` on `paper-2`, because a group has no colour of its own. The icon is used on the share image and, from 10 Nov 2026, on the group's card in Home's By approval row (home.md, Compare by goal; ODOBRENO DIZAJN - Karlo - 10. 11. 2026 - PR #171); a place on the group page itself comes later.
 
-**Which layout** (owner, 8 Nov 2026): guide layout for /fda-approved/, /prescription/ and /injections/; list layout for /supplements/, /topical/ and /bioregulators/. A later group takes the layout its Google check shows.
+**Which layout** (owner, 8 Nov 2026): guide layout for /fda-approved/, /prescription/ and /injections/; list layout for /supplements/, /topical/ and /bioregulators/. A later group takes the layout its Google check shows. /supplements/ moved to the guide layout (owner, 11 Nov 2026: its Google results are guides), built in w3's PR #209.
 
-### List layout (/supplements/, /topical/, /bioregulators/)
+### List layout (/topical/, /bioregulators/)
 - **Top** (white): breadcrumb Home / <Group>; H1; the author line; the short answer as the `lede` (two sentences: what the group is, and what is and is not approved in it); a facts pad right from 900px (7 + 5), the price pad's frame (`white`, 1.5px `ink` border, `radius-panel`): the number of substances in the group, how many are FDA approved, and the "Checked <date>" stamp. Counts come from data; the H1 and title never carry them (site map rules 5.3).
 - **The substances** (`paper-2` band): the /peptides/ A to Z table filtered to the group (Substance, Status chip, What it means, Lowest price), with the filter look (name, status chips, sort). Each name links to its substance page; a thin (noindex) substance shows as plain text (cross-links only to indexable pages, rule 4.3).
 - **Where to buy, by kind** (white, only for a group with sellers): the Sellers list's two tables cut to the group's substances, the tab control on top (Online clinics, Research-use shops, and Supplements once /sellers/ has that group, sellers-list.md). Buttons by the paid link rule: a clinic's paid `btn-action` "Visit <Name>" or `btn-wait` "See plans"; a supplement shop's link only on a cosmetic product row; a research-use shop never.
@@ -18,9 +18,9 @@ Substances grouped by approval, route or class. A group page is made only when i
 - **What to do next** and **Sources** as on the goal pages.
 - **Schema:** ItemList of the substances (as /peptides/) and BreadcrumbList.
 
-### Guide layout (/fda-approved/, /prescription/, /injections/)
+### Guide layout (/fda-approved/, /prescription/, /injections/, /supplements/)
 - The Guide template (learn.md, Guide) with its short answer card, prose H2s phrased as the questions people type and the optional Questions part, at the Guide's 64ch body.
-- After the short answer: **the substances in this group** as the A to Z table above (no filter row when it has 12 rows or fewer).
+- After the short answer: **the substances in this group** as the A to Z table above (no filter row when it has 12 rows or fewer). /supplements/ uses the same table part with its own columns: Substance, Status, Shops, Lowest listed price; a substance with no FDA status shows `chip-neutral` "Supplement" (PR #209). It goes live only with 10 or more shops in data.
 - Breadcrumb Home / <Group> (not under Learn: the group is its own type). Schema: Article and BreadcrumbList (plus FAQPage with Questions).
 - No paid link anywhere on a guide-layout page (guides never carry one, rule 4.5).
 

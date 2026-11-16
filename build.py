@@ -708,6 +708,22 @@ ALL_GOALS = DATA["goals"]
 # with its own options, `parent`, `path` and `panel` (the parent goal's colour panel). Not in ALL_GOALS: a subpage is never
 # on Home, in the menu, in the goals strip or in the legal tables; it is reached from its goal page.
 SUBPAGES = DATA.get("subpages") or []
+
+
+def option_subs(g):
+    """Every medicine a goal's own options name: each option's substance, substances and plan_substances."""
+    return {s for x in g.get("peptides") or [] for s in ([x["substance"]] if x.get("substance") else [])
+            + list(x.get("substances") or []) + list(x.get("plan_substances") or [])}
+
+
+# A goal's clinic table and its one "from" price use only the goal's own options (owner queue block 41, 16 Nov 2026: /longevity/
+# showed "from $89/mo", a sermorelin plan, and sermorelin is not a Longevity option). One rule for every goal and subpage: a
+# clinic_table or clinic_plans substance that no option names is dropped here, so the table, the menu, the Home card, the page
+# price and every link from a medicine to a goal agree. check.py (check-goal-prices) checks the built tables.
+for _g in ALL_GOALS + SUBPAGES:
+    for _k in ("clinic_table", "clinic_plans"):
+        if (_g.get(_k) or {}).get("substances"):
+            _g[_k]["substances"] = [s for s in _g[_k]["substances"] if s in option_subs(_g)]
 SUB_ORAL_FORMS = {"tablet", "odt", "capsule", "troche", "drops"}  # plan dosage forms taken by mouth
 # The hair goal's cosmetic option is a scalp product (data agent's task 33): its window takes only listings named for hair or scalp.
 SCALP_OPTIONS = {id(p) for g in ALL_GOALS if g["slug"] == "hair" for p in g.get("peptides") or [] if p["status"].startswith("Cosmetic")}
