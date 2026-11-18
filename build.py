@@ -6751,6 +6751,7 @@ def main():
                                                                       for k, v in sorted(PROFILES.items())}},
                                                          ensure_ascii=False, separators=(",", ":")) + "\n", encoding="utf-8")
     (DIST / "pages.json").write_text(json.dumps([{"path": p[0], "title": p[2]} for p in PAGES] + [{"path": "/404", "title": "Page not found | Peptide Chooser"}]))
+    asset_versions()
     print("built", len(PAGES) + 1, "pages")
     if PEPTIDE_SLUGS:
         print(f"peptide pages: {len(PEPTIDE_SLUGS) - len(PEP_THIN)} indexed, {len(PEP_THIN)} noindex (fewer than {PEP_MIN_SIGNALS} of the six)")
@@ -6763,6 +6764,20 @@ def main():
         out = [r.get("legal_check_outcome") for r in PROFILES.values() if legal_state(r)[0] == "Could not check"]
         print("legal pages: " + ", ".join(f"{k} {v}" for k, v in n.items())
               + (f" (blocked {out.count('blocked')}, failed {out.count('failed')})" if out else ""))
+
+
+def asset_versions():
+    """Cache busting (owner queue block 12, 18 Nov 2026): every /assets/*.css and *.js link in the built pages gets
+    ?v=<first 8 of the file's sha256>, so a changed file has a new URL while the 4-hour cache stays (_headers). Runs last,
+    on the files as written."""
+    ver = {f.name: hashlib.sha256(f.read_bytes()).hexdigest()[:8]
+           for f in (DIST / "assets").iterdir() if f.is_file() and f.suffix in (".css", ".js")}
+    link = re.compile(r'((?:href|src)="/assets/)([a-z0-9-]+\.(?:css|js))(")')
+    for f in DIST.rglob("*.html"):
+        t = f.read_text(encoding="utf-8")
+        n = link.sub(lambda m: f"{m[1]}{m[2]}?v={ver[m[2]]}{m[3]}" if m[2] in ver else m[0], t)
+        if n != t:
+            f.write_text(n, encoding="utf-8")
 
 
 # The Learn section (pages.md, Learn and Guide): /learn/ and the guides, from guides.py, which reads this module's helpers.
