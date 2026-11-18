@@ -23,6 +23,47 @@ GALA = page("Gala Health review: plans, prices and checks", "Gala Health is an o
             "Tracked since 4 Nov 2026. Is it legit? See the four checks.", "Gala Health review")
 
 
+class DailyPrices(unittest.TestCase):
+    """ODOBRENO PRAVILA - Karlo - 18. 11. 2026 - daily prices: a price-only change passes and is logged; changed words still
+    stop; a price that moves more than 50% up or down still stops. The cases are the guard's run on the data of 18 Nov 2026."""
+    SHOP = "{} is a research-use peptide shop. It lists 35 products across 28 substances; prices from {}/mg. Lab reports: 53."
+
+    def run_(self, old, new):
+        return g.prices_only(page("t", old, "h"), page("t", new, "h"))
+
+    def test_tb_500_up_16_percent_passes(self):
+        line = self.run_("TB-500: Not approved. Lowest shop price $1.10/mg. Checked Nov 15, 2026.",
+                         "TB-500: Not approved. Lowest shop price $1.28/mg. Checked Nov 18, 2026.")
+        self.assertEqual(line, "prices only: $1.10 -> $1.28 (+16%)")
+
+    def test_go_alpha_labs_passes_with_a_count(self):
+        self.assertTrue(self.run_(self.SHOP.format("Go Alpha Labs", "$0.019"), self.SHOP.format("Go Alpha Labs", "$0.022").replace("35", "36")))
+
+    def test_one_aminos_down_99_percent_stops(self):
+        self.assertIsNone(self.run_(self.SHOP.format("One Aminos", "$3.50"), self.SHOP.format("One Aminos", "$0.04")))
+
+    def test_alpha_peps_down_51_percent_stops(self):
+        self.assertIsNone(self.run_(self.SHOP.format("Alpha Peps", "$0.18"), self.SHOP.format("Alpha Peps", "$0.089")))
+
+    def test_exactly_50_percent_passes(self):
+        self.assertTrue(self.run_("From $10/mo.", "From $15/mo."))
+        self.assertTrue(self.run_("From $10/mo.", "From $5/mo."))
+
+    def test_words_still_stop(self):
+        self.assertIsNone(self.run_("WellMedr prescribes semaglutide online. From $41/mo.",
+                                    "WellMedr prescribes semaglutide and tirzepatide online. From $45/mo."))
+
+    def test_a_new_price_stops(self):
+        self.assertIsNone(self.run_("From $41/mo.", "From $41/mo, care $20/mo."))
+
+    def test_title_price_counts_too(self):
+        self.assertIsNone(g.prices_only(page("From $10", "d", "h"), page("From $100", "d", "h")))
+
+    def test_seller_template_big_move_stops(self):
+        self.assertTrue(g.big_price_move(page("t", "8 plans from $39/mo.", "h"), page("t", "8 plans from $1,399/mo.", "h")))
+        self.assertFalse(g.big_price_move(page("t", "8 plans from $39/mo.", "h"), page("t", "8 plans from $45/mo.", "h")))
+
+
 class Numbers(unittest.TestCase):
     def same(self, old, new):
         return g.only_numbers(page("t", old, "h"), page("t", new, "h"))

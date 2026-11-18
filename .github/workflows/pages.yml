@@ -2,6 +2,10 @@ name: Deploy site
 on:
   push:
     branches: [main]
+  # once a day on main, so new prices from the database reach the site without a merge; the Tier 1 guard still stops
+  # changed words (owner answer to block 43 Q1 a, 18 Nov 2026)
+  schedule:
+    - cron: "0 6 * * *"
   workflow_dispatch:
 permissions:
   contents: read
