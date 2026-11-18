@@ -1962,7 +1962,8 @@ def opt_facts(g, p):
 
 def opt_head(p):
     """The collapsed row (pages/parts.md, Option rows): "<name> · <what it does>", then the status chip with the prescription fact."""
-    return (f'<span class="opt-one"><span class="name">{p["name"]}</span> · {p["line_one"]}</span>'
+    # the dot and the subtitle in their own spans: Home sets the subtitle on its own line (home.md, Look v3), goal pages keep the dot
+    return (f'<span class="opt-one"><span class="name">{p["name"]}</span><span class="opt-dot"> · </span><span class="opt-sub">{p["line_one"]}</span></span>'
             f'<span class="opt-two">{status_chip(p)}<span class="opt-rx">{p["rx_word"]}</span></span>')
 
 
@@ -2467,7 +2468,7 @@ stage.style.setProperty('--s',r.z);done();}
 function clear(){Object.keys(layers).forEach(function(k){layers[k].forEach(function(i){i.classList.remove('in');});});label.hidden=true;}
 function place(k){var p=box.querySelector('.pin[data-goal="'+k+'"]');label.textContent=p.getAttribute('aria-label');label.hidden=false;label.style.left='0';label.style.top='0';
 var b=box.getBoundingClientRect(),q=p.getBoundingClientRect(),x=q.left+q.width/2-b.left,y=q.top+q.height/2-b.top,w=label.offsetWidth,h=label.offsetHeight,g=14,lx,ly=y-h/2;
-if(x+g+w<=b.width-4)lx=x+g;else if(x-g-w>=4)lx=x-g-w;else{lx=Math.max(4,Math.min(b.width-w-4,x-w/2));ly=y+g;if(ly+h>back.offsetTop-4)ly=y-g-h;}
+if(x+g+w<=b.width-4)lx=x+g;else if(x-g-w>=4)lx=x-g-w;else{lx=Math.max(4,Math.min(b.width-w-4,x-w/2));ly=y+g;if(ly+h>(back.hidden?b.height:back.offsetTop)-4)ly=y-g-h;}
 label.style.left=lx+'px';label.style.top=Math.max(4,Math.min(b.height-h-4,ly))+'px';}
 function go(k){if(cur===k)return;var t=++token,list=ensure(k),anim=!!window.pcMotion;cur=k;clear();box.classList.add('zoomed');view.classList.toggle('near',rect(k).z>1);back.hidden=false;
 pins.forEach(function(p){var on=p.getAttribute('data-goal')===k;p.classList.toggle('on',on);p.setAttribute('aria-pressed',on?'true':'false');});
@@ -2487,7 +2488,10 @@ function pre(e){var p=e.target.closest&&e.target.closest('.pin');if(p)ensure(p.g
 box.addEventListener('mouseover',pre);box.addEventListener('focusin',pre);
 box.addEventListener('keydown',function(e){if((e.key==='Enter'||e.key===' ')&&e.target.classList.contains('pin')){e.preventDefault();pinPick(e.target.getAttribute('data-goal'));}});
 document.addEventListener('keydown',function(e){if(e.key==='Escape'&&cur)out(box.contains(document.activeElement));});
-return {go:go,out:out,preload:ensure};};
+// Look v3 (home.md): the chosen goal's pin carries its name from the start, and again after zooming out.
+function mark(){var p=box.querySelector('.pin.on');if(p&&!cur)place(p.getAttribute('data-goal'));}
+requestAnimationFrame(mark);window.addEventListener('resize',function(){if(!cur)mark();});
+return {go:go,out:function(r){out(r);setTimeout(mark,zoomS*1000+30);},preload:ensure,mark:mark};};
 </script>"""
 
 
@@ -2508,6 +2512,7 @@ gsap.fromTo(root.querySelectorAll('.step-panel[data-goal="'+k+'"] .opt'),{opacit
 function pick(k){if(k===cur)return;cur=k;
 root.querySelectorAll('.goal-item,.pin').forEach(function(x){var on=x.getAttribute('data-goal')===k;
 if(x.hasAttribute('aria-pressed'))x.setAttribute('aria-pressed',on?'true':'false');x.classList.toggle('on',on);});
+if(fig&&fig.mark)setTimeout(fig.mark);
 var old=root.querySelectorAll('.step-panel:not([hidden])');
 if(window.pcMotion&&old.length){gsap.killTweensOf(old);gsap.to(old,{opacity:0,duration:swapS/2,ease:'power1.in',onComplete:function(){gsap.set(old,{opacity:1});if(cur===k)show(k);}});}else{show(k);}}
 function hover(k){root.querySelectorAll('.pin').forEach(function(x){x.classList.toggle('hov',x.getAttribute('data-goal')===k);});if(k&&fig)fig.preload(k);}
@@ -4292,58 +4297,10 @@ ACT_TH = '<th scope="col"><span class="vh">Our page</span></th>'
 
 
 def sellers_index():
-    """/sellers/ (pages.md, Sellers; owner task w2, 3 Nov 2026): two tabs, the online clinics first, then the shops."""
-    shops = sorted(SHOPS.values(), key=sellers_order)
-    clinics = sorted(CLINIC_PROFILES.values(), key=lambda r: (*paid_rank(r["seller_slug"]), seller_name(r).lower()))
-    me = sys.modules[__name__]
-    more_cls = ' class="more"'
-    strs = "".join(
-        f'<tr{more_cls if i >= SELLERS_FIRST else ""} data-c="{" ".join([met_checks(r)] + filter_tokens("sellers", r["seller_slug"])).strip()}" data-s="{r["score"]}" data-subs="{" ".join(shop_subs(r))}"'
-        f' data-p="{r.get("product_count") or 0}" data-m="{compare_ppm(r)[0] if compare_ppm(r)[0] is not None else ""}"'
-        f' data-n="{escape(seller_name(r).lower())}" data-t="{r.get("first_seen") or ""}">'
-        f'<td><span class="cell-pic">{parts.tile(r["seller_slug"], seller_base(seller_name(r)), 40, shop=True)}<a class="name" href="/sellers/{r["seller_slug"]}/">{seller_name(r)}</a></span></td>'
-        f'<td data-l="Sells">{escape(subs_words([x["substance_slug"] for x in SELLER_SUBS.get(r["seller_slug"], [])], r.get("substance_count")))}</td>'
-        f'<td class="num" data-l="From">{per_mg(compare_ppm(r)[0]) + "/mg" if compare_ppm(r)[0] is not None else "unknown"}</td>'
-        f'<td data-l="Checks">{check_bar(r)}</td><td data-l="FDA letters">{home.where_letters(me, r)}</td>'
-        f'<td class="act"><a class="btn btn-line btn-sm" href="/sellers/{r["seller_slug"]}/">Our review</a></td></tr>'
-        for i, r in enumerate(shops))
-    checked = max((r["score_checked_on"] for r in PROFILES.values() if r.get("score_checked_on")), default="")
-    more = (f'<p class="legal-more sellers-more" hidden><button type="button" class="btn btn-line" id="sellers-all">Show all {len(shops)}</button></p>'
-            if len(shops) > SELLERS_FIRST else "")
-    lede = (f"{plural(len(clinics), 'online clinic')} that prescribe and ship, then {plural(len(shops), 'research-use shop')}." if clinics else
-            f"{plural(len(shops), 'research-use shop')}.")
-    tabs = ("<div class=\"seg sellers-tabs\" role=\"group\" aria-label=\"Show\" hidden>"
-            f'<button type="button" class="seg-b" data-type="clinics"{ev("tab_change", tab="clinics")} aria-pressed="true">Online clinics ({len(clinics)})</button>'
-            f'<button type="button" class="seg-b" data-type="shops"{ev("tab_change", tab="shops")} aria-pressed="false">Research-use shops ({len(shops)})</button></div>') if clinics and shops else ""
-    shops_sec = f"""
-    <section class="sellers-sec" id="shops" aria-labelledby="shops-h">
-      <h2 id="shops-h" class="h-sources">Research-use shops</h2>
-      <div class="tbl-wrap"><table class="tbl tbl-cards tbl-sellers tbl-where" id="sellers-table"><caption class="vh">Research-use shops, most checks first</caption>
-        <thead><tr><th scope="col">Shop</th><th scope="col">Sells</th><th scope="col">From</th><th scope="col">Checks</th><th scope="col">FDA letters</th>{ACT_TH}</tr></thead>
-        <tbody>{strs}</tbody>
-      </table></div>
-      {more}
-    </section>""" if shops else ""
-    return f"""
-<section class="section letters-hd">
-  <div class="wrap">
-    <h1>Peptide sellers we track</h1>
-    <p class="lede">{lede}</p>
-    <p class="letters-stamp">{f'<span class="stamp">Checked {nice_date(checked)}</span>' if checked else ""}</p>
-  </div>
-</section>
-<section class="band-2" id="sellers-list">
-  <div class="wrap">
-    <div class="sellers-top">
-    {sellers_filter(shops, clinics, tabs)}</div>
-    {clinics_directory(clinics)}{shops_sec}
-    {COMPARE_LINK}
-    <p class="small" style="margin-top:16px">Checks are facts we hold about the seller, not a safety or quality grade. <a href="/how-we-rate/">How we rate</a></p>
-  </div>
-</section>
-{SELLERS_INDEX_JS}
-{CF_JS}
-"""
+    """/sellers/ (pages.md, Sellers; Sellers v2, sellers-list.md, owner prototype 18 Nov 2026): two tabs, the online clinics
+    first, then the shops, with the Filter column (sellers_list.py)."""
+    import sellers_list
+    return sellers_list.page(sys.modules[__name__])
 
 
 def clinics_directory(clinics):

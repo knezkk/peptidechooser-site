@@ -50,7 +50,8 @@ function pages(dir, base = '') {
         const wraps = [...document.querySelectorAll('.wrap')];
         let outside = 0, which = [];
         for (const el of document.body.querySelectorAll('*')) {
-          if (el.closest('.tbl-wrap, .nav')) continue;
+          // scroll rows by design: a table's wrap, the nav, and /sellers/' quick filter row (sellers-list.md, Sellers v2); the page itself still may not scroll sideways (sw above)
+          if (el.closest('.tbl-wrap, .nav, .sl-quick')) continue;
           const b = el.getBoundingClientRect();
           if (b.width && b.right > iw + 1) {
             outside++;
