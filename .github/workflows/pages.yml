@@ -34,11 +34,13 @@ jobs:
       # since the sitemap index (task 23): every file of it, flat, and the live page dates, so an unchanged page keeps its date
       - name: fetch the live sitemap
         run: python3 tools/live_sitemap.py "$RUNNER_TEMP"
-      - run: python3 build.py
-        env: { LIVE_SITEMAP: "${{ runner.temp }}/live-sitemap.xml", LIVE_LASTMOD: "${{ runner.temp }}/live-lastmod.json", LIVE_SELLER_ARCHIVE: "${{ runner.temp }}/live-seller-archive.json" }
+      # DEEP_LINK_CHECK: each plan deep link target is asked once; one that does not answer keeps the seller's home page,
+      # listed in this step's log (queue block 44, 18 Nov 2026)
+      - run: python3 tools/test_deep_links.py && python3 build.py
+        env: { LIVE_SITEMAP: "${{ runner.temp }}/live-sitemap.xml", LIVE_LASTMOD: "${{ runner.temp }}/live-lastmod.json", LIVE_SELLER_ARCHIVE: "${{ runner.temp }}/live-seller-archive.json", DEEP_LINK_CHECK: "1" }
       # a page born from new data gets its share image here (owner answer Q1 a, 3 Nov 2026), then the site is rebuilt
       - name: draw missing share images
-        env: { LIVE_SITEMAP: "${{ runner.temp }}/live-sitemap.xml", LIVE_LASTMOD: "${{ runner.temp }}/live-lastmod.json", LIVE_SELLER_ARCHIVE: "${{ runner.temp }}/live-seller-archive.json" }
+        env: { LIVE_SITEMAP: "${{ runner.temp }}/live-sitemap.xml", LIVE_LASTMOD: "${{ runner.temp }}/live-lastmod.json", LIVE_SELLER_ARCHIVE: "${{ runner.temp }}/live-seller-archive.json", DEEP_LINK_CHECK: "1" }
         run: |
           if [ "$(python3 tools/og.py --missing --count)" != "0" ]; then
             pip install -q playwright==1.49.1
