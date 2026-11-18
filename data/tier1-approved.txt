@@ -303,3 +303,5 @@ ODOBRENO SEO - Karlo - 16. 11. 2026 - Lost Coast Aminos and Peptidology prices (
 /sellers/peptidology/ f00388f82e2b
 ODOBRENO SEO - Karlo - 16. 11. 2026 - testosterone page (new substance page from the data of 16 Nov 2026: title "Testosterone: FDA status, prices and where it is sold", H1 "Testosterone", description as built; owner in the terminal)
 /peptides/testosterone/ 6e9484551b14
+ODOBRENO SEO - Karlo - 16. 11. 2026 - WellMedr tirzepatide (WellMedr description "prescribes semaglutide and tirzepatide online", from the data of 16 Nov 2026; owner in the terminal)
+/sellers/wellmedr/ 1d60a36fca1a
