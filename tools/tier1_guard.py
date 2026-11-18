@@ -5,6 +5,9 @@ Run in the deploy after the last build: every built page's <title>, meta descrip
 the live site. Words stop the deploy; numbers and data-born pages pass and are listed (owner answer, 5 Nov 2026):
 - a page that differs only in counts or dates (the same words with other counts or dates) passes; a changed price stops
   (owner queue block 40, 15 Nov 2026, ODOBRENO PRAVILA - guard numbers);
+- a page that differs only in prices (with counts or dates) passes and is logged with each move, when no price moves more
+  than 50% up or down; a bigger move, a price that comes or goes, or any other word still stops (daily deploy, owner,
+  ODOBRENO PRAVILA - Karlo - 18. 11. 2026 - daily prices); a seller description's data slots pass only within the same 50%;
 - an approved text also covers the same words with other counts or dates: the approval line's hash is taken with the counts
   and dates blanked (an exact hash from before still counts for its exact text);
 - a shop page's meta description passes by rule when both texts are made only of the build's fixed shop sentences (build.py,
@@ -188,6 +191,45 @@ def numbers_masked(text, prices=True):
 def only_numbers(old, new):
     """The same words with other counts or dates; the same prices (owner queue block 40, 15 Nov 2026)."""
     return all(numbers_masked(old[k], prices=False) == numbers_masked(new[k], prices=False) for k in FIELDS)
+
+
+PRICE_MOVE_MAX = 0.5  # a price that moves more than 50% up or down stops (ODOBRENO PRAVILA - Karlo - 18. 11. 2026 - daily prices)
+
+
+def price_pairs(old, new):
+    """Each price of the old text with the price in the same place of the new text, field by field; None when a field has
+    another number of prices."""
+    pairs = []
+    for k in FIELDS:
+        a, b = PRICE.findall(old[k]), PRICE.findall(new[k])
+        if len(a) != len(b):
+            return None
+        pairs += [(x, y) for x, y in zip(a, b) if x != y]
+    return pairs
+
+
+def price_move(x, y):
+    """How far a price moved, as a share of the old price ("$3.50", "$0.04" -> -0.99)."""
+    v = lambda p: float(p[1:].replace(",", ""))
+    return (v(y) - v(x)) / v(x) if v(x) else float("inf")
+
+
+def prices_only(old, new):
+    """Daily deploy (owner, 18 Nov 2026, ODOBRENO PRAVILA - Karlo - 18. 11. 2026 - daily prices): the same words with other
+    prices (and counts or dates) pass and are logged, when no price moves more than 50% up or down. Returns the log line
+    ("prices only: $1.10 -> $1.28 (+16%)") or None."""
+    if not all(numbers_masked(old[k]) == numbers_masked(new[k]) for k in FIELDS):
+        return None
+    pairs = price_pairs(old, new)
+    if not pairs or any(abs(price_move(x, y)) > PRICE_MOVE_MAX for x, y in pairs):
+        return None
+    return "prices only: " + ", ".join(f"{x} -> {y} ({price_move(x, y):+.0%})" for x, y in pairs)
+
+
+def big_price_move(old, new):
+    """A price in the same place that moved more than 50%: it stops even where a template rule would pass the text."""
+    pairs = price_pairs(old, new) or []
+    return any(abs(price_move(x, y)) > PRICE_MOVE_MAX for x, y in pairs)
 
 
 def shape_stamp(page):
@@ -413,8 +455,9 @@ def main():
             passes = "follows its section's template" if follows_template(path, page, live, facts) else None
             changes.append((path, "new page", GONE, page, passes))
         else:
-            why = ("counts or dates only" if only_numbers(old, page) else "data slots of the seller description" if data_description(path, old, page)
-                   else "counts and dates of the shop description" if shop_description(path, old, page) else None)
+            why = ("counts or dates only" if only_numbers(old, page) else prices_only(old, page)
+                   or ("data slots of the seller description" if data_description(path, old, page) and not big_price_move(old, page)
+                       else "counts and dates of the shop description" if shop_description(path, old, page) else None))
             changes.append((path, "changed", old, page, why))
     for path in gone:
         old = live_page(path)[1]
