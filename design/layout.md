@@ -25,6 +25,9 @@ Nothing on any page may leave its margins or push the page sideways, at any scre
 ## Sellers list columns (owner prototype design-2026-11-18, queue block 11; waits for ODOBRENO DIZAJN)
 From 900px /sellers/ is two columns: the Filter column (260px) and the table (the rest), gap `space-5`; under 900px one column with the Bottom sheet. Home's option rows keep the action column at `cta-width` from 900px; under 900px the action goes under the text at full width.
 
+## Seller and goal page columns (queue block 13, 18 Nov 2026; waits for ODOBRENO DIZAJN)
+Seller page: from 900px the head is text plus the 320px score card; the body keeps its two columns (main and the aside) on the `paper-2` band. Goal page: pick cards two in a row from 641px; the open option row's three columns from 900px; the clinic table's action column at `cta-width` from 641px; the legal table stacks under 641px.
+
 ## Touch
 
 Every control is at least 44px tall: nav items, the header button, in-table `btn-sm`, cookie buttons, goal rows. Body pins are 24px controls from 900px and plain markers below it, and a click anywhere on the figure chooses the nearest pin, so the whole figure is the target; the goal list beside the figure is the full-size control for the same choice. **Exceptions** (owner task w2, 3 Nov 2026, phone finding 9): a footnote number (`sup a`) is at least 24px tall, the WCAG 2.5.8 minimum (it sits inside a line of text and a 44px target would push the lines apart); a link inside running text follows the text's line; a Chip is at least 24px tall (README, Chips). `tools/check_layout.js` checks the 44px rule at 390px on every page with these exceptions (w3's phone check, on by default since #75; the earlier `TAP=1` switch is gone).

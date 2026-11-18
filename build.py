@@ -1983,9 +1983,13 @@ def option_rows(g, lazy=False):
             how, status = unsaid(how), (unsaid(status) if NO_LINK_SAID.search(status) else status)
         # one status chip next to the name; no seller fact on the row (pages/parts.md, Option rows, 5 Nov 2026)
         head = opt_head(p) if not lazy else tip_chips(opt_head(p)).replace('<span class="name">', '<span class="name tip-o">', 1)
+        # goal pages (goal.md, Goal page v2): the open row's three lines in labelled columns; Home keeps its lines as they are
+        c0, c1, c2, c3 = ("", "", "", "") if lazy else ('<div class="opt-cols"><div><span class="opt-lab">What it does</span>',
+                                                        '</div><div><span class="opt-lab">FDA status</span>',
+                                                        '</div><div><span class="opt-lab">How to get it</span>', "</div></div>")
         rows.append(f'<li class="opt"><details class="opt-more"><summary class="opt-sum">{option_picture(p, rp)}<span class="opt-m" aria-hidden="true"></span>{head}</summary>'
-                    f'<div class="opt-body">{opt_line(g, p, rp, "p")}<p class="opt-does">{p["does"]}{refs(p, slug, price=not pad)}</p>'
-                    f'<p class="opt-status">{status}</p><p class="opt-how">{how}{cost}</p>{"" if lazy else opt_facts(g, p)}</div></details>{opt_action(g, p, rp, lazy, pad)}</li>')
+                    f'<div class="opt-body">{opt_line(g, p, rp, "p")}{c0}<p class="opt-does">{p["does"]}{refs(p, slug, price=not pad)}</p>'
+                    f'{c1}<p class="opt-status">{status}</p>{c2}<p class="opt-how">{how}{cost}</p>{c3}{"" if lazy else opt_facts(g, p)}</div></details>{opt_action(g, p, rp, lazy, pad)}</li>')
     return rows
 
 
@@ -2860,7 +2864,7 @@ def goal_faq_pairs(g):
 
 def goal_faq(g):
     pairs = goal_faq_pairs(g)
-    return f'<section class="section goal-sec" id="faq"><div class="wrap">{faq_block(mq_cap(g), pairs, "faq-h")}</div></section>' if pairs else ""
+    return f'<section class="section goal-sec" id="faq"><div class="wrap">{faq_block(mq_cap(g), pairs, "faq-h", fold=True)}</div></section>' if pairs else ""
 
 
 def mq_cap(g):
@@ -2925,7 +2929,7 @@ def care_note(r):
     return "care fee not known" if fee is None else "all-in" if float(fee) == 0 else f"incl. {usd(fee)}/mo care"
 
 
-CLINICS_FIRST = 10
+CLINICS_FIRST = 20  # Goal page v2 (goal.md): the first 20 rows at every width, then Show all N
 # "Compare any two" (btn-line) under the clinic table and under the sellers table; /compare/ is built when plans or sellers exist
 COMPARE_LINK = ('<p class="cmp-link"><a class="btn btn-line" href="/compare/">Compare any two</a></p>'
                 if DATA.get("plans") or DATA.get("seller_profiles") else "")
@@ -3096,10 +3100,9 @@ def goal_clinic_section(g, rows):
         more = ' class="more"' if i >= CLINICS_FIRST else ""
         plan = explain_brand(r["plan_name"], named)
         trs.append(f'<tr{more} data-s="{row_sub(g, r)}"{state_attrs(r["seller_slug"])} data-k="{kind}" data-f="{plan_form(r)}" data-l="{1 if (r.get("fda_letter_count") or 0) else 0}">'
-                   f'<td><span class="cell-pic">{parts.plan_picture(r)}<span class="name plan-cut" title="{escape(strip_tags(plan))}">{slash_break(plan)}</span></span></td>'
-                   f'<td data-l="What it is">{plan_chip(g, r)}</td>'
-                   f'<td data-l="Per month"><span class="num">{usd(r["price_monthly"])}</span>{plan_letter(r)}{f"<span class=sub>{care}</span>" if care else ""}{covers_note(r)}</td>'
-                   f'<td data-l="Clinic"><span class="cell-pic">{parts.tile(r["seller_slug"], seller_base(r["seller_name"]), 28, seller=PROFILES.get(r["seller_slug"]))}{clinic_link(r["seller_slug"], seller_base(r["seller_name"]), True)}</span></td>'
+                   f'<td><span class="cell-pic">{parts.plan_picture(r)}<span class="cp-txt"><span class="name plan-cut" title="{escape(strip_tags(plan))}">{slash_break(plan)}</span>'
+                   f'<span class="cp-sub"><span class="cell-pic">{parts.tile(r["seller_slug"], seller_base(r["seller_name"]), 20, seller=PROFILES.get(r["seller_slug"]))}{clinic_link(r["seller_slug"], seller_base(r["seller_name"]), True)}</span>{plan_chip(g, r)}{plan_letter(r)}{covers_note(r)}</span></span></span></td>'
+                   f'<td class="cp-price" data-l="Per month"><span class="num">{usd(r["price_monthly"])}</span>{f"<span class=sub>{care}</span>" if care else ""}</td>'
                    f'<td class="act">{clinic_row_act(r)}</td></tr>')
     seg = lambda grp, opts: (f'<div class="seg" role="group" aria-label="{grp[1]}">'
                              + "".join(f'<button type="button" class="seg-b" data-g="{grp[0]}" data-v="{v}" data-filter="{grp[0]}" data-value="{v or "all"}" aria-pressed="{"true" if not v else "false"}">{t}</button>'
@@ -3112,10 +3115,9 @@ def goal_clinic_section(g, rows):
 <section class="band-2 goal-sec" id="clinics" data-state-root>
   <div class="wrap">
     <h2 class="goal-h2">Online clinic prices</h2>
-    {filt}
-    {STATE_N}<p class="small clinic-n" id="clinic-n" aria-live="polite">{len(rows)} of {len(rows)} plans</p>
+    <div class="clinic-bar">{filt}<p class="small clinic-n" id="clinic-n" aria-live="polite">{len(rows)} of {len(rows)} plans</p></div>{STATE_N}
     <div class="tbl-wrap"><table class="tbl tbl-compact tbl-cards tbl-clinics">
-      <thead><tr><th scope="col">Plan</th><th scope="col">What it is</th><th scope="col">Per month</th><th scope="col">Clinic</th><th scope="col"><span class="vh">Action</span></th></tr></thead>
+      <thead><tr><th scope="col">Plan and clinic</th><th scope="col" class="cp-price">Per month</th><th scope="col"><span class="vh">Action</span></th></tr></thead>
       <tbody>{"".join(trs)}</tbody>
     </table></div>
     {f'<p class="clinics-more" hidden><button type="button" class="btn btn-line" id="clinics-all">Show all {len(rows)}</button></p>{CLINICS_JS}' if len(rows) > CLINICS_FIRST else ""}
@@ -3139,6 +3141,8 @@ def card_slug(key):
 
 
 def decide_card(key, name, chips, price, act, pic=""):
+    # Goal page v2 (goal.md): the Best approved card carries the page's ink button, the Cheapest an outline one
+    act = re.sub(r'\bbtn-wait\b', "btn-ink" if key == "Best approved" else "btn-line", act, count=1)
     return (f'<li class="panel-line decide-card" data-card="{card_slug(key)}">{pic}<p class="decide-k">{key}</p><h2>{name}</h2>'
             f'{f"<span class=chips>{chips}</span>" if chips else ""}<p class="decide-price">{price}</p>{act}</li>')
 
@@ -3620,7 +3624,7 @@ def check_card(r):
     """Background check card (pages.md, Seller; owner task 3 Nov 2026): a summary in the right column, sticky from 900px.
     The seller's checks as one chip each (a shop's five, a clinic's four), the name only: their facts and dates live in the
     legit section, once."""
-    rows = "".join(f"<li>{card_chip(k, t, r)}</li>" for k, t in seller_checks(r))
+    rows = "".join(f'<li>{card_chip(k, t, r)}<span class="cc-st" aria-hidden="true">{"Met" if r.get(k) else "Not met"}</span></li>' for k, t in seller_checks(r))
     return f"""
       <div class="board check-card" aria-labelledby="check-h">
         <div class="check-head"><h2 id="check-h">Background check</h2><p class="check-n"><span class="num-xl">{score_of(r)}</span> <span class="num-unit">of {out_of(r)} checks</span></p></div>
@@ -3738,7 +3742,7 @@ def card_count(x):
 
 def similar_section(r):
     """"Similar sellers" under the card (owner task 3 Nov 2026): the three sellers similar_sellers picks, as small links."""
-    items = "".join(f'<li>{parts.tile(x["seller_slug"], seller_base(seller_name(x)), 28, shop=x["seller_slug"] in SHOPS, seller=x)}<span><a href="/sellers/{x["seller_slug"]}/">{seller_name(x)}</a> · {score_of(x)} of {out_of(x)} checks</span></li>'
+    items = "".join(f'<li>{parts.tile(x["seller_slug"], seller_base(seller_name(x)), 28, shop=x["seller_slug"] in SHOPS, seller=x)}<a href="/sellers/{x["seller_slug"]}/">{seller_name(x)}</a><span class="sim-n">{score_of(x)} of {out_of(x)} checks</span></li>'
                     for x in similar_sellers(r))
     return f"""
       <nav class="seller-similar" aria-labelledby="similar-h">
@@ -3975,7 +3979,7 @@ def legit_section(r):
     legal = legal_state(r)
     line = lambda k: f"{legal[0]}: {legal[1]}" if k == "score_legal_pages" else f'{"Met" if r.get(k) else "Not met"}: {lines[k]}'
     items = "".join(
-        f'<li><span class="check-key">{t}</span><span class="check-line">{line(k)}'
+        f'<li class="{"met" if r.get(k) else "unmet"}"><span class="check-key">{t}</span><span class="check-line">{line(k)}'
         f'{company_ledger(r) if k == "score_registered_company" else ""}</span></li>'
         for k, t in seller_checks(r))
     return f"""
@@ -4001,12 +4005,14 @@ def faq_schema(pairs):
             + json.dumps({"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": els}, ensure_ascii=False) + "</script>")
 
 
-def faq_block(name, pairs, heading_id, cls="seller-sec faq"):
+def faq_block(name, pairs, heading_id, cls="seller-sec faq", fold=False):
     """Questions as h3 with their answers, between hairlines; no accordion, no icon. A guide passes cls="faq", so its h2
     is the guide's own prose h2 (pages/learn.md, Guide)."""
     if not pairs:
         return ""
-    items = "".join(f'<div class="faq-item"><h3>{q}</h3><p>{a}</p></div>' for q, a in pairs if a)
+    # fold (Goal page v2, goal.md): each question opens and closes; the answer is in the page and in the FAQPage schema
+    items = "".join((f'<details class="faq-item"><summary><h3>{q}</h3></summary><p>{a}</p></details>' if fold else
+                     f'<div class="faq-item"><h3>{q}</h3><p>{a}</p></div>') for q, a in pairs if a)
     return (f'\n<section class="{cls}" aria-labelledby="{heading_id}">\n  <h2 id="{heading_id}">Questions about {name}</h2>\n'
             f'  <div class="faq-list">{items}</div>\n</section>')
 
@@ -4034,6 +4040,11 @@ def seller_faq(r):
     return faq_block(name, pairs, "faq-h")
 
 
+def score_bar(r):
+    """The score card's bar (seller.md, Seller v2): one segment per check, met or not; spoken by the number above it."""
+    return '<span class="score-bar" aria-hidden="true">' + "".join(f'<span class="{"on" if r.get(k) else ""}"></span>' for k, _ in seller_checks(r)) + "</span>"
+
+
 def seller_action(r):
     """The page's one action on the H1's row (owner task 3 Nov 2026): a clinic compares with another clinic, a shop with
     another shop, on /compare/ (built whenever seller pages are). A clinic with a paid link in the data also gets "Visit <Name>"
@@ -4043,13 +4054,13 @@ def seller_action(r):
         return ""
     if r["seller_slug"] in CLINIC_PROFILES:
         plans = clinic_plan_rows(r)
-        compare = (f'<a class="btn btn-ink" href="/compare/?a=p.{r["seller_slug"]}.{plans[0]["plan_slug"]}"{ev("compare_pick", kind="plan")}>Compare with another clinic</a>'
+        compare = (f'<a class="btn btn-line" href="/compare/?a=p.{r["seller_slug"]}.{plans[0]["plan_slug"]}"{ev("compare_pick", kind="plan")}>Compare with another clinic</a>'
                    if plans else "")
         if not r.get("paid_url"):
             return compare
-        return (f'<div class="seller-pair">{compare}<span class="pick-act"><a class="btn btn-action" href="{paid_href(r["seller_slug"], r["paid_url"])}"{paid_ev(r["seller_slug"], r["paid_url"], "seller page")}{PAID_ATTRS}>'
-                f'Visit {seller_base(seller_name(r))}{NEW_TAB}</a><span class="paid">Paid link</span></span></div>')
-    return f'<a class="btn btn-ink" href="/compare/?a=s.{r["seller_slug"]}"{ev("compare_pick", kind="seller")}>Compare with another shop</a>'
+        return (f'<div class="seller-pair"><span class="pick-act"><a class="btn btn-action" href="{paid_href(r["seller_slug"], r["paid_url"])}"{paid_ev(r["seller_slug"], r["paid_url"], "seller page")}{PAID_ATTRS}>'
+                f'Visit {seller_base(seller_name(r))}{NEW_TAB}</a><span class="paid">Paid link</span></span>{compare}</div>')
+    return f'<a class="btn btn-line" href="/compare/?a=s.{r["seller_slug"]}"{ev("compare_pick", kind="seller")}>Compare with another shop</a>'
 
 
 def seller_page(r):
@@ -4068,17 +4079,17 @@ def seller_page(r):
   <div class="wrap">
     <div class="seller-head">
       <div class="seller-id">
-        {f'<img class="h1-logo" src="{r.get("wordmark_path") or r["logo_path"]}" alt="" height="28">' if clinic and r.get("logo_path") else parts.tile(r["seller_slug"], seller_base(seller_name(r)), 72, shop=not clinic, seller=r)}
+        {parts.tile(r["seller_slug"], seller_base(seller_name(r)), 72, shop=not clinic, seller=r)}
         <div class="seller-id-text">
         <h1>{seller_base(seller_name(r))} review</h1>
-        <p class="seller-kind"><span class="chip chip-neutral">{kind_words(r)[1]}</span></p>
+        <p class="seller-kind"><span class="chip chip-{"info" if clinic else "neutral"}">{kind_words(r)[1]}</span></p>
         {author_line(checked) if checked else ""}
         <p class="small seller-meta">{meta}</p>{not_in_line(r["seller_slug"], "p")}
+        <p class="intro seller-answer">{answer}</p>
         </div>
       </div>
-      <div class="seller-score"><p class="check-n"><span class="num-xl">{score_of(r)}</span> <span class="num-unit">of {out_of(r)} checks</span></p>{seller_action(r)}</div>
+      <div class="seller-score"><p class="check-n"><span class="num-xl">{score_of(r)}</span> <span class="num-unit">of {out_of(r)} checks</span></p>{score_bar(r)}{seller_action(r)}</div>
     </div>
-    <p class="intro seller-answer">{answer}</p>
   </div>
 </section>
 <div class="wrap seller-body">
@@ -6821,8 +6832,12 @@ def what_next(g):
             links.append(f'<li><a href="/sellers/#substance={best}">Every seller of {name}, with its checks</a></li>')
     # beside it from 900px, the goals strip (pages.md, Category): one section, two columns, so the page stays short
     strip = re.search(r'<div class="wrap">(.*?)</div>\s*</section>', goals_strip("Compare other goals", g["slug"]), re.S)
-    nxt = f'<div><h2 class="h-sources">What to do next</h2><ul class="next-list">{"".join(links)}</ul></div>' if links else ""
-    other = f'<div id="other-goals">{strip.group(1)}</div>' if strip else ""
+    # Goal page v2 (goal.md): the links as cards with the part before ":" as a kicker; the goals as pills with their photo
+    links = [re.sub(r'(<a href="[^"]+">)(Read the guide|Compare side by side): ', r'\1<span class="nx-k">\2<span class="vh">:</span></span> ', x, count=1) for x in links]
+    nxt = f'<div><h2 class="h-sources">What to do next</h2><ul class="next-list next-cards">{"".join(links)}</ul></div>' if links else ""
+    pills = re.sub(r'<a class="btn btn-line btn-sm" href="/([a-z0-9-]+)/">',
+                   lambda m: f'<a class="goal-pill" href="/{m[1]}/"><span class="gp-pic">{parts.goal_photo(m[1], 28, small=True)}</span>', strip.group(1)) if strip else ""
+    other = f'<div id="other-goals">{pills}</div>' if strip else ""
     return f'<section class="section goal-sec goal-next" id="next"><div class="wrap goal-two">{nxt}{other}</div></section>' if nxt or other else ""
 
 
