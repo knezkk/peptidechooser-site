@@ -1534,8 +1534,8 @@ NOT_SWALLOWED = {"cream": "cream", "serum": "serum", "lotion": "lotion", "gel": 
 
 def supp_rows(b):
     """The listings our database sells as supplements (site.products, regulatory_group supplement): each shop's cheapest
-    listing per substance (tools/pull_data.py keeps them)."""
-    return [p for p in b.PRODUCTS if p.get("regulatory_group") == "supplement" and p.get("price_usd") is not None]
+    listing per substance, from site.json supplement_products (tools/pull_data.py keep_supplements, PR #211)."""
+    return [p for p in (b.SUPPLEMENTS or []) if p.get("regulatory_group") == "supplement" and p.get("price_usd") is not None]
 
 
 def supp_not_peptide(b, x):
