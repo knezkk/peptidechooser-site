@@ -21,6 +21,7 @@ GOALS = ("hair", "skin", "weight-loss", "muscle", "recovery", "libido", "longevi
 
 def monogram(name):
     """The first two letters of the short name; two words or more, their first letters."""
+    name = re.sub(r"\s*\(formerly [^)]*\)", "", name)  # "welludr (formerly WellMedr)" -> "We", not "WF"
     words = re.findall(r"[A-Z]?[a-z0-9]+|[A-Z]+(?![a-z])", name)
     while len(words) > 1 and words[-1].lower() in GENERIC:
         words.pop()
