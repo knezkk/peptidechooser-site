@@ -118,19 +118,29 @@ def built():
     return out
 
 
+# A live page that does not answer is asked again before the guard gives up (owner, queue block 45, 18 Nov 2026): three
+# tries, 2 s and then 5 s apart, so a slow minute on the host does not stop a deploy; a page still unread after the third
+# try stops it as before, listed apart from text changes as a network problem.
+TRIES = 3
+WAITS = (2, 5)
+SLEEP = time.sleep
+OPEN = urllib.request.urlopen
+
+
 def fetch(url):
-    """(status, text); status 0 when the page could not be read after three tries."""
-    for i in range(3):
+    """(status, text); status 0 when the page could not be read after TRIES tries. A 404 is an answer, never tried again."""
+    for i in range(TRIES):
         try:
             req = urllib.request.Request(url, headers={"User-Agent": "peptidechooser-tier1-guard"})
-            with urllib.request.urlopen(req, timeout=30) as r:
+            with OPEN(req, timeout=30) as r:
                 return r.status, r.read().decode("utf-8", "replace")
         except urllib.error.HTTPError as e:
             if e.code == 404:
                 return 404, ""
-        except (OSError, http.client.HTTPException):  # a cut-off answer (IncompleteRead) is tried again too
+        except (OSError, http.client.HTTPException):  # a timeout or a cut-off answer (IncompleteRead) is tried again too
             pass
-        time.sleep(2 * (i + 1))
+        if i < TRIES - 1:
+            SLEEP(WAITS[min(i, len(WAITS) - 1)])
     return 0, ""
 
 
@@ -481,7 +491,8 @@ def main():
         report.append("ODOBRENO SEO - Karlo - <date>")
         report += [f"{path} {shape_stamp(new)}" for path, _, _, new, _ in open_]
     if unread:
-        report.append(f"\nCould not read {len(unread)} live page(s), so the guard cannot say what changed: " + ", ".join(unread[:20]))
+        report.append(f"\nNetwork, not text: {len(unread)} live page(s) did not answer, so the guard cannot say what changed. Run the deploy again:")
+        report += [f"  could not read {LIVE}{p} after {TRIES} tries (network)" for p in unread[:20]]
     if paths is None:
         report.append("\nCould not read the live sitemap, so the guard cannot say which pages left the build.")
     text = "\n".join(report)

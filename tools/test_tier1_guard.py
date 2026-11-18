@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 """What the Tier 1 guard lets through and what it stops. No network; run in the deploy before the guard itself."""
+import contextlib
+import io
 import sys
 import tempfile
 import unittest
@@ -198,6 +200,75 @@ class NewPages(unittest.TestCase):
         self.assertTrue(self.follows("/peptides/semaglutide/", new, live))
         bad = dict(new, description="Semaglutide: FDA approved. On our favourite page.")
         self.assertFalse(self.follows("/peptides/semaglutide/", bad, live))
+
+
+class Retry(unittest.TestCase):
+    """Queue block 45 (18 Nov 2026): a live page is asked up to three times, 2 s and then 5 s apart, before the guard stops."""
+
+    class Answer:
+        def __init__(self, html, status=200):
+            self.html, self.status = html, status
+
+        def read(self):
+            return self.html.encode()
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *a):
+            return False
+
+    def run_with(self, answers, fn):
+        calls, waits = [], []
+        def opener(req, timeout):
+            calls.append(req.full_url)
+            a = answers.pop(0) if answers else TimeoutError()
+            if isinstance(a, BaseException):
+                raise a
+            return a
+        saved = g.OPEN, g.SLEEP
+        g.OPEN, g.SLEEP = opener, waits.append
+        try:
+            return fn(), calls, waits
+        finally:
+            g.OPEN, g.SLEEP = saved
+
+    def html(self, p):
+        return f'<title>{p["title"]}</title><meta name="description" content="{p["description"]}"><h1>{p["h1"]}</h1>'
+
+    def guard(self, built, answers):
+        saved = g.built, g.live_paths, g.approvals, g.load_facts
+        g.built, g.live_paths, g.approvals, g.load_facts = (lambda: built), (lambda: set(built)), (lambda: set()), (lambda pages: FACTS)
+        out = io.StringIO()
+        try:
+            with contextlib.redirect_stdout(out):
+                code, calls, waits = self.run_with(answers, g.main)
+        finally:
+            g.built, g.live_paths, g.approvals, g.load_facts = saved
+        return code, out.getvalue(), calls, waits
+
+    def test_fails_once_then_works(self):
+        (status, text), calls, waits = self.run_with([TimeoutError(), self.Answer("<h1>ok</h1>")], lambda: g.fetch("https://x.test/a/"))
+        self.assertEqual((status, len(calls), waits), (200, 2, [2]))
+
+    def test_three_failures_stop_with_the_network_message(self):
+        (status, _), calls, waits = self.run_with([TimeoutError()] * 3, lambda: g.fetch("https://x.test/a/"))
+        self.assertEqual((status, len(calls), waits), (0, 3, [2, 5]))
+        code, out, _, _ = self.guard({"/sellers/alan-meds/": ALAN}, [TimeoutError()] * 3)
+        self.assertEqual(code, 1)
+        self.assertIn(f"could not read {g.LIVE}/sellers/alan-meds/ after 3 tries (network)", out)
+        self.assertIn("0 changes", out)
+
+    def test_404_is_an_answer(self):
+        (status, _), calls, waits = self.run_with([g.urllib.error.HTTPError("u", 404, "Not Found", {}, None)], lambda: g.fetch("https://x.test/a/"))
+        self.assertEqual((status, len(calls), waits), (404, 1, []))
+
+    def test_changed_text_still_stops_after_a_retry(self):
+        new = page(ALAN["title"], "Alan Meds is a great online clinic.", ALAN["h1"])
+        code, out, calls, _ = self.guard({"/sellers/alan-meds/": new}, [TimeoutError(), self.Answer(self.html(ALAN))])
+        self.assertEqual(code, 1)
+        self.assertIn("NOT APPROVED", out)
+        self.assertNotIn("(network)", out)
 
 
 class Redirects(unittest.TestCase):
