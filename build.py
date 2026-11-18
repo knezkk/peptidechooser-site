@@ -1009,12 +1009,14 @@ NEW_TAB_NOTE = '<span id="new-tab" hidden>Opens in a new tab</span>'
 PLACEMENTS = ("option row", "clinic table", "window", "seller page", "decision card")
 
 
-def paid_ev(seller_slug, paid, placement):
+def paid_ev(seller_slug, paid, placement, plan=None):
     """`paid_link_click` (owner task 20, 8 Nov 2026): `partner` is the /out/ slug, `placement` where the button sits; `page_type`
-    comes from <body data-pt>. nav.js sends it by beacon, so it leaves before /out/ redirects."""
+    comes from <body data-pt>. nav.js sends it by beacon, so it leaves before /out/ redirects. A button on a plan row also
+    carries the plan slug (queue block 44, 18 Nov 2026)."""
     assert placement in PLACEMENTS, placement
     out = paid_href(seller_slug, paid)
-    return ev("paid_link_click", seller=seller_slug, partner=out.strip("/").split("/")[1], placement=placement, out_path=out)
+    return ev("paid_link_click", seller=seller_slug, partner=out.strip("/").split("/")[1], placement=placement, out_path=out,
+              plan=(plan or {}).get("plan_slug"))
 
 
 def plans_ev(seller_slug, plan=None):
@@ -1237,6 +1239,23 @@ if PROFILES:
     GONE = {k: {**v, "gone": True, "paid_url": None} for k, v in SELLER_ARCHIVE.items()
             if k not in PROFILES and k in _live and f"/sellers/{k}/" not in _moved}
     PROFILES.update(GONE)
+# Plan deep links (owner, queue block 44, 18 Nov 2026; paid.deep_links): a paid button on a plan row goes to
+# /out/<seller>/<target>/, which lands on the plan's own page through the network. The deploy (DEEP_LINK_CHECK=1) asks each
+# target once; a 404, a redirect to another host or no answer keeps /out/<seller>/ and is listed in the run log.
+DEEP = paid.deep_links(PLANS, PROFILES)
+if os.environ.get("DEEP_LINK_CHECK") == "1" and DEEP:
+    DEEP, _dropped = paid.checked_deep_links(DEEP)
+    for _out, _target, _why in _dropped:
+        print(f"deep link: {_out} -> {_target}: {_why}, the button keeps the seller's home page", file=sys.stderr)
+print(f"deep links: {len(DEEP)} plan rows to {len({v['out_path'] for v in DEEP.values()})} plan pages", file=sys.stderr)
+
+
+def plan_paid(seller_slug, plan, paid_url):
+    """The /out/ path of a paid button: the plan's deep link page when it has one, else the seller's `paid_url`."""
+    d = DEEP.get((seller_slug, (plan or {}).get("plan_slug")))
+    return d["out_path"] if d and paid_url == PROFILES.get(seller_slug, {}).get("paid_url") else paid_url
+
+
 # A tool (pages.md, Category, Tools) does not prescribe: no seller page, not counted as a clinic. A shop stays a shop. An entry
 # with `clinic` prescribes too (Vitals Vault, owner answer to #104 Q1 A): it keeps its seller page and counts as a clinic.
 TOOL_PROFILES = {t["seller_slug"]: PROFILES.pop(t["seller_slug"]) for g in DATA.get("goals") or [] for t in g.get("tools") or []
@@ -1386,7 +1405,8 @@ def clinic_button(seller_slug, label, small="Our clinic page", plan=None, paid_o
     paid = (plan or {}).get("paid_url") or r.get("paid_url")
     if paid_ok and paid:
         tail = label.split(" · ", 1)[1] if " · " in label else ""
-        return (f'<span class="pick-act"><a class="btn btn-action btn-sm" href="{paid_href(seller_slug, paid)}"{paid_ev(seller_slug, paid, placement)}{PAID_ATTRS}>'
+        paid = plan_paid(seller_slug, plan, paid)
+        return (f'<span class="pick-act"><a class="btn btn-action btn-sm" href="{paid_href(seller_slug, paid)}"{paid_ev(seller_slug, paid, placement, plan)}{PAID_ATTRS}>'
                 f'Visit {seller_base(r["seller_name"])}{" · " + tail if tail else ""}{NEW_TAB}'
                 + ('<span class="paid">Paid link</span></a></span>' if in_table else '</a><span class="paid">Paid link</span></span>'))
     return (f'<span class="pick-act"><a class="btn btn-wait btn-sm" href="/sellers/{seller_slug}/"{plans_ev(seller_slug, plan)}>{label}</a>'
@@ -2965,7 +2985,8 @@ def clinic_row_act(r, placement="clinic table"):
     owner decision 4 Nov 2026); otherwise btn-wait "See plans" to our clinic page."""
     name, paid = seller_base(r["seller_name"]), r.get("paid_url") or PROFILES.get(r["seller_slug"], {}).get("paid_url")
     if paid:
-        return (f'<span class="pick-act"><a class="btn btn-action btn-sm" href="{paid_href(r["seller_slug"], paid)}"{paid_ev(r["seller_slug"], paid, placement)}{PAID_ATTRS}>Visit {name}{NEW_TAB}'
+        paid = plan_paid(r["seller_slug"], r, paid)
+        return (f'<span class="pick-act"><a class="btn btn-action btn-sm" href="{paid_href(r["seller_slug"], paid)}"{paid_ev(r["seller_slug"], paid, placement, r)}{PAID_ATTRS}>Visit {name}{NEW_TAB}'
                 '<span class="paid">Paid link</span></a></span>')
     if r["seller_slug"] not in PROFILES:
         return ""
@@ -6727,7 +6748,7 @@ def main():
         "background_color": COLOR["white"], "theme_color": COLOR["white"],
         "icons": [{"src": "/assets/apple-touch-icon.png", "sizes": "180x180", "type": "image/png"},
                   {"src": "/assets/icon-512.png", "sizes": "512x512", "type": "image/png"}]}, indent=2) + "\n")
-    paid.write_out_pages(DIST, {slug: seller_base(r["seller_name"]) for slug, r in PROFILES.items()})
+    paid.write_out_pages(DIST, {slug: seller_base(r["seller_name"]) for slug, r in PROFILES.items()}, deep=DEEP)
     (DIST / "CNAME").write_text("peptidechooser.com\n")
     (DIST / ".nojekyll").write_text("")
     # Cloudflare Pages, the new host (owner queue block 5, step 4A); GitHub Pages serves both as plain files and ignores them.
