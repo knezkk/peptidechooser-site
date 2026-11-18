@@ -1439,7 +1439,7 @@ def check_events(P):
                 errs.append(f"{name}: a text filter would send what was typed: {t[:120]}")
         if "gtag('event'" in html:
             errs.append(f"{name}: a gtag event outside the events script")
-        if 'src="/assets/nav.js"' in html and "<body data-pt=" not in html:
+        if re.search(r'src="/assets/nav\.js(?:\?v=[0-9a-f]{8})?"', html) and "<body data-pt=" not in html:
             errs.append(f"{name}: no page type on <body>")
     nav = (DIST / "assets" / "nav.js").read_text(encoding="utf-8")
     gate, calls = nav.find("if(!window.pcGA)return;"), nav.count("gtag(")
