@@ -2004,9 +2004,10 @@ def option_rows(g, lazy=False):
         # one status chip next to the name; no seller fact on the row (pages/parts.md, Option rows, 5 Nov 2026)
         head = opt_head(p) if not lazy else tip_chips(opt_head(p)).replace('<span class="name">', '<span class="name tip-o">', 1)
         # goal pages (goal.md, Goal page v2): the open row's three lines in labelled columns; Home keeps its lines as they are
-        c0, c1, c2, c3 = ("", "", "", "") if lazy else ('<div class="opt-cols"><div><span class="opt-lab">What it does</span>',
-                                                        '</div><div><span class="opt-lab">FDA status</span>',
-                                                        '</div><div><span class="opt-lab">How to get it</span>', "</div></div>")
+        # Home too since block 14 (parts.md, Option rows, the open control)
+        c0, c1, c2, c3 = ('<div class="opt-cols"><div><span class="opt-lab">What it does</span>',
+                          '</div><div><span class="opt-lab">FDA status</span>',
+                          '</div><div><span class="opt-lab">How to get it</span>', "</div></div>")
         rows.append(f'<li class="opt"><details class="opt-more"><summary class="opt-sum">{option_picture(p, rp)}<span class="opt-m" aria-hidden="true"></span>{head}</summary>'
                     f'<div class="opt-body">{opt_line(g, p, rp, "p")}{c0}<p class="opt-does">{p["does"]}{refs(p, slug, price=not pad)}</p>'
                     f'{c1}<p class="opt-status">{status}</p>{c2}<p class="opt-how">{how}{cost}</p>{c3}{"" if lazy else opt_facts(g, p)}</div></details>{opt_action(g, p, rp, lazy, pad)}</li>')
@@ -2468,6 +2469,16 @@ var d=e.target.closest('.sellers-dlg');if(d&&e.target===d)d.close();});})();
 # The figure's zoom (design book, Motion): GSAP moves the whole stage, the sharp close-up and the highlight fade in when it
 # lands. They are the same camera, so nothing shifts. Close-ups load on first hover, focus or click. No GSAP or reduced
 # motion: it swaps straight to the close-up. No JavaScript: the full figure and the goal list.
+# Option rows (parts.md, the open control; queue block 14): one row open at a time in a list, and the first row of a
+# visible list open on load, so people see that rows open. Home calls pcOptFirst when a goal's panel is shown.
+OPT_SCRIPT = r"""(function(){document.addEventListener('toggle',function(e){var d=e.target;if(!d.matches||!d.matches('details.opt-more')||!d.open)return;
+var ul=d.closest('.opts');if(ul)[].forEach.call(ul.querySelectorAll('details.opt-more[open]'),function(x){if(x!==d)x.open=false;});},true);
+function first(root){[].forEach.call((root||document).querySelectorAll('.opts'),function(ul){if(ul.closest('[hidden]')||ul.querySelector('details.opt-more[open]'))return;
+var f=ul.querySelector('details.opt-more');if(f)f.open=true;});}
+window.pcOptFirst=first;if(document.readyState!=='loading')first();else document.addEventListener('DOMContentLoaded',function(){first();});})();
+"""
+
+
 FIG_JS = """<script>
 window.pcFig=function(box,choose){
 var stage=box.querySelector('.fig3d-stage'),label=box.querySelector('.fig3d-label'),back=box.querySelector('.fig3d-back');
@@ -2530,6 +2541,7 @@ function show(k){var p=root.querySelector('.step-panel[data-goal="'+k+'"][data-s
 if(p){var src=p.getAttribute('data-src');p.removeAttribute('data-src');fetch(src).then(function(r){return r.json();}).then(function(j){p.innerHTML=j.html;if(cur===k)show(k);})
 .catch(function(){location.href='/'+k+'/';});return;}
 root.querySelectorAll('.step-panel').forEach(function(x){x.hidden=x.getAttribute('data-goal')!==k;if(!x.hidden)root.querySelector('.goal-t').textContent=': '+x.getAttribute('data-title');});
+if(window.pcOptFirst)pcOptFirst(root.querySelector('.step-panel[data-goal="'+k+'"]'));
 if(!window.pcMotion)return;var on=root.querySelectorAll('.step-panel[data-goal="'+k+'"]');
 gsap.fromTo(on,{opacity:0},{opacity:1,duration:swapS,ease:'power1.out'});
 gsap.fromTo(root.querySelectorAll('.step-panel[data-goal="'+k+'"] .opt'),{opacity:0,y:4},{opacity:1,y:0,duration:swapS,ease:'power1.out',stagger:0.04});}
@@ -6759,7 +6771,7 @@ def main():
     (DIST / "windows").mkdir(exist_ok=True)
     for k, html in GOAL_PANELS.items():
         (DIST / "windows" / f"goal-{k}.json").write_text(json.dumps({"html": html}), encoding="utf-8")
-    (DIST / "assets" / "nav.js").write_text(NAV_SCRIPT + STATE_SCRIPT + EVENTS_SCRIPT, encoding="utf-8")
+    (DIST / "assets" / "nav.js").write_text(NAV_SCRIPT + STATE_SCRIPT + EVENTS_SCRIPT + OPT_SCRIPT, encoding="utf-8")
     (DIST / "assets" / "motion.js").write_text(MOTION_CODE, encoding="utf-8")
     if home.JS:
         # Home carries the header search in its cached file too (queue block 21: the wave B goals took Home past 60 KB)

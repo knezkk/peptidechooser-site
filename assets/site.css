@@ -804,8 +804,8 @@ body:has(.home-sec) .site-foot { margin-top: 0; }
 @media (min-width: 1100px) { .hero-clinic .goal-item > span:first-child { white-space: nowrap; } }
 /* Option rows: drawing 48px | name, the subtitle on its own line, chip and prescription | the action at cta-width, one right edge. */
 .hero-clinic .flow { --thumb-row: 48px; }
-.hero-clinic .opt-sum { grid-template-columns: var(--thumb-row) minmax(0, 1fr); grid-template-areas: "t one" "t two"; column-gap: 14px; }
-.hero-clinic .opt-m, .hero-clinic .opt-dot { display: none; }
+.hero-clinic .opt-sum { column-gap: 14px; }
+.hero-clinic .opt-dot { display: none; }
 .hero-clinic .opt-sub { display: block; font-size: var(--small-size); line-height: 1.45; color: var(--ink-2); }
 .hero-clinic .opt-body { padding-left: calc(var(--thumb-row) + 14px); }
 .hero-clinic .flow .opt > .pick-act { justify-self: end; }
@@ -956,8 +956,6 @@ body:has(.home-sec) .site-foot { margin-top: 0; }
 .decide-card .pick-act .btn { width: 100%; }
 /* compare the options on the band, the rows in one white box, a + that turns into a minus */
 .goal-opts { background: var(--paper-2); }
-.flow-solo .opt-m::before { content: "+"; width: auto; height: auto; margin: 0; border: 0; transform: none; font: 700 20px/1 var(--font-text); color: var(--ink); }
-.flow-solo .opt-more[open] .opt-m::before { content: "\2212"; margin: 0; transform: none; }
 .opt-cols { display: grid; gap: 10px; margin-top: 6px; }
 .opt-cols > div { min-width: 0; }
 .opt-lab { display: block; margin-bottom: 2px; font-size: 13px; font-weight: 600; color: var(--ink-2); }
@@ -1016,3 +1014,23 @@ details.faq-item > p { margin-top: 6px; }
   .seller-sec#plans { grid-template-columns: minmax(0, 1fr); }
   .seller-sec#plans > .seller-lede { grid-column: 1; margin-bottom: 8px; }
 }
+
+/* Option rows, the open control (parts.md; queue block 14): a round 32px button at the header's right, a down chevron that
+   turns when open; the whole header opens it, with a light hover; Home and the goal pages alike. */
+.opts .opt-sum { grid-template-columns: var(--thumb-row) minmax(0, 1fr) 32px; grid-template-areas: "t one m" "t two m"; column-gap: 14px; padding: 4px; margin: -4px; transition: background-color var(--motion-quick); }
+.opts .opt-sum:hover { background: var(--paper-2); }
+.opts .opt-m { grid-area: m; align-self: center; width: 32px; height: 32px; border-radius: var(--radius-pill); background: var(--white); border: 1px solid var(--line-strong); }
+.opts .opt-sum:hover .opt-m { background: var(--white); border-color: var(--ink); }
+.opts .opt-m::before { width: 8px; height: 8px; margin: -4px 0 0; border-right: 2px solid var(--ink); border-bottom: 2px solid var(--ink); transform: rotate(45deg); }
+.opts .opt-more[open] .opt-m::before { margin: 4px 0 0; transform: rotate(-135deg); }
+html:not(.motion) .opts .opt-m::before { transition: none; }
+.opts .opt-body { padding-right: 46px; }
+@media (max-width: 640px) { .opts .opt-m { align-self: start; } .opts .opt-body { padding-right: 0; } }
+/* from 900px the open row's body runs the full width of the row; the action keeps its column at the top right */
+@media (min-width: 900px) {
+  .flow .opt > .opt-more { grid-column: 1 / -1; grid-row: 1; }
+  .flow .opt > .pick-act { grid-column: 2; grid-row: 1; align-self: start; margin-top: 6px; position: relative; z-index: 1; }
+  .opts .opt-sum { padding-right: calc(var(--cta-width) + 20px); }
+  .opts .opt-body { padding-right: 0; }
+}
+@media (min-width: 900px) { .flow .opt:has(> .opt-more:not([open])) > .pick-act { align-self: center; margin-top: 0; } }
