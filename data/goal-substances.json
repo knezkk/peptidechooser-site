@@ -1,0 +1,79 @@
+{
+ "_source": "The substances of each goal's Home option rows: data/site.json goals[].peptides[].substance and .substances, read 18 Nov 2026 (queue block 11). A seller matches a goal on /sellers/ when it sells one of them. Regenerate when a goal's option rows change.",
+ "goals": {
+  "hair": [
+   "finasteride",
+   "minoxidil",
+   "ghk-cu",
+   "bpc-157",
+   "tb-500"
+  ],
+  "skin": [
+   "ghk-cu",
+   "palmitoyl-pentapeptide-4",
+   "acetyl-hexapeptide-8"
+  ],
+  "weight-loss": [
+   "semaglutide",
+   "tirzepatide",
+   "retatrutide",
+   "orforglipron",
+   "cagrilintide",
+   "liraglutide",
+   "naltrexone-bupropion",
+   "orlistat"
+  ],
+  "muscle": [
+   "tesamorelin",
+   "sermorelin",
+   "cjc-1295",
+   "ipamorelin",
+   "igf-1-lr3",
+   "testosterone"
+  ],
+  "recovery": [
+   "bpc-157",
+   "tb-500"
+  ],
+  "libido": [
+   "bremelanotide",
+   "sildenafil",
+   "tadalafil",
+   "testosterone",
+   "melanotan-2",
+   "flibanserin"
+  ],
+  "longevity": [
+   "epitalon",
+   "mots-c",
+   "nad-plus"
+  ],
+  "menopause": [
+   "estradiol",
+   "estradiol-progesterone",
+   "fezolinetant"
+  ],
+  "growth-hormone": [
+   "somatropin",
+   "tesamorelin",
+   "cjc-1295",
+   "ipamorelin",
+   "igf-1-lr3",
+   "sermorelin"
+  ],
+  "sleep": [
+   "dsip"
+  ],
+  "energy": [
+   "mots-c",
+   "nad-plus",
+   "sermorelin"
+  ],
+  "testosterone": [
+   "testosterone",
+   "hcg",
+   "gonadorelin",
+   "kisspeptin-10"
+  ]
+ }
+}

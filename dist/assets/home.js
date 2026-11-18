@@ -69,7 +69,7 @@ stage.style.setProperty('--s',r.z);done();}
 function clear(){Object.keys(layers).forEach(function(k){layers[k].forEach(function(i){i.classList.remove('in');});});label.hidden=true;}
 function place(k){var p=box.querySelector('.pin[data-goal="'+k+'"]');label.textContent=p.getAttribute('aria-label');label.hidden=false;label.style.left='0';label.style.top='0';
 var b=box.getBoundingClientRect(),q=p.getBoundingClientRect(),x=q.left+q.width/2-b.left,y=q.top+q.height/2-b.top,w=label.offsetWidth,h=label.offsetHeight,g=14,lx,ly=y-h/2;
-if(x+g+w<=b.width-4)lx=x+g;else if(x-g-w>=4)lx=x-g-w;else{lx=Math.max(4,Math.min(b.width-w-4,x-w/2));ly=y+g;if(ly+h>back.offsetTop-4)ly=y-g-h;}
+if(x+g+w<=b.width-4)lx=x+g;else if(x-g-w>=4)lx=x-g-w;else{lx=Math.max(4,Math.min(b.width-w-4,x-w/2));ly=y+g;if(ly+h>(back.hidden?b.height:back.offsetTop)-4)ly=y-g-h;}
 label.style.left=lx+'px';label.style.top=Math.max(4,Math.min(b.height-h-4,ly))+'px';}
 function go(k){if(cur===k)return;var t=++token,list=ensure(k),anim=!!window.pcMotion;cur=k;clear();box.classList.add('zoomed');view.classList.toggle('near',rect(k).z>1);back.hidden=false;
 pins.forEach(function(p){var on=p.getAttribute('data-goal')===k;p.classList.toggle('on',on);p.setAttribute('aria-pressed',on?'true':'false');});
@@ -89,7 +89,10 @@ function pre(e){var p=e.target.closest&&e.target.closest('.pin');if(p)ensure(p.g
 box.addEventListener('mouseover',pre);box.addEventListener('focusin',pre);
 box.addEventListener('keydown',function(e){if((e.key==='Enter'||e.key===' ')&&e.target.classList.contains('pin')){e.preventDefault();pinPick(e.target.getAttribute('data-goal'));}});
 document.addEventListener('keydown',function(e){if(e.key==='Escape'&&cur)out(box.contains(document.activeElement));});
-return {go:go,out:out,preload:ensure};};
+// Look v3 (home.md): the chosen goal's pin carries its name from the start, and again after zooming out.
+function mark(){var p=box.querySelector('.pin.on');if(p&&!cur)place(p.getAttribute('data-goal'));}
+requestAnimationFrame(mark);window.addEventListener('resize',function(){if(!cur)mark();});
+return {go:go,out:function(r){out(r);setTimeout(mark,zoomS*1000+30);},preload:ensure,mark:mark};};
 
 
 (function(){var root=document.getElementById('goals');if(!root)return;
@@ -108,6 +111,7 @@ gsap.fromTo(root.querySelectorAll('.step-panel[data-goal="'+k+'"] .opt'),{opacit
 function pick(k){if(k===cur)return;cur=k;
 root.querySelectorAll('.goal-item,.pin').forEach(function(x){var on=x.getAttribute('data-goal')===k;
 if(x.hasAttribute('aria-pressed'))x.setAttribute('aria-pressed',on?'true':'false');x.classList.toggle('on',on);});
+if(fig&&fig.mark)setTimeout(fig.mark);
 var old=root.querySelectorAll('.step-panel:not([hidden])');
 if(window.pcMotion&&old.length){gsap.killTweensOf(old);gsap.to(old,{opacity:0,duration:swapS/2,ease:'power1.in',onComplete:function(){gsap.set(old,{opacity:1});if(cur===k)show(k);}});}else{show(k);}}
 function hover(k){root.querySelectorAll('.pin').forEach(function(x){x.classList.toggle('hov',x.getAttribute('data-goal')===k);});if(k&&fig)fig.preload(k);}

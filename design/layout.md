@@ -22,6 +22,9 @@ Nothing on any page may leave its margins or push the page sideways, at any scre
 7. Headings use the phone sizes from `tokens.json` under 640px (`display-1` 32px, 28px in the Home hero; `display-2` 26px; `display-3` 22px; `number-xl` 48px).
 8. No element is positioned outside the container (no negative margins, no absolute elements past the edges). Sticky only for the article sidebar and the seller page's right column (the Background check card and Similar sellers; owner task 3 Nov 2026), from 900px up.
 
+## Sellers list columns (owner prototype design-2026-11-18, queue block 11; waits for ODOBRENO DIZAJN)
+From 900px /sellers/ is two columns: the Filter column (260px) and the table (the rest), gap `space-5`; under 900px one column with the Bottom sheet. Home's option rows keep the action column at `cta-width` from 900px; under 900px the action goes under the text at full width.
+
 ## Touch
 
 Every control is at least 44px tall: nav items, the header button, in-table `btn-sm`, cookie buttons, goal rows. Body pins are 24px controls from 900px and plain markers below it, and a click anywhere on the figure chooses the nearest pin, so the whole figure is the target; the goal list beside the figure is the full-size control for the same choice. **Exceptions** (owner task w2, 3 Nov 2026, phone finding 9): a footnote number (`sup a`) is at least 24px tall, the WCAG 2.5.8 minimum (it sits inside a line of text and a 44px target would push the lines apart); a link inside running text follows the text's line; a Chip is at least 24px tall (README, Chips). `tools/check_layout.js` checks the 44px rule at 390px on every page with these exceptions (w3's phone check, on by default since #75; the earlier `TAP=1` switch is gone).
