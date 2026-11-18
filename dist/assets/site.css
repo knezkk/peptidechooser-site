@@ -904,3 +904,115 @@ body:has(.home-sec) .site-foot { margin-top: 0; }
 @media (max-width: 899px) { .hero-clinic .fig3d-label { font-size: 13px; } }
 .sl-sortg[hidden], .sl-sortg:empty { display: none; }
 .sl-sortg .sf-sort[hidden] { display: none; }
+
+/* Seller v2 (seller.md, Seller v2; owner design canvas, queue block 13). Words and order unchanged. */
+.seller-id { display: flex; align-items: flex-start; gap: 16px; }
+.seller-id > .tile { flex: none; }
+.seller-answer { font-weight: 400; font-size: calc(var(--ui-size) + 2px); line-height: 1.55; max-width: 62ch; }
+.seller-score, .seller-head:has(.seller-pair) .seller-score { display: flex; flex-direction: column; align-items: stretch; justify-content: flex-start; gap: 0; padding: var(--space-4) var(--space-5); background: var(--white); border: 1.5px solid var(--ink); border-radius: var(--radius-panel); }
+@media (max-width: 899px) { .seller-score .check-n { display: block; } }
+.seller-score .check-n { margin: 0 0 10px; }
+.score-bar { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 4px; margin: 0 0 14px; }
+.score-bar > span { height: 6px; border-radius: 2px; background: var(--line); }
+.score-bar > span.on { background: var(--action); }
+.seller-score .seller-pair, .seller-score > .btn { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; width: 100%; }
+.seller-score > .btn { display: flex; }
+@media (min-width: 900px) { .seller-head { grid-template-columns: minmax(0, 1fr) 320px; align-items: start; } .seller-score .seller-pair { grid-template-columns: minmax(0, 1fr); width: 100%; } }
+/* the body on the band, background only (layout.md: full-bleed is background only) */
+.seller-body { position: relative; }
+.seller-top + .seller-body { margin-top: 0; padding-top: var(--space-6); padding-bottom: var(--space-6); box-shadow: 0 0 0 100vmax var(--paper-2); clip-path: inset(0 -100vmax); background: var(--paper-2); }
+.seller-sec#plans { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: baseline; column-gap: 16px; }
+.seller-sec#plans > h2 { grid-column: 1; }
+.seller-sec#plans > .seller-lede { grid-column: 2; margin: 0; }
+.seller-sec#plans > :not(h2):not(.seller-lede) { grid-column: 1 / -1; }
+/* legit rows in one white box, a tick or a cross */
+.legit-list { background: var(--white); border: 1px solid var(--line-strong); border-radius: var(--radius-panel); padding: 0 var(--space-4); }
+.legit-list > li { position: relative; padding-left: 28px; }
+.legit-list > li::before { content: ""; position: absolute; left: 2px; top: 1.05em; width: 14px; height: 14px; }
+.legit-list > li.met::before { width: 6px; height: 11px; left: 6px; top: 0.85em; border-right: 2.5px solid var(--action); border-bottom: 2.5px solid var(--action); transform: rotate(45deg); }
+.legit-list > li.unmet::before { background: linear-gradient(45deg, transparent 44%, var(--ink-2) 44%, var(--ink-2) 56%, transparent 56%), linear-gradient(-45deg, transparent 44%, var(--ink-2) 44%, var(--ink-2) 56%, transparent 56%); }
+.legit-list .check-key { font-weight: 600; color: var(--ink); }
+/* aside: the card's checks as rows, Similar sellers as a card */
+.check-card .check-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding-bottom: 10px; border-bottom: 2px solid var(--ink); }
+.check-card .check-head .num-xl { font-size: 32px; line-height: 1; }
+.check-card .check-head .num-unit { font-size: var(--small-size); }
+.check-card .check-chips { align-items: stretch; gap: 0; }
+.check-card .check-chips > li { display: flex; justify-content: space-between; align-items: center; gap: 12px; min-height: 36px; border-bottom: 1px solid var(--line); }
+.check-card .check-chips .chip { padding: 0; border: 0; background: none; color: var(--ink); font-size: var(--small-size); font-weight: 400; white-space: normal; }
+.cc-st { font-size: var(--small-size); font-weight: 600; color: var(--ink); white-space: nowrap; }
+.seller-similar ul { list-style: none; margin: 0; padding: 0 var(--space-4); background: var(--white); border: 1px solid var(--line-strong); border-radius: var(--radius-panel); }
+.seller-similar li { display: flex; align-items: center; gap: 10px; min-height: 52px; border-bottom: 1px solid var(--line); }
+.seller-similar li:last-child { border-bottom: 0; }
+.seller-similar .sim-n { margin-left: auto; color: var(--ink-2); white-space: nowrap; }
+
+/* Goal page v2 (goal.md, Goal page v2; owner design canvas, queue block 13). Words, option order and numbers unchanged. */
+/* pick cards: drawing left, the key as a mark label, the button full width */
+.decide-card { display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: 16px; row-gap: 4px; align-content: start; }
+.decide-card > .thumb { grid-row: 1 / span 6; align-self: start; }
+.decide-card > :not(.thumb) { grid-column: 2; }
+.decide-k { justify-self: start; padding: 2px 6px; background: var(--mark); color: var(--ink); font-size: 13px; font-weight: 700; border-radius: var(--radius-chip); }
+.decide-card[data-card="best-approved"] { border: 1.5px solid var(--ink); }
+.decide-card .pick-act { padding-top: 8px; }
+.decide-card .pick-act .btn { width: 100%; }
+/* compare the options on the band, the rows in one white box, a + that turns into a minus */
+.goal-opts { background: var(--paper-2); }
+.flow-solo .opt-m::before { content: "+"; width: auto; height: auto; margin: 0; border: 0; transform: none; font: 700 20px/1 var(--font-text); color: var(--ink); }
+.flow-solo .opt-more[open] .opt-m::before { content: "\2212"; margin: 0; transform: none; }
+.opt-cols { display: grid; gap: 10px; margin-top: 6px; }
+.opt-cols > div { min-width: 0; }
+.opt-lab { display: block; margin-bottom: 2px; font-size: 13px; font-weight: 600; color: var(--ink-2); }
+@media (min-width: 900px) { .opt-cols { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; } }
+/* clinic prices: the filters and the count on one row; a row of logo, plan with clinic and chips, price, action */
+.clinic-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-bottom: 12px; }
+.clinic-bar .clinic-filter { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin: 0; }
+.clinic-bar .clinic-filter[hidden] { display: none; }
+.clinic-bar .clinic-n { margin: 0 0 0 auto; }
+.tbl-clinics .cp-txt { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.tbl-clinics .cp-sub { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; font-size: var(--small-size); color: var(--ink-2); }
+.tbl-clinics .cp-price { text-align: right; white-space: nowrap; }
+.tbl-clinics td.cp-price .num { display: block; font-size: 17px; font-weight: 700; }
+#clinics.clip tr.more { display: none; }
+/* Is it legal today?: stacks under 641px, never sideways */
+@media (max-width: 640px) {
+  .tbl-legal, .tbl-legal tbody, .tbl-legal tr, .tbl-legal td { display: block; width: 100%; }
+  .tbl-legal thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+  .tbl-legal tr { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 12px; padding: 12px 0; border-bottom: 1px solid var(--line); }
+  .tbl-legal td { padding: 0; border: 0; }
+  .tbl-legal td:nth-child(n+3) { grid-column: 1 / -1; }
+  #legal .tbl-wrap { overflow: visible; }
+}
+/* FAQ rows that open and close */
+details.faq-item > summary { display: flex; justify-content: space-between; align-items: center; gap: 16px; min-height: var(--touch); cursor: pointer; list-style: none; }
+details.faq-item > summary::-webkit-details-marker { display: none; }
+details.faq-item > summary h3 { margin: 0; }
+details.faq-item > summary::after { content: "+"; flex: none; font: 700 20px/1 var(--font-text); color: var(--ink); }
+details.faq-item[open] > summary::after { content: "\2212"; }
+details.faq-item > p { margin-top: 6px; }
+/* What to do next as cards; other goals as pills with the goal photo */
+.goal-next .goal-two { grid-template-columns: minmax(0, 1fr); }
+.next-cards { display: grid; gap: 12px; }
+@media (min-width: 641px) { .next-cards { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.next-cards li, .next-cards li:last-child { padding: 0; border: 0; }
+.next-cards a { display: flex; flex-direction: column; gap: 4px; height: 100%; box-sizing: border-box; padding: 14px 16px; background: var(--white); border: 1px solid var(--line-strong); border-radius: var(--radius-panel); color: var(--ink); font-weight: 700; text-decoration: none; }
+.next-cards a:hover { border-color: var(--clinic); }
+.nx-k { font-size: 13px; font-weight: 400; color: var(--ink-2); }
+#other-goals .btn-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.goal-pill { display: inline-flex; align-items: center; gap: 8px; min-height: var(--touch); padding: 0 14px 0 6px; background: var(--white); border: 1px solid var(--line-strong); border-radius: var(--radius-pill); color: var(--ink); font-weight: 600; font-size: 14px; text-decoration: none; }
+.goal-pill:hover { border-color: var(--clinic); }
+.gp-pic { display: block; flex: none; width: 32px; height: 32px; overflow: hidden; border-radius: var(--radius-pill); background: var(--paper-2); }
+.gp-pic img, .gp-pic svg { display: block; width: 100%; height: 100%; object-fit: cover; }
+.goal-opts { padding-top: var(--space-6); padding-bottom: var(--space-6); }
+.goal-narrow .next-list { display: grid; gap: 12px; }
+@media (min-width: 641px) { .goal-narrow .next-list { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.goal-narrow .next-list li, .goal-narrow .next-list li:last-child { padding: 0; border: 0; }
+.goal-narrow .next-list a { display: block; height: 100%; box-sizing: border-box; padding: 14px 16px; background: var(--white); border: 1px solid var(--line-strong); border-radius: var(--radius-panel); color: var(--ink); font-weight: 700; text-decoration: none; }
+.goal-narrow .next-list a:hover { border-color: var(--clinic); }
+#clinics .clinics-more { display: block; }
+#clinics .clinics-more[hidden] { display: none; }
+.seller-similar li > a { display: inline-flex; align-items: center; min-height: var(--touch); }
+@media (max-width: 640px) {
+  .seller-id { flex-wrap: wrap; gap: 12px; }
+  .seller-id-text { flex-basis: 100%; }
+  .seller-sec#plans { grid-template-columns: minmax(0, 1fr); }
+  .seller-sec#plans > .seller-lede { grid-column: 1; margin-bottom: 8px; }
+}

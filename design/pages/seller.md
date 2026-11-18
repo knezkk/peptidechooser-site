@@ -32,6 +32,14 @@ One page per seller in site.seller_profile (owner task, phase 4d, 2 Nov 2026). B
 - In the sitemap, llms.txt and `tools/og.py` like every page (one share image per seller, drawn from its title); a seller added after og.py last ran gets its image in the deploy (Share image).
 - **One number on phones** (owner task 3 Nov 2026, the 390px walkthrough): under 900px the big "N of 5 checks" (a clinic: "N of 4") next to "Compare with another shop/clinic" is not drawn, because the Background check card right under it shows the same number; the button stays.
 
+### Seller v2 (owner design canvas, boards "Klinika: /sellers/embody/", "Cilj: /weight-loss/", "Cilj – mobitel 390"; queue block 11 follow-up, block 13, 18 Nov 2026; waits for ODOBRENO DIZAJN)
+Words, facts and section order unchanged; it replaces the entries above where they differ.
+- **Head:** the seller's logo tile at 72px (the tile part, its logo inside, else the monogram), the H1 beside it with the type chip under it (an online clinic `chip-info`, a shop `chip-neutral`), then the byline and dates, then the intro in body weight at `ui-size` plus 2px.
+- **Score card** (right of the head from 900px, under it on phones): a white card, 1.5px `ink` border, `radius-panel`: the big "N" with "of 4 checks" (a shop: "of 5"), a bar of one segment per check (met `action`, not met `line`), then for a clinic with a paid link `btn-action` "Visit <Name>" full width with "Paid link" under it, then `btn-line` "Compare with another clinic" (a shop: "Compare with another shop") full width. Without a paid link only the outline button.
+- **Body** on the `paper-2` band from Plans and prices down. Plans and prices: one table as now, "Prices checked <date>" on the heading's line at the right; under 640px each plan a card.
+- **Is <Name> legit?:** the facts as rows in one white bordered box: a tick (met, `action`) or a cross (not met, `ink-2`) drawn in CSS, the check name in 600, then the line ("Met: ..."), then the paragraphs and the closing sentence as now; the FAQ after it.
+- **Aside:** the Background check card with "Background check" and the small "N of 4 checks" on one line, then one row per check: its name, and "Met" or "Not met" right-aligned in 600; Similar sellers as a white card, one row per seller: the 28px tile, the name link, its checks right-aligned.
+
 ## Vendor `/vendors/<name>/`
 
 H1 + hero number (price per month), DecisionCard in the sidebar, rating by our five criteria in words (no numeric score yet), what's good / not so good, prices ledger with dates, SourcesList.
