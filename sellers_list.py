@@ -131,6 +131,7 @@ def side(b, shops, clinics):
             + link)
     return f"""<aside class="sl-side" id="sellers-fbody" aria-label="Filters" hidden>
       <div class="sl-sheet-hd"><span class="sl-handle" aria-hidden="true"></span><h2 class="sl-h">Filters</h2><button type="button" class="sl-clear">Clear all</button><button type="button" class="sl-x" aria-label="Close filters">×</button></div>
+      <div class="sl-sortg" hidden></div>
       {body}
       <div class="sl-foot"><button type="button" class="sl-clear sl-clear-f">Clear all</button><button type="button" class="btn btn-ink sl-show">Show</button></div>
     </aside>"""
@@ -280,7 +281,9 @@ if(o){last=document.activeElement;if(g){var d=side.querySelector('.sl-g[data-g="
 fbtn.addEventListener('click',function(){sheet(true);});scrim.addEventListener('click',function(){sheet(false);});
 side.querySelector('.sl-x').addEventListener('click',function(){sheet(false);});show.addEventListener('click',function(){sheet(false);});
 document.addEventListener('keydown',function(e){if(e.key==='Escape'&&side.classList.contains('sheet-on'))sheet(false);});
-function mode(){side.hidden=false;root.classList.add('sl-js');if(wide.matches){side.classList.remove('sheet-on');scrim.hidden=true;document.documentElement.classList.remove('sl-lock');}}
+// phones: Sort lives in the sheet, first; from 900px it goes back into the bar (owner, 18 Nov 2026)
+var sortBox=side.querySelector('.sl-sortg'),sorts=[].slice.call(bar.querySelectorAll('.sf-sort')),qk=bar.querySelector('.sl-quick');
+function mode(){side.hidden=false;root.classList.add('sl-js');sortBox.hidden=wide.matches;sorts.forEach(function(x){if(wide.matches)bar.insertBefore(x,qk);else sortBox.appendChild(x);});if(wide.matches){side.classList.remove('sheet-on');scrim.hidden=true;document.documentElement.classList.remove('sl-lock');}}
 if(wide.addEventListener)wide.addEventListener('change',mode);
 bar.hidden=false;head.hidden=false;if(tabs)tabs.hidden=false;mode();load();
 side.addEventListener('change',function(e){if(e.target.matches('input[data-k]'))ch();});
