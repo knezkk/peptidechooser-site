@@ -3460,7 +3460,7 @@ def seller_title(r):
     """Title (Tier 1): the full pattern, shortened step by step to the 60 characters tools/check.py allows, always ending in
     "| Peptide Chooser" (owner queue block 5, round a, 7 Nov 2026): the middle words shorten, the brand stays."""
     if r["seller_slug"] in REVIEW_DESC or r["seller_slug"] in REVIEW_TITLE_ONLY:
-        n = seller_name(r)
+        n = search_name(r)
         t = f"{n} reviews {SEO_YEAR}: is it legit? Prices and FDA checks"
         return t if len(t) <= 60 else f"{n} reviews {SEO_YEAR}: is it legit?"
     kept = RULE8.get(f'/sellers/{r["seller_slug"]}/')
@@ -3486,7 +3486,7 @@ def seller_title(r):
 # is it legit?" once the database carries the name, done in PR #203).
 REVIEW_TITLE_ONLY = {"shedrx"}
 REVIEW_DESC = {
-    "wellmedr": "{name} (now branded welludr.) prescribes {subs} online. {letter}; {checks} of our checks met. See its plans and every check.",
+    "wellmedr": "{name} prescribes {subs} online. {letter}; {checks} of our checks met. See its plans and every check.",
     "direct-meds": "{name} prescribes {subs} online: {plans}. {letter}. See the plans and our {out} checks.",
     "coreage-rx": "{name} prescribes {subs} online: {plans}. {letter}; {checks} of our checks met. See every plan and check.",
     "embody": "{name} prescribes {subs} online: {plans}. {letter}; {checks} of our checks met. See the plans and checks.",
@@ -3496,8 +3496,17 @@ REVIEW_DESC = {
     "peter-md": "{name} prescribes {subs} online: {plans}. {letter}; {checks} of our checks met. See every plan and what we could not check.",
     "skinnyrx": "{name} prescribes {subs} online: {plans}, {care}. {letter}; {checks} of our checks met.",
 }
-# The clinic's own new brand, said once in its short answer (owner, block 30); the page keeps the name people search.
-BRAND_NOW = {"wellmedr": "WellMedr now brands itself welludr."}
+# The clinic's own new brand, said once in its short answer (owner, block 30). Empty since the database carries the new
+# name itself ("welludr (formerly WellMedr)", 18 Nov 2026), which would say it twice.
+BRAND_NOW = {}
+# Rule 8 (CLAUDE.md): a page Google already shows keeps its title and H1. The name people search stays in those two when
+# the database renames the clinic (owner queue block W3-WELLMEDR, 18 Nov 2026: /sellers/wellmedr/ has impressions).
+SEARCH_NAME = {"wellmedr": "WellMedr"}
+
+
+def search_name(r):
+    """The name in the seller page's title and H1: the searched name when rule 8 keeps it, else the page's name."""
+    return SEARCH_NAME.get(r["seller_slug"]) or seller_base(seller_name(r))
 
 
 def review_description(r):
@@ -4102,7 +4111,7 @@ def seller_page(r):
       <div class="seller-id">
         {parts.tile(r["seller_slug"], seller_base(seller_name(r)), 72, shop=not clinic, seller=r)}
         <div class="seller-id-text">
-        <h1>{seller_base(seller_name(r))} review</h1>
+        <h1>{search_name(r)} review</h1>
         <p class="seller-kind"><span class="chip chip-{"info" if clinic else "neutral"}">{kind_words(r)[1]}</span></p>
         {author_line(checked) if checked else ""}
         <p class="small seller-meta">{meta}</p>{not_in_line(r["seller_slug"], "p")}
@@ -5971,7 +5980,11 @@ def cmp_clinic_name(slug):
 def cmp_url_name(slug):
     """A clinic's part of a compare address: from its database name, so a new display name (data/seller_names.json)
     never moves a live page (site map rules 3.2)."""
-    return cmp_slugify(seller_base(SELLER_DB_NAMES.get(slug) or PROFILES[slug]["seller_name"]))
+    name = SELLER_DB_NAMES.get(slug) or PROFILES[slug]["seller_name"]
+    # a database rename to "<new> (formerly <old>)" keeps the old name in the address (queue block W3-WELLMEDR, 18 Nov
+    # 2026: "welludr (formerly WellMedr)" stays alan-meds-vs-wellmedr, the slug's name, not ...-welludr-formerly-wellmedr)
+    was = re.search(r"\(formerly ([^)]+)\)", name)
+    return cmp_slugify(was.group(1) if was else seller_base(name))
 
 
 # The sitemap index (site map rules 4.4; owner task 23, 8 Nov 2026): sitemap.xml points to one file per page type, and each

@@ -312,6 +312,9 @@ ODOBRENO SEO - Karlo - 18. 11. 2026 - four prices, not One Aminos (data of 16 to
 /sellers/go-alpha-labs/ 434bfa145f31
 ODOBRENO SEO - Karlo - 18. 11. 2026 - One Aminos price (One Aminos "prices from $0.04/mg", data of 18 Nov 2026; owner in the terminal)
 /sellers/one-aminos/ 463a71879f04
+ODOBRENO SEO - Karlo - 18. 11. 2026 - PR #220 (welludr (formerly WellMedr): /sellers/wellmedr/ description with the new name, title and H1 unchanged, "WellMedr now brands itself welludr." removed; new /compare/alan-meds-vs-wellmedr/; typed in the terminal)
+/compare/alan-meds-vs-wellmedr/ 9157e1732dd5
+/sellers/wellmedr/ 4bafaa40b1c6
 ODOBRENO SEO - Karlo - 18. 11. 2026 - fridays wellmedr (Fridays description "prescribes Semaglutide and Tirzepatide. 4 plans from $249/mo"; WellMedr title, H1 and description as "welludr (formerly WellMedr)", data of 18 Nov 2026; owner in the terminal)
 /sellers/fridays/ b53148c76689
 /sellers/wellmedr/ 5e7bb84b5da9
