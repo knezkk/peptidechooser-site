@@ -33,6 +33,10 @@ One look for every list that can be narrowed (/sellers/, /peptides/, /fda-warnin
 - **/peptides/:** no name search; the "Show" chips stay in the row, "Sold as" and "Form" go in the panel.
 - **Without JavaScript:** the row's controls and the panel are hidden and every row shows, as before.
 
+## Filter column and Bottom sheet (/sellers/; (owner prototype design-2026-11-18, queue block 11; waits for ODOBRENO DIZAJN))
+- **Filter column** (from 900px): "Filters" (h2 at 18px) and "Clear all" on one line, then foldable groups (`details`): the group name (600, `ui-size`), a small "new" tag in `clinic` where the owner marked one, the summary on the right in `ink-2` ("Any", "All states" or how many are chosen) and a chevron. Options are rows 36px tall: a 18px checkbox (a radio dot for single-choice groups), the label, the count right-aligned in `ink-2`, tabular. The state grid: codes in 44px buttons, 5 to a row, the chosen one `ink`. Hairlines between groups, no box.
+- **Bottom sheet** (under 900px): the same column as a sheet from the bottom, `radius-panel` top corners, at most 85% of the screen, a 40 by 4px handle, "Filters" and a 44px × close; a scrim of `ink` at 45%; the foot sticks: "Clear all" (underlined text) and `btn-ink` "Show N clinics". Escape and the scrim close it; focus goes in on open and back to "Filters" on close.
+
 ## Select (every select on the site)
 
 `appearance: none`; the option rows' chevron (2.5px `ink` stroke) drawn 16px, 12px from the right edge; 40px right padding; 44px minimum height.

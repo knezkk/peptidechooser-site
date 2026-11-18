@@ -790,14 +790,17 @@ def check_parts(P):
                 if m and "hidden" not in m.group(1):
                     errs.append(f"{name}: the {cls} block shows without JavaScript")
             subs = {s for a, _ in trs for s in re.findall(r'data-subs="([^"]*)"', a or "")[0:1] for s in s.split()}
+            # the substance filter: the old select, or Sellers v2's checkboxes (sellers-list.md, Sellers v2, 18 Nov 2026)
             sel = re.search(r'<select class="input" id="sellers-sub"[^>]*>(.*?)</select>', html, re.S)
-            for v in re.findall(r'<option value="([^"]+)"', sel.group(1) if sel else ""):
+            sub_vals = (re.findall(r'<option value="([^"]+)"', sel.group(1)) if sel else
+                        re.findall(r'<input type="checkbox" name="sl-substance" value="([^"]+)"', html))
+            for v in sub_vals:
                 if v not in subs:
                     errs.append(f"{name}: the substance filter offers {v}, which no row carries")
             for s in re.findall(r"/sellers/([^\"'/#]+)/", "".join(re.findall(r"<script>(.*?)</script>", html, re.S))):
                 if s not in built:
                     errs.append(f"{name}: a script names /sellers/{s}/, which is not in the build")
-            opts = set(re.findall(r'<option value="([^"]+)"', sel.group(1) if sel else ""))
+            opts = set(sub_vals)
             for pn in (n for n in P if n.startswith("peptides/")):
                 for s in re.findall(r'href="/sellers/#substance=([^"]+)"', (DIST / pn).read_text(encoding="utf-8")):
                     if s not in opts:
@@ -1429,7 +1432,10 @@ def check_events(P):
             if 'data-ev="newsletter_submit"' not in t:
                 errs.append(f"{name}: the newsletter form without data-ev")
         for t in re.findall(r"<input[^>]*data-filter=[^>]*>", html):
-            if 'data-value="text"' not in t:
+            # a checkbox or radio sends its fixed value, never typed text (Sellers v2, 18 Nov 2026)
+            fixed = re.search(r'type="(?:checkbox|radio)"', t) and re.search(r'value="([^"]*)"', t) and \
+                re.search(r'value="([^"]*)"', t)[1] == (re.search(r'data-value="([^"]*)"', t) or [None, None])[1]
+            if 'data-value="text"' not in t and not fixed:
                 errs.append(f"{name}: a text filter would send what was typed: {t[:120]}")
         if "gtag('event'" in html:
             errs.append(f"{name}: a gtag event outside the events script")

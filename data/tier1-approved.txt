@@ -303,3 +303,12 @@ ODOBRENO SEO - Karlo - 16. 11. 2026 - Lost Coast Aminos and Peptidology prices (
 /sellers/peptidology/ f00388f82e2b
 ODOBRENO SEO - Karlo - 16. 11. 2026 - testosterone page (new substance page from the data of 16 Nov 2026: title "Testosterone: FDA status, prices and where it is sold", H1 "Testosterone", description as built; owner in the terminal)
 /peptides/testosterone/ 6e9484551b14
+ODOBRENO SEO - Karlo - 16. 11. 2026 - WellMedr tirzepatide (WellMedr description "prescribes semaglutide and tirzepatide online", from the data of 16 Nov 2026; owner in the terminal)
+/sellers/wellmedr/ 1d60a36fca1a
+ODOBRENO SEO - Karlo - 18. 11. 2026 - four prices, not One Aminos (data of 16 to 18 Nov 2026: TB-500 lowest $1.28/mg on /compare/ghk-cu-vs-tb-500/ and /peptides/tb-500/; Alpha Peps from $0.089/mg; Go Alpha Labs from $0.022/mg; One Aminos left out; owner in the terminal)
+/compare/ghk-cu-vs-tb-500/ 6bee5e0ddaf4
+/peptides/tb-500/ 3177d35ba535
+/sellers/alpha-peps/ a21acc10cfc1
+/sellers/go-alpha-labs/ 434bfa145f31
+ODOBRENO SEO - Karlo - 18. 11. 2026 - One Aminos price (One Aminos "prices from $0.04/mg", data of 18 Nov 2026; owner in the terminal)
+/sellers/one-aminos/ 463a71879f04
