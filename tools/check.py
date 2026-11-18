@@ -409,7 +409,8 @@ def paid_rule_errs(name, html, rule):
     seller = re.fullmatch(r"sellers/([^/]+)/index\.html", name)
     if seller and seller.group(1) in ruo and 'class="btn btn-action' in html:
         errs.append(f"{name}: a green button on a research-use shop's page")
-    found = {out_paths.get(h) or h.split("/")[2] for h in re.findall(r'class="btn btn-action[^"]*" href="(/out/[^"/]+/)"', html)}
+    # a plan deep link (/out/<seller>/<plan page>/, queue block 44) belongs to the seller its second part names
+    found = {out_paths.get(h) or h.split("/")[2] for h in re.findall(r'class="btn btn-action[^"]*" href="(/out/[^"/]+/(?:[^"/]+/)?)"', html)}
     for row in re.findall(r"<tr\b.*?</tr>", html, re.S):
         if 'class="btn btn-action' in row:
             found |= set(re.findall(r'href="/sellers/([^"/#]+)/', row)) | set(re.findall(r'data-seller="([^"]+)"', row))
@@ -436,11 +437,25 @@ def check_paid_plumbing():
     want = {paid.out_dir(r["out_path"]): r for r in data["redirects"]}
     if len(want) != len(data["redirects"]):
         errs.append("paid data: two redirects share one /out/ path")
+    # plan deep links (queue block 44): the pages the data allows, each with its own tracking address; the deploy may drop
+    # one whose target does not answer, so a page may be missing, never one the data does not allow
+    site_d = json.loads((Path(os.environ["SITE_JSON"]) if os.environ.get("SITE_JSON") else ROOT / "data" / "site.json").read_text(encoding="utf-8"))
+    deep = {paid.out_dir(v["out_path"]): {"out_path": v["out_path"], "tracking_url": v["url"], "seller_slug": v["seller_slug"], "deep": v}
+            for v in paid.deep_links(site_d.get("plans") or [], {r["seller_slug"]: r for r in site_d.get("seller_profiles") or []},
+                                     data["redirects"]).values()}
+    for d, r in deep.items():
+        v = r["deep"]
+        if not paid.deep_target_ok(v["target"], ({x["seller_slug"]: x for x in site_d.get("seller_profiles") or []}.get(v["seller_slug"]) or {}).get("domain")):
+            errs.append(f"{d}: a deep link target off the seller's own domain or its home page")
+        if not v["url"].startswith(want.get(paid.out_dir("/".join(v["out_path"].split("/")[:3]) + "/"), {}).get("tracking_url") or "https://") and v["network"].lower() != "firstpromoter":
+            errs.append(f"{d}: a deep link that is not the seller's own tracking address")
+    built = {str(f.parent.relative_to(DIST)) for f in (DIST / "out").rglob("index.html")} if (DIST / "out").exists() else set()
+    want |= {d: r for d, r in deep.items() if d in built}
     have = {str(f.parent.relative_to(DIST)) for f in (DIST / "out").rglob("index.html")} if (DIST / "out").exists() else set()
     for d in sorted(have - set(want)):
         errs.append(f"{d}: a redirect page with no tracking address in the data")
     for d, r in sorted(want.items()):
-        if not re.fullmatch(r"out/[a-z0-9-]+", d):
+        if not re.fullmatch(r"out/[a-z0-9-]+" + (r"/[a-z0-9-]+" if r.get("deep") else ""), d):
             errs.append(f"paid data: bad /out/ path {r['out_path']}")
         if not (r.get("tracking_url") or "").startswith("https://"):
             errs.append(f"{d}: no https tracking address in the data")
@@ -1393,7 +1408,7 @@ def check_events(P):
                 errs.append(f"{name}: green button without its event attributes: {t[:120]}")
         # owner task 20 (8 Nov 2026): every /out/ link carries what paid_link_click reads, its partner the link's own slug
         for t in re.findall(r'<a [^>]*href="/out/[^"]*"[^>]*>', html):
-            slug = re.search(r'href="/out/([^/"]+)/?"', t)
+            slug = re.search(r'href="/out/([^/"]+)/', t)
             place = re.search(r'data-ev-placement="([^"]+)"', t)
             if ('data-ev="paid_link_click"' not in t or not slug or f'data-ev-partner="{slug.group(1)}"' not in t
                     or not place or place.group(1) not in ("option row", "clinic table", "window", "seller page", "decision card")
