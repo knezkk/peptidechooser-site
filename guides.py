@@ -83,8 +83,8 @@ GUIDES = [
      "desc": "GHK-Cu, Matrixyl and Argireline: what each skin peptide was tested on, in people or in a dish, their cosmetic status and how to read an ingredient list.",
      "line": "Copper peptides, Matrixyl and Argireline, and what each was tested on."},
     # queue block 33 (owner, 19 Nov 2026): GHK-Cu on the skin, "copper peptide serum" (~13,000 US searches a month,
-    # Manufactura 19 Nov 2026); a draft until the owner's ODOBRENO SEO
-    {"slug": "copper-peptide-serum", "title": "Copper peptide serum (GHK-Cu): what the studies show", "draft": True,
+    # Manufactura 19 Nov 2026); ODOBRENO SEO - Karlo - 19. 11. 2026 - PR #224
+    {"slug": "copper-peptide-serum", "title": "Copper peptide serum (GHK-Cu): what the studies show",
      "h1": "Copper peptide serum: what GHK-Cu on the skin is, and what the studies show.",
      "desc": "GHK-Cu, the copper peptide in serums: what the studies in people show, how serums differ, how a serum differs from a prescription, and prices we track.",
      "line": "GHK-Cu serums: the studies in people, how serums differ, and the prices we track."},
