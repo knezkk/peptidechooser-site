@@ -318,3 +318,5 @@ ODOBRENO SEO - Karlo - 18. 11. 2026 - PR #220 (welludr (formerly WellMedr): /sel
 ODOBRENO SEO - Karlo - 18. 11. 2026 - fridays wellmedr (Fridays description "prescribes Semaglutide and Tirzepatide. 4 plans from $249/mo"; WellMedr title, H1 and description as "welludr (formerly WellMedr)", data of 18 Nov 2026; owner in the terminal)
 /sellers/fridays/ b53148c76689
 /sellers/wellmedr/ 5e7bb84b5da9
+ODOBRENO SEO - Karlo - 19. 11. 2026 - Verified Peptides price (Verified Peptides "prices from $0.21/mg", data of 19 Nov 2026; owner in the terminal)
+/sellers/verified-peptides/ f85914712f50
