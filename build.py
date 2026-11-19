@@ -4835,6 +4835,27 @@ def pep_clinic_plans(slug):
     return [r for r in pep_plans(slug) if r["seller_slug"] in PROFILES] if pep_group(pep_status(slug)) == "not" else []
 
 
+def pep_order_plans(slug):
+    """The per-order plans of one substance that is not an approved drug (spec 0023: price_per_order, never a monthly figure),
+    at clinics with a page of ours, cheapest order first; a plan covering several medicines is left out (queue block 49)."""
+    if pep_group(pep_status(slug)) != "not":
+        return []
+    return sorted((r for r in PER_ORDER_PLANS if plan_subs(r) == {slug} and r["seller_slug"] in PROFILES),
+                  key=lambda r: (order_cost(r), r["seller_name"], r["plan_name"]))
+
+
+def order_cost(r):
+    """One order's price with its per-order fee when the data has one."""
+    return float(r["price_per_order"]) + float(r.get("fee_per_order") or 0)
+
+
+def order_words(r):
+    """"$299.99 for 2 vials at Precision Telemed", ", fees included" when a per-order fee is in the figure."""
+    qty = escape(r["order_quantity"]) if r.get("order_quantity") else "one order"
+    fee = ", fees included" if float(r.get("fee_per_order") or 0) > 0 else ""
+    return f'{usd(order_cost(r))} for {qty} at {clinic_link(r["seller_slug"], seller_base(r["seller_name"]), True)}{fee}'
+
+
 def pep_low_plan(slug):
     """The cheapest plan of the brand medicine or its generic: a pharmacy-made copy, or a plan of unknown kind, is not the
     approved product (the goal pages' rule, owner 31 Oct 2026; task 21, 8 Nov 2026). None without one."""
@@ -5535,12 +5556,20 @@ def pep_hhs_section(slug):
     out = [f'{hhs_sentence(name)} <a href="{escape(url)}" rel="nofollow">{source_word(url)}</a>']
     if HHS.get("routes", {}).get(slug):
         out.append(f'For {name} it covers these routes: {HHS["routes"][slug]}.')
-    plans = pep_clinic_plans(slug)
+    plans, orders = pep_clinic_plans(slug), pep_order_plans(slug)
     if plans:
         r = plans[0]
         out.append(f'{plural(len(plans), "online clinic plan")} we track {"carries" if len(plans) == 1 else "carry"} it'
                    f'{"" if len(plans) == 1 else ", the cheapest"} at {usd(r["price_monthly"])}/mo '
                    f'({clinic_link(r["seller_slug"], seller_base(r["seller_name"]), True)}), checked {nice_date(r["last_seen"])}.')
+        # per-order plans (queue block 49): their own sentence, an order's price, never a monthly figure (spec 0023)
+        if orders:
+            out.append(f'{plural(len(orders), "more plan")} {"is" if len(orders) == 1 else "are"} priced per order, '
+                       f'{"" if len(orders) == 1 else "the cheapest "}{order_words(orders[0])}.')
+    elif orders:
+        r = orders[0]
+        out.append(f'{plural(len(orders), "online clinic plan")} we track {"carries" if len(orders) == 1 else "carry"} it, priced per order'
+                   f'{": " if len(orders) == 1 else "; the cheapest is "}{order_words(r)}, checked {nice_date(r["last_seen"])}.')
     else:
         out.append("No online clinic plan we track carries it yet.")
     out.append('Our guide <a href="/learn/is-bpc-157-legal/">Is BPC-157 legal?</a> lists the ten conditions.')
