@@ -34,6 +34,8 @@ Every control is at least 44px tall: nav items, the header button, in-table `btn
 
 ## Text
 
+The seller page head has its own layout from 1600px (seller.md, Seller head from 1600px): one row, then the intro across the frame, the one exception to the measure below (owner, 19 Nov 2026).
+
 Body text runs at most 80 characters a line (owner task w2, 3 Nov 2026): `max-width: 58ch` on prose paragraphs and list items (guides, trust pages), the goal page intro, the seller page's short answer and notes, the legit closing line and the /sources/ entries; Public Sans sets about 1.37 characters per `ch`, so 58ch measures 73 to 77 characters at 1440px (72ch would measure about 98). Not tables, cards or the header. Headings, ledes, paragraphs, list items and table cells wrap with `text-wrap: pretty` where the browser has it, so a last line is never one word; no script.
 
 **Phones (owner task 3 Nov 2026, the 390px walkthrough; waits for ODOBRENO DIZAJN):**
