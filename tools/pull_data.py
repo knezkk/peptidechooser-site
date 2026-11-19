@@ -401,6 +401,10 @@ def main():
     # owner runs the 4C-day script; [] while the view is missing
     d["seller_redirects"] = (rows("select old_slug, new_slug from site.seller_redirects order by old_slug")
                              if has_view("seller_redirects") else [])
+    # a closed seller with a successor (sellers.successor_seller_id; queue block 46, 19 Nov 2026): the build sends its pages
+    # to the successor by itself; empty until the data side publishes the view
+    d["seller_successors"] = (rows("select old_slug, new_slug from site.seller_successors order by old_slug")
+                              if has_view("seller_successors") else [])
     # excluded states per clinic (pages.md, Clinic rows); while the view is missing build.py reads data/clinic_states.json
     d["seller_states"] = rows("select * from site.seller_states order by seller_slug") if has_view("seller_states") else []
     pull_paid()

@@ -108,6 +108,50 @@ if SELLER_MOVES:
     DATA = _move_sellers(DATA)
 
 
+def resolve_successors(pairs):
+    """{closed seller: the last open seller its successor chain reaches} (queue block 46, 19 Nov 2026). A successor that is
+    itself closed is followed to the next one; a chain that loops back never reaches an open seller and is left out."""
+    nxt = {o: n for o, n in pairs if o and n and o != n}
+    out = {}
+    for old in nxt:
+        seen, cur = {old}, nxt[old]
+        while cur in nxt and cur not in seen:
+            seen.add(cur)
+            cur = nxt[cur]
+        if cur not in nxt:
+            out[old] = cur
+    return out
+
+
+# A closed seller with a successor (owner, queue block 46, 19 Nov 2026; site.seller_successors from
+# sellers.successor_seller_id): its page, its offer pages and its comparison pages get a 301 to the successor, the same way a
+# seller move does (_redirects plus a fallback page), and it gets no archive page. A closed seller without one keeps its
+# archive page.
+SUCCESSORS = resolve_successors((r.get("old_slug"), r.get("new_slug")) for r in DATA.get("seller_successors") or [])
+
+
+def successor_moves(live_paths, built_page):
+    """(old path, new path) for every live page of a closed seller in SUCCESSORS: /sellers/<old>/ and /sellers/<old>/<x>/ go
+    to the same page of the successor when it is built, else to /sellers/<new>/; /compare/<a>-vs-<old>/ goes to its twin with
+    the successor (names in alphabetical order) when built, else to /sellers/<new>/. A path the build has is never moved."""
+    moves = {}
+    for old, new in SUCCESSORS.items():
+        moves[f"/sellers/{old}/"] = f"/sellers/{new}/"
+        for p in sorted(live_paths):
+            if built_page(p):
+                continue
+            m = re.fullmatch(rf"/sellers/{re.escape(old)}/([a-z0-9-]+)/", p)
+            if m:
+                twin = f"/sellers/{new}/{m.group(1)}/"
+                moves[p] = twin if built_page(twin) else f"/sellers/{new}/"
+            m = re.fullmatch(r"/compare/([a-z0-9-]+)-vs-([a-z0-9-]+)/", p)
+            if m and old in m.groups():
+                other = m.group(2) if m.group(1) == old else m.group(1)
+                twin = "/compare/{}-vs-{}/".format(*sorted((other, new)))
+                moves[p] = twin if other != new and built_page(twin) else f"/sellers/{new}/"
+    return {o: n for o, n in moves.items() if not built_page(o)}
+
+
 def hhs_sentence(what):
     """The policy in one sentence for the peptides named in `what` ("BPC-157 and TB-500"), from legal.hhs_policy."""
     return HHS["sentence"].replace("{what}", what) if HHS else ""
@@ -820,6 +864,9 @@ _n0 = len(LEGAL["sources"]) + len(LIVE_GOALS) + len(OPT_SOURCES)
 PLAN_REF = {slug: _n0 + i + 1 for i, slug in enumerate(GOAL_PLANS)}
 # "Strut Health (Strut Health, LLC)" -> "Strut Health"; "Shed (formerly ShedRx)" stays (queue block 39)
 seller_base = lambda name: re.sub(r"\s*\((?!formerly )[^)]*\)", "", name).strip()
+# A Visit button says the brand alone: "Visit EverPrime", not "Visit EverPrime (formerly Enhance MD)", which ran past the
+# edge at 320px; the seller's full name stands next to the button (queue block 46, 19 Nov 2026)
+button_name = lambda name: re.sub(r"\s*\(formerly [^)]*\)", "", seller_base(name)).strip()
 SOURCES_HOME += "".join(f'<li id="src-plan-{slug}">{seller_base(r["seller_name"])}, {r["plan_name"]}, {nice_date(r["last_seen"])}: '
                         f'<a href="{r["pricing_url"]}" rel="nofollow">{r["pricing_url"]}</a></li>' for slug, r in GOAL_PLANS.items())
 
@@ -1220,12 +1267,29 @@ def _live_seller_pages():
     return set(re.findall(re.escape(SITE) + r"/sellers/([a-z0-9-]+)/</loc>", text))
 
 
+def _live_paths():
+    """Every path in the live sitemap (LIVE_SITEMAP), else in the last build's sitemap files; read once, before dist is cleared."""
+    return _LIVE_PATHS
+
+
+def _read_live_paths():
+    f = os.environ.get("LIVE_SITEMAP")
+    files = [Path(f)] if f and Path(f).is_file() else [DIST / "sitemap.xml"] + sorted(DIST.glob("sitemap-*.xml"))
+    text = "".join(x.read_text(encoding="utf-8") for x in files if x.is_file())
+    return {re.sub(r"^https?://[^/]+", "", u) or "/" for u in re.findall(r"<loc>([^<]+)</loc>", text)}
+
+
+_LIVE_PATHS = _read_live_paths() if SUCCESSORS else set()
+SUCCESSOR_MOVES = {}
+
+
 # A seller that leaves the data keeps its page (site map rule 5.1, no page is deleted; owner task 25, 9 Nov 2026): when its
 # page is live and data/redirects.json sends it nowhere, the page is built from its last profile, from data/seller_archive.json
 # or the live /seller-archive.json the deploy fetches into LIVE_SELLER_ARCHIVE. It has no Visit button, no /out/ link and no
 # compare button, says it left our data, and stays in the sitemap. Every build publishes the profiles it holds there.
 _moved = json.loads((ROOT / "data" / "redirects.json").read_text(encoding="utf-8")) if (ROOT / "data" / "redirects.json").exists() else {}
 _moved |= {f"/sellers/{r['old_slug']}/": f"/sellers/{r['new_slug']}/" for r in DATA.get("seller_redirects") or []}  # 4C moves
+_moved |= {f"/sellers/{o}/": f"/sellers/{n}/" for o, n in SUCCESSORS.items()}  # closed with a successor (block 46)
 SELLER_ARCHIVE = {}
 for _f in (os.environ.get("LIVE_SELLER_ARCHIVE"), ROOT / "data" / "seller_archive.json"):
     if _f and Path(_f).is_file():
@@ -1407,7 +1471,7 @@ def clinic_button(seller_slug, label, small="Our clinic page", plan=None, paid_o
         tail = label.split(" · ", 1)[1] if " · " in label else ""
         paid = plan_paid(seller_slug, plan, paid)
         return (f'<span class="pick-act"><a class="btn btn-action btn-sm" href="{paid_href(seller_slug, paid)}"{paid_ev(seller_slug, paid, placement, plan)}{PAID_ATTRS}>'
-                f'Visit {seller_base(r["seller_name"])}{" · " + tail if tail else ""}{NEW_TAB}'
+                f'Visit {button_name(r["seller_name"])}{" · " + tail if tail else ""}{NEW_TAB}'
                 + ('<span class="paid">Paid link</span></a></span>' if in_table else '</a><span class="paid">Paid link</span></span>'))
     return (f'<span class="pick-act"><a class="btn btn-wait btn-sm" href="/sellers/{seller_slug}/"{plans_ev(seller_slug, plan)}>{label}</a>'
             f'{"" if in_table else f"""<span class="paid">{small}</span>"""}</span>')
@@ -2995,7 +3059,7 @@ def clinic_row_act(r, placement="clinic table"):
     """A clinic plan's button, every kind (owner answer Q1 a, 3 Nov 2026; for compounded plans owner decision C8, 3 Nov 2026, labelled compounded): btn-action "Visit <Name>" with "Paid link"
     only when the data carries the clinic's paid link, on the plan row or its profile (the paid link rule, pages.md, Buttons;
     owner decision 4 Nov 2026); otherwise btn-wait "See plans" to our clinic page."""
-    name, paid = seller_base(r["seller_name"]), r.get("paid_url") or PROFILES.get(r["seller_slug"], {}).get("paid_url")
+    name, paid = button_name(r["seller_name"]), r.get("paid_url") or PROFILES.get(r["seller_slug"], {}).get("paid_url")
     if paid:
         paid = plan_paid(r["seller_slug"], r, paid)
         return (f'<span class="pick-act"><a class="btn btn-action btn-sm" href="{paid_href(r["seller_slug"], paid)}"{paid_ev(r["seller_slug"], paid, placement, r)}{PAID_ATTRS}>Visit {name}{NEW_TAB}'
@@ -4101,7 +4165,7 @@ def seller_action(r):
         if not r.get("paid_url"):
             return compare
         return (f'<div class="seller-pair"><span class="pick-act"><a class="btn btn-action" href="{paid_href(r["seller_slug"], r["paid_url"])}"{paid_ev(r["seller_slug"], r["paid_url"], "seller page")}{PAID_ATTRS}>'
-                f'Visit {seller_base(seller_name(r))}{NEW_TAB}</a><span class="paid">Paid link</span></span>{compare}</div>')
+                f'Visit {button_name(seller_name(r))}{NEW_TAB}</a><span class="paid">Paid link</span></span>{compare}</div>')
     return f'<a class="btn btn-line" href="/compare/?a=s.{r["seller_slug"]}"{ev("compare_pick", kind="seller")}>Compare with another shop</a>'
 
 
@@ -6741,6 +6805,9 @@ def main():
     # server redirects, and tools/tier1_guard.py, see the move (queue block 29, 9 Nov 2026)
     moves = list(REDIRECTS.items()) + [(f"/sellers/{o}/", f"/sellers/{n}/") for o, n in sorted(SELLER_MOVES.items())
                                        if f"/sellers/{o}/" not in REDIRECTS]
+    # closed sellers with a successor (block 46): every live page of theirs, read from the live sitemap
+    SUCCESSOR_MOVES.update(successor_moves(_live_paths(), lambda p: built(p) or (DIST / p.strip("/") / "index.html").exists()))
+    moves += [(o, n) for o, n in sorted(SUCCESSOR_MOVES.items()) if o not in REDIRECTS and o not in dict(moves)]
     for old_path, new_path in moves:
         assert not built(old_path), f"redirect from {old_path}, which is still a page"
         if not built(new_path) and not (DIST / new_path.strip("/") / "index.html").exists():
@@ -6769,6 +6836,10 @@ def main():
     # peptidechooser.com in Google.
     _301 = {o: n for o, n in REDIRECTS.items() if built(n) or (DIST / n.strip("/") / "index.html").exists()}
     _301 |= {f"/sellers/{o}/": f"/sellers/{n}/" for o, n in SELLER_MOVES.items()}
+    _301 |= {o: n for o, n in SUCCESSOR_MOVES.items() if o not in _301}
+    # an old paid link of a closed seller still pays: /out/<old>/ -> /out/<successor>/ when only the successor has one
+    _301 |= {f"/out/{o}/": f"/out/{n}/" for o, n in SUCCESSORS.items()
+             if (DIST / "out" / n / "index.html").exists() and not (DIST / "out" / o / "index.html").exists()}
     (DIST / "_redirects").write_text("# Server redirects on Cloudflare Pages (301), task 4C (site map rules, section 8).\n"
                                      + "".join(f"{o} {n} 301\n" for o, n in sorted(_301.items())))
     (DIST / "_headers").write_text("# Cloudflare Pages only: keep the project's pages.dev address out of Google.\n"
