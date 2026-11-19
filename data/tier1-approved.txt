@@ -325,3 +325,6 @@ ODOBRENO SEO - Karlo - 19. 11. 2026 - everprime (EverPrime (formerly Enhance MD)
 /sellers/everprime/tirzepatide/ 2f5723b6d2c4
 ODOBRENO SEO - Karlo - 19. 11. 2026 - everprime tirzepatide title (/sellers/everprime/tirzepatide/ title "Tirzepatide at EverPrime: plans and checks | Peptide Chooser", H1 and description as approved before; owner in the terminal)
 /sellers/everprime/tirzepatide/ e07768660efd
+ODOBRENO SEO - Karlo - 19. 11. 2026 - PR #224 (/learn/copper-peptide-serum/: title, H1, description and every sentence in the PR table; the /learn/ guide count it adds, twenty-nine; the /supplements/ sentence; typed in the terminal)
+/learn/copper-peptide-serum/ fa3e71418bc2
+/learn/ ad3ef2156afe
