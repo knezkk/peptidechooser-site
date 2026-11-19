@@ -1053,7 +1053,7 @@ NEW_TAB = ""  # said by aria-describedby: a hidden text inside the button escape
 NEW_TAB_NOTE = '<span id="new-tab" hidden>Opens in a new tab</span>'
 
 
-PLACEMENTS = ("option row", "clinic table", "window", "seller page", "decision card")
+PLACEMENTS = ("option row", "clinic table", "window", "seller page", "decision card", "plan-name")
 
 
 def paid_ev(seller_slug, paid, placement, plan=None):
@@ -3069,6 +3069,24 @@ def clinic_row_act(r, placement="clinic table"):
     return (f'<span class="pick-act"><a class="btn btn-wait btn-sm" href="/sellers/{r["seller_slug"]}/"{plans_ev(r["seller_slug"], r)}>See plans</a></span>')
 
 
+def plan_name_link(r, text):
+    """A plan's name in a price table (seller page "Plans and prices", goal page clinic rows): the clinic's paid link to the
+    same /out/ page the row's Visit button uses (the plan deep link where it exists), a plain link in the site's link colour
+    with no "Paid link" of its own, the page's Visit carries it (owner, queue block 47, 19 Nov 2026; README rule 6). Its own
+    offer page wins where that page is indexed. No paid link, a research-use shop or a closed seller: the name stays text."""
+    seller = r["seller_slug"]
+    if (seller, r.get("substance_slug")) in OFFER_INDEXED:
+        return offer_link(seller, r["substance_slug"], text)
+    prof = PROFILES.get(seller) or {}
+    paid = r.get("paid_url") or prof.get("paid_url")
+    if not paid or seller in SHOPS or prof.get("gone"):
+        return text
+    paid = plan_paid(seller, r, paid)
+    # class "name": the table's plan name size (site.css `.tbl .name`), not the 13px a compact table gives its links
+    return (f'<a class="name" href="{paid_href(seller, paid)}"{paid_ev(seller, paid, "plan-name", r)}'
+            f'{PAID_ATTRS.replace("sponsored noopener", "sponsored nofollow noopener")}>{text}</a>')
+
+
 def clinic_section(g, rows):
     """"Online clinic prices" (pages.md, Category, weight loss; owner task 2 Nov 2026): one row per plan, cheapest first;
     the clinic in plain text (no link to any clinic site), its FDA letter chip beside the price, and btn-wait "See plans"
@@ -3083,7 +3101,7 @@ def clinic_section(g, rows):
         # on phones the first CLINICS_FIRST rows show until "Show all N" (owner answer Q2 a, 2 Nov 2026; bundle.css, Clinic table)
         more = ' class="more"' if i >= CLINICS_FIRST else ""
         plan = explain_brand(r["plan_name"], named)
-        trs.append(f'<tr{more} data-s="{row_sub(g, r)}"{state_attrs(r["seller_slug"])}><td>{clinic_link(r["seller_slug"], seller_base(r["seller_name"]))}</td><td data-l="Plan"><span class="plan-cut" title="{escape(strip_tags(plan))}">{offer_link(r["seller_slug"], r["substance_slug"], slash_break(plan))}</span></td>'
+        trs.append(f'<tr{more} data-s="{row_sub(g, r)}"{state_attrs(r["seller_slug"])}><td>{clinic_link(r["seller_slug"], seller_base(r["seller_name"]))}</td><td data-l="Plan"><span class="plan-cut" title="{escape(strip_tags(plan))}">{plan_name_link(r, slash_break(plan))}</span></td>'
                    f'<td>{plan_chip(g, r)}</td>'
                    f'<td data-l="Per month"><span class="num">{usd(r["price_monthly"])}</span>{plan_letter(r)}{f"<span class=sub>{care}</span>" if care else ""}{covers_note(r)}</td>'
                    # every row: the letter chip by the price, no FDA letter column, "See plans" to our clinic page (owner answers
@@ -3197,7 +3215,7 @@ def goal_clinic_section(g, rows):
         more = ' class="more"' if i >= CLINICS_FIRST else ""
         plan = explain_brand(r["plan_name"], named)
         trs.append(f'<tr{more} data-s="{row_sub(g, r)}"{state_attrs(r["seller_slug"])} data-k="{kind}" data-f="{plan_form(r)}" data-l="{1 if (r.get("fda_letter_count") or 0) else 0}">'
-                   f'<td><span class="cell-pic">{parts.plan_picture(r)}<span class="cp-txt"><span class="name plan-cut" title="{escape(strip_tags(plan))}">{slash_break(plan)}</span>'
+                   f'<td><span class="cell-pic">{parts.plan_picture(r)}<span class="cp-txt"><span class="name plan-cut" title="{escape(strip_tags(plan))}">{plan_name_link(r, slash_break(plan))}</span>'
                    f'<span class="cp-sub"><span class="cell-pic">{parts.tile(r["seller_slug"], seller_base(r["seller_name"]), 20, seller=PROFILES.get(r["seller_slug"]))}{clinic_link(r["seller_slug"], seller_base(r["seller_name"]), True)}</span>{plan_chip(g, r)}{plan_letter(r)}{covers_note(r)}</span></span></span></td>'
                    f'<td class="cp-price" data-l="Per month"><span class="num">{usd(r["price_monthly"])}</span>{f"<span class=sub>{care}</span>" if care else ""}</td>'
                    f'<td class="act">{clinic_row_act(r)}</td></tr>')
@@ -3929,7 +3947,7 @@ def clinic_plans_section(r):
                      if other else '<span class="sub">no medication named</span>' if not p["substance_slug"]
                      else '<span class="sub">form not stated</span>' if not p.get("dosage_form") else '<span class="sub">no other clinic</span>')
         fee = p.get("membership_fee_monthly")
-        trs.append(f'<tr><td><span class="cell-pic">{parts.plan_picture(p)}<span class="name">{offer_link(p["seller_slug"], p["substance_slug"], slash_break(clean(p["plan_name"])))}</span></span></td><td data-l="What it is">{plan_chip(plan_goal(p), p)}</td>'
+        trs.append(f'<tr><td><span class="cell-pic">{parts.plan_picture(p)}<span class="name">{plan_name_link(p, slash_break(clean(p["plan_name"])))}</span></span></td><td data-l="What it is">{plan_chip(plan_goal(p), p)}</td>'
                    f'<td class="num" data-l="Per month">{usd(p["price_monthly"])}</td>'
                    f'<td data-l="Care fee">{"not known" if fee is None else "none" if float(fee) == 0 else usd(fee) + "/mo, included"}</td>'
                    f'<td data-l="Cheapest elsewhere">{elsewhere}</td></tr>')

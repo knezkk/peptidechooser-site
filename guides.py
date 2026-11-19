@@ -82,6 +82,12 @@ GUIDES = [
      "h1": "Peptides for skin: what has evidence, what is marketing.",
      "desc": "GHK-Cu, Matrixyl and Argireline: what each skin peptide was tested on, in people or in a dish, their cosmetic status and how to read an ingredient list.",
      "line": "Copper peptides, Matrixyl and Argireline, and what each was tested on."},
+    # queue block 33 (owner, 19 Nov 2026): GHK-Cu on the skin, "copper peptide serum" (~13,000 US searches a month,
+    # Manufactura 19 Nov 2026); ODOBRENO SEO - Karlo - 19. 11. 2026 - PR #224
+    {"slug": "copper-peptide-serum", "title": "Copper peptide serum (GHK-Cu): what the studies show",
+     "h1": "Copper peptide serum: what GHK-Cu on the skin is, and what the studies show.",
+     "desc": "GHK-Cu, the copper peptide in serums: what the studies in people show, how serums differ, how a serum differs from a prescription, and prices we track.",
+     "line": "GHK-Cu serums: the studies in people, how serums differ, and the prices we track."},
     {"slug": "how-we-check-sellers", "title": "How we check peptide sellers: the five checks explained",
      "h1": "How we check peptide sellers: the five checks, with examples.",
      "desc": "The five checks behind every seller score, each with a real example from our database, what the score does not tell you and how often it refreshes.",
@@ -205,7 +211,7 @@ TOPIC = {"is-bpc-157-legal": "legal", "are-peptides-safe": "legal", "how-to-read
          "what-an-fda-warning-letter-means": "legal", "compounded-vs-brand-glp-1": "glp1",
          "compounded-semaglutide-price": "glp1", "peptides-for-hair-loss-what-works": "hair",
          "best-peptides-for-hair-growth": "hair", "ghk-cu-for-hair": "hair", "injectable-peptides-for-hair-growth": "hair",
-         "best-peptides-for-muscle-growth": "body", "bpc-157-vs-tb-500": "body", "peptides-for-skin-what-works": "body",
+         "best-peptides-for-muscle-growth": "body", "bpc-157-vs-tb-500": "body", "peptides-for-skin-what-works": "body", "copper-peptide-serum": "body",
          "are-peptides-legal-in-the-us": "legal", "how-we-check-sellers": "legal", "semaglutide-vs-tirzepatide-price": "glp1",
          "peptides-for-recovery-and-joints": "body", "peptides-for-libido-what-is-approved": "body",
          "longevity-peptides-epitalon-mots-c-nad": "body", "online-clinic-vs-research-shop": "buying",
@@ -320,6 +326,8 @@ SOURCES = {
                    "Int J Mol Sci 19(7), 2018, PubMed 29986520", "https://pubmed.ncbi.nlm.nih.gov/29986520/"),
     "pm-najafi": ("Najafi N et al., A systematic review of the mechanisms and therapeutic applications of GHK-Cu in topical microneedle "
                   "delivery, Arch Intern Med Res 9(3), 2026, PubMed 42787770", "https://pubmed.ncbi.nlm.nih.gov/42787770/"),
+    "pm-miller": ("Miller TR et al., Effects of topical copper tripeptide complex on CO2 laser-resurfaced skin, Arch Facial Plast "
+                  "Surg 8(4), 2006, PubMed 16847171", "https://pubmed.ncbi.nlm.nih.gov/16847171/"),
     "pm-wilding": ("Wilding JPH et al., Once-weekly semaglutide in adults with overweight or obesity (STEP 1), N Engl J Med 384(11), "
                    "2021, PubMed 33567185", "https://pubmed.ncbi.nlm.nih.gov/33567185/"),
     "pm-jastreboff-22": ("Jastreboff AM et al., Tirzepatide once weekly for the treatment of obesity (SURMOUNT-1), N Engl J Med 387(3), "
@@ -1588,6 +1596,8 @@ def g_supplements(b, f, N):
     applied = sorted({NOT_SWALLOWED[p["form"]] for p in rows if p.get("form") in NOT_SWALLOWED})
     worded = (f"<p>Some shops we track list {and_list([w + 's' for w in applied])} among their supplements.{N('db-sellers')} "
               f"For cosmetic peptides in creams and serums, see our <a href=\"/skin/\">skin page</a>.</p>") if applied else ""
+    serum = (' Our <a href="/learn/copper-peptide-serum/">copper peptide serum guide</a> covers GHK-Cu on the skin.'
+             if guide_built("copper-peptide-serum") else "")  # queue block 33: the two pages link each other
     ruo = [x for x in ("bpc-157", "tb-500") if x in by]
     nruo = len({p["seller_slug"] for x in ruo for p in by[x]})
     ruo_block = (f"""
@@ -1606,7 +1616,7 @@ def g_supplements(b, f, N):
 <p>The FDA does not approve a supplement's label claims either. A claim about the body needs a note on the label that the FDA has not checked it, and a product sold as a treatment for a disease counts as a drug under the law.{N('fda-supplements')}</p>
 """ + (f"<p>{and_list([supp_name(b, x) for x in approved])} {'is' if len(approved) == 1 else 'are'} in an FDA-approved medicine, but a supplement is not that medicine.{N('db-peptides')}</p>\n" if approved else "") + f"""
 <h2>Are creams and nasal sprays supplements?</h2>
-<p>No. A supplement must be swallowed, as a pill, capsule, powder or liquid; a product put on the skin or breathed in is not a supplement.{N('fda-supplements')}</p>
+<p>No. A supplement must be swallowed, as a pill, capsule, powder or liquid; a product put on the skin or breathed in is not a supplement.{N('fda-supplements')}{serum}</p>
 {worded}{ruo_block}
 <h2>Where are peptide supplements sold?</h2>
 <p>At these {b.plural(len(shops), 'shop')}, each with its page and its checks on our site: {and_list([link(s, n) for s, n in shops])}.{N('db-sellers')}</p>
@@ -1619,6 +1629,92 @@ def g_supplements(b, f, N):
          f"In our data, {supp_name(b, top).lower()}: {ntop} of the {b.plural(len(shops), 'shop')} we track that sell peptide supplements list it."),
         ("Is a peptide cream or nasal spray a supplement?",
          "No. A supplement must be swallowed; a product put on the skin or breathed in is not one."),
+    ])
+    return short, body, nxt, faq
+
+
+SERUM_FORMS = ("serum", "cream", "lotion", "gel")
+
+
+def serum_rows(b):
+    """The copper peptide serums the serum guide lists (queue block 33): GHK-Cu products a cosmetic or supplement shop sells
+    on the skin, with a price, its date and a product page (a sourced price). Research-use shops never: their products
+    are labelled not for use in people."""
+    return sorted((p for p in b.PRODUCTS if p["substance_slug"] == "ghk-cu" and p.get("form") in SERUM_FORMS
+                   and p.get("regulatory_group") in ("cosmetic", "supplement") and p.get("price_usd") is not None
+                   and p.get("product_url") and p.get("price_observed_at")),
+                  key=lambda p: (float(p["price_usd"]), p["seller_name"]))
+
+
+def guide_built(slug):
+    return any(g["slug"] == slug for g in GUIDES)
+
+
+def g_copper_serum(b, f, N):
+    """Copper peptide serum (queue block 33, owner 19 Nov 2026): GHK-Cu on the skin, what the studies in people show and do
+    not show, how serums differ, how a serum differs from GHK-Cu on prescription, and the serums we track with a sourced
+    price. No health claim, no before and after, no dose. No button yet: the paid link per product waits for the owner's
+    shop application (owner, 19 Nov 2026), and a guide carries no paid link until the rules say otherwise."""
+    rows = serum_rows(b)
+    ruo = {p["seller_slug"] for p in b.PRODUCTS if p["substance_slug"] == "ghk-cu" and p.get("form") in SERUM_FORMS + ("topical",)
+           and p.get("regulatory_group") == "research_use_only"}
+    rx = [r for r in b.PLANS if (r["substance_slug"] == "ghk-cu" or "ghk-cu" in (r.get("substance_slugs") or []))
+          and r.get("price_monthly") is not None]
+    ghk = '<a href="/peptides/ghk-cu/">GHK-Cu page</a>' if "ghk-cu" in b.PEPTIDE_SLUGS and "ghk-cu" not in b.PEP_THIN else "GHK-Cu page"
+    short = (f"A copper peptide serum is a cosmetic with GHK-Cu, a small copper peptide the body makes; cosmetics do not need "
+             f"FDA approval before they are sold.{N('legal-5')} The studies in people are few and small: in one controlled trial "
+             f"after laser treatment, GHK-Cu skin care did not reduce redness or wrinkles more than the usual care.{N('pm-miller')}")
+    shop = lambda p: (f'<a class="name" href="/sellers/{p["seller_slug"]}/">{escape(b.seller_base(p["seller_name"]))}</a>'
+                      if p["seller_slug"] in b.PROFILES else f'<span class="name">{escape(b.seller_base(p["seller_name"]))}</span>')
+    trs = "".join(f'<tr><td>{shop(p)}</td>'
+                  f'<td data-l="Product">{escape(p["product_name"])}{(" (" + escape(p["variant_title"]) + ")") if p.get("variant_title") and p["variant_title"] != "Default Title" else ""}</td>'
+                  f'<td class="num" data-l="Price">{b.usd(p["price_usd"])}</td>'
+                  f'<td data-l="Checked">{b.nice_date(p["price_observed_at"][:10])}</td></tr>' for p in rows)
+    table = (f'<div class="tbl-wrap"><table class="tbl tbl-cards"><caption class="vh">Copper peptide serums we track</caption>'
+             f'<thead><tr><th scope="col">Shop</th><th scope="col">Product</th><th scope="col">Price</th><th scope="col">Checked</th></tr></thead>'
+             f'<tbody>{trs}</tbody></table></div>') if rows else ""
+    rx_p = (f"<p>{spelled(len(rx))} online clinic {'plan' if len(rx) == 1 else 'plans'} we track {'carries' if len(rx) == 1 else 'carry'} GHK-Cu on prescription: "
+            f"{and_list([plan_words(b, r, N(pkey(r))) for r in sorted(rx, key=lambda r: float(r['price_monthly']))])}. "
+            f"A pharmacy-made (compounded) product is not FDA approved.{N('fda-compounding')}</p>") if rx else ""
+    ruo_p = (f"<p>{spelled(len(ruo))} research-use {'shop' if len(ruo) == 1 else 'shops'} we track also {'sells' if len(ruo) == 1 else 'sell'} "
+             f"GHK-Cu creams and serums labelled not for use in people.{N('db-sellers')} Our {ghk} has the substance's FDA status.</p>") if ruo else ""
+    supp = (' Our <a href="/supplements/">peptide supplements</a> page lists what is sold to swallow.'
+            if any(g["slug"] == "supplements" and g["needs"](b) for g in GROUPS) else "")
+    body = f"""
+<h2>What is a copper peptide serum?</h2>
+<p>GHK is a peptide of three amino acids (glycine, histidine and lysine), and GHK-Cu is the same peptide carrying copper. The body makes it, and lab studies link it to skin repair and collagen.{N('pm-pickart')} On an ingredient list it often appears as copper tripeptide-1.{N('pm-inci')}</p>
+<p>A serum or cream with GHK-Cu is sold as a cosmetic. Cosmetics are regulated, but they do not need FDA approval before they are sold.{N('legal-5')}</p>
+
+<h2>What do the studies in people show?</h2>
+<p>Most of the research is in cells and animals. A 2026 review of the GHK-Cu research called the studies in people thin: most trials were small and tested face creams.{N('pm-najafi')}</p>
+<p>In one controlled trial, 13 patients finished a course of skin care after laser treatment of the face, with or without GHK-Cu. Blinded evaluators found no difference between the groups in redness, wrinkles or overall skin quality; the patients who used GHK-Cu rated their skin better on a questionnaire.{N('pm-miller')}</p>
+<p>We found no large trial in people that shows a copper peptide serum reduces wrinkles, and we make no such claim.</p>
+
+<h2>How do copper peptide serums differ?</h2>
+<ul>
+<li><strong>The amount of GHK-Cu.</strong> Some labels give a percentage; many do not.</li>
+<li><strong>The other ingredients.</strong> Many serums mix GHK-Cu with other peptides or actives, so a result, good or bad, cannot be put down to the copper peptide alone.</li>
+<li><strong>Price for the size.</strong> Compare the price per ml: at the same price, a 15 ml bottle costs twice as much per ml as a 30 ml one.</li>
+</ul>
+
+<h2>How is a serum different from GHK-Cu on prescription?</h2>
+<p>A serum is a cosmetic you buy without a prescription. A prescription product is made by a pharmacy for one patient.</p>
+{rx_p}{ruo_p}
+<h2>Which copper peptide serums do we track?</h2>
+""" + (f"<p>Each price is the shop's own, from its product page on the date shown. We list only products with a price and a source.{N('db-sellers')}</p>\n{table}"
+       if rows else f"<p>We do not track a copper peptide serum with a sourced price yet.</p>") + f"""
+
+<h2>Is a copper peptide serum a supplement?</h2>
+<p>No. A supplement must be swallowed; a product put on the skin is not a supplement.{N('fda-supplements')}{supp}</p>"""
+    nxt = (("/skin/", "Every skin option"), ("/learn/peptides-for-skin-what-works/", "Peptides for skin guide"))
+    faq = ("copper peptide serums", [
+        ("Is a copper peptide serum FDA approved?",
+         "No. It is sold as a cosmetic, and cosmetics do not need FDA approval before they are sold."),
+        ("Do copper peptide serums reduce wrinkles?",
+         "We found no large trial in people that shows it. In one small controlled trial after laser treatment, blinded "
+         "evaluators found no difference in wrinkles with GHK-Cu skin care."),
+        ("What is copper tripeptide-1?",
+         "It is the name GHK-Cu often goes by on an ingredient list."),
     ])
     return short, body, nxt, faq
 
@@ -2854,7 +2950,7 @@ TEXTS = {"is-bpc-157-legal": g_bpc, "are-peptides-safe": g_safe, "how-to-read-a-
          "what-research-use-only-means": g_ruo, "peptide-seller-checks-by-the-numbers": g_by_numbers,
          "best-peptides-for-weight-loss": g_wl, "peptides-vs-steroids": g_steroids,
          "fda-approved": g_fda_approved, "prescription": g_prescription,
-         "injections": g_injections, "supplements": g_supplements}
+         "injections": g_injections, "supplements": g_supplements, "copper-peptide-serum": g_copper_serum}
 
 
 GUIDE_DATES = {}
