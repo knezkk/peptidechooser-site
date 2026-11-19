@@ -20,6 +20,12 @@ def title(b, seller, sub):
         t = f"{sub_name(b, sub)} at {seller_short(b, seller)}{tail} | Peptide Chooser"
         if len(t) <= 60:
             return t
+    # a renamed seller's "(formerly ...)" is the last thing dropped, only when nothing else fits (queue block 46, 19 Nov
+    # 2026: "Tirzepatide at EverPrime (formerly Enhance MD) | Peptide Chooser" is 64); the H1 keeps the full name
+    for tail in TITLE_TAILS:
+        t = f"{sub_name(b, sub)} at {b.button_name(seller_short(b, seller))}{tail} | Peptide Chooser"
+        if len(t) <= 60:
+            return t
     return t
 
 
