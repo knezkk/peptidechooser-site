@@ -4,6 +4,8 @@ Index: [`design/pages.md`](../pages.md).
 
 ## Sellers `/sellers/`
 
+**20 Nov 2026** (owner, queue block 18; ODOBRENO DIZAJN + PRAVILA - Karlo - 20.11.2026, with ODOBRENO SEO; point 7): the checks cell gets its second line "Missing: <check>" or "Missing: N checks" with the list (nov20.md, Parts, f). The table never grows past the container at 1440 px: "Missing" wraps inside the cell, "What it prescribes" has a 150px minimum (was 180px, which already pushed the clinics table 23px past the container at 1440); the other columns keep their widths (layout.md, Sellers list columns).
+
 The index of the seller pages (owner task, phase 4d, 2 Nov 2026; online clinics first, owner task w2, UX audit 2.6, B7 and 11.5, 3 Nov 2026, waits for ODOBRENO DIZAJN and ODOBRENO SEO). Built from the Letters page's parts: header, breadcrumbs (Home / Sellers), the white top with the Checked stamp, the grey band, DataTable, the Legal filter, the Home seller block's segmented control (`seg`). Not built without `seller_profiles` in data/site.json (never drawn empty).
 
 - **Title:** "Peptide sellers and their checks | Peptide Chooser". **H1:** "Peptide sellers we track" (both unchanged, rule 8). **Description:** as approved (ODOBRENO SEO - Karlo - 2. 11. 2026).

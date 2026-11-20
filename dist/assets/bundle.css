@@ -5,8 +5,14 @@ a{color:var(--clinic);text-underline-offset:0.18em}
 a:hover{color:var(--clinic-hover)}
 /* Links on dark (footer, ink panels): white, and mark yellow on hover and focus; the light hover blue is 1.9:1 on ink. */
 .site-foot a:hover,.site-foot a:focus-visible,.panel-ink a:hover,.panel-ink a:focus-visible{color:var(--mark)}
-/* Footnote numbers: a 24px tap area around the small number without moving the line (WCAG 2.5.8). */
-sup a,a.ref{display:inline-block;min-width:24px;min-height:24px;padding:4px 4px;margin:-8px -8px;box-sizing:border-box;text-align:center;line-height:1}
+/* Footnote numbers: a 24px tap area around the small number without moving the line (WCAG 2.5.8). Since 20 Nov 2026 the
+   templates draw no numbers (Source link below); the rule stays for a number a page still writes by hand. */
+sup a{display:inline-block;min-width:24px;min-height:24px;padding:4px 4px;margin:-8px -8px;box-sizing:border-box;text-align:center;line-height:1}
+/* Source link (pages/nov20.md, Parts, e): the word "Source" after a space at the end of its claim, a plain
+   link in the line of text (WCAG 2.5.8 inline exception), fine size in ink-2, so it never reads as part of a price. */
+a.ref{display:inline;font-size:13px;line-height:inherit;font-weight:400;color:var(--ink-2);text-decoration:underline;text-decoration-color:var(--line-strong);text-underline-offset:.18em;white-space:nowrap}
+a.ref:hover{color:var(--clinic-hover);text-decoration-color:currentColor}
+a.ref:focus-visible{outline:3px solid var(--clinic);outline-offset:2px;border-radius:2px}
 
 /* Buttons */
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:var(--touch);padding:0 20px;border-radius:var(--radius-control);font:700 15px var(--font-text);text-decoration:none;cursor:pointer;border:1.5px solid transparent;box-sizing:border-box;white-space:nowrap;transition:background-color var(--motion-quick),color var(--motion-quick),border-color var(--motion-quick)}
@@ -723,3 +729,41 @@ p.not-in{margin:4px 0 0}
 /* Header search results, group heading (nav-parts.md, Header search results; w2 block 36) */
 .search-group{padding:10px 12px 2px;font:600 12px/1.4 var(--font-text);color:var(--ink-2)}
 .search-group ~ .search-group{border-top:1px solid var(--line)}
+
+/* Parts of 20 Nov 2026 (pages/nov20.md, Parts; ODOBRENO DIZAJN + PRAVILA - Karlo - 20.11.2026, queue block 18).
+   a. "What is a peptide?": one box at the full content width at every width, the width of the blocks under it, never a
+   narrow column; its text keeps the 80-character line. */
+.pep-box{box-sizing:border-box;width:100%;max-width:none;margin:var(--space-4) 0 0;padding:var(--space-4) var(--space-5);background:var(--paper-2);border:1px solid var(--line);border-radius:var(--radius-panel)}
+.pep-box p{margin:0;max-width:64ch;color:var(--ink-2);text-wrap:pretty}
+.pep-box strong{color:var(--ink);font-weight:700}
+@media (max-width:640px){.pep-box{padding:var(--space-3) var(--space-4)}}
+/* b. "Not a peptide": a small pill beside the status chip, white with a line-strong border, so it never reads as a status. */
+.chip-np{background:var(--white);color:var(--ink-2);border:1px solid var(--line-strong);border-radius:var(--radius-pill);font-weight:600;white-space:nowrap}
+/* b2. Group heading in the option list: "Peptides", then "Proven alternative (not a peptide)"; a row of its own in the frame. */
+.opt-group{padding:var(--space-2) var(--space-4);background:var(--paper-2);border-bottom:1px solid var(--line)}
+.opt-group h3{margin:0;font:700 14px/1.45 var(--font-text);color:var(--ink-2)}
+/* c. The research-use row's action column: the note, the shops link, the legal option and its one button. */
+.ru-act{gap:4px;font-size:14px;line-height:1.45;white-space:normal}
+.ru-act .ru-note{font-weight:600;color:var(--ink)}
+.ru-act .ru-alt{color:var(--ink-2);margin-top:4px}
+.ru-act .ru-none{color:var(--ink-muted)}
+.ru-act .sellers-open:not(.btn){font-weight:600}
+/* d. Goal filter over "Where to get it": the chosen goal as a mark chip with its ×, then two text actions and the count. */
+.goal-filter{display:flex;flex-wrap:wrap;align-items:center;gap:var(--space-2) var(--space-4);margin:0 0 var(--space-3)}
+.chip-filter{display:inline-flex;align-items:center;gap:4px;min-height:32px;padding:0 4px 0 12px;background:var(--mark);color:var(--ink);border-radius:var(--radius-chip);font:600 14px/1 var(--font-text)}
+.chip-filter strong{font-weight:700}
+.chip-x{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;padding:0;border:0;border-radius:var(--radius-chip);background:transparent;color:var(--ink);font:700 18px/1 var(--font-text);cursor:pointer}
+.chip-x:hover{background:var(--white)}
+.chip-x:focus-visible,.gf-all:focus-visible{outline:3px solid var(--clinic);outline-offset:2px}
+.gf-change,.gf-all{font:600 14px/1.45 var(--font-text);color:var(--clinic);text-decoration:underline;text-underline-offset:.18em;min-height:var(--touch);display:inline-flex;align-items:center}
+.gf-all{padding:0;border:0;background:none;cursor:pointer}
+.gf-change:hover,.gf-all:hover{color:var(--clinic-hover)}
+.gf-count{margin-left:auto;font-size:14px;color:var(--ink-2)}
+.gf-empty{margin:var(--space-3) 0;color:var(--ink-2)}
+@media (max-width:640px){.gf-count{margin-left:0;flex-basis:100%}}
+/* f. "Missing: <check>" as the second line of the "x of y" cell; two or more, the count, its list floats on hover, focus or tap. */
+.missing{position:relative;display:block;margin-top:2px;font-size:13px;line-height:1.4;font-weight:400;color:var(--warn-text);white-space:normal}
+.missing-n{cursor:help;text-decoration:underline dotted var(--line-strong);text-underline-offset:3px;width:max-content;max-width:100%}
+.missing-n:focus-visible{outline:3px solid var(--clinic);outline-offset:2px}
+.missing-list{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+.missing-n:hover .missing-list,.missing-n:focus .missing-list{z-index:60;left:0;top:calc(100% + 6px);width:max-content;max-width:min(32ch,calc(100vw - 32px));height:auto;overflow:visible;clip-path:none;padding:8px 10px;background:var(--ink);color:var(--white);border-radius:var(--radius-control);box-shadow:var(--shadow-card);white-space:normal;font-size:13px}

@@ -418,7 +418,6 @@ body > .crumbs { width: -moz-available; width: -webkit-fill-available; width: st
 
 /* Creators, trust row */
 .sr { position: absolute; left: -999px; width: 1px; height: 1px; overflow: hidden; }
-.ref { text-decoration: none; }
 .creators { list-style: none; margin: 0; padding: 0; display: grid; gap: 0 32px; }
 .creators li { display: flex; flex-direction: column; gap: 2px; padding: 14px 0; border-bottom: 1px solid var(--line); }
 .creators a { font-weight: 600; }
@@ -902,7 +901,7 @@ body:has(.home-sec) .site-foot { margin-top: 0; }
   .tbl-sl td.act .pick-act { width: 100%; }
 }
 .tbl-sl td.act .paid { text-align: center; }
-.tbl-sl td.sl-what { min-width: 180px; }
+.tbl-sl td.sl-what { min-width: 150px; } /* 180px pushed the clinics table 23px past the container at 1440 (20 Nov 2026, point 7: "Missing" must not widen it) */
 .tbl-sl td.sl-checks { white-space: nowrap; }
 /* with JavaScript the tab names the table; the h2 stays for screen readers and the outline */
 .sl-js .sellers-sec > .h-sources { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
