@@ -2080,6 +2080,42 @@ def check_plan_links(P):
     return errs
 
 
+MONTHLY_WORDS = re.compile(r"/mo\b|per month|a month|monthly|care fee|cheapest elsewhere", re.I)
+
+
+def per_order_errs(name, html):
+    """design/pages/seller.md, Per-order plans (queue block 51, 20 Nov 2026): a per-order table stands under its h3 "Priced per
+    order" and never shows a monthly word ("/mo", "per month", "a month", "monthly", the care fee or "Cheapest elsewhere")."""
+    errs = []
+    for m in re.finditer(r'<table [^>]*data-per-order[^>]*>(.*?)</table>', html, re.S):
+        if not html[:m.start()].rstrip().endswith('<h3 class="h-sources">Priced per order</h3><div class="tbl-wrap">'):
+            errs.append(f"{name}: a per-order table without its heading \"Priced per order\" right above it")
+        bad = MONTHLY_WORDS.search(re.sub(r"<[^>]+>", " ", m.group(1)))
+        if bad:
+            errs.append(f"{name}: a per-order table shows a monthly word: {bad.group()!r}")
+    return errs
+
+
+def check_per_order(P):
+    """Every page passes per_order_errs; and every per-order plan of a clinic with a seller page stands in that page's
+    per-order table (spec 0023: it is never dropped or shown as monthly)."""
+    errs = []
+    for n in P:
+        if not n.startswith("out/"):
+            errs += per_order_errs(n, (DIST / n).read_text(encoding="utf-8"))
+    src = Path(os.environ["SITE_JSON"]) if os.environ.get("SITE_JSON") else ROOT / "data" / "site.json"
+    for pl in json.loads(src.read_text(encoding="utf-8")).get("plans") or []:
+        if pl.get("price_per_order") is None:
+            continue
+        f = DIST / "sellers" / pl["seller_slug"] / "index.html"
+        if not f.exists():
+            continue
+        tables = "".join(re.findall(r'<table [^>]*data-per-order[^>]*>.*?</table>', f.read_text(encoding="utf-8"), re.S))
+        if " ".join(pl["plan_name"].split()) not in " ".join(unescape(re.sub(r"<[^>]+>", "", tables)).split()):
+            errs.append(f"sellers/{pl['seller_slug']}/: per-order plan {pl['plan_name']!r} is not in its per-order table")
+    return errs
+
+
 def check_goal_prices(P):
     """Queue block 34 (audit of 11 Nov 2026). (a) Each goal's "from" price is one figure: the header menu, the Home goal card
     and the goal page's lowest shown price agree, in the same unit. The page's lowest is its lowest clinic monthly price (the
@@ -2157,7 +2193,7 @@ def check_us_dates(P):
     return [f"{name}: day-first date {m.group()!r} (write it as Nov 13, 2026)" for name, html in files for m in pat.finditer(html)]
 
 
-CHECKS = {"words": check_words, "seo": check_seo, "schema": check_schema, "parts": check_parts, "data": check_data, "book": check_book, "events": check_events, "logic": check_logic, "rules33": check_rules33, "addresses": check_addresses, "arch": check_arch, "arch-switch": check_arch_switch, "offers": check_offers, "kept-sellers": check_kept_sellers, "wave-b": check_wave_b, "paid-first": check_paid_first, "goal-prices": check_goal_prices, "paid-tab": check_paid_tab, "plan-links": check_plan_links, "us-dates": check_us_dates}
+CHECKS = {"words": check_words, "seo": check_seo, "schema": check_schema, "parts": check_parts, "data": check_data, "book": check_book, "events": check_events, "logic": check_logic, "rules33": check_rules33, "addresses": check_addresses, "arch": check_arch, "arch-switch": check_arch_switch, "offers": check_offers, "kept-sellers": check_kept_sellers, "wave-b": check_wave_b, "paid-first": check_paid_first, "goal-prices": check_goal_prices, "paid-tab": check_paid_tab, "plan-links": check_plan_links, "per-order": check_per_order, "us-dates": check_us_dates}
 
 # Plan names against their form (owner task w2, 3 Nov 2026): a clinic's own plan name can name another form than the
 # plan's `dosage_form` ("Ozempic Pill" for a pen). The site cannot change data, so this only warns, never fails, and the
