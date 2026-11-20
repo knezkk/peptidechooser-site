@@ -4,9 +4,17 @@ on:
     branches: [main]
   # once a day on main, so new prices from the database reach the site without a merge; the Tier 1 guard still stops
   # changed words (owner answer to block 43 Q1 a, 18 Nov 2026)
+  # the GitHub schedule is late or missing on quiet repos (19 Nov ran 9 hours late, 20 Nov not at all), so it is only the
+  # backup now: the 06:00 UTC run comes from the Cloudflare Worker in tools/daily-trigger/ as a workflow_dispatch with
+  # daily=true, and the gate job lets one daily run a day build (queue block 50, 20 Nov 2026)
   schedule:
     - cron: "0 6 * * *"
   workflow_dispatch:
+    inputs:
+      daily:
+        description: "The daily 06:00 UTC run (skips when today's daily run already ran); leave off for a manual deploy"
+        type: boolean
+        default: false
 permissions:
   contents: read
 # One group per branch, so a branch run never touches a run on main. A newer run replaces an older one on a branch; on main nothing
@@ -15,7 +23,23 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 jobs:
+  # once a day: a daily run (schedule or daily=true) skips when today's already ran; a push or manual run always builds
+  gate:
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+    outputs:
+      run: ${{ steps.gate.outputs.run }}
+    steps:
+      - uses: actions/checkout@v4
+        with: { sparse-checkout: tools/daily_gate.py, sparse-checkout-cone-mode: false }
+      - id: gate
+        env: { GH_TOKEN: "${{ github.token }}", EVENT: "${{ github.event_name }}", DAILY: "${{ inputs.daily }}" }
+        run: python3 tools/daily_gate.py
   check-and-build:
+    needs: gate
+    if: needs.gate.outputs.run == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -36,7 +60,7 @@ jobs:
         run: python3 tools/live_sitemap.py "$RUNNER_TEMP"
       # DEEP_LINK_CHECK: each plan deep link target is asked once; one that does not answer keeps the seller's home page,
       # listed in this step's log (queue block 44, 18 Nov 2026)
-      - run: python3 tools/test_deep_links.py && python3 tools/test_successors.py && python3 tools/test_plan_links.py && python3 tools/test_order_plans.py && python3 tools/test_order_rows.py && python3 build.py
+      - run: python3 tools/test_daily_gate.py && python3 tools/test_deep_links.py && python3 tools/test_successors.py && python3 tools/test_plan_links.py && python3 tools/test_order_plans.py && python3 tools/test_order_rows.py && python3 build.py
         env: { LIVE_SITEMAP: "${{ runner.temp }}/live-sitemap.xml", LIVE_LASTMOD: "${{ runner.temp }}/live-lastmod.json", LIVE_SELLER_ARCHIVE: "${{ runner.temp }}/live-seller-archive.json", DEEP_LINK_CHECK: "1" }
       # a page born from new data gets its share image here (owner answer Q1 a, 3 Nov 2026), then the site is rebuilt
       - name: draw missing share images
@@ -52,6 +76,7 @@ jobs:
       # after the last build: the words of a title, description or H1 that differ from the live page stop the deploy without the owner's phrase, numbers and data-born pages pass;
       # the full list, old and new, stays in this step's log (owner answer to #94 Q2, 5 Nov 2026)
       - name: tier 1 guard
+        id: guard
         run: |
           python3 tools/test_tier1_guard.py
           python3 tools/tier1_guard.py
@@ -70,6 +95,11 @@ jobs:
           # all three together: npm i --no-save removes what an earlier --no-save installed (Playwright, from check-layout)
           npm i --no-save playwright@1.49.1 lighthouse@12.8.2 chrome-launcher@1 >/dev/null
           node tools/check_lighthouse.js
+      # the guard writes its own one-line reason; any other stop gets this one (queue block 50, 20 Nov 2026)
+      - name: why the run stopped
+        if: failure() && steps.guard.outcome != 'failure'
+        run: |
+          echo "**Stopped: a step other than the Tier 1 guard failed; the red step above says which.**" >> "$GITHUB_STEP_SUMMARY"
       # only main publishes: a branch run checks and builds, skips the publishing steps and stays green (owner, 5 Nov 2026)
       # the checked build as one artifact for deploy-cloudflare (GitHub Pages itself is off since 16 Nov 2026, owner "ajmo")
       - uses: actions/upload-pages-artifact@v3
