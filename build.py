@@ -850,6 +850,16 @@ for _p in PLANS:
     _fee = _p.get("membership_fee_monthly")
     if _p.get("price_monthly") is not None and _fee is not None and float(_fee) > 0:
         _p["price_monthly"] = round(float(_p["price_monthly"]) + float(_fee), 2)
+# "From $X" (owner, 20 Nov 2026; queue block 54; peptide-data task t63): where the page sells longer plans for less, the
+# number every table, "from" price and sort reads is the cheapest monthly rate (lowest_monthly, membership included); the
+# standard price stays in price_standard and "Cheapest elsewhere" still compares comparable_monthly. A plan with an intro
+# or sale price keeps its standard price, so its "then" price is never below the intro.
+for _p in PLANS:
+    _low = _p.get("lowest_monthly")
+    if (_low is not None and _p.get("price_monthly") is not None and float(_low) < float(_p["price_monthly"])
+            and _p.get("price_first_month") is None and _p.get("promo_price") is None):
+        _p["price_standard"] = _p["price_monthly"]
+        _p["price_monthly"] = float(_low)
 
 
 def cheapest_plan(g):
@@ -1422,6 +1432,9 @@ def plan_terms(p):
     out = []
     if p.get("commitment_months"):
         out.append(("Commitment", plural(int(p["commitment_months"]), "month")))
+    if p.get("price_standard") is not None and p.get("lowest_commitment_months"):
+        out.append(("Lowest price", f'{usd(p["price_monthly"])} a month on a {int(p["lowest_commitment_months"])}\u2011month plan; '
+                                    f'{usd(p["price_standard"])} a month on the shortest plan'))
     # queue block 48: the intro and sale lines name the standard price after them; a 4-week bill and a list price are said
     for x in price_kind_notes(p):
         name = ("Intro price" if " first " in x else "Sale" if " sale" in x else "Billing" if x.startswith("billed") else
@@ -4059,7 +4072,8 @@ def cheapest_elsewhere(p):
             return None
         other = next((x for x in PLANS if (x["seller_slug"], x["plan_slug"]) == (e["other_seller_slug"], e["other_plan_slug"])), None)
         return {"seller_slug": e["other_seller_slug"], "seller_name": e["other_seller_name"],
-                "price": float(e["other_comparable_monthly"]),
+                # the price that clinic's own row shows (its "From" price after block 54), chosen on comparable_monthly
+                "price": float(other["price_monthly"]) if other else float(e["other_comparable_monthly"]),
                 "notes": [x for x in price_kind_notes(other) if x != MEMBERSHIP_UNKNOWN] if other else []}
     if not p["substance_slug"] or not p.get("dosage_form"):
         return None
@@ -4144,7 +4158,7 @@ def clinic_plans_section(r):
     trs = []
     # columns (owner, 20 Nov 2026): with an intro or sale price, "First N months" and "Then monthly"; else one price column
     first_h = first_price_head(plans)
-    price_h = "Then monthly" if first_h else "Per month"
+    price_h = "Then monthly" if first_h else "From, per month" if any(p.get("price_standard") for p in plans) else "Per month"
     for p in plans:
         other = cheapest_elsewhere(p)
         # the name the site shows for that clinic (data/seller_names.json), without "(formerly ...)": Shed, not ShedRx
@@ -4167,7 +4181,7 @@ def clinic_plans_section(r):
     <thead><tr>{heads}</tr></thead>
     <tbody>{"".join(trs)}</tbody>
   </table></div>
-  <p class="small seller-note">Prices are per month, with the clinic's monthly membership included when it shows one.{" An intro or sale price lasts only its first months; the regular price follows it." if first_h else ""} Cheapest elsewhere is the lowest regular monthly price for the same medication, kind and form at another clinic we track.</p>""" if plans else ""
+  <p class="small seller-note">Prices are per month, with the clinic's monthly membership included when it shows one.{" An intro or sale price lasts only its first months; the regular price follows it." if first_h else ""}{" From is the lowest monthly price on any plan length the clinic sells; a longer plan can cost less a month." if any(p.get("price_standard") for p in plans) else ""} Cheapest elsewhere is the lowest regular monthly price for the same medication, kind and form at another clinic we track.</p>""" if plans else ""
     per_order = order_table("tbl tbl-cards tbl-clinics tbl-compact tbl-plans", (("Plan", ""), ("What it is", ""), ("Per order", "")),
                             [f'<tr><td><span class="cell-pic">{parts.plan_picture(p)}<span class="name">{plan_name_link(p, slash_break(clean(p["plan_name"])))}</span></span></td>'
                              f'<td data-l="What it is">{plan_chip(plan_goal(p), p)}</td><td data-l="Per order">{order_price(p)}</td></tr>' for p in orders]) if orders else ""
