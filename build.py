@@ -6519,10 +6519,30 @@ def cmp_rx_prices(a, b):
     if len(sides) != 1:
         return ""
     x = sides[0]
+    o = b if x == a else a
     _, sec = unwrap(pep_plans_section(x))
     sec = (sec.replace('class="tbl tbl-cards', 'class="tbl tbl-compact tbl-cards', 1)
-           .replace("<h2>Online clinic prices</h2>", f'<h2 id="rx-h">{escape(pep_short(x))} on prescription: prices</h2>', 1))
+           .replace("<h2>Online clinic prices</h2>", f'<h2 id="rx-h">{escape(pep_short(x))} on prescription: prices</h2>', 1)
+           .replace('</h2><p>', f'</h2><p>{cmp_rx_lead(x, o)} ', 1))
     return f'<section class="section pep-sold cmp-rx" id="clinics" aria-labelledby="rx-h"><div class="wrap">{sec}</div></section>\n'
+
+
+def cmp_rx_lead(x, o):
+    """The lead of "<Substance> on prescription: prices" on a substance pair (queue block 34, w3, 20 Nov 2026): which side
+    clinics prescribe, how many plans and clinics we track and the lowest monthly price, how many say a compounding
+    pharmacy makes it, and the other side's FDA status sentence, so each pair reads apart from the substance page."""
+    plans = pep_clinic_plans(x)
+    clinics = len({r["seller_slug"] for r in plans})
+    low = min(float(r["price_monthly"]) for r in plans if r.get("price_monthly"))
+    made = sum(1 for r in plans if r.get("product_kind") == "compounded")
+    nx, no = escape(pep_short(x)), escape(pep_short(o))
+    st = (pep_status(o) or {}).get("sentence")
+    out = (f"{nx} is not FDA approved, and online clinics prescribe it after a visit: from {usd(low)}/mo at the "
+           f"{clinics} clinics we track.")
+    if made:
+        out += f" {made} of the {len(plans)} plans say a compounding pharmacy makes it."
+    out += f" We track no clinic plan for {no}" + (f", whose FDA status reads: {escape(st)}." if st else ".")
+    return out
 
 
 def cmp_body(h1, checked, answer, table, links, pre, note, verdict="", nxt=""):
