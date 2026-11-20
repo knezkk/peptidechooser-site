@@ -420,7 +420,8 @@ def facts(b):
     hair_plans = sorted((r for r in b.PLANS if r["substance_slug"] in ("finasteride", "minoxidil") and r.get("price_monthly") is not None),
                         key=lambda r: (float(r["price_monthly"]), r["seller_name"]))
     return {
-        "sellers": gs.get("sellers"), "coa_12m": gs.get("sellers_coa_12m"), "bpc_sellers": gs.get("bpc_sellers"),
+        # the shop count from the one count source (queue block 56, point 3), the lab report counts from guide_stats
+        "sellers": (b.site_count("shops") if b.COUNTS else gs.get("sellers")), "coa_12m": gs.get("sellers_coa_12m"), "bpc_sellers": gs.get("bpc_sellers"),
         "stats_on": gs.get("checked_on"),
         "letters": len(letters), "letters_on": (d.get("pulled_at") or "")[:10] or None,
         "letters_oldest": d.get("letters_all_oldest"),

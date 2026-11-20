@@ -300,6 +300,24 @@ def article_date_errs(name, node):
 OFF_MENU_GOALS = {"menopause"}
 
 
+# The owner does not want the "we never sell" phrase anywhere (queue block 56, point 4, 20 Nov 2026), in any page, its
+# description or llms.txt. The newsletter's "We never sell or share the list" (privacy, another meaning) stays.
+NEVER_SELL = re.compile(r"never sell(?! or share the list)|don't sell|we compare, we|sells nothing", re.I)
+
+
+def check_never_sell(P):
+    errs = []
+    for name in P:
+        text = (DIST / name).read_text(encoding="utf-8")
+        for m in NEVER_SELL.finditer(text):
+            errs.append(f"{name}: \"{text[max(0, m.start() - 30):m.end() + 10].strip()}\" (the owner removed this phrase)")
+    llms = DIST / "llms.txt"
+    if llms.exists():
+        for m in NEVER_SELL.finditer(llms.read_text(encoding="utf-8")):
+            errs.append(f"llms.txt: \"{m.group(0)}\" (the owner removed this phrase)")
+    return errs
+
+
 def check_schema(P):
     errs = []
     for name, p in P.items():
@@ -2243,7 +2261,7 @@ def check_us_dates(P):
     return [f"{name}: day-first date {m.group()!r} (write it as Nov 13, 2026)" for name, html in files for m in pat.finditer(html)]
 
 
-CHECKS = {"words": check_words, "seo": check_seo, "schema": check_schema, "parts": check_parts, "data": check_data, "book": check_book, "events": check_events, "logic": check_logic, "rules33": check_rules33, "addresses": check_addresses, "arch": check_arch, "arch-switch": check_arch_switch, "offers": check_offers, "kept-sellers": check_kept_sellers, "wave-b": check_wave_b, "paid-first": check_paid_first, "goal-prices": check_goal_prices, "paid-tab": check_paid_tab, "plan-links": check_plan_links, "per-order": check_per_order, "price-kinds": check_price_kinds, "us-dates": check_us_dates}
+CHECKS = {"words": check_words, "seo": check_seo, "schema": check_schema, "parts": check_parts, "data": check_data, "book": check_book, "events": check_events, "logic": check_logic, "rules33": check_rules33, "addresses": check_addresses, "arch": check_arch, "arch-switch": check_arch_switch, "offers": check_offers, "kept-sellers": check_kept_sellers, "wave-b": check_wave_b, "paid-first": check_paid_first, "goal-prices": check_goal_prices, "paid-tab": check_paid_tab, "plan-links": check_plan_links, "per-order": check_per_order, "price-kinds": check_price_kinds, "us-dates": check_us_dates, "never-sell": check_never_sell}
 
 # Plan names against their form (owner task w2, 3 Nov 2026): a clinic's own plan name can name another form than the
 # plan's `dosage_form` ("Ozempic Pill" for a pen). The site cannot change data, so this only warns, never fails, and the

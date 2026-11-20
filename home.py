@@ -125,7 +125,7 @@ def where_section(b):
     rows = [r for r in rows if r.get("score") is not None]
     if not rows:
         return "", ""
-    n = len(rows)
+    n = b.site_count("sellers")  # one count source (queue block 56, point 3)
     shops = [r for r in rows if seller_kind(b, r) == "shop"]
     clinics = [r for r in rows if seller_kind(b, r) == "clinic"]
     # the substance select: the /sellers/ page's own list (same values, so its hash reads the same)

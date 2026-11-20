@@ -532,7 +532,7 @@ def nav_link(path, href, label, sub="", attrs=""):
 
 def nav_counts():
     """The count sentence under "Start here" (pages.md, Every page, Header; owner task 3 Nov 2026), from this build."""
-    parts = [plural(len(PROFILES), "seller") if PROFILES else "", plural(len(PEPTIDE_SLUGS), "substance") if PEPTIDE_SLUGS else "",
+    parts = [plural(site_count("sellers"), "seller") if PROFILES else "", plural(len(PEPTIDE_SLUGS), "substance") if PEPTIDE_SLUGS else "",
              plural(len(LETTERS_ALL), "FDA letter") if LETTERS_ALL else ""]
     parts = [x for x in parts if x]
     return (", ".join(parts) + ". " if parts else "") + f"Checked {nice_date(DATA_CHECKED)}."
@@ -569,10 +569,10 @@ def nav_cats(path):
     legal = next((g["line"] for g in guides.GUIDES if g["slug"] == "are-peptides-legal-in-the-us"), "")
     topics = {t: sum(1 for g in guides.GUIDES if guides.TOPIC.get(g["slug"]) == t) for t, _ in LEARN_TOPICS}
     flat = {
-        "sellers": ("Sellers", [("/sellers/#clinics", "Online clinics", plural(len(CLINIC_PROFILES), "clinic") if CLINIC_PROFILES else ""),
-                                ("/sellers/", "Research-use shops", plural(len(SHOPS), "shop") if SHOPS else ""),
-                                ("/compare/", "Compare any two", " and ".join(x for x in (plural(len(plans), "plan") if plans else "",
-                                                                                          plural(len(sellers), "seller") if sellers else "") if x))]),
+        "sellers": ("Sellers", [("/sellers/#clinics", "Online clinics", plural(site_count("clinics"), "clinic") if CLINIC_PROFILES else ""),
+                                ("/sellers/", "Research-use shops", plural(site_count("shops"), "shop") if SHOPS else ""),
+                                ("/compare/", "Compare any two", " and ".join(x for x in (plural(site_count("plans"), "plan") if plans else "",
+                                                                                          plural(site_count("sellers"), "seller") if sellers else "") if x))]),
         "peptides": ("Peptides", [("/peptides/", "A to Z", plural(len(PEPTIDE_SLUGS), "substance") if PEPTIDE_SLUGS else ""),
                                   ("/learn/are-peptides-legal-in-the-us/", "Legal status", legal),
                                   ("/fda-warning-letters/", "FDA warning letters",
@@ -690,7 +690,7 @@ def page(path, title, description, body, schema="", crumb=None):
     <div class="foot-grid">
       <div>
         <a class="brand" href="/"><img src="/assets/logo-dark.svg" alt="" width="50" height="20">Peptide Chooser</a>
-        <p>An independent comparison site for the United States that sells nothing and is not medical advice: talk to a doctor before starting any treatment.</p>
+        <p>An independent comparison site for the United States. Not medical advice: talk to a doctor before starting any treatment.</p>
         <p>{OPERATOR_LINE}</p>
       </div>
       {foot_cols()}
@@ -848,6 +848,17 @@ def covers_note(r):
 # card and clinic table. It is kept apart for that later design task.
 PER_ORDER_PLANS = [r for r in PLANS if r.get("price_per_order") is not None]
 PLANS = [r for r in PLANS if r.get("price_per_order") is None]
+# One count source (spec 0040, site.counts; queue block 56, point 3): every count of sellers, shops, clinics and plans the
+# site prints comes from here, never counted again elsewhere. Until the view exists, the build's own lists stand in.
+COUNTS = DATA.get("counts") or {}
+
+
+def site_count(key):
+    """sellers, shops, clinics or plans: site.counts, else this build's lists (guides are counted by the site)."""
+    if COUNTS.get(key) is not None:
+        return int(COUNTS[key])
+    return {"sellers": lambda: len(PROFILES), "shops": lambda: len(SHOPS), "clinics": lambda: len(CLINIC_PROFILES),
+            "plans": lambda: len(PLANS) + len(PER_ORDER_PLANS)}[key]()
 # A plan's monthly figure includes its monthly membership or care fee when the data has one (data agent's task 33, owner
 # 7 Nov 2026: Ivim stores the medication, $65, and the membership, $74.99, apart; the reader pays $139.99). The medicine's
 # own price stays in price_medicine; the care fee is shown as included, never added twice.
@@ -2150,6 +2161,48 @@ def opt_head(p):
             f'<span class="opt-two">{status_chip(p)}<span class="opt-rx">{p["rx_word"]}</span></span>')
 
 
+# The legal option for a substance a research-use shop sells (spec 0040, site.legal_alternatives; queue block 56, point 2):
+# one row per substance, a clinic plan (the data's pick: paid link first, then the substance alone, then the lowest
+# monthly price) or, with no plan, the FDA approved drug. No row: NO_LEGAL_OPTION.
+LEGAL_ALTERNATIVES = {r["substance_slug"]: r for r in DATA.get("legal_alternatives") or [] if r.get("substance_slug")}
+NO_LEGAL_OPTION = "No legal option for use in people yet"
+
+
+def legal_option_line(p):
+    """The research-use row's legal option line(s) (queue block 56, point 2), one per distinct option of the row's substances:
+    "Legal option: <option> from $X/mo at <Seller>" with "Visit <Seller>" and "Paid link" when the clinic has one; a plan
+    priced per order "Legal option: <option> at <Seller>, priced per order"; an approved drug "Legal option: <brand>
+    (<substance>), FDA approved, on prescription", no button; none: "No legal option for use in people yet"."""
+    subs = [p["substance"]] if p.get("substance") else list(p.get("substances") or [])
+    seen, lines = set(), []
+    for s in subs:
+        r = LEGAL_ALTERNATIVES.get(s)
+        if not r:
+            continue
+        key = (r.get("option_kind"), r.get("seller_slug"), r.get("plan_slug"), r.get("option_name"))
+        if key in seen:
+            continue
+        seen.add(key)
+        name = escape(clean(r.get("option_name") or ""))
+        if r.get("option_kind") == "fda_approved_drug":
+            lines.append(f'Legal option: {name} ({escape(r.get("substance_name") or sub_label(s))}), FDA approved, on prescription')
+            continue
+        who = clinic_link(r["seller_slug"], seller_base(r.get("seller_name") or ""), True) if r.get("seller_slug") else ""
+        if r.get("lowest_monthly") is not None:
+            btn = (clinic_button(r["seller_slug"], "", placement="legal option") if r.get("has_paid_link") and has_paid(r["seller_slug"]) else "")
+            lines.append(f'Legal option: {name} from <span class="num">{usd(r["lowest_monthly"])}/mo</span> at {who}{btn}')
+        else:
+            lines.append(f"Legal option: {name} at {who}, priced per order")
+    if not lines:
+        lines = [NO_LEGAL_OPTION]
+    return "".join(f'<p class="small opt-legal">{x}</p>' for x in lines[:3])
+
+
+def research_row(p):
+    """A research-use option row: its button opens a window of research-use shops."""
+    return has_window(p) and window_kind(p) not in COSMETIC_KINDS
+
+
 def option_rows(g, lazy=False):
     """One goal's step 2 option rows (pages.md, Home, Option rows; also the goal pages): collapsed, the name and chips,
     the `plain` sentence and the price in bold, and one button (opt_action); opened, the does, status and how lines with
@@ -2173,7 +2226,7 @@ def option_rows(g, lazy=False):
                           '</div><div><span class="opt-lab">How to get it</span>', "</div></div>")
         rows.append(f'<li class="opt"><details class="opt-more"><summary class="opt-sum">{option_picture(p, rp)}<span class="opt-m" aria-hidden="true"></span>{head}</summary>'
                     f'<div class="opt-body">{opt_line(g, p, rp, "p")}{c0}<p class="opt-does">{p["does"]}{refs(p, slug, price=not pad)}</p>'
-                    f'{c1}<p class="opt-status">{status}</p>{c2}<p class="opt-how">{how}{cost}</p>{c3}{"" if lazy else opt_facts(g, p)}</div></details>{opt_action(g, p, rp, lazy, pad)}</li>')
+                    f'{c1}<p class="opt-status">{status}</p>{c2}<p class="opt-how">{how}{cost}</p>{c3}{"" if lazy else opt_facts(g, p)}</div></details>{opt_action(g, p, rp, lazy, pad)}{legal_option_line(p) if not lazy and research_row(p) else ""}</li>')
     return rows
 
 
@@ -2741,8 +2794,8 @@ fromHash();window.addEventListener('hashchange',fromHash);})();
 
 # What we track (owner task 2 Nov 2026): the counts the trust pages and Home's sellers card show, all from site.json;
 # each line is drawn only when its data is there (never a placeholder).
-N_SELLERS = len(SHOPS)
-N_CLINIC_PAGES = len(CLINIC_PROFILES)
+N_SELLERS = site_count("shops") if SHOPS else 0
+N_CLINIC_PAGES = site_count("clinics") if CLINIC_PROFILES else 0
 # One number on Home and /about/ (owner task, 5 Nov 2026): the clinics on /sellers/, that is the clinic pages. A seller with a plan and no
 # page (a tool, pages.md, Category) is not counted. Plan sellers only when the data has no seller pages at all.
 N_CLINICS = N_CLINIC_PAGES or len({r["seller_slug"] for r in PLANS})
@@ -2751,7 +2804,7 @@ N_STATUS = len({r["substance_slug"] for r in LEGAL_DB or []})
 PULLED = nice_date(DATA["pulled_at"][:10]) if DATA.get("pulled_at") else ""
 # Home's hero counts (pages.md, Home; owner task 2 Nov 2026): one sentence, only when every count and the pull date are there.
 # owner answer Q1 c (2 Nov 2026): shops and online clinics counted apart, as on /sellers/
-_ns, _nc = len(SHOPS), len(CLINIC_PROFILES)
+_ns, _nc = N_SELLERS, N_CLINIC_PAGES
 HERO_COUNTS = (f" {_ns} shop{'' if _ns == 1 else 's'}, {f'{_nc} online clinic' + ('' if _nc == 1 else 's') + ', ' if _nc else ''}"
                f"{len(PEPTIDE_SLUGS)} substances and {N_LETTERS} FDA warning letters, checked {PULLED}."
                if SHOPS and PEPTIDE_SLUGS and N_LETTERS and PULLED else "")
@@ -2769,7 +2822,7 @@ HOME_LEDE = "Find the right peptide for your goal and where to buy it at the bes
 # Home's description (owner, ODOBRENO SEO - Karlo - 14. 11. 2026 - block 29): the counts and date from data, as in the hero;
 # without them the plain line stays.
 HOME_DESC = (f"Compare the best peptides by goal: FDA status and the lowest price at {_nc} online clinics and {_ns} shops, "
-             f"checked {PULLED}. We compare; we never sell." if _nc and _ns and PULLED else
+             f"checked {PULLED}." if _nc and _ns and PULLED else
              "Find the right option for your goal and where to get it at the best price. Research-use peptides with "
              "their real status.")
 HOME = f"""
@@ -4091,18 +4144,6 @@ def plan_cost(x):
 # injection), compared on the standard monthly price plus membership. With no such view (repo data) the old rule stays:
 # same medicine, kind and stated dosage form (data agent's task 33, 7 Nov 2026).
 ELSEWHERE = {(r["seller_slug"], r["plan_slug"]): r for r in DATA.get("cheapest_elsewhere") or []}
-# The legal option for a research-use peptide (data task 64, site.legal_alternative; queue block 55, point 4), by the
-# research-use substance. Empty until the view exists: the research-use row (book part 2c) then says "No legal option
-# for use in people yet".
-LEGAL_ALTERNATIVES = {}
-for _r in DATA.get("legal_alternatives") or []:
-    LEGAL_ALTERNATIVES.setdefault(_r.get("substance_slug") or _r.get("research_substance_slug"), []).append(_r)
-NO_LEGAL_OPTION = "No legal option for use in people yet"
-
-
-def legal_alternative(slug):
-    """The legal options for a research-use substance, cheapest first by their monthly price when the view gives one."""
-    return sorted(LEGAL_ALTERNATIVES.get(slug) or [], key=lambda r: float(r.get("price_monthly") or r.get("comparable_monthly") or 1e9))
 
 
 def cheapest_elsewhere(p):
@@ -4716,15 +4757,20 @@ def missing_line(r):
     in the HTML (a title on hover, spoken). Nothing when every check is met or the seller has no score."""
     if score_of(r) is None:
         return ""
+    # a seller with an FDA letter shows the letter, never "Missing: No FDA letter" (queue block 56, point 1)
+    letter = ""
+    if not r.get("score_no_fda_letter"):
+        on = newest_letter(r)
+        letter = f'<span class="sub missing">FDA letter{", " + nice_date(on[:10]) if on else ""}</span>'
     # short names, so the line stays narrow in the /sellers/ table (owner: no overflow at 1440)
-    miss = [MISSING_NAME.get(k, t) for k, t in seller_checks(r) if not r.get(k)]
+    miss = [MISSING_NAME.get(k, t) for k, t in seller_checks(r) if not r.get(k) and k != "score_no_fda_letter"]
     if not miss:
-        return ""
+        return letter
     if len(miss) == 1:
-        return f'<span class="sub missing">Missing: {miss[0]}</span>'
+        return letter + f'<span class="sub missing">Missing: {miss[0]}</span>'
     # the names on hover (title) and for screen readers; a tap target waits for book part 2f (a <details> summary is
     # under 44px without its CSS, tools/check_layout.js)
-    return (f'<span class="sub missing" title="{", ".join(miss)}">Missing: {len(miss)} checks'
+    return letter + (f'<span class="sub missing" title="{", ".join(miss)}">Missing: {len(miss)} checks'
             f'<span class="vh">: {", ".join(miss)}</span></span>')
 
 
@@ -4817,9 +4863,9 @@ for _g in SUBPAGES:  # live ones from site.json, drafts with PC_DRAFTS=1
 
 if PROFILES:
     PAGES.append(("/sellers/", "sellers/index.html", "Peptide sellers and their checks | Peptide Chooser",
-                  (f"The {len(SHOPS)} peptide shops and {len(CLINIC_PROFILES)} online clinics in our database, each on its own page "
+                  (f"The {site_count('shops')} peptide shops and {site_count('clinics')} online clinics in our database, each on its own page "
                    "with background checks, products or plans and FDA warning letters.") if CLINIC_PROFILES else
-                  (f"Every peptide seller in our database, {len(PROFILES)} in all, each on its own page with five background checks, "
+                  (f"Every peptide seller in our database, {site_count('sellers')} in all, each on its own page with five background checks, "
                    "product and substance counts and FDA warning letters."),
                   sellers_index(),
                   # ItemList (owner task 2 Nov 2026): one item per seller page on our site, never the seller's own domain
@@ -5055,7 +5101,7 @@ def compare_page():
   <div class="wrap">
     <h1>Compare any two plans or sellers</h1>
     <p class="lede">Pick two online clinic plans, two peptide shops or two substances and see them side by side: price and care fee for a plan; the five checks, products, price per mg and FDA letters for a shop; FDA status, prices and letters for a substance. Seller names open our page on the seller.</p>
-    <p class="letters-stamp">{f'<span class="stamp">Checked {nice_date(checked)}</span>' if checked else ""}<span class="small">{plural(len(plans), "clinic plan")} and {plural(len(sellers), "seller")}.</span></p>
+    <p class="letters-stamp">{f'<span class="stamp">Checked {nice_date(checked)}</span>' if checked else ""}<span class="small">{plural(site_count("plans"), "clinic plan")} and {plural(site_count("sellers"), "seller")}.</span></p>
   </div>
 </section>
 <section class="band-2" id="compare-two">
@@ -5295,10 +5341,9 @@ def pep_description(slug):
         parts.append(f'Approved brand{"s" if len(brands) > 1 else ""}: {", ".join(brands[:3])}.')
     # too short for the 110-character rule (vardenafil, task 26, 9 Nov 2026: no goal page, no brand or generic plan): the clinic
     # table's own count line, a fact the page shows
-    if len(" ".join(parts + ["Checked Sep 30, 2026.", "We compare and never sell."])) < 110 and pep_plans(slug):
+    if len(" ".join(parts + ["Checked Sep 30, 2026."])) < 110 and pep_plans(slug):
         parts.append(f'{plural(len(pep_plans(slug)), "plan")} at the online clinics we track.')
     parts.append(f"Checked {nice_date(pep_checked(slug))}.")
-    parts.append("We compare and never sell.")
     out = parts[0]
     for x in parts[1:]:
         # the date is measured at its widest ("Sep 30, 2026"), so a short date never adds the sentence
@@ -6806,7 +6851,7 @@ def cmp_sub_page(a, b, goals):
     body += (f'<section class="section" id="more"><div class="wrap">{more}</div></section>\n' if more else "") \
         + (f'<section class="section"><div class="wrap">{nxt}</div></section>\n' if nxt else "")
     desc = cmp_fit([f"{na} vs {nb}: {cmp_sub_answer(a, b)[0][:-1]}.", *cmp_sub_answer(a, b)[1:2],
-                    f'Both on our {goals[0]["name"].lower()} page.', f"Checked {nice_date(checked)}.", "We compare and never sell."])
+                    f'Both on our {goals[0]["name"].lower()} page.', f"Checked {nice_date(checked)}."])
     return cmp_title(f"{na} vs {nb}", "FDA status and prices"), desc, body
 
 
@@ -7013,8 +7058,6 @@ def cmp_clinic_page(a, b, subs):
         first = f"{na} vs {nb} for compounded {' and '.join(subs)}: monthly price, care fee, FDA warning letters and four background checks."
     desc = cmp_fit([first,
                     answer[-1], f"Checked {nice_date(checked)}."])
-    if len(desc) < 110:
-        desc = cmp_fit([desc, "We compare and never sell."])
     return cmp_title(f"{na} vs {nb}", "prices, care fees and checks", "prices and checks"), desc, body
 
 
@@ -7262,7 +7305,7 @@ def main():
     (DIST / "robots.txt").write_text(f"User-agent: *\nAllow: /\nDisallow: /out/\nSitemap: {SITE}/sitemap.xml\n")
     (DIST / "llms.txt").write_text(
         "# Peptide Chooser\n\n> An independent US comparison site: peptide products next to FDA-approved alternatives, "
-        "with evidence, FDA status and price per month for each goal. We compare; we never sell.\n\n"
+        "with evidence, FDA status and price per month for each goal.\n\n"
         + llms_sections())
     # the search index (pages.md, Every page, Header, Search): one entry per page, substance and seller
     if COMPARE_DATA:
@@ -7499,11 +7542,11 @@ def sources_body():
     if PLANS:
         clinics = {r["seller_slug"] for r in PLANS}
         own.append(src_li("Online clinic plan pages", "/sellers/#clinics" if built("/sellers/") else "", built("/sellers/"),
-                          f"Monthly price and fees of {plural(len(PLANS), 'plan')} at {plural(len(clinics), 'clinic')}.",
+                          f"Monthly price and fees of {plural(site_count('plans'), 'plan')} at {plural(site_count('clinics'), 'clinic')}.",
                           max((r.get("last_seen") or "" for r in PLANS), default=""),
                           ids=plan_ids + [i for u, ids in home_ids.items() if host(u) in seller_hosts for i in ids]))
     if PROFILES:
-        own.append(src_li("Seller checks", "/how-we-rate/", True, f"The checks on {plural(len(PROFILES), 'seller')}.",
+        own.append(src_li("Seller checks", "/how-we-rate/", True, f"The checks on {plural(site_count('sellers'), 'seller')}.",
                           max((r.get("score_checked_on") or "" for r in PROFILES.values()), default="")))
     if DATA.get("pulled_at") and own:
         own.append(src_li("Peptide Chooser database", "", False, "The copy this build of the site was made from.", DATA["pulled_at"][:10]))
