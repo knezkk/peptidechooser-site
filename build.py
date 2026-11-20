@@ -3218,10 +3218,12 @@ def order_cost(r):
 ORDER_H = '<h3 class="h-sources">Priced per order</h3>'
 
 
-def order_price(r):
-    """The price cell: "$299.99 per order", a fee joined to it ("$80 + $54 fee per order"), what one order holds under it."""
+def order_price(r, narrow=False):
+    """The price cell: "$299.99 per order", a fee joined to it ("$80 + $54 fee per order"), what one order holds under it.
+    narrow: the goal table's price column (150px at 1440, queue block 52) breaks a fee price before "per order"."""
     fee = float(r.get("fee_per_order") or 0)
-    price = f'{usd(r["price_per_order"])} + {usd(fee)} fee per order' if fee > 0 else f'{usd(r["price_per_order"])} per order'
+    price = (f'{usd(r["price_per_order"])} + {usd(fee)} fee{"<br>" if narrow else " "}per order' if fee > 0
+             else f'{usd(r["price_per_order"])} per order')
     days = r.get("order_supply_days")
     qty = escape(r.get("order_quantity") or "")
     # the goal table's price column never wraps (site.css .cp-price): a long quantity breaks before its bracket, and the
@@ -3358,7 +3360,7 @@ def goal_clinic_section(g, rows, orders=()):
         otrs.append(f'<tr data-s="{row_sub(g, r)}"{state_attrs(r["seller_slug"])} data-k="compounded" data-f="{plan_form(r)}" data-l="{1 if (r.get("fda_letter_count") or 0) else 0}">'
                     f'<td><span class="cell-pic">{parts.plan_picture(r)}<span class="cp-txt"><span class="name plan-cut" title="{plan}">{plan_name_link(r, slash_break(plan))}</span>'
                     f'<span class="cp-sub"><span class="cell-pic">{parts.tile(r["seller_slug"], seller_base(r["seller_name"]), 20, seller=PROFILES.get(r["seller_slug"]))}{clinic_link(r["seller_slug"], seller_base(r["seller_name"]), True)}</span>{plan_chip(g, r)}{plan_letter(r)}{covers_note(r)}</span></span></span></td>'
-                    f'<td class="cp-price" data-l="Per order">{order_price(r)}</td>'
+                    f'<td class="cp-price" data-l="Per order">{order_price(r, narrow=True)}</td>'
                     f'<td class="act">{clinic_row_act(r)}</td></tr>')
     per_order = order_table("tbl tbl-compact tbl-cards tbl-clinics", (("Plan and clinic", ""), ("Per order", ' class="cp-price"'), ('<span class="vh">Action</span>', "")), otrs) if otrs else ""
     monthly = f"""<div class="tbl-wrap"><table class="tbl tbl-compact tbl-cards tbl-clinics">
