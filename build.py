@@ -953,12 +953,6 @@ def _short_lines(x):
     return x
 
 
-def price_kind_subs(r, skip=(), short=False):
-    """price_kind_notes as the book's sub lines under a number (bundle.css .sub), leaving out notes already shown; short
-    breaks each into lines for a column that never wraps."""
-    return "".join(f'<span class="sub">{_short_lines(x) if short else escape(x)}</span>' for x in price_kind_notes(r) if x not in skip)
-
-
 # A goal's clinic plans (pages.md, Category, weight loss; owner task 2 Nov 2026): the rows of site.plan_prices whose
 # substance is one of the goal's `clinic_plans.substances`. A plan with no substance, or another one, shows only on the seller's
 # own page, never on a goal page or in a clinic window, until the data carries a goal tag (owner answer to #104 Q2 A, 5 Nov 2026).
@@ -1911,6 +1905,8 @@ def clinic_window(g, p):
     rows = sorted(option_plans(g, p), key=lambda r: (paid_rank(r["seller_slug"]), r.get("product_kind") == "compounded", clinic_order(r)))
     key, named, trs = clinic_key(g, p), set(), []
     otc = needs_rx(p) is False
+    first_h = first_price_head(rows)
+    care_col = any(r.get("membership_fee_monthly") is not None for r in rows)  # no column when no fee is known (owner, 20 Nov 2026)
     for r in rows:
         fee = r.get("membership_fee_monthly")
         prof = PROFILES.get(r["seller_slug"], {})
@@ -1920,8 +1916,8 @@ def clinic_window(g, p):
                    f'<td data-l="Plan"><span class="cell-pic">{parts.plan_picture(r)}<span>{explain_brand(r["plan_name"], named)}</span></span></td>'
                    f'<td data-l="What it is">{plan_chip(g, r)}</td>'
                    f'<td data-l="Form">{plan_form_word(r)}</td>'
-                   f'<td data-l="Per month"><span class="num">{usd(r["price_monthly"])}</span>{plan_letter(r)}{seller_closed_chip(r["seller_slug"])}</td>'
-                   f'<td data-l="Care fee">{"not known" if fee is None else "none" if float(fee) == 0 else usd(fee) + "/mo, included"}</td>'
+                   f'{first_cell(r, first_h)}<td data-l="Per month"><span class="num">{usd(r["price_monthly"])}</span>{plan_letter(r)}{seller_closed_chip(r["seller_slug"])}</td>'
+                   + (f'<td data-l="Care fee">{"" if fee is None else "none" if float(fee) == 0 else usd(fee) + "/mo, included"}</td>' if care_col else "") +
                    f'<td data-l="Checks">{checks}</td>'
                    f'<td class="act">{clinic_row_act(r, "window")}</td></tr>')
     newest = max(r["last_seen"] for r in rows)
@@ -1930,7 +1926,7 @@ def clinic_window(g, p):
   <div class="dlg-hd"><h2 id="{key}-h">{p["name"]}</h2><form method="dialog"><button class="btn btn-line btn-sm" type="submit">Close</button></form></div>
   <p class="dlg-lede">{who} with plans, prices checked {nice_date(newest)}.</p>
   {state_filter(who.lower())}{STATE_N}
-  <div class="tbl-wrap"><table class="tbl tbl-cards tbl-compact tbl-window"><thead><tr><th scope="col">{who[:-1]}</th><th scope="col">Plan</th><th scope="col">What it is</th><th scope="col">Form</th><th scope="col">Per month</th><th scope="col">Care fee</th><th scope="col">Checks</th><th scope="col"><span class="vh">Our page</span></th></tr></thead><tbody>{"".join(trs)}</tbody></table></div>
+  <div class="tbl-wrap"><table class="tbl tbl-cards tbl-compact tbl-window"><thead><tr><th scope="col">{who[:-1]}</th><th scope="col">Plan</th><th scope="col">What it is</th><th scope="col">Form</th>{f'<th scope="col">{first_h}</th>' if first_h else ""}<th scope="col">{"Then monthly" if first_h else "Per month"}</th>{'<th scope="col">Care fee</th>' if care_col else ""}<th scope="col">Checks</th><th scope="col"><span class="vh">Our page</span></th></tr></thead><tbody>{"".join(trs)}</tbody></table></div>
   <p class="dlg-foot">Prices are the clinics' published monthly prices on {nice_date(newest)}. A clinic with an FDA warning letter is still listed; the letter is public record.</p>
 </div></dialog>"""
 
@@ -3173,14 +3169,15 @@ def clinic_section(g, rows, orders=()):
     rows = sorted(rows, key=lambda r: paid_rank(r["seller_slug"]))  # the caller's order (cheapest first) breaks a tie
     newest = max(r["last_seen"] for r in rows) if rows else ""
     trs, named = [], set()
+    first_h = first_price_head(rows)
     for i, r in enumerate(rows):
-        care = care_note(r)
+        care = known_care(r)
         # on phones the first CLINICS_FIRST rows show until "Show all N" (owner answer Q2 a, 2 Nov 2026; bundle.css, Clinic table)
         more = ' class="more"' if i >= CLINICS_FIRST else ""
         plan = explain_brand(r["plan_name"], named)
         trs.append(f'<tr{more} data-s="{row_sub(g, r)}"{state_attrs(r["seller_slug"])}><td>{clinic_link(r["seller_slug"], seller_base(r["seller_name"]))}</td><td data-l="Plan"><span class="plan-cut" title="{escape(strip_tags(plan))}">{plan_name_link(r, slash_break(plan))}</span></td>'
                    f'<td>{plan_chip(g, r)}</td>'
-                   f'<td data-l="Per month"><span class="num">{usd(r["price_monthly"])}</span>{plan_letter(r)}{f"<span class=sub>{care}</span>" if care else ""}{price_kind_subs(r, (care,))}{covers_note(r)}</td>'
+                   f'{first_cell(r, first_h)}<td data-l="Per month"><span class="num">{usd(r["price_monthly"])}</span>{plan_letter(r)}{f"<span class=sub>{care}</span>" if care else ""}{covers_note(r)}</td>'
                    # every row: the letter chip by the price, no FDA letter column, "See plans" to our clinic page (owner answers
                    # Q1 a and Q2 b, 3 Nov 2026)
                    f'<td class="act">{clinic_row_act(r)}</td></tr>')
@@ -3193,7 +3190,7 @@ def clinic_section(g, rows, orders=()):
             if rows else "")
     monthly = f"""
     <div class="tbl-wrap"><table class="tbl tbl-cards tbl-clinics">
-      <thead><tr><th scope="col">Clinic</th><th scope="col">Plan</th><th scope="col">What it is</th><th scope="col">Per month</th><th scope="col"><span class="vh">Action</span></th></tr></thead>
+      <thead><tr><th scope="col">Clinic</th><th scope="col">Plan</th><th scope="col">What it is</th>{f'<th scope="col">{first_h}</th>' if first_h else ""}<th scope="col">{"Then monthly" if first_h else "Per month"}</th><th scope="col"><span class="vh">Action</span></th></tr></thead>
       <tbody>{"".join(trs)}</tbody>
     </table></div>
     {f'<p class="clinics-more" hidden><button type="button" class="btn btn-line" id="clinics-all">Show all {len(rows)}</button></p>{CLINICS_JS}' if len(rows) > CLINICS_FIRST else ""}""" if rows else ""
@@ -3343,8 +3340,9 @@ def goal_clinic_section(g, rows, orders=()):
     rows = sorted(rows, key=lambda r: (paid_rank(r["seller_slug"]), clinic_order(r)))
     newest = max(r["last_seen"] for r in rows) if rows else ""
     trs, named = [], set()
+    first_h = first_price_head(rows)
     for i, r in enumerate(rows):
-        care = care_note(r)
+        care = known_care(r)
         k = plan_kind(r)
         kind = "brand" if k in ("brand", "generic") else "compounded" if k == "compounded" else "other"
         more = ' class="more"' if i >= CLINICS_FIRST else ""
@@ -3352,7 +3350,7 @@ def goal_clinic_section(g, rows, orders=()):
         trs.append(f'<tr{more} data-s="{row_sub(g, r)}"{state_attrs(r["seller_slug"])} data-k="{kind}" data-f="{plan_form(r)}" data-l="{1 if (r.get("fda_letter_count") or 0) else 0}">'
                    f'<td><span class="cell-pic">{parts.plan_picture(r)}<span class="cp-txt"><span class="name plan-cut" title="{escape(strip_tags(plan))}">{plan_name_link(r, slash_break(plan))}</span>'
                    f'<span class="cp-sub"><span class="cell-pic">{parts.tile(r["seller_slug"], seller_base(r["seller_name"]), 20, seller=PROFILES.get(r["seller_slug"]))}{clinic_link(r["seller_slug"], seller_base(r["seller_name"]), True)}</span>{plan_chip(g, r)}{plan_letter(r)}{covers_note(r)}</span></span></span></td>'
-                   f'<td class="cp-price" data-l="Per month"><span class="num">{usd(r["price_monthly"])}</span>{f"<span class=sub>{care}</span>" if care else ""}{price_kind_subs(r, (care,), short=True)}</td>'
+                   f'{first_cell(r, first_h, CP_PRICE)}<td class="cp-price" data-l="Per month"><span class="num">{usd(r["price_monthly"])}</span>{f"<span class=sub>{care}</span>" if care else ""}</td>'
                    f'<td class="act">{clinic_row_act(r)}</td></tr>')
     otrs = []
     for r in orders:
@@ -3364,7 +3362,7 @@ def goal_clinic_section(g, rows, orders=()):
                     f'<td class="act">{clinic_row_act(r)}</td></tr>')
     per_order = order_table("tbl tbl-compact tbl-cards tbl-clinics", (("Plan and clinic", ""), ("Per order", ' class="cp-price"'), ('<span class="vh">Action</span>', "")), otrs) if otrs else ""
     monthly = f"""<div class="tbl-wrap"><table class="tbl tbl-compact tbl-cards tbl-clinics">
-      <thead><tr><th scope="col">Plan and clinic</th><th scope="col" class="cp-price">Per month</th><th scope="col"><span class="vh">Action</span></th></tr></thead>
+      <thead><tr><th scope="col">Plan and clinic</th>{f'<th scope="col" class="cp-price">{first_h}</th>' if first_h else ""}<th scope="col" class="cp-price">{"Then monthly" if first_h else "Per month"}</th><th scope="col"><span class="vh">Action</span></th></tr></thead>
       <tbody>{"".join(trs)}</tbody>
     </table></div>""" if rows else ""
     foot = f"""<p class="small" style="margin-top:12px">Clinics with a paid link first, then the most checks; then brand plans before compounded, cheapest first. Prices are the clinics' published monthly prices on {nice_date(newest)}. A clinic with an FDA warning letter is still listed; the letter is public record.</p>
@@ -4099,11 +4097,54 @@ def clinic_answer(r):
     return out
 
 
+def first_price(p):
+    """The intro or sale price with the plan's care fee (what the reader pays first), or None when the plan has neither."""
+    if intro_active(p):
+        return _with_care(p, p["price_first_month"])
+    if promo_active(p):
+        return _with_care(p, p["promo_price"])
+    return None
+
+
+CP_PRICE = ' class="cp-price"'
+
+
+def first_cell(r, head, cls=""):
+    """The intro or sale price cell of a goal, substance or window table that has the column (owner, 20 Nov 2026); empty and
+    unlabelled when the plan has none, so a phone card does not say the same price twice; nothing without the column."""
+    if not head:
+        return ""
+    first = first_price(r)
+    return f'<td{cls} data-l="{head}"><span class="num">{usd(first)}</span></td>' if first is not None else f'<td{cls}></td>'
+
+
+def known_care(r):
+    """The care note only when the data knows the fee (owner, 20 Nov 2026: "not known" is not shown in a price table)."""
+    c = care_note(r)
+    return "" if c == "care fee not known" else c
+
+
+def first_price_head(plans):
+    """"First 2 months" when every intro in the table lasts the same, "Intro price" when they differ or a sale has no length;
+    None when no plan has one."""
+    firsts = [p for p in plans if first_price(p) is not None]
+    if not firsts:
+        return None
+    n = {int(p.get("intro_months") or 1) if intro_active(p) else None for p in firsts}
+    if len(n) == 1 and None not in n:
+        m = n.pop()
+        return "First month" if m == 1 else f"First {m} months"
+    return "Intro price"
+
+
 def clinic_plans_section(r):
     plans, orders = clinic_plan_rows(r), seller_order_rows(r)
     if not plans and not orders:
         return ""
     trs = []
+    # columns (owner, 20 Nov 2026): with an intro or sale price, "First N months" and "Then monthly"; else one price column
+    first_h = first_price_head(plans)
+    price_h = "Then monthly" if first_h else "Per month"
     for p in plans:
         other = cheapest_elsewhere(p)
         # the name the site shows for that clinic (data/seller_names.json), without "(formerly ...)": Shed, not ShedRx
@@ -4113,20 +4154,20 @@ def clinic_plans_section(r):
         elsewhere = (f'<span class="cell-pic">{parts.tile(other["seller_slug"], short, 24, seller=PROFILES.get(other["seller_slug"]))}<span><span class="num">{usd(other["price"])}</span> {clinic_link(other["seller_slug"], short, True)}</span></span>'
                      if other else '<span class="sub">no medication named</span>' if not p["substance_slug"]
                      else '<span class="sub">form not stated</span>' if not (p.get("dosage_form") or p.get("form_family")) else '<span class="sub">no other clinic</span>')
-        fee = p.get("membership_fee_monthly")
-        # with lines under the price (queue block 48), the number in its own span, as in the clinic tables
-        per_month = (f'<td class="num" data-l="Per month">{usd(p["price_monthly"])}</td>' if not price_kind_notes(p) else
-                     f'<td data-l="Per month"><span class="num">{usd(p["price_monthly"])}</span>{price_kind_subs(p, (MEMBERSHIP_UNKNOWN,))}</td>')
+        price = usd(p["price_monthly"])
+        first = first_price(p)
+        cols = ((f'<td class="num" data-l="{first_h}">{usd(first)}</td>' if first is not None else
+                 f'<td data-l="{first_h}"><span class="sub">{price}</span></td>') if first_h else "")
         trs.append(f'<tr><td><span class="cell-pic">{parts.plan_picture(p)}<span class="name">{plan_name_link(p, slash_break(clean(p["plan_name"])))}</span></span></td><td data-l="What it is">{plan_chip(plan_goal(p), p)}</td>'
-                   f'{per_month}<td data-l="Care fee">{MEMBERSHIP_UNKNOWN if fee is None and p.get("membership_required") else "not known" if fee is None else "none" if float(fee) == 0 else usd(fee) + "/mo, included"}</td>'
-                   f'<td data-l="Cheapest elsewhere">{elsewhere}</td></tr>')
+                   f'{cols}<td class="num" data-l="{price_h}">{price}</td><td data-l="Cheapest elsewhere">{elsewhere}</td></tr>')
     on = prices_checked(r)
+    heads = "".join(f'<th scope="col">{h}</th>' for h in ("Plan", "What it is", first_h, price_h, "Cheapest elsewhere") if h)
     monthly = f"""
   <div class="tbl-wrap"><table class="tbl tbl-cards tbl-clinics tbl-compact tbl-plans">
-    <thead><tr><th scope="col">Plan</th><th scope="col">What it is</th><th scope="col">Per month</th><th scope="col">Care fee</th><th scope="col">Cheapest elsewhere</th></tr></thead>
+    <thead><tr>{heads}</tr></thead>
     <tbody>{"".join(trs)}</tbody>
   </table></div>
-  <p class="small seller-note">Per month is the clinic's standard monthly price for the plan, with its monthly membership or care fee included when it shows one; an intro or sale price is shown under it, never instead of it. Cheapest elsewhere is the lowest standard monthly cost, membership included, for the same medication, kind and form (a vial and a pen are both injections) at another clinic we track; a plan whose form is not stated gets none.</p>""" if plans else ""
+  <p class="small seller-note">Prices are per month, with the clinic's monthly membership included when it shows one.{" An intro or sale price lasts only its first months; the regular price follows it." if first_h else ""} Cheapest elsewhere is the lowest regular monthly price for the same medication, kind and form at another clinic we track.</p>""" if plans else ""
     per_order = order_table("tbl tbl-cards tbl-clinics tbl-compact tbl-plans", (("Plan", ""), ("What it is", ""), ("Per order", "")),
                             [f'<tr><td><span class="cell-pic">{parts.plan_picture(p)}<span class="name">{plan_name_link(p, slash_break(clean(p["plan_name"])))}</span></span></td>'
                              f'<td data-l="What it is">{plan_chip(plan_goal(p), p)}</td><td data-l="Per order">{order_price(p)}</td></tr>' for p in orders]) if orders else ""
