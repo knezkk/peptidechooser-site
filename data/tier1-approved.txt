@@ -332,3 +332,4 @@ ODOBRENO SEO - Karlo - 19. 11. 2026 - per order sentence (PR #226: the "N more p
 ODOBRENO SEO - Karlo - 19. 11. 2026 - PR #227 (/learn/bpc-157-prescription-online/: title, H1, description and every sentence in the PR; the /learn/ guide count it adds, thirty; the BPC-157 prescription sentence; typed in the terminal)
 /learn/bpc-157-prescription-online/ ae38275a005e
 /learn/ a83d3520f70a
+ODOBRENO SEO - Karlo - 20. 11. 2026 - PR #230 (the lead of "Sermorelin on prescription: prices" on /compare/ipamorelin-vs-sermorelin/ and /compare/cjc-1295-vs-sermorelin/, built from data: lowest monthly price, clinic and plan counts, compounded plans, the other substance's FDA status sentence; body text, no title, H1 or description changes; typed in the terminal)
