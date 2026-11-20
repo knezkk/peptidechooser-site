@@ -81,6 +81,15 @@ def rows(sql):
     return [{k: plain(v) for k, v in r.items()} for r in fetch(sql)]
 
 
+# Columns of site.plan_prices the data side added after the first pull, read when present. spec 0023 (task 22, 8 Nov 2026): a
+# per-order price; substance_slugs: every medicine a plan covers (decision 0d, owner 8 Nov 2026). spec 0036 (task t61, 20 Nov
+# 2026): the kind of each price kept apart; comparable_monthly is the standard monthly price plus membership, filled only where
+# a like-for-like comparison holds.
+PLAN_EXTRA = ("price_per_order", "order_quantity", "order_supply_days", "fee_per_order", "substance_slugs", "regulatory_group",
+              "route", "billing_cycle", "price_per_cycle", "intro_months", "intro_terms", "intro_ends_on", "promo_price",
+              "promo_ends_on", "price_basis", "membership_required", "form_family", "comparable_monthly")
+
+
 def optional_columns(view, *cols):
     """Columns the data side is still adding (peptide-data task 12): ", a, b" for those the view has, so a pull never breaks
     while they are missing."""
@@ -357,10 +366,16 @@ def main():
         "select seller_slug, seller_name, plan_slug, plan_name, product_kind, dosage_form, substance_slug, "
         "pharmacy_partner, price_monthly, price_first_month, membership_fee_monthly, consult_fee, "
         "commitment_months, observed_at, last_seen, pricing_url, fda_letter_count, last_fda_letter_date"
-        # spec 0023 (task 22, 8 Nov 2026): a per-order price, read once the data side has migrated it; substance_slugs: every
-        # medicine a plan covers (decision 0d, owner 8 Nov 2026)
-        f"{optional_columns('plan_prices', 'price_per_order', 'order_quantity', 'order_supply_days', 'fee_per_order', 'substance_slugs', 'regulatory_group', 'route')} "
+        f"{optional_columns('plan_prices', *PLAN_EXTRA)} "
         "from site.plan_prices order by seller_slug, plan_slug")
+    # spec 0036 decision 5: per comparable plan, the cheapest comparable plan of another seller (same medicine, regulatory
+    # group and form family), with its intro terms; the site decides what to show (queue block 48)
+    d["cheapest_elsewhere"] = rows(
+        "select seller_slug, plan_slug, other_seller_slug, other_seller_name, other_plan_slug, other_plan_name, "
+        "other_comparable_monthly, other_price_monthly, other_membership_fee_monthly, other_commitment_months, "
+        "other_billing_cycle, other_price_per_cycle, other_intro_price, other_intro_months, other_intro_terms, "
+        "other_intro_ends_on, other_intro_active, other_promo_price, other_promo_ends_on, other_price_basis "
+        "from site.cheapest_elsewhere order by seller_slug, plan_slug") if has_view("cheapest_elsewhere") else []
     products = rows(
         "select seller_slug, seller_name, seller_status, product_name, variant_title, product_url, substance_slug, is_blend, "
         "amount_mg, form, price_usd, price_per_mg, price_observed_at, first_seen, last_seen, has_coa, coa_count"

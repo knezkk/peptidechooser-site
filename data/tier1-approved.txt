@@ -342,3 +342,5 @@ ODOBRENO SEO - Karlo - 20. 11. 2026 - t61 prices (the 8 description texts in w2'
 /sellers/mochi-health/ adfc62e417c4
 /sellers/snagrx/ 8e7138a9e730
 /sellers/trumprx/ 9cfb1a3d8760
+
+ODOBRENO SEO - Karlo - 20. 11. 2026 - block 48 (PR #235: the price column names "First 2 months", "Intro price", "Then monthly", "Per month"; the seller note under "Plans and prices"; intro sentences "$X first N months, then $Y/mo" on offer and compare pages; body text, no title, H1 or description changes; typed in the w2 terminal, with ODOBRENO DIZAJN - Karlo - 20. 11. 2026 - price columns)
