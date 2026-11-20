@@ -4874,6 +4874,9 @@ def order_words(r):
     return f'{usd(order_cost(r))} for {qty} at {clinic_link(r["seller_slug"], seller_base(r["seller_name"]), True)}{fee}'
 
 
+guides.gate(sys.modules[__name__])  # guides whose data is missing are dropped before any page links to them
+
+
 def pep_low_plan(slug):
     """The cheapest plan of the brand medicine or its generic: a pharmacy-made copy, or a plan of unknown kind, is not the
     approved product (the goal pages' rule, owner 31 Oct 2026; task 21, 8 Nov 2026). None without one."""

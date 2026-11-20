@@ -82,6 +82,14 @@ GUIDES = [
      "h1": "Peptides for skin: what has evidence, what is marketing.",
      "desc": "GHK-Cu, Matrixyl and Argireline: what each skin peptide was tested on, in people or in a dish, their cosmetic status and how to read an ingredient list.",
      "line": "Copper peptides, Matrixyl and Argireline, and what each was tested on."},
+    # queue block 32 (owner, 19 Nov 2026): "where to get BPC-157 on prescription and what it costs", next to
+    # /learn/is-bpc-157-legal/ ("is it legal"); the year comes from SEO_YEAR and the description from data (rx_guide_meta).
+    # A draft until the owner's ODOBRENO SEO; built only with a clinic plan in the data.
+    {"slug": "bpc-157-prescription-online", "title": "BPC-157 prescription online: clinics and prices",
+     "needs": lambda b: bool(rx_plans(b, "bpc-157")),
+     "h1": "BPC-157 on prescription online: the clinics, their prices and the rules.",
+     "desc": "BPC-157 on prescription from online clinics: the plans and prices we track, what each includes, the HHS conditions and the FDA letters.",
+     "line": "The online clinics that prescribe BPC-157: plans, prices, the HHS conditions."},
     # queue block 33 (owner, 19 Nov 2026): GHK-Cu on the skin, "copper peptide serum" (~13,000 US searches a month,
     # Manufactura 19 Nov 2026); ODOBRENO SEO - Karlo - 19. 11. 2026 - PR #224
     {"slug": "copper-peptide-serum", "title": "Copper peptide serum (GHK-Cu): what the studies show",
@@ -211,7 +219,8 @@ TOPIC = {"is-bpc-157-legal": "legal", "are-peptides-safe": "legal", "how-to-read
          "what-an-fda-warning-letter-means": "legal", "compounded-vs-brand-glp-1": "glp1",
          "compounded-semaglutide-price": "glp1", "peptides-for-hair-loss-what-works": "hair",
          "best-peptides-for-hair-growth": "hair", "ghk-cu-for-hair": "hair", "injectable-peptides-for-hair-growth": "hair",
-         "best-peptides-for-muscle-growth": "body", "bpc-157-vs-tb-500": "body", "peptides-for-skin-what-works": "body", "copper-peptide-serum": "body",
+         "best-peptides-for-muscle-growth": "body", "bpc-157-vs-tb-500": "body", "peptides-for-skin-what-works": "body", "bpc-157-prescription-online": "legal",
+         "copper-peptide-serum": "body",
          "are-peptides-legal-in-the-us": "legal", "how-we-check-sellers": "legal", "semaglutide-vs-tirzepatide-price": "glp1",
          "peptides-for-recovery-and-joints": "body", "peptides-for-libido-what-is-approved": "body",
          "longevity-peptides-epitalon-mots-c-nad": "body", "online-clinic-vs-research-shop": "buying",
@@ -887,7 +896,9 @@ def rx_block(b, N):
         out += (f"<p>Of the online clinics we track, {spelled(len({x['seller_slug'] for x in plans})).lower()} "
                 f"list{'s' if len({x['seller_slug'] for x in plans}) == 1 else ''} a BPC-157 plan"
                 f"{'' if len(plans) == 1 else ', the cheapest'}: {plan_words(b, r, N(pkey(r)))}. "
-                f'Our <a href="/peptides/bpc-157/">BPC-157 page</a> lists {"it" if len(plans) == 1 else "them"} next to the research-use shops.</p>')
+                f'Our <a href="/peptides/bpc-157/">BPC-157 page</a> lists {"it" if len(plans) == 1 else "them"} next to the research-use shops.'
+                + (' Our guide <a href="/learn/bpc-157-prescription-online/">BPC-157 prescription online</a> compares the plans.'
+                   if any(g["slug"] == "bpc-157-prescription-online" for g in GUIDES) else "") + '</p>')
     return out
 
 
@@ -1733,6 +1744,102 @@ def supp_meta(b):
     d = (f"{names[0].upper() + names[1:]} sold as supplements at {len({p['seller_slug'] for p in rows})} shops: "
          "the lowest prices, and why the FDA approves no supplement before it is sold.")
     return d if len(d) <= 160 else None
+
+
+def rx_guide_meta(b):
+    """The BPC-157 prescription guide's title with the year and its description from data (Tier 1, queue block 32), or None."""
+    plans = rx_plans(b, "bpc-157")
+    if not plans:
+        return None
+    n, c = len(plans), len({r["seller_slug"] for r in plans})
+    d = (f"BPC-157 on prescription: {b.plural(n, 'plan')} at {b.plural(c, 'online clinic')} from {b.usd(plans[0]['price_monthly'])}/mo, "
+         "what each includes, the HHS conditions and the FDA letters.")
+    fixed = next(g["desc"] for g in GUIDES if g["slug"] == "bpc-157-prescription-online")
+    return f"BPC-157 prescription online: clinics and prices ({b.SEO_YEAR})", d if len(d) <= 160 else fixed
+
+
+def g_bpc_rx(b, f, N):
+    """BPC-157 prescription online (queue block 32, owner 19 Nov 2026): where to get it on prescription and what it costs,
+    from data only: every clinic plan we track, what it includes, the states, the HHS conditions in plain words and the FDA
+    letters. A plain table, no button: a guide carries no paid link (rule 4.5). No dose, no protocol."""
+    plans = rx_plans(b, "bpc-157")
+    clinics = list(dict.fromkeys(r["seller_slug"] for r in plans))
+    first = [next(r for r in plans if r["seller_slug"] == c) for c in clinics]
+    name = lambda r: b.seller_base(r["seller_name"])
+    link = lambda r: (f'<a class="name" href="/sellers/{r["seller_slug"]}/">{escape(name(r))}</a>'
+                      if r["seller_slug"] in b.PROFILES else escape(name(r)))
+    has_letter = lambda r: bool(r.get("fda_letter_count") and r.get("last_fda_letter_date"))
+    letter = lambda r: (f'<a href="{b.letter_href(r["seller_slug"])}">{b.plural(r["fda_letter_count"], "letter")}, newest '
+                        f'{b.nice_date(r["last_fda_letter_date"])}</a>' if has_letter(r) else "None")
+    trs = "".join(f'<tr><td>{link(r)}</td><td data-l="Plan">{escape(b.clean(r["plan_name"]))}</td>'
+                  f'<td data-l="Form">{escape(b.plan_form_word(r))}</td>'
+                  f'<td class="num" data-l="Per month">{b.usd(r["price_monthly"])}</td>'
+                  f'<td data-l="Care fee">{b.care_note(r)}</td><td data-l="FDA letter">{letter(r)}</td>'
+                  f'<td data-l="Checked">{b.nice_date(str(r["last_seen"])[:10])}</td></tr>' for r in plans)
+    table = (f'<div class="tbl-wrap"><table class="tbl tbl-cards"><caption class="vh">BPC-157 plans at online clinics</caption>'
+             f'<thead><tr><th scope="col">Clinic</th><th scope="col">Plan</th><th scope="col">Form</th><th scope="col">Per month</th>'
+             f'<th scope="col">Care fee</th><th scope="col">FDA letter</th><th scope="col">Checked</th></tr></thead>'
+             f'<tbody>{trs}</tbody></table></div>')
+    low = plans[0]
+    short = (f"BPC-157 is not FDA approved.{N('db-bpc') if 'db-bpc' in N.known else N('fda-approval')} Since 30 Oct 2026, HHS says it does not intend to act against a licensed pharmacy "
+             f"that makes it for one patient on a prescription.{N('legal-13')} Of the online clinics we track, "
+             f"{spelled(len(clinics)).lower()} {'sells' if len(clinics) == 1 else 'sell'} a BPC-157 plan, from "
+             f"{b.usd(low['price_monthly'])} a month.{N(pkey(low))}")
+    notes = "".join(N(pkey(r)) for r in plans)  # after the short answer, so its sources are numbered first
+
+    def included(r):
+        bits = [b.care_note(r)]
+        if r.get("consult_fee") is not None:
+            bits.append("no consult fee" if float(r["consult_fee"]) == 0 else f"a {b.usd(r['consult_fee'])} consult fee")
+        if r.get("commitment_months"):
+            bits.append(f"a {r['commitment_months']}-month commitment")
+        return f"<li>{link(r)}, {escape(b.clean(r['plan_name']))}: {b.usd(r['price_monthly'])} a month, {', '.join(bits)}.{N(pkey(r))}</li>"
+    states = {s["seller_slug"]: s for s in b.DATA.get("seller_states") or []}
+
+    def state_line(r):
+        st = states.get(r["seller_slug"])
+        if st and st.get("excluded_states"):
+            return (f"<li>{link(r)} does not serve {and_list(st['excluded_states'])}, by the list we read on "
+                    f"{b.nice_date(st['checked_on'])}.</li>")
+        return f"<li>{link(r)}: we have no state limits on file.</li>"
+    letters = (f"{'Neither clinic has' if len(first) == 2 else 'None of these clinics has' if len(first) > 2 else 'The clinic has no'}"
+               f"{'' if len(first) == 1 else ' an'} FDA warning letter in the letters the FDA publishes."
+               if not any(has_letter(r) for r in first) else None) or " ".join(f"{link(r)}: {b.plural(r['fda_letter_count'], 'FDA warning letter')}, the newest {b.nice_date(r['last_fda_letter_date'])}."
+                       if has_letter(r) else f"{link(r)}: no FDA warning letter in the letters the FDA publishes." for r in first)
+    legal = '<a href="/learn/is-bpc-157-legal/">Is BPC-157 legal in the US?</a>'
+    body = f"""
+<h2>Which online clinics sell BPC-157 on prescription?</h2>
+<p>{spelled(len(plans))} {'plan' if len(plans) == 1 else 'plans'} at {spelled(len(clinics)).lower()} {'online clinic' if len(clinics) == 1 else 'online clinics'} we track, cheapest first. Each price is the clinic's own, from its price page on the date shown.{notes}</p>
+{table}
+
+<h2>What is included in a plan?</h2>
+<ul>{"".join(included(r) for r in plans)}</ul>
+<p>The price is what the clinic shows before a visit; the prescriber decides whether a plan fits you.</p>
+
+<h2>Which states do the clinics serve?</h2>
+<ul>{"".join(state_line(r) for r in first)}</ul>
+
+<h2>What are the HHS conditions?</h2>
+{hhs_block(b, N, "bpc-157")}
+
+<h2>Has the FDA sent these clinics a warning letter?</h2>
+<p>{letters}{N('db-letters') if 'db-letters' in N.known else ''}</p>
+
+<h2>Is prescription BPC-157 FDA approved?</h2>
+<p>No. It is a pharmacy-made (compounded) medicine: the FDA does not check its safety, effectiveness or quality before it is sold.{N('fda-compounding')} For BPC-157, the FDA says it found little or no safety information for use in people.{N('fda-bulk-risks')}</p>
+<p>Our guide {legal} explains what the FDA and HHS decided.</p>"""
+    nxt = (("/peptides/bpc-157/", "BPC-157: status and prices"), ("/learn/is-bpc-157-legal/", "Is BPC-157 legal?"))
+    faq = ("BPC-157 on prescription", [
+        ("Can you get BPC-157 on prescription online?",
+         f"Yes, from a few online clinics: we track {b.plural(len(plans), 'plan')} at {b.plural(len(clinics), 'clinic')}, "
+         f"from {b.usd(low['price_monthly'])} a month. It is a pharmacy-made medicine, not FDA approved."),
+        ("How much does BPC-157 cost on prescription?",
+         f"From {b.usd(low['price_monthly'])} a month at {name(low)}, as listed on {b.nice_date(str(low['last_seen'])[:10])}; "
+         "each plan shows its care fee where the clinic states it."),
+        ("Is prescription BPC-157 FDA approved?",
+         "No. A pharmacy makes it for one patient, and the FDA does not check a compounded medicine before it is sold."),
+    ])
+    return short, body, nxt, faq
 
 
 def g_steroids(b, f, N):
@@ -2950,7 +3057,8 @@ TEXTS = {"is-bpc-157-legal": g_bpc, "are-peptides-safe": g_safe, "how-to-read-a-
          "what-research-use-only-means": g_ruo, "peptide-seller-checks-by-the-numbers": g_by_numbers,
          "best-peptides-for-weight-loss": g_wl, "peptides-vs-steroids": g_steroids,
          "fda-approved": g_fda_approved, "prescription": g_prescription,
-         "injections": g_injections, "supplements": g_supplements, "copper-peptide-serum": g_copper_serum}
+         "injections": g_injections, "supplements": g_supplements, "bpc-157-prescription-online": g_bpc_rx,
+         "copper-peptide-serum": g_copper_serum}
 
 
 GUIDE_DATES = {}
@@ -3186,6 +3294,12 @@ def letters_meta(b):
             "and what each asks.")
 
 
+def gate(b):
+    """A guide's own data gate: a guide whose "needs" is not met is not built, and no page links to it. build.py calls it
+    once the clinic plans are known, before the substance pages are made; pages() calls it again (it does nothing twice)."""
+    GUIDES[:] = [g for g in GUIDES if not (callable(g.get("needs")) and not g["needs"](b))]
+
+
 def pages(b):
     """/learn/ and the guides as build.py PAGES rows: (path, file, title, description, body, schema, crumb). The guides
     are built first: /learn/ needs their read times and "Start here", the three guides the most other pages link to
@@ -3198,6 +3312,11 @@ def pages(b):
     for g in GROUPS:
         if g["slug"] == "supplements" and sm:
             g["desc"] = sm
+    rgm = rx_guide_meta(b)
+    for g in GUIDES:
+        if g["slug"] == "bpc-157-prescription-online" and rgm:
+            g["title"], g["desc"] = rgm
+    gate(b)
     out = []
     for g in GUIDES:
         path = f"/learn/{g['slug']}/"
