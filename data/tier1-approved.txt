@@ -328,3 +328,4 @@ ODOBRENO SEO - Karlo - 19. 11. 2026 - everprime tirzepatide title (/sellers/ever
 ODOBRENO SEO - Karlo - 19. 11. 2026 - PR #224 (/learn/copper-peptide-serum/: title, H1, description and every sentence in the PR table; the /learn/ guide count it adds, twenty-nine; the /supplements/ sentence; typed in the terminal)
 /learn/copper-peptide-serum/ fa3e71418bc2
 /learn/ ad3ef2156afe
+ODOBRENO SEO - Karlo - 19. 11. 2026 - per order sentence (PR #226: the "N more plans are priced per order, the cheapest is $X for <quantity> at <clinic>" and "N online clinic plans we track carry it, priced per order" sentences in "<Peptide> on prescription"; body text, no title, H1 or description changes; typed in the terminal)
