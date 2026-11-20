@@ -1619,9 +1619,11 @@ def check_rules33(P):
             other = re.search(r'href="/sellers/([^/"]+)/', cell.group(1))
             if "$" not in cell.group(1) or not fits:
                 continue
-            if all(not x.get("dosage_form") for x in fits):
+            # queue block 48: with the database's form family (spec 0036) a vial and a pen are one form, an injection
+            form = lambda x: x.get("form_family") or x.get("dosage_form")
+            if all(not form(x) for x in fits):
                 errs.append(f"{name}: '{pn}' states no form but shows a cheapest-elsewhere price")
-            elif other and not any(y["seller_slug"] == other.group(1) and y.get("dosage_form") == x["dosage_form"]
+            elif other and not any(y["seller_slug"] == other.group(1) and form(y) == form(x)
                                    and y["substance_slug"] == x["substance_slug"] for x in fits for y in plans):
                 errs.append(f"{name}: '{pn}' is paired with {other.group(1)}, which has no plan of its form and medicine")
     # 3. a research-use "from $X/mg" on Home and the goal pages is the price per mg of a vial
@@ -2096,6 +2098,24 @@ def per_order_errs(name, html):
     return errs
 
 
+INTRO_OR_SALE = re.compile(r"\$[\d,]+(?:\.\d\d)? (?:all-in )?(?:first (?:month|\d+ months)|sale(?: until [A-Z][a-z]{2} \d{1,2}, \d{4})?)")
+
+
+def price_kind_errs(name, text):
+    """Queue block 48 (owner, 19 Nov 2026): an intro or sale price is never shown alone. Every "$X first month", "$X first 2
+    months" or "$X sale" names the standard price after it (", then $Y/mo") within the same phrase."""
+    return [f"{name}: '{m.group(0)}' without the standard price after it"
+            for m in INTRO_OR_SALE.finditer(text) if not re.search(r", then \$[\d,.]+/mo", text[m.end():m.end() + 70])]
+
+
+def check_price_kinds(P):
+    errs = []
+    for name in P:
+        html = (DIST / name).read_text(encoding="utf-8")
+        errs += price_kind_errs(name, " ".join(unescape(re.sub(r"<[^>]+>", " ", html)).split()))
+    return errs
+
+
 def check_per_order(P):
     """Every page passes per_order_errs; and every per-order plan of a clinic with a seller page stands in that page's
     per-order table (spec 0023: it is never dropped or shown as monthly)."""
@@ -2193,7 +2213,7 @@ def check_us_dates(P):
     return [f"{name}: day-first date {m.group()!r} (write it as Nov 13, 2026)" for name, html in files for m in pat.finditer(html)]
 
 
-CHECKS = {"words": check_words, "seo": check_seo, "schema": check_schema, "parts": check_parts, "data": check_data, "book": check_book, "events": check_events, "logic": check_logic, "rules33": check_rules33, "addresses": check_addresses, "arch": check_arch, "arch-switch": check_arch_switch, "offers": check_offers, "kept-sellers": check_kept_sellers, "wave-b": check_wave_b, "paid-first": check_paid_first, "goal-prices": check_goal_prices, "paid-tab": check_paid_tab, "plan-links": check_plan_links, "per-order": check_per_order, "us-dates": check_us_dates}
+CHECKS = {"words": check_words, "seo": check_seo, "schema": check_schema, "parts": check_parts, "data": check_data, "book": check_book, "events": check_events, "logic": check_logic, "rules33": check_rules33, "addresses": check_addresses, "arch": check_arch, "arch-switch": check_arch_switch, "offers": check_offers, "kept-sellers": check_kept_sellers, "wave-b": check_wave_b, "paid-first": check_paid_first, "goal-prices": check_goal_prices, "paid-tab": check_paid_tab, "plan-links": check_plan_links, "per-order": check_per_order, "price-kinds": check_price_kinds, "us-dates": check_us_dates}
 
 # Plan names against their form (owner task w2, 3 Nov 2026): a clinic's own plan name can name another form than the
 # plan's `dosage_form` ("Ozempic Pill" for a pen). The site cannot change data, so this only warns, never fails, and the
