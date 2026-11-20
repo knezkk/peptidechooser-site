@@ -1281,6 +1281,7 @@ def _read_live_paths():
 
 _LIVE_PATHS = _read_live_paths() if SUCCESSORS else set()
 SUCCESSOR_MOVES = {}
+GONE_CMP_MOVES = {}  # live clinic comparisons this build no longer makes, filled in main() (owner, 20 Nov 2026)
 
 
 # A seller that leaves the data keeps its page (site map rule 5.1, no page is deleted; owner task 25, 9 Nov 2026): when its
@@ -6593,10 +6594,30 @@ def cmp_rx_prices(a, b):
     if len(sides) != 1:
         return ""
     x = sides[0]
+    o = b if x == a else a
     _, sec = unwrap(pep_plans_section(x))
     sec = (sec.replace('class="tbl tbl-cards', 'class="tbl tbl-compact tbl-cards', 1)
-           .replace("<h2>Online clinic prices</h2>", f'<h2 id="rx-h">{escape(pep_short(x))} on prescription: prices</h2>', 1))
+           .replace("<h2>Online clinic prices</h2>", f'<h2 id="rx-h">{escape(pep_short(x))} on prescription: prices</h2>', 1)
+           .replace('</h2><p>', f'</h2><p>{cmp_rx_lead(x, o)} ', 1))
     return f'<section class="section pep-sold cmp-rx" id="clinics" aria-labelledby="rx-h"><div class="wrap">{sec}</div></section>\n'
+
+
+def cmp_rx_lead(x, o):
+    """The lead of "<Substance> on prescription: prices" on a substance pair (queue block 34, w3, 20 Nov 2026): which side
+    clinics prescribe, how many plans and clinics we track and the lowest monthly price, how many say a compounding
+    pharmacy makes it, and the other side's FDA status sentence, so each pair reads apart from the substance page."""
+    plans = pep_clinic_plans(x)
+    clinics = len({r["seller_slug"] for r in plans})
+    low = min(float(r["price_monthly"]) for r in plans if r.get("price_monthly"))
+    made = sum(1 for r in plans if r.get("product_kind") == "compounded")
+    nx, no = escape(pep_short(x)), escape(pep_short(o))
+    st = (pep_status(o) or {}).get("sentence")
+    out = (f"{nx} is not FDA approved, and online clinics prescribe it after a visit: from {usd(low)}/mo at the "
+           f"{clinics} clinics we track.")
+    if made:
+        out += f" {made} of the {len(plans)} plans say a compounding pharmacy makes it."
+    out += f" We track no clinic plan for {no}" + (f", whose FDA status reads: {escape(st)}." if st else ".")
+    return out
 
 
 def cmp_body(h1, checked, answer, table, links, pre, note, verdict="", nxt=""):
@@ -6788,6 +6809,26 @@ if CLINIC_PROFILES and HAS_COMPARE:
                       [("/compare/", "Compare any two"), (_p, f"{cmp_clinic_name(_a)} vs {cmp_clinic_name(_b)}")]))
 
 
+def gone_compare_moves(live_paths, built_page, clinics, compared):
+    """(old path, new path) for every live clinic comparison this build no longer makes (owner, 20 Nov 2026: Good Life Meds'
+    only plan lost its standard price, spec 0036, and its six comparisons left the build; no page just disappears).
+    `clinics` maps a clinic's address name to its seller slug, `compared` holds the address names still in a built pair. The
+    page goes to the seller page of the side that left every comparison, else of its first side, else to /compare/. A pair
+    of substances, a path the build has and a page whose target is not built are never moved."""
+    moves = {}
+    for p in sorted(live_paths):
+        m = re.fullmatch(r"/compare/([a-z0-9-]+)-vs-([a-z0-9-]+)/", p)
+        if not m or built_page(p):
+            continue
+        sides = [x for x in m.groups() if x in clinics]
+        if len(sides) != 2:
+            continue
+        left = [x for x in sides if x not in compared] or sides
+        target = f"/sellers/{clinics[left[0]]}/"
+        moves[p] = target if built_page(target) else "/compare/"
+    return {o: n for o, n in moves.items() if built_page(n)}
+
+
 def cmp_compared_with(key):
     """"Compared with: A, B." for a /peptides/ page or a clinic page, or "" when it is in no pair."""
     links = [f'<a href="{p}">{escape(t)}</a>' for p, t, _, _, a, b in CMP_PAGES if key in (a, b)]
@@ -6947,6 +6988,12 @@ def main():
     # closed sellers with a successor (block 46): every live page of theirs, read from the live sitemap
     SUCCESSOR_MOVES.update(successor_moves(_live_paths(), lambda p: built(p) or (DIST / p.strip("/") / "index.html").exists()))
     moves += [(o, n) for o, n in sorted(SUCCESSOR_MOVES.items()) if o not in REDIRECTS and o not in dict(moves)]
+    # a live clinic comparison this build no longer makes (owner, 20 Nov 2026): a 301 to the closest page, never a 404
+    _built = lambda p: built(p) or (DIST / p.strip("/") / "index.html").exists()  # noqa: E731
+    GONE_CMP_MOVES.update(gone_compare_moves(
+        LIVE_PATHS, _built, {cmp_url_name(s): s for s in CLINIC_PROFILES},
+        {x for p, _, k, _, a, b in CMP_PAGES if k == "clinic" for x in (cmp_url_name(a), cmp_url_name(b))}))
+    moves += [(o, n) for o, n in sorted(GONE_CMP_MOVES.items()) if o not in REDIRECTS and o not in dict(moves)]
     for old_path, new_path in moves:
         assert not built(old_path), f"redirect from {old_path}, which is still a page"
         if not built(new_path) and not (DIST / new_path.strip("/") / "index.html").exists():
@@ -6976,6 +7023,7 @@ def main():
     _301 = {o: n for o, n in REDIRECTS.items() if built(n) or (DIST / n.strip("/") / "index.html").exists()}
     _301 |= {f"/sellers/{o}/": f"/sellers/{n}/" for o, n in SELLER_MOVES.items()}
     _301 |= {o: n for o, n in SUCCESSOR_MOVES.items() if o not in _301}
+    _301 |= {o: n for o, n in GONE_CMP_MOVES.items() if o not in _301}
     # an old paid link of a closed seller still pays: /out/<old>/ -> /out/<successor>/ when only the successor has one
     _301 |= {f"/out/{o}/": f"/out/{n}/" for o, n in SUCCESSORS.items()
              if (DIST / "out" / n / "index.html").exists() and not (DIST / "out" / o / "index.html").exists()}
