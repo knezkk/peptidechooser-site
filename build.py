@@ -4105,8 +4105,11 @@ def clinic_plans_section(r):
     trs = []
     for p in plans:
         other = cheapest_elsewhere(p)
-        other_notes = "".join(f'<span class="sub">{escape(x)}</span>' for x in other["notes"]) if other else ""
-        elsewhere = (f'<span class="cell-pic">{parts.tile(other["seller_slug"], seller_base(other["seller_name"]), 24, seller=PROFILES.get(other["seller_slug"]))}<span><span class="num">{usd(other["price"])}</span><span class="sub">{clinic_link(other["seller_slug"], seller_base(other["seller_name"]))}</span>{other_notes}</span></span>'
+        # the name the site shows for that clinic (data/seller_names.json), without "(formerly ...)": Shed, not ShedRx
+        shown = next((x["seller_name"] for x in PLANS if x["seller_slug"] == other["seller_slug"]), None) if other else None
+        short = re.sub(r"\s*\(formerly [^)]*\)", "", seller_base(shown or other["seller_name"])) if other else ""
+        # one line (owner, 20 Nov 2026): a small logo, the price, the clinic's short name; its intro price stays on its own row
+        elsewhere = (f'<span class="cell-pic">{parts.tile(other["seller_slug"], short, 24, seller=PROFILES.get(other["seller_slug"]))}<span><span class="num">{usd(other["price"])}</span> {clinic_link(other["seller_slug"], short, True)}</span></span>'
                      if other else '<span class="sub">no medication named</span>' if not p["substance_slug"]
                      else '<span class="sub">form not stated</span>' if not (p.get("dosage_form") or p.get("form_family")) else '<span class="sub">no other clinic</span>')
         fee = p.get("membership_fee_monthly")
