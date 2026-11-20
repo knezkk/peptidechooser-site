@@ -284,6 +284,8 @@ SOURCES = {
                      "https://api.fda.gov/drug/label.json?search=openfda.brand_name:%22WEGOVY%22"),
     "label-mounjaro": ("FDA drug label for Mounjaro, Indications and Usage, through openFDA, effective 29 Jul 2026",
                        "https://api.fda.gov/drug/label.json?search=openfda.brand_name:%22MOUNJARO%22"),
+    "label-saxenda": ("FDA drug label for Saxenda (liraglutide), Indications and Usage, Dosage and Administration, through openFDA, effective 25 Feb 2026",
+                      "https://api.fda.gov/drug/label.json?search=openfda.brand_name:%22SAXENDA%22"),
     "label-zepbound": ("FDA drug label for Zepbound, Indications and Usage, through openFDA, effective 28 Aug 2026",
                        "https://api.fda.gov/drug/label.json?search=openfda.brand_name:%22ZEPBOUND%22"),
     "label-egrifta": ("FDA drug label for Egrifta SV (tesamorelin), Indications and Usage, through openFDA, effective 29 Jul 2026",
@@ -1961,7 +1963,9 @@ def g_legal(b, f, N):
     for slug in sorted({r["substance_slug"] for r in b.LEGAL_DB or []}):
         st = b.db_status(slug)
         if st:
-            groups.setdefault(st["label"], []).append(pep_link(b, slug, b.pep_short(slug)))
+            # a substance the database marks as no peptide (NAD+) carries "(not a peptide)" (owner, queue block 35, 20 Nov 2026)
+            groups.setdefault(st["label"], []).append(pep_link(b, slug, b.pep_short(slug))
+                                                      + (" (not a peptide)" if slug in b.NOT_PEPTIDES_DB else ""))
     cos = [r["peptide"] for r in b.LEGAL["rows"] if r.get("chip") == "info"][:3]
     ruo = lambda: (f'The FDA warning letters on our <a href="{b.LETTERS_URL}">letters page</a> went to companies: {f["ruo_letters"]} of the '
            f'{f["letters"]} went to research-use peptide shops.{N("db-letters")}') if f["letters"] else ""
@@ -2973,6 +2977,7 @@ def g_wl(b, f, N):
     opts = (f"<li><strong>Semaglutide (Wegovy)</strong>: FDA approved. A weekly shot{N('label-wegovy')}"
             + (f", and at {b.plural(pill, 'clinic')} we track also a pill (Wegovy Pill){N(pkey(pills[0]))}" if pill else "") + ".</li>"
             f"<li><strong>Tirzepatide (Zepbound)</strong>: FDA approved. A weekly shot.{N('label-zepbound')}</li>"
+            f"<li><strong>Liraglutide (Saxenda)</strong>: FDA approved. A daily shot.{N('label-saxenda')}</li>"
             "<li><strong>Compounded semaglutide or tirzepatide</strong>: not FDA approved. Pharmacy-made copies, sold by online "
             "clinics on prescription.</li>"
             "<li><strong>Retatrutide</strong>: not approved, still in trials. Sold online only by research-use shops.</li>")
@@ -3001,6 +3006,7 @@ def g_wl(b, f, N):
 <ul>
 <li><strong>Wegovy</strong> (semaglutide): to reduce excess body weight and keep it off in adults with obesity, or with overweight and a weight-related condition.{N('label-wegovy')}</li>
 <li><strong>Zepbound</strong> (tirzepatide): for the same groups, and to treat moderate to severe sleep apnea in adults with obesity.{N('label-zepbound')}</li>
+<li><strong>Saxenda</strong> (liraglutide): to reduce excess body weight and keep it off in adults with obesity, or with overweight and a weight-related condition, and in children 12 and older who weigh more than 60 kg and have obesity.{N('label-saxenda')}</li>
 </ul>
 <p>Ozempic (semaglutide) and Mounjaro (tirzepatide) are the same medicines approved for type 2 diabetes, not for weight loss.{N('label-ozempic')}{N('label-mounjaro')} Compounded copies and retatrutide are not FDA approved.</p>
 
