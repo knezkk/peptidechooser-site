@@ -6502,12 +6502,27 @@ def cmp_sub_page(a, b, goals):
                     [(f"/peptides/{a}/", na), (f"/peptides/{b}/", nb)], pre,
                     "Statuses come from the FDA lists; prices are the lowest we show, per mg at the shops or per month at the online clinics.",
                     verdict, "")
+    body += cmp_rx_prices(a, b)
     # the brand table and the questions in their own section, then "What to do next" (SEO round c, queue block 9)
     body += (f'<section class="section" id="more"><div class="wrap">{more}</div></section>\n' if more else "") \
         + (f'<section class="section"><div class="wrap">{nxt}</div></section>\n' if nxt else "")
     desc = cmp_fit([f"{na} vs {nb}: {cmp_sub_answer(a, b)[0][:-1]}.", *cmp_sub_answer(a, b)[1:2],
                     f'Both on our {goals[0]["name"].lower()} page.', f"Checked {nice_date(checked)}.", "We compare and never sell."])
     return cmp_title(f"{na} vs {nb}", "FDA status and prices"), desc, body
+
+
+def cmp_rx_prices(a, b):
+    """"<Substance> on prescription: prices" under the comparison band of a substance pair (design/pages/compare.md; queue
+    block 17, ODOBRENO DIZAJN - Karlo - 20. 11. 2026 - sermorelin on compare): the substance page's clinic table for the
+    side that clinics prescribe, only when that side has clinic plans and the other has none."""
+    sides = [x for x in (a, b) if pep_clinic_plans(x)]
+    if len(sides) != 1:
+        return ""
+    x = sides[0]
+    _, sec = unwrap(pep_plans_section(x))
+    sec = (sec.replace('class="tbl tbl-cards', 'class="tbl tbl-compact tbl-cards', 1)
+           .replace("<h2>Online clinic prices</h2>", f'<h2 id="rx-h">{escape(pep_short(x))} on prescription: prices</h2>', 1))
+    return f'<section class="section pep-sold cmp-rx" id="clinics" aria-labelledby="rx-h"><div class="wrap">{sec}</div></section>\n'
 
 
 def cmp_body(h1, checked, answer, table, links, pre, note, verdict="", nxt=""):
