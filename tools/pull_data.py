@@ -87,7 +87,9 @@ def rows(sql):
 # a like-for-like comparison holds.
 PLAN_EXTRA = ("price_per_order", "order_quantity", "order_supply_days", "fee_per_order", "substance_slugs", "regulatory_group",
               "route", "billing_cycle", "price_per_cycle", "intro_months", "intro_terms", "intro_ends_on", "promo_price",
-              "promo_ends_on", "price_basis", "membership_required", "form_family", "comparable_monthly")
+              "promo_ends_on", "price_basis", "membership_required", "form_family", "comparable_monthly",
+              # task t63 (20 Nov 2026): the cheapest monthly rate of any plan length the page sells, membership included
+              "lowest_monthly", "lowest_commitment_months")
 
 
 def optional_columns(view, *cols):
