@@ -358,6 +358,9 @@ html:not(.motion) .fig3d-layer { transition: none; }
 .tbl .note { display: block; font-size: var(--small-size); color: var(--ink-2); }
 
 .h-sources { font-size: var(--display-4-size); line-height: var(--display-4-lh); margin-bottom: 12px; }
+/* a heading over a second table of a section: space-6 above it when a table stands above it (the per-order table under the
+   monthly one, design/pages/seller.md; /bioregulators/ "Research-use shops"); owner task 20 Nov 2026 */
+.tbl-wrap + h3.h-sources, .tbl-wrap ~ h3.h-sources:has(+ .tbl-wrap > table[data-per-order]) { margin-top: var(--space-6); }
 .sources li { max-width: 58ch; margin-bottom: 4px; }
 
 /* Article / prose pages */
