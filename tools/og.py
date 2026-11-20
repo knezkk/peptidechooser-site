@@ -26,14 +26,13 @@ body{{margin:0;width:1200px;height:630px;background:{paper};color:{ink};font-fam
 .t{{font:800 64px/1.05 "Bricolage Grotesque",Arial,sans-serif;letter-spacing:-0.02em;max-width:1000px;overflow-wrap:anywhere}}
 .b{{display:flex;align-items:center;gap:16px;font:800 32px "Public Sans",Arial,sans-serif;letter-spacing:-0.015em}}
 .b svg{{height:32px;width:auto}}
-.s{{font-size:22px;color:{ink2};margin-top:16px}}
 .k{{font-size:26px;font-weight:700;color:{ink2};margin-bottom:14px}}
 .r{{display:flex;align-items:flex-end;justify-content:space-between;gap:48px}}
 .i{{flex:none;display:flex;align-items:center;justify-content:center;width:220px;height:220px;border-radius:20px;background:{paper2}}}
 .i svg{{width:132px;height:132px;fill:none;stroke:{ink};stroke-width:2.4;stroke-linecap:round}}
 </style></head><body>
 <div class="b">{svg}<span>Peptide Chooser</span></div>
-<div class="r"><div>{kind}<div class="t">{title}</div><div class="s">We compare, we don't sell.</div></div>{icon}</div>
+<div class="r"><div>{kind}<div class="t">{title}</div></div>{icon}</div>
 </body></html>"""
 
 # The new page types (design/pages/new-types.md, group.md) say what they are above the title; a group page also shows
