@@ -734,7 +734,7 @@ p.not-in{margin:4px 0 0}
    a. "What is a peptide?": one box at the full content width at every width, the width of the blocks under it, never a
    narrow column; its text keeps the 80-character line. */
 .pep-box{box-sizing:border-box;width:100%;max-width:none;margin:var(--space-4) 0 0;padding:var(--space-4) var(--space-5);background:var(--paper-2);border:1px solid var(--line);border-radius:var(--radius-panel)}
-.pep-box p{margin:0;max-width:64ch;color:var(--ink-2);text-wrap:pretty}
+.pep-box p{margin:0;max-width:none;color:var(--ink-2);text-wrap:pretty}
 .pep-box strong{color:var(--ink);font-weight:700}
 @media (max-width:640px){.pep-box{padding:var(--space-3) var(--space-4)}}
 /* b. "Not a peptide": a small pill beside the status chip, white with a line-strong border, so it never reads as a status. */
