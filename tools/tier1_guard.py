@@ -447,6 +447,19 @@ def redirect_target(path):
     return m.group(1).strip() if m else None
 
 
+def stop_line(open_paths, unread, sitemap_missing):
+    """The one line a stopped daily run shows at the top of its summary (queue block 50, 20 Nov 2026); None when it does not stop."""
+    if open_paths:
+        shown = ", ".join(open_paths[:10]) + (f" and {len(open_paths) - 10} more" if len(open_paths) > 10 else "")
+        return f"Stopped: text/price change waits for approval: {shown}"
+    if unread:
+        more = f" and {len(unread) - 1} more page(s)" if len(unread) > 1 else ""
+        return f"Stopped: network: {LIVE}{unread[0]} after {TRIES} tries{more}"
+    if sitemap_missing:
+        return f"Stopped: network: {LIVE}/sitemap.xml could not be read"
+    return None
+
+
 def main():
     pages = built()
     with ThreadPoolExecutor(8) as pool:
@@ -499,7 +512,8 @@ def main():
     print(text)
     if os.environ.get("GITHUB_STEP_SUMMARY"):
         with open(os.environ["GITHUB_STEP_SUMMARY"], "a", encoding="utf-8") as f:
-            f.write("```\n" + text + "\n```\n")
+            stop = stop_line([c[0] for c in open_], unread, paths is None)
+            f.write((f"**{stop}**\n\n" if stop else "") + "```\n" + text + "\n```\n")
     return 1 if open_ or unread or paths is None else 0
 
 
