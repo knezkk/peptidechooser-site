@@ -690,6 +690,8 @@ body:has(.home-sec) .site-foot { margin-top: 0; }
   .pep-sold .tbl-clinics th:nth-child(4) { width: 250px; }
   .tbl-clinics .plan-cut, .tbl-clinics td > a, .tbl-clinics .cell-pic a { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
   .tbl-clinics .plan-cut { display: block; white-space: nowrap; }
+  /* the clinic name is cut the same way, not run into the plan column ("EverPrime (formerly Enhance MD)", block 17) */
+  :is(.goal-sec, .pep-sold) .tbl-clinics td:first-child > a { display: block; }
 }
 .state-filter { display: flex; align-items: center; gap: 8px; font-size: var(--small-size); }
 .state-filter[hidden] { display: none; }

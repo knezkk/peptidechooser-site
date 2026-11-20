@@ -865,7 +865,9 @@ def check_parts(P):
     for name in pairs:
         html = (DIST / name).read_text(encoding="utf-8")
         heads = re.findall(r'<th scope="col">(?:<span class="tile[^>]*>(?:<img [^>]*>|[^<]*)</span>)?<a class="name" href="(/(?:peptides|sellers)/[^"/]+/)"', html)
-        if len(heads) != 2 or any(f'href="{h}"' not in html.split('id="compare-two"', 1)[-1].split("cmp-link")[0].split("</table>")[-1] for h in heads):
+        # the band alone: a pair's clinic section below it (compare.md, Prescription prices) has tables and links of its own
+        band = html.split('id="compare-two"', 1)[-1].split("</section>", 1)[0]
+        if len(heads) != 2 or any(f'href="{h}"' not in band.split("cmp-link")[0].split("</table>")[-1] for h in heads):
             errs.append(f"{name}: does not link both sides to their pages")
         if all(h.startswith("/peptides/") for h in heads) and len(re.findall(r'rel="nofollow">(?:FDA source|Source)</a>', html)) < 2:
             errs.append(f"{name}: a substance without its status source")
