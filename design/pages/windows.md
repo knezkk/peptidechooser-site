@@ -25,3 +25,12 @@ A paid link (`btn-action` through `/out/`) opens in a new tab: `target="_blank"`
 ## State filter (owner task 5 Nov 2026)
 
 **"Your state"** is one control in the filter row above every clinic table: goal pages, peptide pages, the /sellers/ clinics tab and the clinic windows; on phones the same control at full width above the cards. A select of the 50 states and DC, two-letter code with the full name, first option "All states". A chosen state hides each clinic whose `site.seller_states` excludes it and says what we know: "1 of 34 clinics does not ship to California", "2 of 34 clinics do not ship to ...", and "No clinic here is known to skip <State>" when none does ("seller" in a window of medicines without a prescription), counted in clinics, not plans (owner answer Q1 b, 5 Nov 2026; ODOBRENO DIZAJN and ODOBRENO SEO - Karlo - 5. 11. 2026). A clinic with no exclusion data counts as serving every state. The choice stays in localStorage (try/catch), applies on load and in a window opened later, never in the URL, and leaves only through the `filter_change` event (`filter` state, `value` the code or `all`). Without JavaScript the control is hidden and every row shows. Script: `STATE_SCRIPT` in the cached `nav.js`.
+
+## Price columns (plan and clinic tables)
+
+Owner, ODOBRENO DIZAJN - Karlo - 20. 11. 2026 - price columns (queue block 48 of w2, PR #235; data spec 0036). The big number is always the standard monthly price with its membership; an intro or sale price is never shown alone (`tools/check.py` price-kinds). No new part, colour or size: `num` and `sub` only.
+- **Seller page "Plans and prices"** (seller.md): columns Plan | What it is | intro column | Then monthly | Cheapest elsewhere. The intro column ("First 2 months", or "Intro price") only when a plan in the table has an intro or sale price; then the price column reads "Then monthly", else "Per month". A plan without an intro shows its regular price in the intro column in `sub`. No care fee column, no lines under the price.
+- **Goal, substance and clinic-window tables:** the same intro column (`cp-price` on goal pages), empty and unlabelled for a plan without one. "care fee not known" is not shown; a known fee keeps "incl. $X/mo care". A long price breaks with `<br>` (the goal price column never wraps).
+- **Cheapest elsewhere:** one line: tile 24, `num`, the clinic's short name as an inline link.
+- The per-order table (seller.md, Per-order plans) keeps its own "Per order" column.
+

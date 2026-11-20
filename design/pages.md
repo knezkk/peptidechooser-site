@@ -17,7 +17,7 @@ One file per page type (split 5 Nov 2026). An older note saying "pages.md, <sect
 - [learn.md](pages/learn.md): Learn `/learn/`, Guide `/learn/<topic>/`
 - [trust.md](pages/trust.md): Trust pages, Sources `/sources/`, Paid link redirect page `/out/<slug>/`
 - [search.md](pages/search.md): Search `/search/`
-- [windows.md](pages/windows.md): Seller window, Clinic window
+- [windows.md](pages/windows.md): Seller window, Clinic window, Price columns (plan and clinic tables)
 - [parts.md](pages/parts.md): Buttons, Option rows, Pictures, Seller tile, Product drawings, Goal drawings, Goal photos, Logo, Medical cues (figure, chips, price pad)
 - [group.md](pages/group.md): Group page `/<group>/` (list and guide layouts), Goal subpage `/<goal>/<topic>/`
 - [new-types.md](pages/new-types.md): Brand, Seller offer, Lab, Company FDA letters, Tool (templates; none built yet)
