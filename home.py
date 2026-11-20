@@ -99,13 +99,28 @@ def where_row(b, r):
     return ('<tr>'
             f'<td><span class="cell-pic">{parts.tile(r["seller_slug"], b.seller_base(b.seller_name(r)), 40, shop=kind == "shop", seller=r)}<span><a class="name" href="/sellers/{r["seller_slug"]}/">{b.seller_name(r)}</a><span class="sub">{escape(where_line(b, r))}</span></span></span></td>'
             f'<td data-l="Type">{chip}</td>'
-            f'<td class="num" data-l="Checks">{b.score_of(r) or 0} of {b.out_of(r)}</td>'
+            f'<td class="num" data-l="Checks">{b.score_of(r) or 0} of {b.out_of(r)}{b.missing_line(r)}</td>'
             f'<td class="num" data-l="From">{where_from(b, r)}</td>'
             f'<td data-l="FDA letters">{where_letters(b, r)}</td>'
             f'<td class="act">{where_action(b, r)}</td></tr>')
 
 
+def seller_goals(b, r):
+    """The chooser goals a seller serves (queue block 55, point 6): a clinic with a plan on the goal's list (monthly or per
+    order), a shop listing one of the goal's substances. Slugs in the chooser's order."""
+    if seller_kind(b, r) == "clinic":
+        plans = [x for x in b.PLANS + b.PER_ORDER_PLANS if x["seller_slug"] == r["seller_slug"]]
+        return [g["slug"] for g in b.CHOOSER_GOALS if any(b.on_goal(g, x, b.goal_list(g)) for x in plans)]
+    subs = set(b.shop_subs(r))
+    return [g["slug"] for g in b.CHOOSER_GOALS if subs & b.goal_list(g)]
+
+
 def where_section(b):
+    """Where to get it (queue block 55, point 6; ODOBRENO DIZAJN + SEO + PRAVILA - Karlo - 20.11.2026): filtered by the
+    chosen goal at load (the chooser's first goal), the chip "Goal: <goal> ×", "Change goal", "Show all N sellers" and
+    "M of N sellers"; paid links first (where_order). The chooser's goal switch (MAP_JS pick, event pc-goal) moves the
+    filter at once. Home stays under its 64 KB (ODOBRENO PRAVILA - Karlo - 13. 11. 2026): the HTML carries the first goal's
+    first 8 rows, every row (none removed) is in sellers/home.json, read on the first change."""
     rows = sorted(list(b.SHOPS.values()) + list(b.CLINIC_PROFILES.values()), key=lambda r: where_order(b, r))
     rows = [r for r in rows if r.get("score") is not None]
     if not rows:
@@ -119,18 +134,30 @@ def where_section(b):
                    for i in range(len(b.SCORE_CHECKS) + 1))
     seg = "".join(f'<button type="button" class="seg-b" data-type="{k}" data-filter="type" data-value="{k or "all"}" aria-pressed="{"true" if not k else "false"}">{t}</button>'
                   for k, t in (("", "All"), ("clinic", "Online clinics"), ("shop", "Research-use shops")))
+    goals = {r["seller_slug"]: seller_goals(b, r) for r in rows}
     data = [{"t": seller_kind(b, r), "s": r.get("score") or 0, "u": (b.clinic_subs(r) if seller_kind(b, r) == "clinic" else b.shop_subs(r)),
-             "n": b.seller_name(r).lower(), "h": where_row(b, r)} for r in rows]
-    body = "".join(where_row(b, r) for r in rows[:WHERE_FIRST])
+             "n": b.seller_name(r).lower(), "g": goals[r["seller_slug"]], "h": where_row(b, r)} for r in rows]
+    first = b.CHOOSER_GOALS[0] if b.CHOOSER_GOALS else None
+    hit = [r for r in rows if not first or first["slug"] in goals[r["seller_slug"]]]
+    no_clinic = first is not None and not any(seller_kind(b, r) == "clinic" for r in hit)
+    body = "".join(where_row(b, r) for r in hit[:WHERE_FIRST])
+    labels = json.dumps({g["slug"]: g["label"] for g in b.CHOOSER_GOALS}, separators=(",", ":")).replace("<", "\\u003c")
+    goal_bar = (f'<div class="cf-pills where-goal" role="group" aria-label="Goal" hidden>'
+                f'<button type="button" class="cf-pill" id="where-goal" data-goal="{first["slug"]}">Goal: <span class="where-goal-l">{first["label"]}</span> <span class="rm" aria-label="remove">\u00d7</span></button>'
+                f'<button type="button" class="cf-clear" id="where-change">Change goal</button>'
+                f'<button type="button" class="cf-clear" id="where-showall">Show all {n} sellers</button></div>') if first else ""
+    count = f'{len(hit)} of {n} sellers'
+    empty = (f'<p class="small where-empty" id="where-empty"{"" if no_clinic else " hidden"}>No online clinic for this goal yet. '
+             f'<a href="/sellers/">See all {n} sellers</a></p>')
     html = f"""
 <section class="section home-sec" id="where">
   <div class="wrap">
-    <div class="sec-hd"><div><h2>Where to buy peptides</h2><p>{n} sellers, each with background checks. Online clinics prescribe and ship medicines; research-use shops sell vials labeled for lab use. Every name opens our page on that seller.</p></div></div>
+    <div class="sec-hd"><div><h2>Where to get it</h2><p>{n} sellers, each with background checks. Online clinics prescribe and ship medicines; research-use shops sell vials labeled for lab use. Every name opens our page on that seller.</p></div></div>
+    {goal_bar}
     <form class="where-filter cf" hidden onsubmit="return false">
       <div class="cf-bar"><div class="seg" role="group" aria-label="Type">{seg}</div>
       <div class="sf-field sf-name"><label class="vh" for="where-q">Filter by name</label><span class="sf-q"><input class="input" id="where-q" type="text" autocomplete="off" placeholder="Filter by name" data-filter="name" data-value="text"><button type="button" class="sf-clear" id="where-clear">Clear</button></span></div>
       <button type="button" class="btn btn-line cf-btn" aria-expanded="false" aria-controls="where-fbody">Filters <span class="cf-count"></span></button>
-      <p class="small cf-n where-n" id="where-n" aria-live="polite">Showing {min(WHERE_FIRST, n)} of {n} · online clinics first, then by checks</p>
       </div>
       <div class="cf-pills" aria-label="Active filters" role="group"></div>
       <div class="cf-panel" id="where-fbody" hidden>
@@ -138,7 +165,9 @@ def where_section(b):
       <div class="sf-field"><label for="where-min">Minimum checks</label><select class="input" id="where-min" data-filter="min_checks">{mins}</select></div>
       </div>
     </form>
-    <div class="tbl-wrap"><table class="tbl tbl-cards tbl-where" id="where-table"><caption class="vh">Sellers, online clinics first, then by checks</caption>
+    <p class="small cf-n where-n" id="where-n" aria-live="polite">{count}</p>
+    {empty}
+    <div class="tbl-wrap"><table class="tbl tbl-cards tbl-where" id="where-table" data-goals='{labels}'><caption class="vh">Sellers, paid links first, then online clinics, then by checks</caption>
       <thead><tr><th scope="col">Seller</th><th scope="col">Type</th><th scope="col">Checks</th><th scope="col">From</th><th scope="col">FDA letters</th><th scope="col"><span class="vh">Action</span></th></tr></thead>
       <tbody>{body}</tbody>
     </table></div>
@@ -146,30 +175,42 @@ def where_section(b):
     <p class="sec-act"><a class="btn btn-ink" id="where-all" href="/sellers/">See all {n} sellers</a></p>
   </div>
 </section>
-{WHERE_JS.replace("FIRST_N", str(WHERE_FIRST))}
+{WHERE_JS.replace("FIRST_N", str(WHERE_FIRST)).replace("TOTAL_N", str(n))}
 {b.CF_JS}"""
     return html, json.dumps(data, separators=(",", ":"))
 
 
-# With JavaScript the filter shows; the first change loads every seller row (sellers/home.json) and the table shows the
-# first 8 that match. The filter writes the hash /sellers/ reads (substance, min, type, q) onto "See all", so the link
-# carries it. Without JavaScript the 8 rows show and the filter stays hidden.
+# The goal filter (queue block 55, point 6): the chooser's goal switch fires "pc-goal" (MAP_JS pick, for a chip and a pin
+# alike), which sets the goal chip and the rows at once; the chip's × and "Show all" clear the goal. Every other change
+# reads every row (sellers/home.json, loaded once) and the table shows the first 8 that match. The filter writes the hash
+# /sellers/ reads (substance, min, type, q) onto "See all". Without JavaScript the first goal's 8 rows show.
 WHERE_JS = """<script>
 (function(){var f=document.querySelector('.where-filter'),tb=document.getElementById('where-table');if(!f||!tb||!window.fetch)return;
 var sb=document.getElementById('where-sub'),mn=document.getElementById('where-min'),q=document.getElementById('where-q'),n=document.getElementById('where-n'),
-all=document.getElementById('where-all'),segs=[].slice.call(f.querySelectorAll('.seg-b')),rows=null,FIRST=FIRST_N;
+all=document.getElementById('where-all'),gb=document.getElementById('where-goal'),sa=document.getElementById('where-showall'),em=document.getElementById('where-empty'),
+labels=JSON.parse(tb.getAttribute('data-goals')||'{}'),goal=gb?gb.getAttribute('data-goal'):'',
+segs=[].slice.call(f.querySelectorAll('.seg-b')),rows=null,wait=null,FIRST=FIRST_N,TOTAL=TOTAL_N;
 function type(){var on=segs.filter(function(x){return x.getAttribute('aria-pressed')==='true';})[0];return on?on.getAttribute('data-type'):'';}
+function bar(){if(!gb)return;gb.hidden=!goal;if(goal)gb.querySelector('.where-goal-l').textContent=labels[goal]||goal;if(sa)sa.hidden=!goal;}
 function draw(){var s=q.value.trim().toLowerCase(),u=sb.value,k=parseInt(mn.value,10),t=type(),hit=rows.filter(function(r){
-return(!s||r.n.indexOf(s)>=0)&&(!u||r.u.indexOf(u)>=0)&&r.s>=k&&(!t||r.t===t);});
+return(!goal||r.g.indexOf(goal)>=0)&&(!s||r.n.indexOf(s)>=0)&&(!u||r.u.indexOf(u)>=0)&&r.s>=k&&(!t||r.t===t);});
 tb.tBodies[0].innerHTML=hit.slice(0,FIRST).map(function(r){return r.h;}).join('');
 [].forEach.call(tb.tBodies[0].rows,function(r){r.style.opacity=1;});
-n.textContent=hit.length?'Showing '+Math.min(FIRST,hit.length)+' of '+hit.length+' that match · online clinics first, then by checks':'No seller matches. Try fewer filters.';
+n.textContent=hit.length?hit.length+' of '+TOTAL+' sellers':'No seller matches. Try fewer filters.';
+if(em)em.hidden=!goal||rows.some(function(r){return r.g.indexOf(goal)>=0&&r.t==='clinic';});
 var h=[];if(u)h.push('substance='+u);if(k)h.push('min='+k);if(t)h.push('type='+t);if(s)h.push('q='+encodeURIComponent(s));
 all.href='/sellers/'+(h.length?'#'+h.join('&'):'');}
-function ch(){if(rows)return draw();fetch('/sellers/home.json').then(function(r){return r.json();}).then(function(d){rows=d;draw();});}
+function ch(){bar();if(rows)return draw();if(!wait)wait=fetch('/sellers/home.json').then(function(r){return r.json();}).then(function(d){rows=d;});wait.then(draw);}
+function setGoal(k){goal=k||'';ch();}
 f.hidden=false;[sb,mn].forEach(function(x){x.addEventListener('change',ch);});q.addEventListener('input',ch);
 segs.forEach(function(x){x.addEventListener('click',function(){segs.forEach(function(y){y.setAttribute('aria-pressed',y===x?'true':'false');});ch();});});
-var cl=document.getElementById('where-clear');if(cl)cl.addEventListener('click',function(){q.value='';ch();q.focus();});})();
+if(gb){gb.parentNode.hidden=false;gb.addEventListener('click',function(){setGoal('');(document.getElementById('where-change')||q).focus();});}
+var cg=document.getElementById('where-change');if(cg)cg.addEventListener('click',function(){var g=document.getElementById('goals');if(!g)return;g.scrollIntoView();
+var on=g.querySelector('.goal-item[aria-pressed="true"]')||g.querySelector('.goal-item');if(on)on.focus({preventScroll:true});});if(sa)sa.addEventListener('click',function(){setGoal('');q.focus();});
+document.addEventListener('pc-goal',function(e){if(e.detail&&labels[e.detail.goal])setGoal(e.detail.goal);});
+var cl=document.getElementById('where-clear');if(cl)cl.addEventListener('click',function(){q.value='';ch();q.focus();});
+// a goal chosen before this ran (the header menu's /#goals-<slug>) moves the filter too
+var on=document.querySelector('.goal-item[aria-pressed="true"]');if(on&&on.getAttribute('data-goal')!==goal&&labels[on.getAttribute('data-goal')])setGoal(on.getAttribute('data-goal'));})();
 </script>"""
 
 

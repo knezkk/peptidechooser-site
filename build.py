@@ -518,7 +518,7 @@ def goals_strip(heading, skip=None):
 # six groups (two columns until w1 widens the card; see nav_cats). A goal shows only when its page is in this build and has `page` in the data, so a
 # draft goal (data/drafts.json, PC_DRAFTS=1 only) stays out of the deploy and joins by itself when it moves to site.json.
 NAV_GOAL_GROUPS = [("Hair and skin", ("hair", "skin")), ("Weight", ("weight-loss",)),
-                   ("Body", ("muscle", "recovery", "growth-hormone")), ("Hormones", ("testosterone", "menopause")),
+                   ("Body", ("muscle", "recovery", "growth-hormone")), ("Hormones", ("testosterone",)),
                    ("Drive and aging", ("libido", "longevity")), ("Sleep and energy", ("sleep", "energy"))]
 # "Body" added (owner answer 2 a to w2, 3 Nov 2026): /learn/ has a sixth topic for the muscle, skin, recovery, libido and aging guides
 LEARN_TOPICS = [("hair", "Hair"), ("glp1", "GLP-1"), ("legal", "Legal"), ("buying", "Buying"), ("data", "Data"), ("body", "Body")]
@@ -552,9 +552,8 @@ def nav_cats(path):
 
     def goal_link(sl):
         g = goals[sl]
-        low = goal_low(g)
-        said = {"clinic": "clinics from", "research": "shops from"}.get(low["kind"], "from") if low else ""
-        return nav_link(path, f"/{sl}/", g["label"], plural(len(g["peptides"]), "option") + (f", {said} {low['price']}" if low else ""))  # goal_pick: nav.js reads the goal from the link (13 Nov 2026, Home's 60 KB)
+        low = legal_low(g)
+        return nav_link(path, f"/{sl}/", g["label"], plural(len(g["peptides"]), "option") + (f", from {low['price']}" if low else ""))  # goal_pick: nav.js reads the goal from the link (13 Nov 2026, Home's 60 KB)
 
     def col(groups):
         out = "".join(f'<p class="nav-h">{head}</p><ul>{"".join(goal_link(x) for x in slugs if x in goals)}</ul>'
@@ -663,6 +662,7 @@ def page(path, title, description, body, schema="", crumb=None):
 <link rel="stylesheet" href="/assets/tokens.css">
 <link rel="stylesheet" href="/assets/bundle.css">
 <link rel="stylesheet" href="/assets/site.css">
+{SITE_SCHEMA}
 {schema}
 {MOTION_HEAD}
 {NAV_HEAD}
@@ -715,20 +715,26 @@ OPERATOR = {"name": "Flywheel Solutions, LLC", "street": "81990 Overseas Highway
 OPERATOR_LINE = (f"Peptide Chooser is operated by {OPERATOR['name']}, {OPERATOR['street']}, {OPERATOR['city']}, "
                  f"{OPERATOR['region']} {OPERATOR['zip']}, USA.")
 
-ORG_SCHEMA = f"""<script type="application/ld+json">
-{{"@context":"https://schema.org","@graph":[
-{{"@type":"Organization","@id":"{SITE}/#org","name":"Peptide Chooser","url":"{SITE}/","logo":"{SITE}/assets/icon-512.png","email":"{EMAIL}"}},
-{{"@type":"WebSite","@id":"{SITE}/#site","url":"{SITE}/","name":"Peptide Chooser","publisher":{{"@id":"{SITE}/#org"}}}}
-]}}
-</script>"""
-
-# The company's legal name and address go on /about/ only, under the same #org id, so search engines join them with Home's
-# Organization; Home sits at its 60 KB limit (tools/check.py) and the visible line in the footer names the company anyway.
-ABOUT_SCHEMA = ('<script type="application/ld+json">' + json.dumps({"@context": "https://schema.org", "@type": "Organization",
-    "@id": f"{SITE}/#org", "name": "Peptide Chooser", "url": f"{SITE}/", "legalName": OPERATOR["name"],
-    "address": {"@type": "PostalAddress", "streetAddress": OPERATOR["street"], "addressLocality": OPERATOR["city"],
-                "addressRegion": OPERATOR["region"], "postalCode": OPERATOR["zip"], "addressCountry": OPERATOR["country"]}},
+# One schema block on every page (queue block 55, point 9; out-29 Fix S1; ODOBRENO DIZAJN + SEO + PRAVILA - Karlo -
+# 20.11.2026): the Organization with the company's legal name and the footer's address, its three policy pages, and the
+# WebSite, under the ids the site already used (#org, #site). No bank or account details, ever.
+ORG_NODE = {"@type": "Organization", "@id": f"{SITE}/#org", "name": "Peptide Chooser", "legalName": OPERATOR["name"],
+            "url": f"{SITE}/", "logo": f"{SITE}/assets/icon-512.png", "email": EMAIL,
+            "address": {"@type": "PostalAddress", "streetAddress": OPERATOR["street"], "addressLocality": OPERATOR["city"],
+                        "addressRegion": OPERATOR["region"], "postalCode": OPERATOR["zip"], "addressCountry": OPERATOR["country"]},
+            "publishingPrinciples": f"{SITE}/how-we-rate/", "correctionsPolicy": f"{SITE}/corrections/",
+            "ownershipFundingInfo": f"{SITE}/disclosure/"}
+SITE_SCHEMA = ('<script type="application/ld+json">' + json.dumps({"@context": "https://schema.org", "@graph": [
+    ORG_NODE, {"@type": "WebSite", "@id": f"{SITE}/#site", "url": f"{SITE}/", "name": "Peptide Chooser", "publisher": {"@id": f"{SITE}/#org"}}]},
     separators=(",", ":")) + "</script>")
+# Home's own node is the goal list (home_goal_schema).
+ORG_SCHEMA = ""
+ABOUT_SCHEMA = ""  # the Organization with its legal name and address is on every page now (SITE_SCHEMA)
+
+
+def home_goal_schema():
+    """ItemList of the goals on Home's goal list (queue block 55, point 9), in the list's order."""
+    return item_list_schema("Goals", [(g["label"], f"{SITE}/{g['slug']}/") for g in CHOOSER_GOALS if g.get("page")])
 
 
 def breadcrumb_schema(items):
@@ -1296,7 +1302,10 @@ def plain_status(item, drop_price=False):
 BODY = json.loads((ROOT / "assets" / "body" / "manifest.json").read_text(encoding="utf-8"))
 # Home's chooser, its goal cards and the 404 list hold the goals with a pin on the figure (every chooser goal is on the
 # figure, pages.md, Home). A goal page without a pin (/menopause/) is built but stays off them until the figure has its pin.
-CHOOSER_GOALS = [g for g in ALL_GOALS if all(g["slug"] in v["pins"] for v in BODY["variants"].values())]
+# Menopause leaves the goal list and the menu (queue block 55, point 2; ODOBRENO DIZAJN - Karlo - 20.11.2026): /menopause/
+# stays live and in the sitemap, and the seller pages it lists link to it (off_menu_links).
+OFF_MENU_GOALS = {"menopause"}
+CHOOSER_GOALS = [g for g in ALL_GOALS if all(g["slug"] in v["pins"] for v in BODY["variants"].values()) and g["slug"] not in OFF_MENU_GOALS]
 BODY_DEFAULT = "neutral-clay"
 
 
@@ -2057,6 +2066,13 @@ def goal_low(g):
     return None
 
 
+def legal_low(g):
+    """The goal's lowest legal price (queue block 55, point 2): goal_low unless it is a research-use price, which is not a
+    legal option for use in people. The Home goal list and the header menu show it as "from $X/mo"; a goal with none shows none."""
+    low = goal_low(g)
+    return low if low and low["kind"] != "research" else None
+
+
 def plan_clinics(g, p, rp):
     """How many clinics have a plan like the row's: the same substances, compounded or not as the row's plan."""
     comp = rp.get("product_kind") == "compounded"
@@ -2211,6 +2227,13 @@ order_options()
 GOAL_PANELS = {}  # goal slug -> its step 2 panel, for /windows/goal-<slug>.json
 
 
+def goal_from(g):
+    """ "from $25/mo" on its own line under a goal item's name (queue block 55, point 2: visible at 390 px, where the option
+    count hides), from legal_low, never typed."""
+    low = legal_low(g)
+    return f'<span class="listing">from <span class="num">{low["price"]}</span></span>' if low else ""
+
+
 def rail():
     """The flow (design book, pages.md, Home): the goal rows, then per goal the option list, where the top pick's row
     carries the Visit button. Every goal's options are in the page; only the first goal's show until another is chosen."""
@@ -2218,7 +2241,7 @@ def rail():
     for i, g in enumerate(CHOOSER_GOALS):
         slug, hide = g["slug"], "" if i == 0 else " hidden"
         chips.append(f'<button type="button" class="goal-item" data-goal="{slug}"{ev("goal_pick", goal=slug)} aria-pressed="{"true" if i == 0 else "false"}" '
-                     f'aria-controls="opts-{slug}"><span>{g["label"]}</span><span class="small">{plural(len(g["peptides"]), "option")}</span></button>')
+                     f'aria-controls="opts-{slug}"><span>{g["label"]}{goal_from(g)}</span><span class="small">{plural(len(g["peptides"]), "option")}</span></button>')
         rows = option_rows(g, lazy=True)
         link = (f'<a class="btn btn-ink" href="/{slug}/">Compare {g["short"].lower()} options</a>' if g.get("page") else
                 '<p class="small">Full comparison for this goal is not published yet. The legal status above is current as of ' + CHECKED + '.</p>')
@@ -2692,7 +2715,11 @@ if(window.pcOptFirst)pcOptFirst(root.querySelector('.step-panel[data-goal="'+k+'
 if(!window.pcMotion)return;var on=root.querySelectorAll('.step-panel[data-goal="'+k+'"]');
 gsap.fromTo(on,{opacity:0},{opacity:1,duration:swapS,ease:'power1.out'});
 gsap.fromTo(root.querySelectorAll('.step-panel[data-goal="'+k+'"] .opt'),{opacity:0,y:4},{opacity:1,y:0,duration:swapS,ease:'power1.out',stagger:0.04});}
-function pick(k){if(k===cur)return;cur=k;
+function pick(k){
+// Where to get it follows the goal at once (queue block 55, point 6; .handoff/to-w4.md): one event for a chip and a pin,
+// also for the goal already chosen (after the filter's × cleared it)
+document.dispatchEvent(new CustomEvent('pc-goal',{detail:{goal:k}}));
+if(k===cur)return;cur=k;
 root.querySelectorAll('.goal-item,.pin').forEach(function(x){var on=x.getAttribute('data-goal')===k;
 if(x.hasAttribute('aria-pressed'))x.setAttribute('aria-pressed',on?'true':'false');x.classList.toggle('on',on);});
 if(fig&&fig.mark)setTimeout(fig.mark);
@@ -4064,6 +4091,18 @@ def plan_cost(x):
 # injection), compared on the standard monthly price plus membership. With no such view (repo data) the old rule stays:
 # same medicine, kind and stated dosage form (data agent's task 33, 7 Nov 2026).
 ELSEWHERE = {(r["seller_slug"], r["plan_slug"]): r for r in DATA.get("cheapest_elsewhere") or []}
+# The legal option for a research-use peptide (data task 64, site.legal_alternative; queue block 55, point 4), by the
+# research-use substance. Empty until the view exists: the research-use row (book part 2c) then says "No legal option
+# for use in people yet".
+LEGAL_ALTERNATIVES = {}
+for _r in DATA.get("legal_alternatives") or []:
+    LEGAL_ALTERNATIVES.setdefault(_r.get("substance_slug") or _r.get("research_substance_slug"), []).append(_r)
+NO_LEGAL_OPTION = "No legal option for use in people yet"
+
+
+def legal_alternative(slug):
+    """The legal options for a research-use substance, cheapest first by their monthly price when the view gives one."""
+    return sorted(LEGAL_ALTERNATIVES.get(slug) or [], key=lambda r: float(r.get("price_monthly") or r.get("comparable_monthly") or 1e9))
 
 
 def cheapest_elsewhere(p):
@@ -4191,8 +4230,17 @@ def clinic_plans_section(r):
 <section class="seller-sec" id="plans" aria-labelledby="plans-h">
   <h2 id="plans-h">Plans and prices</h2>
   {f'<p class="small seller-lede">Prices checked {nice_date(on)}.</p>' if on else ""}{monthly}
-  {per_order}
+  {per_order}{off_menu_links(r)}
 </section>"""
+
+
+def off_menu_links(r):
+    """A clinic page links each goal page that lists its plans but is off the goal list and the menu (OFF_MENU_GOALS; queue
+    block 55, point 2: /menopause/ from Winona and CoreAge Rx), so that page keeps links from the pages it shows."""
+    plans = [x for x in PLANS + PER_ORDER_PLANS if x["seller_slug"] == r["seller_slug"]]
+    goals = [g for g in ALL_GOALS if g["slug"] in OFF_MENU_GOALS and g.get("page")
+             and any(on_goal(g, x, goal_list(g)) for x in plans)]
+    return "".join(f'\n  <p class="small seller-note">Compared with other clinics: <a href="/{g["slug"]}/">{g["label"]}</a>.</p>' for g in goals)
 
 
 LEGIT_CLOSE = "These are the facts we hold; we do not call any seller legit or safe, and we never link to the shop."
@@ -4443,7 +4491,7 @@ def seller_page(r):
         <p class="intro seller-answer">{answer}</p>
         </div>
       </div>
-      <div class="seller-score"><p class="check-n"><span class="num-xl">{score_of(r)}</span> <span class="num-unit">of {out_of(r)} checks</span></p>{score_bar(r)}{seller_action(r)}</div>
+      <div class="seller-score"><p class="check-n"><span class="num-xl">{score_of(r)}</span> <span class="num-unit">of {out_of(r)} checks</span></p>{score_bar(r)}{missing_line(r)}{seller_action(r)}</div>
     </div>
   </div>
 </section>
@@ -4656,7 +4704,28 @@ def check_bar(r):
     Sellers), each spoken."""
     marks = "".join(f'<span class="chip chip-{"ok" if r.get(k) else "neutral"} mark-{"yes" if r.get(k) else "no"}">'
                     f'<span class="vh">{t}: {"yes" if r.get(k) else "no"}</span></span>' for k, t in seller_checks(r))
-    return f'<span class="num">{score_of(r)} of {out_of(r)}</span><span class="check-bar">{marks}</span>'
+    return f'<span class="num">{score_of(r)} of {out_of(r)}</span><span class="check-bar">{marks}</span>{missing_line(r)}'
+
+
+MISSING_NAME = {"score_registered_company": "State registry"}
+
+
+def missing_line(r):
+    """ "Missing: <check>" under an "x of y" (queue block 55, point 7; ODOBRENO DIZAJN + SEO + PRAVILA - Karlo - 20.11.2026),
+    the second line of the same cell: one check by name; two or more as "Missing: N checks", their names in the HTML
+    in the HTML (a title on hover, spoken). Nothing when every check is met or the seller has no score."""
+    if score_of(r) is None:
+        return ""
+    # short names, so the line stays narrow in the /sellers/ table (owner: no overflow at 1440)
+    miss = [MISSING_NAME.get(k, t) for k, t in seller_checks(r) if not r.get(k)]
+    if not miss:
+        return ""
+    if len(miss) == 1:
+        return f'<span class="sub missing">Missing: {miss[0]}</span>'
+    # the names on hover (title) and for screen readers; a tap target waits for book part 2f (a <details> summary is
+    # under 44px without its CSS, tools/check_layout.js)
+    return (f'<span class="sub missing" title="{", ".join(miss)}">Missing: {len(miss)} checks'
+            f'<span class="vh">: {", ".join(miss)}</span></span>')
 
 
 ACT_TH = '<th scope="col"><span class="vh">Our page</span></th>'
@@ -4713,7 +4782,7 @@ HOME = re.sub(r"\n[ \t]+", "\n", HOME)
 
 PAGES = [
     ("/", "index.html", f"{HOME_H1} | Peptide Chooser",
-     HOME_DESC, HOME, ORG_SCHEMA, None),
+     HOME_DESC, HOME, home_goal_schema(), None),
     ("/about/", "about/index.html", "About Peptide Chooser",
      "Peptide Chooser is an independent site that compares peptide products and sellers for people in the United States.", ABOUT, ABOUT_SCHEMA, [("/about/", "About")]),
     ("/how-we-rate/", "how-we-rate/index.html", "How we rate peptide products and sellers | Peptide Chooser",
@@ -7345,13 +7414,19 @@ def used_on(pages, most=3):
     return f"Cited on {links}" + (f" and {plural(len(pages) - most, 'more page')}" if len(pages) > most else "") + "."
 
 
+def source_id(url):
+    """The /sources/ entry id of a source url: "src-u" and 8 hex characters of its sha1, so /sources/#<id> opens that entry."""
+    return "src-u" + hashlib.sha1(url.encode("utf-8")).hexdigest()[:8]
+
+
 def src_li(name, url, link, take, checked="", ids=()):
     """One /sources/ entry. `ids`: the ids Home's footnotes link (src-1, src-price-hair, src-plan-...), so a footnote on Home
     lands on its line here (owner answer Q3 a, 3 Nov 2026); the first is the item's id, the rest empty anchors in it."""
     head = (f'<a href="{url}" rel="nofollow">{name}</a>' if link and url.startswith("http") else
             f'<a href="{url}">{name}</a>' if link else f"{name}: {url}" if url else name)
     when = f'<span class="src-date">Checked {nice_date(checked)}</span>' if checked else ""
-    ids = list(dict.fromkeys(ids))
+    # every entry has its own address (queue block 55, point 5; out-29 Fix S2): the id of its url, stable while the url is
+    ids = list(dict.fromkeys(list(ids) + ([source_id(url)] if url else [])))
     anchors = "".join(f'<span id="{i}"></span>' for i in ids[1:])
     id_attr = f' id="{ids[0]}"' if ids else ""
     return f'<li{id_attr}>{anchors}<span class="src-name">{head}</span><span class="src-take">{take}</span>{when}</li>'

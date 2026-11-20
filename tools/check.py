@@ -295,6 +295,11 @@ def article_date_errs(name, node):
     return errs
 
 
+# Goal pages that are off Home's goal list and the header menu (build.OFF_MENU_GOALS; queue block 55, point 2): live and in
+# the sitemap, linked from the seller pages they list.
+OFF_MENU_GOALS = {"menopause"}
+
+
 def check_schema(P):
     errs = []
     for name, p in P.items():
@@ -338,7 +343,21 @@ def check_schema(P):
             except json.JSONDecodeError:
                 continue
             found |= {n.get("@type") for n in data.get("@graph", [data])}
-        need = {"Organization"} if name == "index.html" else set() if name == "404.html" else {"BreadcrumbList"}
+        need = {"Organization", "WebSite"} | ({"ItemList"} if name == "index.html" else set() if name == "404.html" else {"BreadcrumbList"})
+        # one schema block on every page (queue block 55, point 9; out-29 Fix S1): the Organization with the company's legal
+        # name, address and its three policy pages; never a bank or account detail
+        for block in p.jsonld:
+            try:
+                data = json.loads(block)
+            except json.JSONDecodeError:
+                continue
+            for n in data.get("@graph", [data]):
+                if n.get("@type") == "Organization" and n.get("@id") == f"{SITE}/#org":
+                    miss = [k for k in ("legalName", "address", "publishingPrinciples", "correctionsPolicy", "ownershipFundingInfo") if not n.get(k)]
+                    if miss:
+                        errs.append(f"{name}: Organization #org without {', '.join(miss)}")
+            if re.search(r"\b(iban|swift|routing|account number|bank)\b", block, re.I):
+                errs.append(f"{name}: bank or account detail in JSON-LD")
         if re.fullmatch(r"learn/[^/]+/index\.html", name):
             need.add("Article")
         if name in ("sellers/index.html", "fda-warning-letters/index.html"):
@@ -1239,7 +1258,7 @@ def check_parts(P):
     src = DIST / "sources" / "index.html"
     if src.exists():
         for sec in re.findall(r'<section class="src-group"[^>]*>(.*?)</section>', src.read_text(encoding="utf-8"), re.S):
-            if "<li>" not in sec:
+            if not re.search(r"<li[ >]", sec):
                 errs.append("sources/index.html: a group with no source")
     return errs
 
@@ -1865,7 +1884,9 @@ def check_offers(P):
             errs.append(f"{name}: indexable without a measured search or two of the three things")
         if f"<loc>{SITE}{path}</loc>" not in offer_map or f"<loc>{SITE}{path}</loc>" in other_maps:
             errs.append(f"{name}: an indexable offer page belongs in sitemap-offer.xml and nowhere else")
-        types = set(re.findall(r'"@type":\s*"([A-Za-z]+)"', " ".join(re.findall(r'<script type="application/ld\+json">(.*?)</script>', html, re.S))))
+        # the sitewide block (Organization #org and WebSite #site, queue block 55, point 9) is on every page; the page's own is a breadcrumb
+        own_ld = [x for x in re.findall(r'<script type="application/ld\+json">(.*?)</script>', html, re.S) if f'"@id":"{SITE}/#org"' not in x]
+        types = set(re.findall(r'"@type":\s*"([A-Za-z]+)"', " ".join(own_ld)))
         if types - {"BreadcrumbList", "ListItem"}:
             errs.append(f"{name}: schema other than BreadcrumbList ({', '.join(sorted(types))})")
     return errs
@@ -1935,7 +1956,7 @@ def check_wave_b(P):
     if menu_goals and "send('goal_pick'" not in nav_js:
         errs.append("assets/nav.js: the By goal menu's goal_pick event is missing")
     for g in d["goals"]:
-        if g.get("page") and (DIST / g["slug"] / "index.html").exists() and g["slug"] not in menu_goals:
+        if g.get("page") and (DIST / g["slug"] / "index.html").exists() and g["slug"] not in menu_goals and g["slug"] not in OFF_MENU_GOALS:
             errs.append(f"index.html: the goal page /{g['slug']}/ is missing from the By goal menu (NAV_GOAL_GROUPS)")
     cards = set(re.findall(r'<a class="goal-card" href="/([a-z0-9-]+)/"', home))
     for slug in sorted(menu_goals | cards):
@@ -2165,11 +2186,20 @@ def check_goal_prices(P):
             for s in sorted(set(re.findall(r'<tr[^>]* data-s="([^"]*)"', t)) - own):
                 errs.append(f'{g["slug"]}: the clinic table lists {s or "a plan"}, which is not one of the goal\'s options')
         low = (f"{min(clin):g}/mo" if clin else f"{min(cos):g} a" if cos else f"{min(mg):g}/mg" if mg else None)
+        card_low = low
         m = re.search(rf'<a href="/{g["slug"]}/"[^>]*><span class="nav-l">[^<]*</span><span class="nav-sub">([^<]*)</span>', home)
         menu = re.search(r"from \$([\d,.]+(?:/mo|/mg| a))", m.group(1)) if m else None
         c = re.search(rf'href="/{g["slug"]}/"(?:(?!</a>).)*?goal-price">from \$([\d,.]+(?:/mo|/mg| a))', home, re.S)
+        # the menu and Home show the lowest legal price only (queue block 55, point 2): a goal whose page shows only a
+        # research-use price per mg shows none there; a goal off the menu (OFF_MENU_GOALS) is on neither
+        if g["slug"] in OFF_MENU_GOALS:
+            if m or c:
+                errs.append(f'{g["slug"]}: off the goal list and the menu, but Home still links it there')
+            continue
+        legal = None if low and low.endswith("/mg") else low
         got = {"menu": menu and money(menu.group(1)), "Home card": c and money(c.group(1))}
         for where, v in got.items():
+            low = legal if where == "menu" else card_low
             if v is not None and low is not None:
                 num, unit = re.match(r"([\d.]+)(.*)", v).groups()
                 if f"{float(num):g}{unit}" != low:

@@ -3101,7 +3101,8 @@ def guide_dates():
 def article_schema(b, g):
     url = f"{b.SITE}{g.get('path') or '/learn/' + g['slug'] + '/'}"
     dates = guide_dates().get(g["slug"])
-    org = {"@type": "Organization", "name": "Peptide Chooser", "url": b.SITE + "/"}
+    # publisher and author: the sitewide Organization (build.SITE_SCHEMA, queue block 55, point 9), by its id
+    org = {"@type": "Organization", "@id": f"{b.SITE}/#org", "name": "Peptide Chooser", "url": b.SITE + "/"}
     return ('<script type="application/ld+json">' + json.dumps({
         "@context": "https://schema.org", "@type": "Article", "headline": g["title"], "description": g["desc"],
         **({"datePublished": dates[0], "dateModified": dates[1]} if dates else {}), "author": org,
@@ -3217,6 +3218,13 @@ def guide_body(b, g):
     first = lead(b, f, N, g["slug"])  # cited first, so its footnote is number 1
     res = TEXTS[g["slug"]](b, f, N)
     short, body, (ink, line) = res[:3]
+    # our shop prices source opens the guide's own goal page, the first goal its "What to do next" buttons open, else the
+    # sellers list (queue block 55, point 10f: it pointed every guide at /recovery/)
+    if "db-sellers" in N.known:
+        goals = {f'/{x["slug"]}/' for x in b.ALL_GOALS if x.get("page")}
+        to = next((h for h in (ink[0], line[0]) if h in goals), "/sellers/")
+        t, _, kind = N.known["db-sellers"]
+        N.known["db-sellers"] = (t, to, kind)
     # a guide's text may return a fourth item, (name, [(question, answer), ...]): the FAQ part before "What to do next",
     # with FAQPage schema holding the same pairs (pages/learn.md, Guide; ODOBRENO DIZAJN - Karlo - 8. 11. 2026)
     name, pairs = res[3] if len(res) > 3 else ("", [])

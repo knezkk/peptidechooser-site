@@ -378,6 +378,9 @@ def main():
         "other_billing_cycle, other_price_per_cycle, other_intro_price, other_intro_months, other_intro_terms, "
         "other_intro_ends_on, other_intro_active, other_promo_price, other_promo_ends_on, other_price_basis "
         "from site.cheapest_elsewhere order by seller_slug, plan_slug") if has_view("cheapest_elsewhere") else []
+    # the legal option for a research-use peptide (data task 64; queue block 55, point 4): read whole while its columns are
+    # being settled; until the view exists the research-use row shows its empty state
+    d["legal_alternatives"] = rows("select * from site.legal_alternative") if has_view("legal_alternative") else []
     products = rows(
         "select seller_slug, seller_name, seller_status, product_name, variant_title, product_url, substance_slug, is_blend, "
         "amount_mg, form, price_usd, price_per_mg, price_observed_at, first_seen, last_seen, has_coa, coa_count"
