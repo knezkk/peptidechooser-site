@@ -175,20 +175,6 @@ var cl=document.getElementById('where-clear');if(cl)cl.addEventListener('click',
 
 # ---------------------------------------------------------------- Compare by goal
 
-def goal_price(b, g):
-    """A goal card's price and its one-word source, from build.goal_low (queue block 34: the menu, this card and the goal page
-    show one "from" price): the lowest clinic plan the goal page shows, else its cosmetic or research-use window's lowest.
-    (price, source) or ("", "")."""
-    low = b.goal_low(g)
-    if not low:
-        return "", ""
-    p = low["plan"]
-    if p:
-        sub = subs_short(b, [p["substance_slug"]], 1) if p.get("substance_slug") else ""
-        return f'from {low["price"]}', (f"compounded {sub}" if p.get("product_kind") == "compounded" else f"{sub}, clinic").strip(", ")
-    return f'from {low["price"]}', ("research-use only" if low["kind"] == "research" else "cosmetic")
-
-
 def by_approval(b):
     """By approval (home.md, Compare by goal; ODOBRENO DIZAJN - Karlo - 10. 11. 2026 - PR #171): one group card per live,
     indexable group page in the group list's order, its icon on paper-2 in place of the photo and "N substances" from the
@@ -222,20 +208,15 @@ GROUP_NAMES = {"fda-approved": "FDA approved", "prescription": "Prescription and
 
 
 def goals_section(b):
-    cards = []
-    for g in b.CHOOSER_GOALS:
-        plans = b.clinic_plans(g)
-        count = b.plural(len(plans), "clinic plan") if plans else b.plural(len(g["peptides"]), "option")
-        price, src = goal_price(b, g)
-        inner = (f'<span class="goal-pic goal-c-{g["slug"]}">{parts.goal_photo(g["slug"], 48, small=True)}</span><span class="goal-name">{g["label"]}</span><span class="small">{count}</span>'
-                 + (f'<span class="goal-price">{price}</span><span class="small">{src}</span>' if price else ""))
-        cards.append(f'<li><a class="goal-card" href="/{g["slug"]}/">{inner}</a></li>' if g.get("page")
-                     else f'<li><span class="goal-card">{inner}</span></li>')
+    """Compare by goal (owner, 20 Nov 2026, point 8; ODOBRENO DIZAJN + SEO + PRAVILA - Karlo - 20.11.2026): the goal card row
+    is gone; the body figure picks a goal above. Every goal page keeps a plain text link from Home in one line of links,
+    then By approval stays."""
+    links = "".join(f'<li><a href="/{g["slug"]}/">{g["label"]}</a></li>' for g in b.CHOOSER_GOALS if g.get("page"))
     return f"""
 <section class="section home-sec" id="compare">
   <div class="wrap">
     <div class="sec-hd"><div><h2>Compare by goal</h2><p>{num_word(len(b.CHOOSER_GOALS))} goals, the same rule on each: the FDA-approved option first, then what people buy instead, with its real status.</p></div></div>
-    <ul class="goal-cards">{"".join(cards)}</ul>{by_approval(b)}
+    <ul class="goal-links">{links}</ul>{by_approval(b)}
   </div>
 </section>"""
 
