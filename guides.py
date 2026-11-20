@@ -85,7 +85,7 @@ GUIDES = [
     # queue block 32 (owner, 19 Nov 2026): "where to get BPC-157 on prescription and what it costs", next to
     # /learn/is-bpc-157-legal/ ("is it legal"); the year comes from SEO_YEAR and the description from data (rx_guide_meta).
     # A draft until the owner's ODOBRENO SEO; built only with a clinic plan in the data.
-    {"slug": "bpc-157-prescription-online", "title": "BPC-157 prescription online: clinics and prices", "draft": True,
+    {"slug": "bpc-157-prescription-online", "title": "BPC-157 prescription online: clinics and prices",
      "needs": lambda b: bool(rx_plans(b, "bpc-157")),
      "h1": "BPC-157 on prescription online: the clinics, their prices and the rules.",
      "desc": "BPC-157 on prescription from online clinics: the plans and prices we track, what each includes, the HHS conditions and the FDA letters.",
@@ -3294,6 +3294,12 @@ def letters_meta(b):
             "and what each asks.")
 
 
+def gate(b):
+    """A guide's own data gate: a guide whose "needs" is not met is not built, and no page links to it. build.py calls it
+    once the clinic plans are known, before the substance pages are made; pages() calls it again (it does nothing twice)."""
+    GUIDES[:] = [g for g in GUIDES if not (callable(g.get("needs")) and not g["needs"](b))]
+
+
 def pages(b):
     """/learn/ and the guides as build.py PAGES rows: (path, file, title, description, body, schema, crumb). The guides
     are built first: /learn/ needs their read times and "Start here", the three guides the most other pages link to
@@ -3310,7 +3316,7 @@ def pages(b):
     for g in GUIDES:
         if g["slug"] == "bpc-157-prescription-online" and rgm:
             g["title"], g["desc"] = rgm
-    GUIDES[:] = [g for g in GUIDES if not (callable(g.get("needs")) and not g["needs"](b))]  # a guide's own data gate
+    gate(b)
     out = []
     for g in GUIDES:
         path = f"/learn/{g['slug']}/"

@@ -4853,6 +4853,9 @@ def pep_clinic_plans(slug):
     return [r for r in pep_plans(slug) if r["seller_slug"] in PROFILES] if pep_group(pep_status(slug)) == "not" else []
 
 
+guides.gate(sys.modules[__name__])  # guides whose data is missing are dropped before any page links to them
+
+
 def pep_low_plan(slug):
     """The cheapest plan of the brand medicine or its generic: a pharmacy-made copy, or a plan of unknown kind, is not the
     approved product (the goal pages' rule, owner 31 Oct 2026; task 21, 8 Nov 2026). None without one."""

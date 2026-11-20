@@ -328,3 +328,6 @@ ODOBRENO SEO - Karlo - 19. 11. 2026 - everprime tirzepatide title (/sellers/ever
 ODOBRENO SEO - Karlo - 19. 11. 2026 - PR #224 (/learn/copper-peptide-serum/: title, H1, description and every sentence in the PR table; the /learn/ guide count it adds, twenty-nine; the /supplements/ sentence; typed in the terminal)
 /learn/copper-peptide-serum/ fa3e71418bc2
 /learn/ ad3ef2156afe
+ODOBRENO SEO - Karlo - 19. 11. 2026 - PR #227 (/learn/bpc-157-prescription-online/: title, H1, description and every sentence in the PR; the /learn/ guide count it adds, thirty; the BPC-157 prescription sentence; typed in the terminal)
+/learn/bpc-157-prescription-online/ ae38275a005e
+/learn/ a83d3520f70a
