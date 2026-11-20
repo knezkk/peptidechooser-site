@@ -6319,7 +6319,9 @@ def cmp_sub_cell(slug, goals):
     host = source_word(s["url"])
     approved = pep_group(s) == "approved"
     low, n = pep_low_shop(slug), len({r["seller_slug"] for r in pep_shops(slug)})
-    plan = pep_low_plan(slug) if approved else None
+    # an approved medicine: its cheapest brand or generic plan; a substance that is not approved: its cheapest clinic plan,
+    # the same one "<Substance> on prescription: prices" starts with (w3 to-w1, owner task 20 Nov 2026)
+    plan = pep_low_plan(slug) if approved else next(iter(pep_clinic_plans(slug)), None)
     opt = next((p for g in goals for p in g["peptides"] if subs_of(p) == [slug]), None) or \
         next((p for g in goals for p in g["peptides"] if slug in subs_of(p)), None)
     guides_ = [g for g in guides.GUIDES if any(w in g["title"].lower() for w in (pep_short(slug).lower(), slug.replace("-", " ")))]
