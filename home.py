@@ -67,7 +67,8 @@ def where_from(b, r):
         if not plans:
             return "unknown"
         p, fee = plans[0], plans[0].get("membership_fee_monthly")
-        return f'{b.usd(p["price_monthly"])}/mo' + (f' incl. {b.usd(fee)} care' if fee and float(fee) > 0 else "")
+        # the care part on its own line: "$941.42/mo incl. $291.42 care" is wider than a 320 px screen (20 Nov 2026)
+        return f'{b.usd(p["price_monthly"])}/mo' + (f'<br>incl. {b.usd(fee)} care' if fee and float(fee) > 0 else "")
     lo = b.compare_ppm(r)[0]
     return f"{b.per_mg(lo)}/mg" if lo is not None else "unknown"
 
