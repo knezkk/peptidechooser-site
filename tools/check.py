@@ -1411,7 +1411,7 @@ def check_events(P):
             slug = re.search(r'href="/out/([^/"]+)/', t)
             place = re.search(r'data-ev-placement="([^"]+)"', t)
             if ('data-ev="paid_link_click"' not in t or not slug or f'data-ev-partner="{slug.group(1)}"' not in t
-                    or not place or place.group(1) not in ("option row", "clinic table", "window", "seller page", "decision card")
+                    or not place or place.group(1) not in ("option row", "clinic table", "window", "seller page", "decision card", "plan-name")
                     or "sponsored" not in (re.search(r'rel="([^"]*)"', t) or [None, ""])[1].split()):
                 errs.append(f"{name}: /out/ link without partner, placement or rel=sponsored: {t[:160]}")
         for t in tag("btn-wait", html):
@@ -2047,6 +2047,37 @@ def check_paid_tab(P):
     return errs
 
 
+def plan_link_errs(name, html):
+    """README rule 6, plan names (owner, queue block 47, 19 Nov 2026): a paid link that is not a green button is only a plan
+    name ("plan-name"), a plain link with rel sponsored nofollow, no icon and no label of its own, on a page where the same
+    seller's green button carries "Paid link"."""
+    errs = []
+    labelled = set(re.findall(r'<a [^>]*class="btn btn-action[^"]*"[^>]*data-ev-seller="([^"]+)"[^>]*>[^<]*(?:<span class="paid">Paid link</span></a>|</a><span class="paid">Paid link</span>)', html))
+    for a, inner in re.findall(r'(<a\b[^>]*href="/out/[^"]*"[^>]*>)(.*?)</a>', html, re.S):
+        if re.search(r'class="[^"]*\bbtn\b', a):
+            continue
+        place = (re.search(r'data-ev-placement="([^"]+)"', a) or [None, ""])[1]
+        seller = (re.search(r'data-ev-seller="([^"]+)"', a) or [None, ""])[1]
+        rel = (re.search(r'rel="([^"]*)"', a) or [None, ""])[1].split()
+        if place != "plan-name":
+            errs.append(f"{name}: a paid text link that is not a plan name: {a[:120]}")
+        elif "sponsored" not in rel or "nofollow" not in rel:
+            errs.append(f"{name}: a plan name paid link without rel sponsored nofollow: {a[:120]}")
+        elif re.search(r"<(svg|img)\b|Paid link", inner):
+            errs.append(f"{name}: a plan name paid link with an icon or its own label: {a[:120]}")
+        elif seller not in labelled:
+            errs.append(f"{name}: a plan name paid link for {seller} on a page without its green button and 'Paid link'")
+    return errs
+
+
+def check_plan_links(P):
+    errs = []
+    for n in P:
+        if not n.startswith("out/"):
+            errs += plan_link_errs(n, (DIST / n).read_text(encoding="utf-8"))
+    return errs
+
+
 def check_goal_prices(P):
     """Queue block 34 (audit of 11 Nov 2026). (a) Each goal's "from" price is one figure: the header menu, the Home goal card
     and the goal page's lowest shown price agree, in the same unit. The page's lowest is its lowest clinic monthly price (the
@@ -2124,7 +2155,7 @@ def check_us_dates(P):
     return [f"{name}: day-first date {m.group()!r} (write it as Nov 13, 2026)" for name, html in files for m in pat.finditer(html)]
 
 
-CHECKS = {"words": check_words, "seo": check_seo, "schema": check_schema, "parts": check_parts, "data": check_data, "book": check_book, "events": check_events, "logic": check_logic, "rules33": check_rules33, "addresses": check_addresses, "arch": check_arch, "arch-switch": check_arch_switch, "offers": check_offers, "kept-sellers": check_kept_sellers, "wave-b": check_wave_b, "paid-first": check_paid_first, "goal-prices": check_goal_prices, "paid-tab": check_paid_tab, "us-dates": check_us_dates}
+CHECKS = {"words": check_words, "seo": check_seo, "schema": check_schema, "parts": check_parts, "data": check_data, "book": check_book, "events": check_events, "logic": check_logic, "rules33": check_rules33, "addresses": check_addresses, "arch": check_arch, "arch-switch": check_arch_switch, "offers": check_offers, "kept-sellers": check_kept_sellers, "wave-b": check_wave_b, "paid-first": check_paid_first, "goal-prices": check_goal_prices, "paid-tab": check_paid_tab, "plan-links": check_plan_links, "us-dates": check_us_dates}
 
 # Plan names against their form (owner task w2, 3 Nov 2026): a clinic's own plan name can name another form than the
 # plan's `dosage_form` ("Ozempic Pill" for a pen). The site cannot change data, so this only warns, never fails, and the
