@@ -396,3 +396,4 @@ ODOBRENO SEO - Karlo - 21. 11. 2026 - block 57 prices (data of 21 Nov 2026: TB-5
 /sellers/go-alpha-labs/ d7f2868656b0
 /sellers/paramount-peptides/ 7b88d322f208
 /sellers/pinnacle-peptides-pinnacle-professional-research/ 24b3552ac865
+ODOBRENO SEO - Karlo - 21. 11. 2026 - block 58 ("Legal option for <goal>: <plan> from $X/mo at <Seller>" + Visit + Paid link on 13 research-use rows: growth-hormone 3, libido 1, muscle 2, testosterone 2, weight-loss 2, weight-loss/new-drugs 2; no title, description or H1 changes; owner in the terminal)
