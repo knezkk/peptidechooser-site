@@ -347,6 +347,10 @@ ODOBRENO SEO - Karlo - 20. 11. 2026 - block 48 (PR #235: the price column names 
 
 ODOBRENO SEO - Karlo - 20. 11. 2026 - block 54 (PR #237: the column "From, per month"; the seller note sentence "From is the lowest monthly price on any plan length the clinic sells; a longer plan can cost less a month."; the plan page row "Lowest price: $X a month on a N-month plan; $Y a month on the shortest plan"; the lower table prices; descriptions /sellers/healthrx/ and /learn/bpc-157-prescription-online/ pass as prices only; typed in the w2 terminal)
 
+ODOBRENO SEO - Karlo - 20. 11. 2026 - July 2026 sentences (PR #239: the FDA committee review sentence "On 23 and 24 July 2026 an FDA advisory committee reviewed seven peptides, including BPC-157, TB-500, MOTS-c and epitalon, and in its briefing document the FDA proposed that none of them be added to the list pharmacies may use." on the six guides that describe the review; body text only; typed in the w3 terminal)
+
+ODOBRENO SEO - Karlo - 20. 11. 2026 - PR #239 (block 35: the Home "What is a peptide?" text; HOME_LEDE "Find the right peptide for your goal and what it costs where it is sold."; the "Not a peptide" chips; card label "On prescription"; goal FAQ "Which {goal peptides} are there?"; Saxenda in the weight-loss guide; NAD+ "(not a peptide)" in the legal guide; "not a crime" removed; the "Not approved" label text; body text, no title, H1 or URL change; typed in the w3 terminal)
+
 ODOBRENO SEO - Karlo - 21. 11. 2026 - block 56 (PR #241: 24 descriptions lose only their last sentence "We compare and never sell." / "We compare; we never sell.", nothing in its place, owner answer Q1 A: the 13 under 110 characters stay short; the footer sentence "An independent comparison site for the United States. Not medical advice: talk to a doctor before starting any treatment."; "FDA letter, <date>" and "Legal option: ..." / "No legal option for use in people yet" lines; typed in the w2 terminal)
 /compare/acetyl-hexapeptide-8-vs-palmitoyl-pentapeptide-4/ df1d7ed27ef4
 /compare/semaglutide-vs-tirzepatide/ 06346f9a7f37
@@ -372,10 +376,6 @@ ODOBRENO SEO - Karlo - 21. 11. 2026 - block 56 (PR #241: 24 descriptions lose on
 /peptides/thymulin/ b248f3f1e1fa
 /peptides/triptorelin/ f14262b99508
 /peptides/vardenafil/ 729f2a3b7c99
-ODOBRENO SEO - Karlo - 20. 11. 2026 - July 2026 sentences (PR #239: the FDA committee review sentence "On 23 and 24 July 2026 an FDA advisory committee reviewed seven peptides, including BPC-157, TB-500, MOTS-c and epitalon, and in its briefing document the FDA proposed that none of them be added to the list pharmacies may use." on the six guides that describe the review; body text only; typed in the w3 terminal)
-
-ODOBRENO SEO - Karlo - 20. 11. 2026 - PR #239 (block 35: the Home "What is a peptide?" text; HOME_LEDE "Find the right peptide for your goal and what it costs where it is sold."; the "Not a peptide" chips; card label "On prescription"; goal FAQ "Which {goal peptides} are there?"; Saxenda in the weight-loss guide; NAD+ "(not a peptide)" in the legal guide; "not a crime" removed; the "Not approved" label text; body text, no title, H1 or URL change; typed in the w3 terminal)
-
 ODOBRENO SEO - Karlo - 21. 11. 2026 - block 57 (13 descriptions back over 110 characters with the page's own count line; the 4 price moves over 50% are not covered: the data agent checks them, owner Q2 A; owner in the terminal)
 /compare/semaglutide-vs-tirzepatide/ eaed6f88ea01
 /peptides/afamelanotide/ e8627acef689
