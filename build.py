@@ -1290,6 +1290,7 @@ if LEGAL_DB is not None and HHS and not any(r["regime"] == "hhs_503a_interim" fo
                             "source_url": HHS["url"], "source_id": "hand_hhs_policy", "first_seen_by_us": HHS["seen"], "valid_from": HHS["date"], "fda_listing": None}
                            for x in HHS["substances"] if x in _names]
 APPROVED_DB = DATA.get("approved_db") or []
+NOT_PEPTIDES_DB = {r["substance_slug"] for r in LEGAL_DB or [] if r.get("is_peptide") is False}  # the option rows' "Not a peptide"
 _plan_seen = max((r["last_seen"] for r in GOAL_PLANS.values()), default="")
 _prices_on = DB.get("prices_checked_on", "") if DB else ""
 STAMP_CHECKED = nice_date(max(_prices_on, _plan_seen)) if (_prices_on or _plan_seen) else CHECKED
@@ -2234,11 +2235,42 @@ def opt_facts(g, p):
             f'{" · " + rx if rx else ""}</p>')
 
 
+# Options that are not peptides (owner, queue block 35, 20 Nov 2026: finasteride, minoxidil, TRT, tretinoin, tadalafil,
+# sildenafil, NAD+, estradiol, enclomiphene, CBT-I and the like): the database's is_peptide flag first (NOT_PEPTIDES_DB),
+# then the owner's list by option name until w2 sets the flag for these rows (to-w2.md, 20 Nov 2026).
+NOT_PEPTIDE_WORDS = ("finasteride", "minoxidil", "testosterone", "tretinoin", "tadalafil", "sildenafil", "nad+", "estradiol",
+                     "enclomiphene", "cbt-i", "fezolinetant", "naltrexone", "orlistat", "flibanserin", "orforglipron",
+                     "compounded hormones")
+PEPTIDE_WORDS = ("pt-141", "peptide", "hcg", "gonadorelin")  # a row that also names a peptide keeps no label
+
+
+def is_not_peptide(p):
+    n = p["name"].lower()
+    if any(w in n for w in PEPTIDE_WORDS):
+        return False
+    return bool(p.get("substance") and p["substance"] in NOT_PEPTIDES_DB) or any(w in n for w in NOT_PEPTIDE_WORDS)
+
+
+def np_chip(p):
+    """The "Not a peptide" chip (group.md; home.md 1 Nov 2026, chip-neutral) after an option's status chip."""
+    return NOT_PEPTIDE if is_not_peptide(p) else ""
+
+
+def grouped_rows(g, rows):
+    """The option list in two groups (nov20.md, Parts, b2; owner, queue block 36): "Peptides" first, then "Proven
+    alternative (not a peptide)". The order inside a group stays as order_options set it; a group with no rows has no
+    heading."""
+    pep = [r for p, r in zip(g["peptides"], rows) if not is_not_peptide(p)]
+    alt = [r for p, r in zip(g["peptides"], rows) if is_not_peptide(p)]
+    return ((opt_group("Peptides") + "".join(pep) if pep else "") +
+            (opt_group("Proven alternative (not a peptide)") + "".join(alt) if alt else ""))
+
+
 def opt_head(p):
     """The collapsed row (pages/parts.md, Option rows): "<name> · <what it does>", then the status chip with the prescription fact."""
     # the dot and the subtitle in their own spans: Home sets the subtitle on its own line (home.md, Look v3), goal pages keep the dot
     return (f'<span class="opt-one"><span class="name">{p["name"]}</span><span class="opt-dot"> · </span><span class="opt-sub">{p["line_one"]}</span></span>'
-            f'<span class="opt-two">{status_chip(p)}<span class="opt-rx">{p["rx_word"]}</span></span>')
+            f'<span class="opt-two">{status_chip(p)}{np_chip(p)}<span class="opt-rx">{p["rx_word"]}</span></span>')
 
 
 # The legal option for a substance a research-use shop sells (spec 0040, site.legal_alternatives; queue block 56, point 2):
@@ -2385,7 +2417,7 @@ def rail():
         link = (f'<a class="btn btn-ink" href="/{slug}/">Compare {g["short"].lower()} options</a>' if g.get("page") else
                 '<p class="small">Full comparison for this goal is not published yet. The legal status above is current as of ' + CHECKED + '.</p>')
         inner = (f'<p class="goal-for">{g["for"]}</p><p class="goal-intro">{g["intro"]}</p>'
-                 f'<ul class="opts">{"".join(rows)}</ul>{approved_instead(g)}{link}')
+                 f'<ul class="opts">{grouped_rows(g, rows)}</ul>{approved_instead(g)}{link}')
         # Home lists no sources: a footnote opens its line on /sources/, which carries the same ids (owner answer Q3 a, 3 Nov 2026)
         inner = inner.replace('href="#src-', 'href="/sources/#src-')
         # A goal's own sources that /sources/ does not carry (/menopause/'s goal_only rows) open on the goal's page,
@@ -2506,7 +2538,7 @@ def legal_rows(only=None):
 
 
 LEGAL_NOTE = ("Approved means the FDA approved a product containing it for a stated use. Not approved means no approved product "
-              "exists; buying it for yourself is not a crime in the US, but nobody has checked what is in the vial.")
+              "exists, and nobody has checked what is in the vial.")
 
 # Latest FDA warning letters (pages.md, Home, after "Is it legal today?"): from site.seller_enforcement through
 # tools/pull_data.py (site.fda_letters), newest first. Without `letters` in site.json the section is not drawn (never drawn empty).
@@ -2903,7 +2935,7 @@ HERO_COUNTS = (f" {_ns} shop{'' if _ns == 1 else 's'}, {f'{_nc} online clinic' +
 SEO_YEAR = "2026"
 HOME_H1 = f"Best peptides in {SEO_YEAR}, compared by goal"
 # Under the H1 (owner's words, 13 Nov 2026): what the site does, then the live counts on their own line.
-HOME_LEDE = "Find the right peptide for your goal and where to buy it at the best price." + \
+HOME_LEDE = "Find the right peptide for your goal and what it costs where it is sold." + \
     (f"<br>{HERO_COUNTS.strip()}" if HERO_COUNTS else "")
 # Home's description (owner, ODOBRENO SEO - Karlo - 14. 11. 2026 - block 29): the counts and date from data, as in the hero;
 # without them the plain line stays.
@@ -2911,11 +2943,16 @@ HOME_DESC = (f"Compare the best peptides by goal: FDA status and the lowest pric
              f"checked {PULLED}." if _nc and _ns and PULLED else
              "Find the right option for your goal and where to get it at the best price. Research-use peptides with "
              "their real status.")
+# "What is a peptide?" (owner's words, block 35; ODOBRENO SEO - Karlo - 20. 11. 2026 - PR #239), in w1's box under the H1
+PEP_BOX = pep_box("What is a peptide?", "A short chain of amino acids. Some are FDA-approved medicines, like semaglutide (Wegovy). "
+                  "Many sold online, like BPC-157, are not approved for any use. Not everything on this page is a peptide: proven "
+                  'options that aren\'t are labeled "Not a peptide".')
 HOME = f"""
 <section class="hero hero-clinic">
   <div class="wrap">
     <h1 class="hero-h1">{HOME_H1}</h1>
     <p class="hero-lede">{HOME_LEDE}</p>
+    {PEP_BOX}
     <div class="chooser flow" id="goals">
       <div class="flow-hd fh-goal"><span class="step-n" aria-hidden="true">1</span><h2 id="step-goal">Choose a goal</h2></div>
       <div class="figure">{FIGURE}</div>
@@ -2927,7 +2964,6 @@ HOME = f"""
 </section>
 <section class="hero-more">
   <div class="wrap">
-    <p class="what-is"><strong>What is a peptide?</strong> A short chain of amino acids. Some are approved medicines (semaglutide, bremelanotide), some are cosmetics in creams, and many are sold online with no approval and no testing. This site tells you which is which, what it costs, and what the proven alternative is.</p>
     <div class="tip-defs" hidden>{TIP_DEFS}</div>
   </div>
 </section>
@@ -3186,7 +3222,7 @@ def goal_faq_pairs(g):
         return []
     mq, opts = mq_cap(g), g["peptides"]
     first = re.split(r"(?<=\.)\s", g["short_answer"], 1)[0]
-    pairs = [(f"What are the best {mq}?",
+    pairs = [(f"Which {mq} are there?",
               f"{first} The options on this page: " + "; ".join(f'{p["name"]}, {p["line_one"]}' for p in opts) + ".")]
     groups = {}
     for p in opts:
@@ -3584,7 +3620,8 @@ def card_slug(key):
 def decide_card(key, name, chips, price, act, pic=""):
     # Goal page v2 (goal.md): the Best approved card carries the page's ink button, the Cheapest an outline one
     act = re.sub(r'\bbtn-wait\b', "btn-ink" if key == "Best approved" else "btn-line", act, count=1)
-    return (f'<li class="panel-line decide-card" data-card="{card_slug(key)}">{pic}<p class="decide-k">{key}</p><h2>{name}</h2>'
+    shown = {"Best approved": "On prescription"}.get(key, key)  # no "best" outside title and H1 (owner, queue block 35, 20 Nov 2026)
+    return (f'<li class="panel-line decide-card" data-card="{card_slug(key)}">{pic}<p class="decide-k">{shown}</p><h2>{name}</h2>'
             f'{f"<span class=chips>{chips}</span>" if chips else ""}<p class="decide-price">{price}</p>{act}</li>')
 
 
@@ -3601,7 +3638,7 @@ def decide_cards(g):
     if named and not row_plan(g, named):
         on_page = named["substance"] in PEPTIDE_SLUGS
         page, label = (f'/peptides/{named["substance"]}/', "FDA status and sources") if on_page else ("/learn/", "Read the guides")
-        cards.append(decide_card("Best approved", named["name"], status_chip(named), no_listing_text(named),
+        cards.append(decide_card("Best approved", named["name"], status_chip(named) + np_chip(named), no_listing_text(named),
                                  f'<span class="pick-act"><a class="btn btn-wait btn-sm" href="{page}" data-card="{card_slug("Best approved")}">{label}</a></span>',
                                  option_picture(named, None)))
     for p in g["peptides"]:
@@ -3618,7 +3655,7 @@ def decide_cards(g):
     if best:
         p, rp, n = best
         name = seller_base(rp["seller_name"])
-        cards.append(decide_card("Best approved", p["name"], status_chip(p),
+        cards.append(decide_card("Best approved", p["name"], status_chip(p) + np_chip(p),
                                  f'At online clinics{plan_src(g, rp)}',
                                  clinic_open(g, p, rp), option_picture(p, rp)))
     # Cheapest: the lowest monthly price among the goal's plans, labelled with its kind
@@ -3642,7 +3679,7 @@ def decide_cards(g):
         rp = row_plan(g, otc)
         if rp:
             name = seller_base(rp["seller_name"])
-            cards.append(decide_card("No prescription", otc["name"], status_chip(otc),
+            cards.append(decide_card("No prescription", otc["name"], status_chip(otc) + np_chip(otc),
                                      f'Sold without a prescription{plan_src(g, rp)}{plan_letter(rp)}',
                                      clinic_open(g, otc, rp), option_picture(otc, rp)))
         else:
@@ -3653,7 +3690,7 @@ def decide_cards(g):
                 page = f'/peptides/{otc["substance"]}/' if on_page else "/learn/"
                 label = "FDA status and sources" if on_page else "Read the guides"
                 price = re.search(r"from (\$[\d.,]+/mo)", pad).group(1)
-                cards.append(decide_card("No prescription", otc["name"], status_chip(otc),
+                cards.append(decide_card("No prescription", otc["name"], status_chip(otc) + np_chip(otc),
                                          f'<strong>From {price}</strong>{re.search(r"<sup>.*</sup>", pad).group(0)}',
                                          # the card's one button (tools/check.py) goes to our own page on the medicine, or the goal's guide
                                          f'<span class="pick-act"><a class="btn btn-wait btn-sm" href="{page}" data-card="{card_slug("No prescription")}">{label}</a>'
@@ -3701,7 +3738,7 @@ def category_body(g):
     material: "Is it legal today?" as an accordion, the goals strip, "What to do next" and the sources. The old "Every option,
     side by side" table is gone; its facts the rows did not show are in the opened rows (opt_facts)."""
     srcs = "".join(f'<li id="src-{s["n"]}">{s["text"]}: <a href="{s["url"]}" rel="nofollow">{s["url"]}</a></li>' for s in g.get("sources", []))
-    opt_html = "".join(option_rows(g))
+    opt_html = grouped_rows(g, option_rows(g))
     instead = approved_instead(g)
     lead, moved = intro_split(g["short_answer"])
     subs = {x for p in g["peptides"] for x in subs_of(p)}

@@ -284,6 +284,8 @@ SOURCES = {
                      "https://api.fda.gov/drug/label.json?search=openfda.brand_name:%22WEGOVY%22"),
     "label-mounjaro": ("FDA drug label for Mounjaro, Indications and Usage, through openFDA, effective 29 Jul 2026",
                        "https://api.fda.gov/drug/label.json?search=openfda.brand_name:%22MOUNJARO%22"),
+    "label-saxenda": ("FDA drug label for Saxenda (liraglutide), Indications and Usage, Dosage and Administration, through openFDA, effective 25 Feb 2026",
+                      "https://api.fda.gov/drug/label.json?search=openfda.brand_name:%22SAXENDA%22"),
     "label-zepbound": ("FDA drug label for Zepbound, Indications and Usage, through openFDA, effective 28 Aug 2026",
                        "https://api.fda.gov/drug/label.json?search=openfda.brand_name:%22ZEPBOUND%22"),
     "label-egrifta": ("FDA drug label for Egrifta SV (tesamorelin), Indications and Usage, through openFDA, effective 29 Jul 2026",
@@ -558,7 +560,7 @@ def g_bpc(b, f, N):
 {rx_block(b, N)}
 
 <h2>What did the FDA review in July 2026?</h2>
-<p>On 23 and 24 July 2026 the FDA's Pharmacy Compounding Advisory Committee, a panel of outside experts, reviewed BPC-157 together with TB-500, MOTS-c and epitalon. The question was whether pharmacies may use these substances to make medicines for patients on a prescription. The FDA proposed not to allow it.{N('legal-6')}</p>
+<p>On 23 and 24 July 2026 an FDA advisory committee reviewed seven peptides, including BPC-157, TB-500, MOTS-c and epitalon, and in its briefing document the FDA proposed that none of them be added to the list pharmacies may use. The question was whether pharmacies may use these substances to make medicines for patients on a prescription.{N('legal-6')}</p>
 <p>A committee advises; the FDA decides. A proposal is a step, not the last word. We keep the status on our <a href="/#legal">Is it legal today?</a> table and change this page when the FDA publishes what it decided.</p>
 
 <h2>Is BPC-157 the same as TB-500?</h2>
@@ -1121,8 +1123,8 @@ def g_inject(b, f, N):
                f"{f['ruo_letters']} went to research-use peptide shops.{N('db-letters')} Each letter names the products and the "
                "claims the FDA objects to; you can read it in full on fda.gov.</p>") if f["letters"] else ""
     table = plan_table(b, f["hair_plans"], N, "hair") if f["hair_plans"] else ""
-    july = (f"<p>In July 2026 the FDA's advisory committee on pharmacy compounding reviewed BPC-157 and TB-500, and the FDA proposed "
-            f"not to allow them.{N('legal-6')} {b.hhs_sentence('BPC-157 or TB-500')}{N('legal-13')} "
+    july = (f"<p>On 23 and 24 July 2026 an FDA advisory committee reviewed seven peptides, including BPC-157, TB-500, MOTS-c "
+            f"and epitalon, and in its briefing document the FDA proposed that none of them be added to the list pharmacies may use.{N('legal-6')} {b.hhs_sentence('BPC-157 or TB-500')}{N('legal-13')} "
             'Our guide <a href="/learn/is-bpc-157-legal/">Is BPC-157 legal?</a> explains both.</p>') if review else ""
     body = f"""
 <h2>Which injectable peptides are sold for hair?</h2>
@@ -1923,7 +1925,7 @@ def g_bpc_tb(b, f, N):
 <li><strong>BPC-157</strong>: {bs or "not approved for any use." + N('drugsfda-hair')}</li>
 <li><strong>TB-500</strong>: {ts or "not approved for any use." + N('drugsfda-hair')}</li>
 </ul>
-<p>On 23 and 24 July 2026 the FDA's Pharmacy Compounding Advisory Committee reviewed both, and the FDA proposed not to allow pharmacies to use them to make medicines.{N('legal-6')} {b.hhs_sentence('BPC-157 or TB-500')}{N('legal-13')} The FDA says both may set off an immune reaction when given some ways.{N('fda-bulk-risks')} Our guide <a href="/learn/is-bpc-157-legal/">Is BPC-157 legal?</a> explains the review and the policy.</p>
+<p>On 23 and 24 July 2026 an FDA advisory committee reviewed seven peptides, including BPC-157, TB-500, MOTS-c and epitalon, and in its briefing document the FDA proposed that none of them be added to the list pharmacies may use.{N('legal-6')} {b.hhs_sentence('BPC-157 or TB-500')}{N('legal-13')} The FDA says both may set off an immune reaction when given some ways.{N('fda-bulk-risks')} Our guide <a href="/learn/is-bpc-157-legal/">Is BPC-157 legal?</a> explains the review and the policy.</p>
 
 <h2>What do the studies show?</h2>
 <p>For BPC-157, most of the research is in animals. A 2026 review found three studies in people, with 30 people in all: two looked back at patients treated for knee pain or a bladder condition, and one tested its safety in two people. The reviewers rated the evidence very low in certainty.{N('pm-poolton')}</p>
@@ -1962,7 +1964,9 @@ def g_legal(b, f, N):
     for slug in sorted({r["substance_slug"] for r in b.LEGAL_DB or []}):
         st = b.db_status(slug)
         if st:
-            groups.setdefault(st["label"], []).append(pep_link(b, slug, b.pep_short(slug)))
+            # a substance the database marks as no peptide (NAD+) carries "(not a peptide)" (owner, queue block 35, 20 Nov 2026)
+            groups.setdefault(st["label"], []).append(pep_link(b, slug, b.pep_short(slug))
+                                                      + (" (not a peptide)" if slug in b.NOT_PEPTIDES_DB else ""))
     cos = [r["peptide"] for r in b.LEGAL["rows"] if r.get("chip") == "info"][:3]
     ruo = lambda: (f'The FDA warning letters on our <a href="{b.LETTERS_URL}">letters page</a> went to companies: {f["ruo_letters"]} of the '
            f'{f["letters"]} went to research-use peptide shops.{N("db-letters")}') if f["letters"] else ""
@@ -2015,7 +2019,7 @@ def g_legal(b, f, N):
 <p>Each status on our legal table and our peptide pages comes with its source and the date we first saw it. Our <a href="/#legal">Is it legal today?</a> table and our <a href="/peptides/">peptides A to Z</a> show every one.</p>
 
 <h2>Can a status change?</h2>
-<p>Yes. The FDA can add a substance to a list, move it between categories or approve a new product. In July 2026 its compounding advisory committee reviewed BPC-157, TB-500, MOTS-c and epitalon, and the FDA proposed not to allow them.{N('legal-6')} {b.hhs_sentence('BPC-157, TB-500, MOTS-c, Epitalon, KPV or Semax')}{N('legal-13')} We check the FDA's pages and change our chips when the FDA publishes a decision.</p>
+<p>Yes. The FDA can add a substance to a list, move it between categories or approve a new product. On 23 and 24 July 2026 an FDA advisory committee reviewed seven peptides, including BPC-157, TB-500, MOTS-c and epitalon, and in its briefing document the FDA proposed that none of them be added to the list pharmacies may use.{N('legal-6')} {b.hhs_sentence('BPC-157, TB-500, MOTS-c, Epitalon, KPV or Semax')}{N('legal-13')} We check the FDA's pages and change our chips when the FDA publishes a decision.</p>
 <p>None of this is legal or medical advice.</p>"""
     nxt = (("/peptides/", "See every peptide's status"), ("/learn/is-bpc-157-legal/", "Is BPC-157 legal? guide"))
     return short, body, nxt
@@ -2221,7 +2225,7 @@ def g_joints(b, f, N):
 <h2>What is their FDA status?</h2>
 <p>Neither is FDA approved for any use.{N('drugsfda-hair')} From our database:</p>
 {f"<ul>{stat}</ul>" if stat else ""}
-<p>In July 2026 the FDA's advisory committee on pharmacy compounding reviewed both, and the FDA proposed not to let pharmacies use them.{N('legal-6')} {b.hhs_sentence('BPC-157 or TB-500')}{N('legal-13')}</p>
+<p>On 23 and 24 July 2026 an FDA advisory committee reviewed seven peptides, including BPC-157, TB-500, MOTS-c and epitalon, and in its briefing document the FDA proposed that none of them be added to the list pharmacies may use.{N('legal-6')} {b.hhs_sentence('BPC-157 or TB-500')}{N('legal-13')}</p>
 
 <h2>What do the studies in people show?</h2>
 <p>For BPC-157, a 2026 review searched four databases for any study in people. It found three, with 30 people in all:{N('pm-poolton')}</p>
@@ -2332,7 +2336,7 @@ def g_longevity(b, f, N):
 <li><strong>Epitalon</strong>: not approved for any use.{N('drugsfda-hair')}{f" Our database records that {ep}" if ep else ""}</li>
 <li><strong>MOTS-c</strong>: not approved for any use.{N('drugsfda-hair')}{f" Our database records that {mo}" if mo else ""}</li>
 </ul>
-<p>On 23 and 24 July 2026 the FDA's Pharmacy Compounding Advisory Committee reviewed both, with BPC-157 and TB-500, and the FDA proposed not to allow pharmacies to use them.{N('legal-6')} {b.hhs_sentence('Epitalon or MOTS-c')}{N('legal-13')}</p>
+<p>On 23 and 24 July 2026 an FDA advisory committee reviewed seven peptides, including BPC-157, TB-500, MOTS-c and epitalon, and in its briefing document the FDA proposed that none of them be added to the list pharmacies may use.{N('legal-6')} {b.hhs_sentence('Epitalon or MOTS-c')}{N('legal-13')}</p>
 {nad_st}
 
 <h2>What studies exist in people?</h2>
@@ -2974,6 +2978,7 @@ def g_wl(b, f, N):
     opts = (f"<li><strong>Semaglutide (Wegovy)</strong>: FDA approved. A weekly shot{N('label-wegovy')}"
             + (f", and at {b.plural(pill, 'clinic')} we track also a pill (Wegovy Pill){N(pkey(pills[0]))}" if pill else "") + ".</li>"
             f"<li><strong>Tirzepatide (Zepbound)</strong>: FDA approved. A weekly shot.{N('label-zepbound')}</li>"
+            f"<li><strong>Liraglutide (Saxenda)</strong>: FDA approved. A daily shot.{N('label-saxenda')}</li>"
             "<li><strong>Compounded semaglutide or tirzepatide</strong>: not FDA approved. Pharmacy-made copies, sold by online "
             "clinics on prescription.</li>"
             "<li><strong>Retatrutide</strong>: not approved, still in trials. Sold online only by research-use shops.</li>")
@@ -3002,6 +3007,7 @@ def g_wl(b, f, N):
 <ul>
 <li><strong>Wegovy</strong> (semaglutide): to reduce excess body weight and keep it off in adults with obesity, or with overweight and a weight-related condition.{N('label-wegovy')}</li>
 <li><strong>Zepbound</strong> (tirzepatide): for the same groups, and to treat moderate to severe sleep apnea in adults with obesity.{N('label-zepbound')}</li>
+<li><strong>Saxenda</strong> (liraglutide): to reduce excess body weight and keep it off in adults with obesity, or with overweight and a weight-related condition, and in children 12 and older who weigh more than 60 kg and have obesity.{N('label-saxenda')}</li>
 </ul>
 <p>Ozempic (semaglutide) and Mounjaro (tirzepatide) are the same medicines approved for type 2 diabetes, not for weight loss.{N('label-ozempic')}{N('label-mounjaro')} Compounded copies and retatrutide are not FDA approved.</p>
 
