@@ -896,6 +896,7 @@ body:has(.home-sec) .site-foot { margin-top: 0; }
   .tbl-sl tbody td { padding: 0; }
   .tbl-sl tbody td:first-child { grid-column: 1; }
   .tbl-sl tbody td.sl-from { grid-column: 2; grid-row: 1; text-align: right; }
+  .tbl-sl tbody td.sl-from { align-self: center; }
   .tbl-sl tbody td.sl-what, .tbl-sl tbody td.sl-checks, .tbl-sl tbody td.act { grid-column: 1 / -1; }
   .tbl-sl tbody td.sl-what::before, .tbl-sl tbody td.sl-checks::before, .tbl-sl tbody td.sl-from::before { display: none; }
   .tbl-sl td.act .pick-act { width: 100%; }
@@ -904,6 +905,23 @@ body:has(.home-sec) .site-foot { margin-top: 0; }
 .tbl-sl td.sl-what { min-width: 150px; } /* 180px pushed the clinics table 23px past the container at 1440 (20 Nov 2026, point 7: "Missing" must not widen it) */
 .tbl-sl td.sl-checks { white-space: nowrap; }
 .tbl-sl .sl-under .chip { white-space: normal; } /* the FDA letter chip ("3 letters, Jun 8, 2026") wraps under the name, so the Clinic column never pushes "Visit <Name>" past the table box at 1440 (20 Nov 2026, block 19) */
+/* 641 to 1199px: the table's box is narrower than the table (783px at its smallest), so each clinic is a card, as on phones
+   (owner Q1 a, 21 Nov 2026; sellers-list.md). The table never scrolls sideways. */
+@media (min-width: 641px) and (max-width: 1199px) {
+  .tbl-wrap:has(> .tbl-sl) { border: 0; background: none; overflow: visible; }
+  .tbl-sl thead { display: none; }
+  .tbl-sl, .tbl-sl tbody, .tbl-sl tr, .tbl-sl td { display: block; width: auto; min-width: 0; }
+  .tbl-sl tbody tr { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 16px; border: 1px solid var(--line); border-radius: var(--radius-panel); background: var(--white); padding: 12px 14px; margin-bottom: 10px; }
+  .tbl-sl tbody tr[hidden] { display: none; }
+  .tbl.tbl-sl tbody tr > td { height: auto; padding: 0; border: 0; }
+  .tbl-sl tbody td:first-child { grid-column: 1; }
+  .tbl-sl tbody td.sl-from { grid-column: 2; grid-row: 1; text-align: right; }
+  .tbl-sl tbody td.sl-from { align-self: center; }
+  .tbl-sl tbody td.sl-what, .tbl-sl tbody td.sl-checks, .tbl-sl tbody td.act { grid-column: 1 / -1; }
+  .tbl-sl td.sl-what { min-width: 0; }
+  .tbl-sl td.act { width: auto; margin-top: 4px; }
+  .tbl-sl td.act .pick-act { width: var(--cta-width, 196px); }
+}
 /* with JavaScript the tab names the table; the h2 stays for screen readers and the outline */
 .sl-js .sellers-sec > .h-sources { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 @media (max-width: 899px) { .hero-clinic .fig3d-label { font-size: 13px; } }
