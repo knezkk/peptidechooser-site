@@ -111,9 +111,12 @@ gsap.fromTo(on,{opacity:0},{opacity:1,duration:swapS,ease:'power1.out'});
 gsap.fromTo(root.querySelectorAll('.step-panel[data-goal="'+k+'"] .opt'),{opacity:0,y:4},{opacity:1,y:0,duration:swapS,ease:'power1.out',stagger:0.04});}
 // Every goal choice (pin, list, arrow keys, the menu's #goals-<slug>) tells the page: "pc-goal" on document with
 // detail.goal, and html[data-goal] for scripts that start later (owner, 20 Nov 2026, point 6: the seller filter follows).
+// It fires also for the goal already chosen, after the filter's x cleared it (queue block 55, point 6).
 function tell(k){document.documentElement.setAttribute('data-goal',k);document.dispatchEvent(new CustomEvent('pc-goal',{detail:{goal:k}}));}
 tell(cur);
-function pick(k){if(k===cur)return;cur=k;tell(k);
+function pick(k){
+tell(k);
+if(k===cur)return;cur=k;
 root.querySelectorAll('.goal-item,.pin').forEach(function(x){var on=x.getAttribute('data-goal')===k;
 if(x.hasAttribute('aria-pressed'))x.setAttribute('aria-pressed',on?'true':'false');x.classList.toggle('on',on);});
 if(fig&&fig.mark)setTimeout(fig.mark);
@@ -145,7 +148,7 @@ var d=e.target.closest('.sellers-dlg');if(d&&e.target===d)d.close();});})();
 (function(){var tip=document.createElement('div'),cur=null,at0=0,touch=false,hov=window.matchMedia&&matchMedia('(hover: hover)').matches;
 tip.id='pc-tip';tip.className='pc-tip';tip.setAttribute('role','tooltip');tip.hidden=true;document.body.appendChild(tip);
 function fill(t){if(t.classList.contains('tip-t')){var d=document.getElementById(t.getAttribute('aria-describedby'));tip.innerHTML=d?d.innerHTML:'';return !!d;}
-var o=t.closest('.opt'),d=o&&o.querySelector('.opt-does');if(!d)return false;var c=d.cloneNode(true);c.querySelectorAll('sup').forEach(function(x){x.remove();});
+var o=t.closest('.opt'),d=o&&o.querySelector('.opt-does');if(!d)return false;var c=d.cloneNode(true);c.querySelectorAll('sup,a.ref').forEach(function(x){x.remove();});
 tip.textContent=c.textContent.trim();return !!tip.textContent;}
 function show(t){if(cur===t)return;if(!fill(t))return hide();cur=t;at0=Date.now();tip.hidden=false;var r=(t.classList.contains('tip-o')?t.closest('.opt-sum'):t).getBoundingClientRect(),w=tip.offsetWidth,h=tip.offsetHeight,
 x=Math.max(16,Math.min(r.left,document.documentElement.clientWidth-w-16)),y=r.bottom+8;if(y+h>innerHeight-8&&r.top-h-8>0)y=r.top-h-8;
