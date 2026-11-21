@@ -372,7 +372,27 @@ ODOBRENO SEO - Karlo - 21. 11. 2026 - block 56 (PR #241: 24 descriptions lose on
 /peptides/thymulin/ b248f3f1e1fa
 /peptides/triptorelin/ f14262b99508
 /peptides/vardenafil/ 729f2a3b7c99
-
 ODOBRENO SEO - Karlo - 20. 11. 2026 - July 2026 sentences (PR #239: the FDA committee review sentence "On 23 and 24 July 2026 an FDA advisory committee reviewed seven peptides, including BPC-157, TB-500, MOTS-c and epitalon, and in its briefing document the FDA proposed that none of them be added to the list pharmacies may use." on the six guides that describe the review; body text only; typed in the w3 terminal)
 
 ODOBRENO SEO - Karlo - 20. 11. 2026 - PR #239 (block 35: the Home "What is a peptide?" text; HOME_LEDE "Find the right peptide for your goal and what it costs where it is sold."; the "Not a peptide" chips; card label "On prescription"; goal FAQ "Which {goal peptides} are there?"; Saxenda in the weight-loss guide; NAD+ "(not a peptide)" in the legal guide; "not a crime" removed; the "Not approved" label text; body text, no title, H1 or URL change; typed in the w3 terminal)
+
+ODOBRENO SEO - Karlo - 21. 11. 2026 - block 57 (13 descriptions back over 110 characters with the page's own count line; the 4 price moves over 50% are not covered: the data agent checks them, owner Q2 A; owner in the terminal)
+/compare/semaglutide-vs-tirzepatide/ eaed6f88ea01
+/peptides/afamelanotide/ e8627acef689
+/peptides/aod-9604/ 1b3d8dbdc1cd
+/peptides/dihexa/ 598543a2a871
+/peptides/elamipretide/ 6e2bc31ffbad
+/peptides/ghrp-2/ 7970ae446c25
+/peptides/ghrp-6/ 42d77f08b8e3
+/peptides/ibutamoren/ 29ae9e2d1edf
+/peptides/ll-37/ a9f98cf6de5e
+/peptides/mecasermin/ b11affcc0702
+/peptides/peg-mgf/ f90e97c49421
+/peptides/selank/ 46cd65c1533b
+/peptides/thymosin-alpha-1/ b41ca2133321
+ODOBRENO SEO - Karlo - 21. 11. 2026 - block 57 prices (data of 21 Nov 2026: TB-500 lowest $1.83/mg on /peptides/tb-500/ and /compare/ghk-cu-vs-tb-500/; Go Alpha Labs from $0.032/mg; Paramount Peptides from $0.043/mg; Pinnacle Peptides from $2.40/mg, 22 products; owner in the terminal)
+/compare/ghk-cu-vs-tb-500/ e95cb6d1cda4
+/peptides/tb-500/ 0e707c534ab1
+/sellers/go-alpha-labs/ d7f2868656b0
+/sellers/paramount-peptides/ 7b88d322f208
+/sellers/pinnacle-peptides-pinnacle-professional-research/ 24b3552ac865
