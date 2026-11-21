@@ -43,6 +43,7 @@ Body text runs at most 80 characters a line (owner task w2, 3 Nov 2026): `max-wi
 - Three things may be smaller:
   - a link inside a line of text;
   - a footnote number (24 by 24px, WCAG 2.5.8; its tap areas may touch the next number's);
+  - a "Source" link (20 Nov 2026): a plain link inside its line of text, the WCAG 2.5.8 inline exception;
   - an FDA letter chip link in a line of text (at least 24px).
 - No text under 13px on a phone: chips, the seller score marks and the Checked stamp are 13px under 640px. Footnote numbers and visually hidden text are the exceptions, and so is a seller tile's monogram, which is a picture hidden from screen readers (owner package 4 Nov 2026).
 - No two controls overlap.

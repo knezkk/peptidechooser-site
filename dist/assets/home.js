@@ -145,7 +145,7 @@ var d=e.target.closest('.sellers-dlg');if(d&&e.target===d)d.close();});})();
 (function(){var tip=document.createElement('div'),cur=null,at0=0,touch=false,hov=window.matchMedia&&matchMedia('(hover: hover)').matches;
 tip.id='pc-tip';tip.className='pc-tip';tip.setAttribute('role','tooltip');tip.hidden=true;document.body.appendChild(tip);
 function fill(t){if(t.classList.contains('tip-t')){var d=document.getElementById(t.getAttribute('aria-describedby'));tip.innerHTML=d?d.innerHTML:'';return !!d;}
-var o=t.closest('.opt'),d=o&&o.querySelector('.opt-does');if(!d)return false;var c=d.cloneNode(true);c.querySelectorAll('sup').forEach(function(x){x.remove();});
+var o=t.closest('.opt'),d=o&&o.querySelector('.opt-does');if(!d)return false;var c=d.cloneNode(true);c.querySelectorAll('sup,a.ref').forEach(function(x){x.remove();});
 tip.textContent=c.textContent.trim();return !!tip.textContent;}
 function show(t){if(cur===t)return;if(!fill(t))return hide();cur=t;at0=Date.now();tip.hidden=false;var r=(t.classList.contains('tip-o')?t.closest('.opt-sum'):t).getBoundingClientRect(),w=tip.offsetWidth,h=tip.offsetHeight,
 x=Math.max(16,Math.min(r.left,document.documentElement.clientWidth-w-16)),y=r.bottom+8;if(y+h>innerHeight-8&&r.top-h-8>0)y=r.top-h-8;
