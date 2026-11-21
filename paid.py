@@ -26,6 +26,8 @@ NETWORKS = {
     "awin": ("Awin", "Awin: paid links through this network pass through awin1.com."),
     "cj": ("CJ", "CJ: paid links through this network pass through anrdoezrs.net."),
     "firstpromoter": ("FirstPromoter", "FirstPromoter: paid links through this service go to the brand's own site with our code in the address."),
+    # a brand's own program, no network (queue block 55, point 10g: /disclosure/ printed the raw "in_house")
+    "in_house": ("In-house", "In-house: paid links through a brand's own program go straight to the brand's site."),
 }
 
 
@@ -185,6 +187,6 @@ def networks_block():
                   key=lambda k: (list(NETWORKS).index(k) if k in NETWORKS else len(NETWORKS), k))
     if not keys:
         return "<p>We may take part in affiliate programs run by individual brands and by affiliate networks. We will list the networks we work with on this page as those relationships start.</p>"
-    lines = "".join(f"<li>{NETWORKS[k][1] if k in NETWORKS else escape(k)}</li>" for k in keys)
+    lines = "".join(f"<li>{NETWORKS[k][1] if k in NETWORKS else escape(k.replace('_', ' ').capitalize())}</li>" for k in keys)
     return ("<p>We may take part in affiliate programs run by individual brands and by affiliate networks. "
             f"These are the networks where we have an approved account:</p>\n<ul>{lines}</ul>")

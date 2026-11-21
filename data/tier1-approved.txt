@@ -346,3 +346,29 @@ ODOBRENO SEO - Karlo - 20. 11. 2026 - t61 prices (the 8 description texts in w2'
 ODOBRENO SEO - Karlo - 20. 11. 2026 - block 48 (PR #235: the price column names "First 2 months", "Intro price", "Then monthly", "Per month"; the seller note under "Plans and prices"; intro sentences "$X first N months, then $Y/mo" on offer and compare pages; body text, no title, H1 or description changes; typed in the w2 terminal, with ODOBRENO DIZAJN - Karlo - 20. 11. 2026 - price columns)
 
 ODOBRENO SEO - Karlo - 20. 11. 2026 - block 54 (PR #237: the column "From, per month"; the seller note sentence "From is the lowest monthly price on any plan length the clinic sells; a longer plan can cost less a month."; the plan page row "Lowest price: $X a month on a N-month plan; $Y a month on the shortest plan"; the lower table prices; descriptions /sellers/healthrx/ and /learn/bpc-157-prescription-online/ pass as prices only; typed in the w2 terminal)
+
+ODOBRENO SEO - Karlo - 21. 11. 2026 - block 56 (PR #241: 24 descriptions lose only their last sentence "We compare and never sell." / "We compare; we never sell.", nothing in its place, owner answer Q1 A: the 13 under 110 characters stay short; the footer sentence "An independent comparison site for the United States. Not medical advice: talk to a doctor before starting any treatment."; "FDA letter, <date>" and "Legal option: ..." / "No legal option for use in people yet" lines; typed in the w2 terminal)
+/compare/acetyl-hexapeptide-8-vs-palmitoyl-pentapeptide-4/ df1d7ed27ef4
+/compare/semaglutide-vs-tirzepatide/ 06346f9a7f37
+/ 72581e328986
+/peptides/afamelanotide/ a44087eddaa5
+/peptides/aod-9604/ 4324fdfcc9d1
+/peptides/ara-290/ 5ddd7ef583e8
+/peptides/cjc-1295/ e52eb9d50b2e
+/peptides/dihexa/ fd7c7876e0ad
+/peptides/elamipretide/ b894097d2969
+/peptides/ghrp-2/ e74b8e759bb8
+/peptides/ghrp-6/ 6a33a897444c
+/peptides/glutathione/ e300a1209623
+/peptides/ibutamoren/ 516c2c6edd5f
+/peptides/kpv/ 27aec3253743
+/peptides/ll-37/ f1bf5dec9cae
+/peptides/mecasermin/ c45f83adb165
+/peptides/oxytocin/ 5420d0dcd32b
+/peptides/peg-mgf/ 29523035333d
+/peptides/selank/ 37a77c6f5fbc
+/peptides/semax/ 28f77281584c
+/peptides/thymosin-alpha-1/ a0689b842455
+/peptides/thymulin/ b248f3f1e1fa
+/peptides/triptorelin/ f14262b99508
+/peptides/vardenafil/ 729f2a3b7c99

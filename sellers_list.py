@@ -141,11 +141,11 @@ def page(b):
     shops = sorted(b.SHOPS.values(), key=b.sellers_order)
     clinics = sorted(b.CLINIC_PROFILES.values(), key=lambda r: (*b.paid_rank(r["seller_slug"]), b.seller_name(r).lower()))
     checked = max((r["score_checked_on"] for r in b.PROFILES.values() if r.get("score_checked_on")), default="")
-    lede = (f"{b.plural(len(clinics), 'online clinic')} that prescribe and ship, then {b.plural(len(shops), 'research-use shop')}." if clinics else
-            f"{b.plural(len(shops), 'research-use shop')}.")
+    lede = (f"{b.plural(b.site_count('clinics'), 'online clinic')} that prescribe and ship, then {b.plural(b.site_count('shops'), 'research-use shop')}." if clinics else
+            f"{b.plural(b.site_count('shops'), 'research-use shop')}.")
     tabs = ("<div class=\"seg sellers-tabs\" role=\"group\" aria-label=\"Show\" hidden>"
-            f'<button type="button" class="seg-b" data-type="clinics"{b.ev("tab_change", tab="clinics")} aria-pressed="true">Online clinics ({len(clinics)})</button>'
-            f'<button type="button" class="seg-b" data-type="shops"{b.ev("tab_change", tab="shops")} aria-pressed="false">Research-use shops ({len(shops)})</button></div>') if clinics and shops else ""
+            f'<button type="button" class="seg-b" data-type="clinics"{b.ev("tab_change", tab="clinics")} aria-pressed="true">Online clinics ({b.site_count("clinics")})</button>'
+            f'<button type="button" class="seg-b" data-type="shops"{b.ev("tab_change", tab="shops")} aria-pressed="false">Research-use shops ({b.site_count("shops")})</button></div>') if clinics and shops else ""
     sorts = "".join(f'<option value="{k}">{t}</option>' for k, t in b.SELLER_SORTS)
     bar = f"""<div class="letters-filter sellers-filter sl-bar" hidden>
       {tabs}
