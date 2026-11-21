@@ -60,6 +60,9 @@ p { margin: 0 0 1em; }
 .has-q #sp-form { min-height: 100vh; } /* /search/?q=...: the results' height reserved, so the goals strip does not jump (Lighthouse CLS) */
 .goal-first h1 { max-width: 30ch; margin-bottom: 12px; }
 .goal-first .intro { max-width: 58ch; font-size: var(--ui-size); line-height: 1.55; margin: 12px 0 0; }
+/* queue block 38: the peptide-first lede and the two cards fill the column next to the photo (owner, 21 Nov 2026) */
+.goal-first .intro-wide { max-width: none; }
+.goal-first .hero-cards { margin-top: var(--space-4); grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
 .goal-sec { padding: 48px 0 0; }
 .goal-opts { padding-top: 0; }
 .goal-opts .flow-solo { margin-top: 0; }
