@@ -372,3 +372,17 @@ ODOBRENO SEO - Karlo - 21. 11. 2026 - block 56 (PR #241: 24 descriptions lose on
 /peptides/thymulin/ b248f3f1e1fa
 /peptides/triptorelin/ f14262b99508
 /peptides/vardenafil/ 729f2a3b7c99
+ODOBRENO SEO - Karlo - 21. 11. 2026 - block 57 (13 descriptions back over 110 characters with the page's own count line; the 4 price moves over 50% are not covered: the data agent checks them, owner Q2 A; owner in the terminal)
+/compare/semaglutide-vs-tirzepatide/ eaed6f88ea01
+/peptides/afamelanotide/ e8627acef689
+/peptides/aod-9604/ 1b3d8dbdc1cd
+/peptides/dihexa/ 598543a2a871
+/peptides/elamipretide/ 6e2bc31ffbad
+/peptides/ghrp-2/ 7970ae446c25
+/peptides/ghrp-6/ 42d77f08b8e3
+/peptides/ibutamoren/ 29ae9e2d1edf
+/peptides/ll-37/ a9f98cf6de5e
+/peptides/mecasermin/ b11affcc0702
+/peptides/peg-mgf/ f90e97c49421
+/peptides/selank/ 46cd65c1533b
+/peptides/thymosin-alpha-1/ b41ca2133321
