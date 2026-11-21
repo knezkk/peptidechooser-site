@@ -33,9 +33,11 @@ What every page carries, and the rules for all of them. Index: [`design/pages.md
 
 ## Schema.org (owner task 2 Nov 2026)
 
-JSON-LD in build.py on every page: Organization (name, url, logo) and WebSite on Home; BreadcrumbList on every inner page; Article on guides; ItemList (one ListItem per row, name and url) on the letters page and on /sellers/ when it exists. `tools/check.py` parses every block and fails a page that lacks the type it needs.
+**Schema and facts of 20 Nov 2026** (points 9 and 10): [nov20.md](nov20.md).
 
 ## Rules that apply to every page
+
+- **Source links** (point 5, 20 Nov 2026): no footnote numbers on any page; each claim ends with its "Source" link (nov20.md, Parts, e), and each Sources entry, also on /sources/, has its own anchor.
 
 - **"legit", the exceptions** (owner decision 2 Nov 2026; title: ODOBRENO PRAVILA - Karlo - 14. 11. 2026 - legit in seller titles): banned as a claim, except on a seller page: the H2 "Is <Name> legit? What we can check", its closing sentence, and the title "<Name> Reviews <year>: Is It Legit? ..." (seller.md). `tools/check.py` tests each case.
 

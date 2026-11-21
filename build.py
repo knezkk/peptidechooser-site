@@ -636,7 +636,87 @@ FEED_LINK = '\n<link rel="alternate" type="application/rss+xml" title="FDA warni
 CANON = json.loads((ROOT / "data" / "canonicals.json").read_text(encoding="utf-8"))["pages"] if (ROOT / "data" / "canonicals.json").exists() else {}
 
 
+# "Source" in place of footnote numbers (parts.md, Source link; owner, 20 Nov 2026, point 5: ODOBRENO DIZAJN + SEO +
+# PRAVILA - Karlo - 20.11.2026). Every footnote the templates draw (a number in <sup>, linked to its Sources entry) becomes
+# the word "Source" after a space, so no number ever touches a price in the HTML. A claim with two or more sources in a
+# row reads "Source, Source 2, Source 3" (the count inside the claim, never the page's number). The page's number stays
+# in data-n, so the Sources list keeps its order and tools/check.py still checks that each link lands on its entry.
+_REF_ONE = (r'<sup><a class="ref" href="(?P<a>[^"]+)" aria-label="Source (?P<an>\d+)">\d+</a></sup>'
+            r'|<a class="ref" href="(?P<b>[^"]+)" aria-label="Source (?P<bn>\d+)"><sup>\d+</sup></a>'
+            r'|<sup>(?P<c>(?:<a href="#[^"]+">\d+</a>(?:, )?)+)</sup>')
+_REF_ANY = re.sub(r"\?P<\w+>", "", _REF_ONE)
+_REF_RUN = re.compile(rf'(?:{_REF_ANY})(?:(?:,\s*)?(?:{_REF_ANY}))*')
+
+
+def src_refs(html):
+    def run(m):
+        found = []
+        for r in re.finditer(_REF_ONE, m.group(0)):
+            if r["c"]:
+                found += re.findall(r'<a href="(#[^"]+)">(\d+)</a>', r["c"])
+            else:
+                found.append((r["a"] or r["b"], r["an"] or r["bn"]))
+        links = ", ".join(f'<a class="ref" href="{h}" data-n="{n}">Source{"" if i == 0 else " " + str(i + 1)}</a>'
+                          for i, (h, n) in enumerate(found))
+        before = m.string[m.start() - 1] if m.start() else " "
+        return ("" if before.isspace() or before == "(" else " ") + links
+    return _REF_RUN.sub(run, html)
+
+
+# The parts of 20 Nov 2026 (nov20.md, Parts; ODOBRENO DIZAJN + PRAVILA - Karlo - 20.11.2026, queue
+# block 18). w1 draws them; w2, w3 and w4 place them on the pages (their blocks 55, 35 and "Nov 20"). Every word and
+# number comes from the caller (data or the approved Tier 1 text); these functions only give them their shape.
+def pep_box(question, answer):
+    """"What is a peptide?" under the Home H1: one box at the full content width at every width (point 1)."""
+    return f'<div class="pep-box"><p><strong>{question}</strong> {answer}</p></div>' if answer else ""
+
+
+NOT_PEPTIDE = '<span class="chip chip-np">Not a peptide</span>'  # point 3: every proven option that is not a peptide
+
+
+def opt_group(name):
+    """The group heading row in the option list (point 3): "Peptides", then "Proven alternative (not a peptide)"."""
+    return f'<li class="opt-group"><h3>{name}</h3></li>'
+
+
+def ru_act(shops, legal="", act="", paid=False):
+    """The research-use row's action column (point 4): "Lab-use only. We don't link them.", the shops link (`shops`, the
+    seller window's opener or a link, "See the N shops and their checks"), then the legal option for use in people: `legal`
+    ("<name> from $X", from data) and its one button `act` (btn-action through /out/ with "Paid link" under it when
+    `paid`, else btn-wait to our page). With no legal option: "No legal option for use in people yet"."""
+    alt = (f'<span class="ru-alt">Legal option: {legal}</span>{act}' + ('<span class="paid">Paid link</span>' if paid else "")
+           if legal else '<span class="ru-alt ru-none">No legal option for use in people yet</span>')
+    return f'<span class="pick-act ru-act"><span class="ru-note">Lab-use only. We don\'t link them.</span>{shops}{alt}</span>'
+
+
+def goal_filter(slug, goal, shown, total, change="#goals"):
+    """"Where to get it" filtered by the chosen goal (point 6): the chip "Goal: <goal> ×" (the × clears it), "Change goal",
+    "Show all N sellers" and "N of N sellers" (aria-live). The rows stay in the HTML; the page script hides and shows them
+    and rewrites the chip, the count and data-goal on every goal click (w2 block 55, w4 "Nov 20"). The empty state sits
+    under it, hidden until a goal has no clinic."""
+    return (f'<div class="goal-filter" data-goal="{slug}">'
+            f'<span class="chip-filter">Goal: <strong>{goal}</strong><button type="button" class="chip-x" '
+            f'aria-label="Remove the goal filter, {goal}">×</button></span>'
+            f'<a class="gf-change" href="{change}">Change goal</a>'
+            f'<button type="button" class="gf-all">Show all {total} sellers</button>'
+            f'<span class="gf-count" aria-live="polite">{shown} of {total} sellers</span></div>'
+            f'<p class="gf-empty" hidden>No online clinic for this goal yet. '
+            f'<a href="/sellers/">See all {total} sellers</a></p>')
+
+
+def missing_line(missing):
+    """The second line under "x of y" in the same cell (point 7): "Missing: <check>"; two or more, "Missing: N checks" with
+    the list in the HTML, shown on hover, keyboard focus and tap, and read by a screen reader in place."""
+    if not missing:
+        return ""
+    if len(missing) == 1:
+        return f'<span class="missing">Missing: {missing[0]}</span>'
+    return (f'<span class="missing missing-n" tabindex="0">Missing: {len(missing)} checks'
+            f'<span class="missing-list"><span class="vh">: </span>{", ".join(missing)}</span></span>')
+
+
 def page(path, title, description, body, schema="", crumb=None):
+    body = src_refs(body)
     canonical = SITE + CANON.get(path, path)
     og = f"{SITE}/assets/og/{og_name(path)}.png"
     return f"""<!doctype html>
@@ -2606,7 +2686,7 @@ TIP_JS = """<script>
 (function(){var tip=document.createElement('div'),cur=null,at0=0,touch=false,hov=window.matchMedia&&matchMedia('(hover: hover)').matches;
 tip.id='pc-tip';tip.className='pc-tip';tip.setAttribute('role','tooltip');tip.hidden=true;document.body.appendChild(tip);
 function fill(t){if(t.classList.contains('tip-t')){var d=document.getElementById(t.getAttribute('aria-describedby'));tip.innerHTML=d?d.innerHTML:'';return !!d;}
-var o=t.closest('.opt'),d=o&&o.querySelector('.opt-does');if(!d)return false;var c=d.cloneNode(true);c.querySelectorAll('sup').forEach(function(x){x.remove();});
+var o=t.closest('.opt'),d=o&&o.querySelector('.opt-does');if(!d)return false;var c=d.cloneNode(true);c.querySelectorAll('sup,a.ref').forEach(function(x){x.remove();});
 tip.textContent=c.textContent.trim();return !!tip.textContent;}
 function show(t){if(cur===t)return;if(!fill(t))return hide();cur=t;at0=Date.now();tip.hidden=false;var r=(t.classList.contains('tip-o')?t.closest('.opt-sum'):t).getBoundingClientRect(),w=tip.offsetWidth,h=tip.offsetHeight,
 x=Math.max(16,Math.min(r.left,document.documentElement.clientWidth-w-16)),y=r.bottom+8;if(y+h>innerHeight-8&&r.top-h-8>0)y=r.top-h-8;

@@ -621,7 +621,8 @@ def check_parts(P):
             continue
         html = re.sub(r"<dialog.*?</dialog>", "", (DIST / name).read_text(encoding="utf-8"), flags=re.S)
         entries = dict((sid, n) for n, sid in re.findall(r'<li value="(\d+)" id="(src-[^"]+)"', html))
-        cited = re.findall(r'<a\b[^>]*href="#(src-[^"]+)"[^>]*>(?:<sup>)?(\d+)(?:</sup>)?</a>', html)
+        # "Source" links (parts.md, Parts of 20 Nov 2026, e) keep the page's number in data-n
+        cited = re.findall(r'<a class="ref" href="#(src-[^"]+)" data-n="(\d+)"', html)
         for sid, n in cited:
             if entries.get(sid) != n:
                 errs.append(f"{name}: footnote {n} ({sid}) has no entry {n} in the page's Sources")
@@ -1000,7 +1001,7 @@ def check_parts(P):
     sellers = seller_names()
     for name in P:
         html = (DIST / name).read_text(encoding="utf-8")
-        for m in re.finditer(r'\((?:<a [^>]*>)?([^()<>]{2,80}?)(?:</a>)?\)\.?<sup><a class="ref" href="#(src-[^"]+)"', html):
+        for m in re.finditer(r'\((?:<a [^>]*>)?([^()<>]{2,80}?)(?:</a>)?\)\.? ?<a class="ref" href="#(src-[^"]+)"', html):
             who = re.split(r"[,;]", m.group(1))[0].strip()
             li = re.search(rf'<li (?:value="\d+" )?id="{re.escape(m.group(2))}">(.*?)</li>', html, re.S)
             src = re.sub(r"<[^>]+>", "", li.group(1)).strip() if li else ""
@@ -1141,7 +1142,7 @@ def check_parts(P):
     for name in (n for n in P if re.fullmatch(r"learn/[^/]+/index\.html", n)):
         html = (DIST / name).read_text(encoding="utf-8")
         sa = re.search(r'<section class="short-answer".*?<p>(.*?)</p>', html, re.S)
-        text = re.sub(r"<[^>]+>", "", re.sub(r"<sup>.*?</sup>", "", sa.group(1))) if sa else ""
+        text = re.sub(r"<[^>]+>", "", re.sub(r'<sup>.*?</sup>|(?:,? ?<a class="ref"[^>]*>[^<]*</a>)+', "", sa.group(1))) if sa else ""
         first = re.split(r"(?<=[.?!])\s", text.strip(), 1)[0]
         if not first or len(first) >= 160:
             errs.append(f"{name}: the short answer's first sentence is {len(first)} characters (under 160)")
@@ -1159,7 +1160,7 @@ def check_parts(P):
             errs.append(f"{name}: 'What to do next' links no built page")
         # a shop is checked on five facts, a clinic on four (owner decision, 4 Nov 2026): no guide sentence gives "five
         # checks" to every seller
-        plain = re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", re.sub(r"<sup>.*?</sup>", "", html[html.find("<main"):html.find("</main>")], flags=re.S)))
+        plain = re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", re.sub(r'<sup>.*?</sup>|<a class="ref"[^>]*>[^<]*</a>', "", html[html.find("<main"):html.find("</main>")], flags=re.S)))
         for sent in re.split(r"(?<=[.?!])\s", plain):
             if re.search(r"\bfive (?:yes or no )?checks\b", sent, re.I) and re.search(r"\b(?:every|each|all|any) (?:peptide )?seller(?:s|'s)?\b", sent, re.I):
                 errs.append(f"{name}: 'five checks' said about every seller: {sent[:100]!r}")
