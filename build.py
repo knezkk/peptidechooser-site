@@ -2280,7 +2280,20 @@ LEGAL_ALTERNATIVES = {r["substance_slug"]: r for r in DATA.get("legal_alternativ
 NO_LEGAL_OPTION = "No legal option for use in people yet"
 
 
-def legal_option_line(p):
+def goal_legal_plan(g):
+    """The goal's legal option for a research-use row with no row in site.legal_alternatives (queue block 58; owner's
+    answer to data task 64, Q2 A, 20 Nov 2026): of the clinic plans the goal page shows (goal_low's plans, priced per
+    month, at an online clinic), a clinic with a paid link first (windows.md), then the lowest monthly price. None: no plan."""
+    if not g:
+        return None
+    subs = (g.get("clinic_table") or {}).get("substances") or []
+    table = clinic_plans(g) or [r for r in PLANS if on_goal(g, r, subs) and r.get("price_monthly") is not None]
+    shown = [r for r in table + [r for p in g["peptides"] for r in option_plans(g, p)]
+             if r.get("price_monthly") is not None and r.get("seller_slug") in CLINIC_PROFILES]
+    return min(shown, key=lambda r: (not has_paid(r["seller_slug"]), float(r["price_monthly"]), r["seller_name"], r["plan_name"])) if shown else None
+
+
+def legal_option_line(p, g=None):
     """The research-use row's legal option lines (queue block 56, point 2), one per option, the row's substances that share
     one clinic and price on one line ("BPC-157 and TB-500 from $129/mo at HealthRX", one Visit): "Legal option: <option>
     from $X/mo at <Seller>" with "Visit <Seller>" and "Paid link" when the clinic has one; a plan priced per order
@@ -2311,6 +2324,12 @@ def legal_option_line(p):
             lines.append(f'Legal option: {name} from <span class="num">{usd(r["lowest_monthly"])}/mo</span> at {who}{btn}')
         else:
             lines.append(f"Legal option: {name} at {who}, priced per order")
+    gp = goal_legal_plan(g) if not lines else None
+    if gp:
+        # "Legal option for <goal>: <plan> from $X/mo at <Seller>" (queue block 58): the goal's plan, not one for the substance
+        btn = clinic_button(gp["seller_slug"], "", placement="option row") if has_paid(gp["seller_slug"]) else ""
+        lines = [f'Legal option for {escape(g["name"].lower())}: {escape(clean(gp["plan_name"]))} from <span class="num">{usd(gp["price_monthly"])}/mo</span> '
+                 f'at {clinic_link(gp["seller_slug"], seller_base(gp["seller_name"]), True)}{btn}']
     if not lines:
         lines = [NO_LEGAL_OPTION]
     return '<div class="opt-legal-list">' + "".join(f'<p class="small opt-legal">{x}</p>' for x in lines[:3]) + "</div>"
@@ -2344,7 +2363,7 @@ def option_rows(g, lazy=False):
                           '</div><div><span class="opt-lab">How to get it</span>', "</div></div>")
         rows.append(f'<li class="opt"><details class="opt-more"><summary class="opt-sum">{option_picture(p, rp)}<span class="opt-m" aria-hidden="true"></span>{head}</summary>'
                     f'<div class="opt-body">{opt_line(g, p, rp, "p")}{c0}<p class="opt-does">{p["does"]}{refs(p, slug, price=not pad)}</p>'
-                    f'{c1}<p class="opt-status">{status}</p>{c2}<p class="opt-how">{how}{cost}</p>{c3}{"" if lazy else opt_facts(g, p)}</div></details>{opt_action(g, p, rp, lazy, pad)}{legal_option_line(p) if not lazy and research_row(p) else ""}</li>')
+                    f'{c1}<p class="opt-status">{status}</p>{c2}<p class="opt-how">{how}{cost}</p>{c3}{"" if lazy else opt_facts(g, p)}</div></details>{opt_action(g, p, rp, lazy, pad)}{legal_option_line(p, g) if not lazy and research_row(p) else ""}</li>')
     return rows
 
 

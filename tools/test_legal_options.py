@@ -47,6 +47,32 @@ class Legal(unittest.TestCase):
         self.assertIn("Compounded BPC-157 and GHK-Cu from", out)
 
 
+class SameGoal(unittest.TestCase):
+    """No row for the substance: the goal's plan, a paid clinic first, then the lowest price (queue block 58)."""
+    G = {"name": "Weight loss", "peptides": []}
+
+    def line(self, plans):
+        with mock.patch.object(b, "LEGAL_ALTERNATIVES", {}), mock.patch.object(b, "goal_legal_plan", lambda g: plans):
+            return b.legal_option_line(ROW, self.G)
+
+    def test_goal_plan(self):
+        out = self.line({"seller_slug": "zz-none", "seller_name": "Rx Clinic", "plan_name": "Weekly Shot", "price_monthly": 49})
+        self.assertIn("Legal option for weight loss: Weekly Shot from", out)
+        self.assertIn("$49/mo", out)
+        self.assertNotIn(b.NO_LEGAL_OPTION, out)
+
+    def test_no_goal_plan(self):
+        self.assertIn(b.NO_LEGAL_OPTION, self.line(None))
+
+    def test_paid_first(self):
+        g = {"slug": "zz", "name": "Zz", "peptides": [], "clinic_plans": None}
+        cheap = {"seller_slug": "a", "seller_name": "A", "plan_name": "x", "price_monthly": 10}
+        paid = {"seller_slug": "b", "seller_name": "B", "plan_name": "y", "price_monthly": 90}
+        with mock.patch.object(b, "clinic_plans", lambda g: [cheap, paid]), mock.patch.object(b, "CLINIC_PROFILES", {"a": {}, "b": {}}), \
+                mock.patch.object(b, "has_paid", lambda s: s == "b"):
+            self.assertIs(b.goal_legal_plan(g), paid)
+
+
 class Letter(unittest.TestCase):
     def test_letter_instead_of_missing(self):
         r = {"seller_slug": "zz-none", "score": 3, "score_lab_testing": True, "score_no_fda_letter": False,
