@@ -644,9 +644,7 @@ body:has(.home-sec) .site-foot { margin-top: 0; }
 .home-sec .sec-hd { padding-bottom: var(--space-3); margin-bottom: var(--space-4); }
 .home-sec .sec-hd > div { width: 100%; }
 .home-sec .sec-hd p { max-width: 58ch; font-size: var(--ui-size); line-height: 1.5; }
-/* By approval (home.md, Compare by goal; ODOBRENO DIZAJN - Karlo - 10. 11. 2026, PR 171): 40px under the goal cards,
-   the group icon in ink on paper-2 in the goal card's panel */
-.home-sec .grp-hd { margin-top: calc(var(--space-6) + var(--space-2)); }
+/* By approval (home.md; ODOBRENO DIZAJN - Karlo - 10. 11. 2026, PR 171): the group icon in ink on paper-2 in the card's panel */
 .grp-pic { --gt: var(--paper-2); --g: var(--ink); }
 .letter-card { padding: var(--space-3) var(--space-4); }
 #letters .sec-act, #learn .sec-act { margin-top: var(--space-3); }
@@ -779,9 +777,7 @@ body:has(.home-sec) .site-foot { margin-top: 0; }
 @media (min-width: 641px) { #compare .grp-cards { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
 /* By approval: one row from 1100px, one column per group card, however many groups are live (ODOBRENO DIZAJN - Karlo - 16. 11. 2026 - By approval in one row) */
 @media (min-width: 1100px) { #compare .grp-cards { grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); } }
-@media (min-width: 641px) and (max-width: 1099px) { #compare .goal-cards:not(.grp-cards) { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
 @media (min-width: 1100px) {
-  #compare .goal-cards:not(.grp-cards) { grid-template-columns: repeat(6, minmax(0, 1fr)); }
   .hero-clinic .flow .opt { min-height: 84px; } /* one line for the name, one for the label: equal rows, no empty second line */
 }
 /* 1100 to 1599px: a narrower figure column and a wider list, so every goal name sits on one line (the list sets the hero's height) */
@@ -821,8 +817,7 @@ body:has(.home-sec) .site-foot { margin-top: 0; }
   .hero-clinic .flow .opt { grid-template-columns: minmax(0, 1fr); }
   .hero-clinic .flow .opt > .pick-act { grid-column: 1; width: 100%; justify-self: stretch; }
 }
-/* Compare by goal: every goal card the same height; By approval: the count never wraps. */
-#compare .goal-cards:not(.grp-cards) { grid-auto-rows: 1fr; }
+/* By approval: the count never wraps. */
 #compare .grp-cards .small { white-space: nowrap; }
 
 /* Sellers v2 (sellers-list.md, Sellers v2; nav-parts.md, Filter column and Bottom sheet; layout.md, Sellers list columns). */
@@ -1080,7 +1075,3 @@ html:not(.motion) .opts .opt-m::before { transition: none; }
   .opts .opt-body { padding-right: 0; }
 }
 @media (min-width: 900px) { .flow .opt:has(> .opt-more:not([open])) > .pick-act { align-self: center; margin-top: 0; } }
-/* Compare by goal without the card row (owner, 20 Nov 2026, point 8): one plain line of text links, one per goal page,
-   across the full content width; 44px tap height (layout.md, Touch). The book lines are in w1's block 18. */
-.goal-links { display: flex; flex-wrap: wrap; gap: 0 var(--space-4); margin: 0; padding: 0; list-style: none; }
-.goal-links a { display: inline-flex; align-items: center; min-height: 44px; font-weight: 600; }
