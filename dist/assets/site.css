@@ -87,6 +87,7 @@ p { margin: 0 0 1em; }
 .hero-after { margin: 20px 0 0; max-width: 62ch; }
 /* Home v2 (owner's sketch, 3 Nov 2026): the H1 promises the option and where to get it; the counts lede sits under it. */
 .hero-lede { margin: 0 0 20px; max-width: 72ch; font-size: var(--ui-size); line-height: 1.5; color: var(--ink-2); }
+.hero-clinic .pep-box { margin-bottom: var(--space-4); } /* a gap before the steps (queue block 37) */
 /* Two columns from 900px: Guides beside How we rate, the legal check beside "Most checked this month". */
 .home-two { display: grid; gap: 40px; }
 .home-two > * { min-width: 0; }
@@ -550,6 +551,7 @@ body > .crumbs { width: -moz-available; width: -webkit-fill-available; width: st
   .hero-clinic .wrap { display: flex; flex-direction: column; }
   .hero-clinic .hero-h1 { order: 1; margin-bottom: 12px; font-size: 22px; line-height: 1.2; }
   .hero-clinic .hero-lede { order: 1; margin-bottom: 14px; } /* under the H1, as in the phone sketch */
+  .hero-clinic .pep-box { order: 1; margin: 0 0 14px; } /* under the H1 and its line (nov20.md, Parts, a; queue block 37) */
   .hero-after { order: 3; }
   .hero-clinic .flow { order: 2; }
   .opt { padding: 12px 14px; }
