@@ -1077,3 +1077,7 @@ html:not(.motion) .opts .opt-m::before { transition: none; }
   .opts .opt-body { padding-right: 0; }
 }
 @media (min-width: 900px) { .flow .opt:has(> .opt-more:not([open])) > .pick-act { align-self: center; margin-top: 0; } }
+/* Compare by goal without the card row (owner, 20 Nov 2026, point 8): one plain line of text links, one per goal page,
+   across the full content width; 44px tap height (layout.md, Touch). The book lines are in w1's block 18. */
+.goal-links { display: flex; flex-wrap: wrap; gap: 0 var(--space-4); margin: 0; padding: 0; list-style: none; }
+.goal-links a { display: inline-flex; align-items: center; min-height: 44px; font-weight: 600; }

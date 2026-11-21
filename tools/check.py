@@ -2235,6 +2235,10 @@ def check_goal_prices(P):
             continue
         legal = None if low and low.endswith("/mg") else low
         got = {"menu": menu and money(menu.group(1)), "Home card": c and money(c.group(1))}
+        # Home's goal card row left on 20 Nov 2026 (owner, point 8, ODOBRENO DIZAJN + SEO + PRAVILA - Karlo - 20.11.2026):
+        # the card is checked while Home draws one; the menu, on every page, still carries the price and is always checked.
+        if not re.search(rf'class="goal-card" href="/{g["slug"]}/"', home):
+            del got["Home card"]
         for where, v in got.items():
             low = legal if where == "menu" else card_low
             if v is not None and low is not None:
