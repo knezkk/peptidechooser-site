@@ -110,13 +110,11 @@ if(!window.pcMotion)return;var on=root.querySelectorAll('.step-panel[data-goal="
 gsap.fromTo(on,{opacity:0},{opacity:1,duration:swapS,ease:'power1.out'});
 gsap.fromTo(root.querySelectorAll('.step-panel[data-goal="'+k+'"] .opt'),{opacity:0,y:4},{opacity:1,y:0,duration:swapS,ease:'power1.out',stagger:0.04});}
 // Every goal choice (pin, list, arrow keys, the menu's #goals-<slug>) tells the page: "pc-goal" on document with
-// detail.goal, and html[data-goal] for scripts that start later (owner, 20 Nov 2026, point 6: the seller filter follows).
-// It fires also for the goal already chosen, after the filter's x cleared it (queue block 55, point 6).
+// detail.goal, and html[data-goal] (also set on load, without the event) for scripts that start later (owner, 20 Nov 2026, point 6: the seller filter follows).
+// It fires also for the goal already chosen (after the filter's × cleared it; queue block 55, .handoff/to-w4.md).
 function tell(k){document.documentElement.setAttribute('data-goal',k);document.dispatchEvent(new CustomEvent('pc-goal',{detail:{goal:k}}));}
-tell(cur);
-function pick(k){
-tell(k);
-if(k===cur)return;cur=k;
+document.documentElement.setAttribute('data-goal',cur);
+function pick(k){tell(k);if(k===cur)return;cur=k;
 root.querySelectorAll('.goal-item,.pin').forEach(function(x){var on=x.getAttribute('data-goal')===k;
 if(x.hasAttribute('aria-pressed'))x.setAttribute('aria-pressed',on?'true':'false');x.classList.toggle('on',on);});
 if(fig&&fig.mark)setTimeout(fig.mark);
