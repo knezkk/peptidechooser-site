@@ -386,3 +386,9 @@ ODOBRENO SEO - Karlo - 21. 11. 2026 - block 57 (13 descriptions back over 110 ch
 /peptides/peg-mgf/ f90e97c49421
 /peptides/selank/ 46cd65c1533b
 /peptides/thymosin-alpha-1/ b41ca2133321
+ODOBRENO SEO - Karlo - 21. 11. 2026 - block 57 prices (data of 21 Nov 2026: TB-500 lowest $1.83/mg on /peptides/tb-500/ and /compare/ghk-cu-vs-tb-500/; Go Alpha Labs from $0.032/mg; Paramount Peptides from $0.043/mg; Pinnacle Peptides from $2.40/mg, 22 products; owner in the terminal)
+/compare/ghk-cu-vs-tb-500/ e95cb6d1cda4
+/peptides/tb-500/ 0e707c534ab1
+/sellers/go-alpha-labs/ d7f2868656b0
+/sellers/paramount-peptides/ 7b88d322f208
+/sellers/pinnacle-peptides-pinnacle-professional-research/ 24b3552ac865
