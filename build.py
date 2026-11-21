@@ -2226,7 +2226,17 @@ def is_not_peptide(p):
 
 def np_chip(p):
     """The "Not a peptide" chip (group.md; home.md 1 Nov 2026, chip-neutral) after an option's status chip."""
-    return '<span class="chip chip-neutral">Not a peptide</span>' if is_not_peptide(p) else ""
+    return NOT_PEPTIDE if is_not_peptide(p) else ""
+
+
+def grouped_rows(g, rows):
+    """The option list in two groups (nov20.md, Parts, b2; owner, queue block 36): "Peptides" first, then "Proven
+    alternative (not a peptide)". The order inside a group stays as order_options set it; a group with no rows has no
+    heading."""
+    pep = [r for p, r in zip(g["peptides"], rows) if not is_not_peptide(p)]
+    alt = [r for p, r in zip(g["peptides"], rows) if is_not_peptide(p)]
+    return ((opt_group("Peptides") + "".join(pep) if pep else "") +
+            (opt_group("Proven alternative (not a peptide)") + "".join(alt) if alt else ""))
 
 
 def opt_head(p):
@@ -2325,7 +2335,7 @@ def rail():
         link = (f'<a class="btn btn-ink" href="/{slug}/">Compare {g["short"].lower()} options</a>' if g.get("page") else
                 '<p class="small">Full comparison for this goal is not published yet. The legal status above is current as of ' + CHECKED + '.</p>')
         inner = (f'<p class="goal-for">{g["for"]}</p><p class="goal-intro">{g["intro"]}</p>'
-                 f'<ul class="opts">{"".join(rows)}</ul>{approved_instead(g)}{link}')
+                 f'<ul class="opts">{grouped_rows(g, rows)}</ul>{approved_instead(g)}{link}')
         # Home lists no sources: a footnote opens its line on /sources/, which carries the same ids (owner answer Q3 a, 3 Nov 2026)
         inner = inner.replace('href="#src-', 'href="/sources/#src-')
         # A goal's own sources that /sources/ does not carry (/menopause/'s goal_only rows) open on the goal's page,
@@ -2847,11 +2857,16 @@ HOME_DESC = (f"Compare the best peptides by goal: FDA status and the lowest pric
              f"checked {PULLED}. We compare; we never sell." if _nc and _ns and PULLED else
              "Find the right option for your goal and where to get it at the best price. Research-use peptides with "
              "their real status.")
+# "What is a peptide?" (owner's words, block 35; ODOBRENO SEO - Karlo - 20. 11. 2026 - PR #239), in w1's box under the H1
+PEP_BOX = pep_box("What is a peptide?", "A short chain of amino acids. Some are FDA-approved medicines, like semaglutide (Wegovy). "
+                  "Many sold online, like BPC-157, are not approved for any use. Not everything on this page is a peptide: proven "
+                  'options that aren\'t are labeled "Not a peptide".')
 HOME = f"""
 <section class="hero hero-clinic">
   <div class="wrap">
     <h1 class="hero-h1">{HOME_H1}</h1>
     <p class="hero-lede">{HOME_LEDE}</p>
+    {PEP_BOX}
     <div class="chooser flow" id="goals">
       <div class="flow-hd fh-goal"><span class="step-n" aria-hidden="true">1</span><h2 id="step-goal">Choose a goal</h2></div>
       <div class="figure">{FIGURE}</div>
@@ -2863,7 +2878,6 @@ HOME = f"""
 </section>
 <section class="hero-more">
   <div class="wrap">
-    <p class="what-is"><strong>What is a peptide?</strong> A short chain of amino acids. Some are FDA-approved medicines, like semaglutide (Wegovy). Many sold online, like BPC-157, are not approved for any use. Not everything on this page is a peptide: proven options that aren't are labeled "Not a peptide".</p>
     <div class="tip-defs" hidden>{TIP_DEFS}</div>
   </div>
 </section>
@@ -3638,7 +3652,7 @@ def category_body(g):
     material: "Is it legal today?" as an accordion, the goals strip, "What to do next" and the sources. The old "Every option,
     side by side" table is gone; its facts the rows did not show are in the opened rows (opt_facts)."""
     srcs = "".join(f'<li id="src-{s["n"]}">{s["text"]}: <a href="{s["url"]}" rel="nofollow">{s["url"]}</a></li>' for s in g.get("sources", []))
-    opt_html = "".join(option_rows(g))
+    opt_html = grouped_rows(g, option_rows(g))
     instead = approved_instead(g)
     lead, moved = intro_split(g["short_answer"])
     subs = {x for p in g["peptides"] for x in subs_of(p)}
