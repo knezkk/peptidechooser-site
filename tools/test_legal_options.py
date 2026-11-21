@@ -41,9 +41,10 @@ class Legal(unittest.TestCase):
                 seller_slug=None, seller_name=None, lowest_monthly=None)
         self.assertIn("Legal option: Brandix (GHK-Cu), FDA approved, on prescription", self.line(r))
 
-    def test_same_option_once(self):
-        out = self.line(alt(), alt(substance_slug="ghk-cu"))
+    def test_same_clinic_and_price_on_one_line(self):
+        out = self.line(alt(), alt(substance_slug="ghk-cu", option_name="GHK-Cu"))
         self.assertEqual(out.count("Legal option:"), 1)
+        self.assertIn("Compounded BPC-157 and GHK-Cu from", out)
 
 
 class Letter(unittest.TestCase):

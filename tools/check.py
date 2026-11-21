@@ -318,6 +318,17 @@ def check_never_sell(P):
     return errs
 
 
+def SITE_COUNTS():
+    """site.counts from data/site.json (spec 0040), {} without it."""
+    return json.loads((ROOT / "data" / "site.json").read_text(encoding="utf-8")).get("counts") or {}
+
+
+def GONE_SELLERS():
+    """The seller pages kept for sellers gone from the data (the live seller archive): built, not in seller_profiles."""
+    have = {r["seller_slug"] for r in json.loads((ROOT / "data" / "site.json").read_text(encoding="utf-8")).get("seller_profiles") or []}
+    return {p.parent.name for p in DIST.glob("sellers/*/index.html")} - have - {"sellers"} if have else set()
+
+
 def check_schema(P):
     errs = []
     for name, p in P.items():
@@ -827,11 +838,17 @@ def check_parts(P):
             if cl and sh and html.index('id="clinics-table"') > html.index('id="sellers-table"'):
                 errs.append(f"{name}: the clinics table does not come first")
             lede = re.search(r'<p class="lede">([^<]*)</p>', html)
-            want = ([f"{len(cl)} online clinic"] if cl else []) + [f"{len(sh)} research-use shop"]
+            # the counts come from site.counts when the data has it (queue block 56, point 3: one count source); a seller
+            # page kept for a seller that is gone (a live page, its redirect) is a row there but not a seller the data counts
+            counts = (json.loads((ROOT / "data" / "site.json").read_text(encoding="utf-8")).get("counts") or {})
+            nc, ns = counts.get("clinics", len(cl)), counts.get("shops", len(sh))
+            want = ([f"{nc} online clinic"] if cl else []) + [f"{ns} research-use shop"]
             if not lede or not all(w in lede.group(1) for w in want):
-                errs.append(f"{name}: the lede's counts are not the rows ({len(cl)} clinics, {len(sh)} shops)")
-            if cl and sh and (f"Online clinics ({len(cl)})" not in html or f"Research-use shops ({len(sh)})" not in html):
-                errs.append(f"{name}: a tab label's count is not its rows")
+                errs.append(f"{name}: the lede's counts are not the data's ({nc} clinics, {ns} shops)")
+            if cl and sh and (f"Online clinics ({nc})" not in html or f"Research-use shops ({ns})" not in html):
+                errs.append(f"{name}: a tab label's count is not the data's")
+            if counts and not (len(cl) + len(sh) - nc - ns == len(GONE_SELLERS() & set(cl + sh))):
+                errs.append(f"{name}: the tables hold {len(cl)} clinics and {len(sh)} shops, the data counts {nc} and {ns}")
             for old in ("Lab report in 12 months", "Fresh prices<", "Legal pages <"):
                 if old in re.sub(r"<script.*?</script>", "", html, flags=re.S).split('class="year-chips"', 1)[-1].split("</div>", 1)[0]:
                     errs.append(f"{name}: an old jargon chip label ({old.strip('<').strip()})")
@@ -1167,7 +1184,8 @@ def check_parts(P):
             if re.search(r'class="[^"]*\bwrap\b|width:\s*100%', m.group(0)):
                 errs.append(f"{name}: header panel is a full-width strip (container class or width:100%)")
         for cnt in set(re.findall(r'<p class="nav-count">([^<]*)</p>', html)):
-            want = {"seller": sellers, "substance": peps, "FDA letter": letters}
+            # sellers: the data's one count (site.counts, queue block 56), which leaves out a gone seller's kept page
+            want = {"seller": SITE_COUNTS().get("sellers", sellers), "substance": peps, "FDA letter": letters}
             for num, word in re.findall(r"(\d+) (seller|substance|FDA letter)s?\b", cnt):
                 if int(num) != want[word]:
                     errs.append(f"{name}: header count '{num} {word}' but the build has {want[word]}")

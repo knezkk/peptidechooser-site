@@ -122,7 +122,8 @@ def where_section(b):
     filter at once. Home stays under its 64 KB (ODOBRENO PRAVILA - Karlo - 13. 11. 2026): the HTML carries the first goal's
     first 8 rows, every row (none removed) is in sellers/home.json, read on the first change."""
     rows = sorted(list(b.SHOPS.values()) + list(b.CLINIC_PROFILES.values()), key=lambda r: where_order(b, r))
-    rows = [r for r in rows if r.get("score") is not None]
+    # a gone seller's kept page is not a seller the data counts (site.counts): not in this table either
+    rows = [r for r in rows if r.get("score") is not None and not r.get("gone")]
     if not rows:
         return "", ""
     n = b.site_count("sellers")  # one count source (queue block 56, point 3)

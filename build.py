@@ -2169,33 +2169,39 @@ NO_LEGAL_OPTION = "No legal option for use in people yet"
 
 
 def legal_option_line(p):
-    """The research-use row's legal option line(s) (queue block 56, point 2), one per distinct option of the row's substances:
-    "Legal option: <option> from $X/mo at <Seller>" with "Visit <Seller>" and "Paid link" when the clinic has one; a plan
-    priced per order "Legal option: <option> at <Seller>, priced per order"; an approved drug "Legal option: <brand>
-    (<substance>), FDA approved, on prescription", no button; none: "No legal option for use in people yet"."""
+    """The research-use row's legal option lines (queue block 56, point 2), one per option, the row's substances that share
+    one clinic and price on one line ("BPC-157 and TB-500 from $129/mo at HealthRX", one Visit): "Legal option: <option>
+    from $X/mo at <Seller>" with "Visit <Seller>" and "Paid link" when the clinic has one; a plan priced per order
+    "Legal option: <option> at <Seller>, priced per order"; an approved drug "Legal option: <brand> (<substance>), FDA
+    approved, on prescription", no button; none: "No legal option for use in people yet". One block under the row."""
     subs = [p["substance"]] if p.get("substance") else list(p.get("substances") or [])
-    seen, lines = set(), []
+    groups = {}
     for s in subs:
         r = LEGAL_ALTERNATIVES.get(s)
         if not r:
             continue
-        key = (r.get("option_kind"), r.get("seller_slug"), r.get("plan_slug"), r.get("option_name"))
-        if key in seen:
-            continue
-        seen.add(key)
-        name = escape(clean(r.get("option_name") or ""))
         if r.get("option_kind") == "fda_approved_drug":
-            lines.append(f'Legal option: {name} ({escape(r.get("substance_name") or sub_label(s))}), FDA approved, on prescription')
+            key = ("drug", r.get("option_name"), s)
+        else:
+            key = ("plan", r.get("seller_slug"), r.get("lowest_monthly"))
+        groups.setdefault(key, []).append(r)
+    lines = []
+    for key, rs in groups.items():
+        r = rs[0]
+        names = [clean(x.get("option_name") or "") for x in rs]
+        name = escape(names[0] if len(names) == 1 else ", ".join(names[:-1]) + " and " + names[-1])
+        if key[0] == "drug":
+            lines.append(f'Legal option: {name} ({escape(r.get("substance_name") or sub_label(r["substance_slug"]))}), FDA approved, on prescription')
             continue
         who = clinic_link(r["seller_slug"], seller_base(r.get("seller_name") or ""), True) if r.get("seller_slug") else ""
         if r.get("lowest_monthly") is not None:
-            btn = (clinic_button(r["seller_slug"], "", placement="legal option") if r.get("has_paid_link") and has_paid(r["seller_slug"]) else "")
+            btn = (clinic_button(r["seller_slug"], "", placement="option row") if r.get("has_paid_link") and has_paid(r["seller_slug"]) else "")
             lines.append(f'Legal option: {name} from <span class="num">{usd(r["lowest_monthly"])}/mo</span> at {who}{btn}')
         else:
             lines.append(f"Legal option: {name} at {who}, priced per order")
     if not lines:
         lines = [NO_LEGAL_OPTION]
-    return "".join(f'<p class="small opt-legal">{x}</p>' for x in lines[:3])
+    return '<div class="opt-legal-list">' + "".join(f'<p class="small opt-legal">{x}</p>' for x in lines[:3]) + "</div>"
 
 
 def research_row(p):
