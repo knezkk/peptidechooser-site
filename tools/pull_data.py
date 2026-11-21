@@ -378,6 +378,13 @@ def main():
         "other_billing_cycle, other_price_per_cycle, other_intro_price, other_intro_months, other_intro_terms, "
         "other_intro_ends_on, other_intro_active, other_promo_price, other_promo_ends_on, other_price_basis "
         "from site.cheapest_elsewhere order by seller_slug, plan_slug") if has_view("cheapest_elsewhere") else []
+    # spec 0040 (data task 64): the legal option for each substance a research-use shop sells (queue block 56, point 2),
+    # and the one row of counts every count on the site comes from (point 3); until the views exist, empty
+    d["legal_alternatives"] = rows(
+        "select substance_slug, substance_name, option_kind, option_name, is_peptide, regulatory_group, seller_slug, "
+        "seller_name, plan_slug, lowest_monthly, has_paid_link, source_url, checked_at "
+        "from site.legal_alternatives order by substance_slug") if has_view("legal_alternatives") else []
+    d["counts"] = (rows("select * from site.counts") or [{}])[0] if has_view("counts") else {}
     products = rows(
         "select seller_slug, seller_name, seller_status, product_name, variant_title, product_url, substance_slug, is_blend, "
         "amount_mg, form, price_usd, price_per_mg, price_observed_at, first_seen, last_seen, has_coa, coa_count"
