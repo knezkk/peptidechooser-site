@@ -2043,7 +2043,7 @@ def check_paid_first(P):
     window, a clinic table, /sellers/, Home's seller list, "Where to get it", "Similar sellers", a group page) no seller
     without a paid link stands above one with a paid link; and on every goal page and Home no option row of a later group
     stands above one of an earlier group (1 its window holds a clinic with a paid link, 2 not FDA approved without one,
-    3 FDA approved without one). A paid link is `paid_url` on the seller's profile in data/site.json."""
+    3 FDA approved without one), inside each of the 20 Nov groups. A paid link is `paid_url` on the seller's profile in data/site.json."""
     errs = []
     d = json.loads((ROOT / "data" / "site.json").read_text(encoding="utf-8"))
     paid = {r["seller_slug"] for r in d.get("seller_profiles") or [] if r.get("paid_url")}
@@ -2072,20 +2072,23 @@ def check_paid_first(P):
                     errs.append(f"{name}: {s.group(1)} (paid link) stands below {seen_unpaid} (no paid link)")
                     break
         for ul in re.findall(r'<ul class="opts">(.*?)</ul>(?=\s*(?:<p class="opt-instead"|<a class="btn|<p class="small"|</div>|$))', html, re.S):
-            last = 1
-            for li in re.findall(r'<li class="opt">.*?(?=<li class="opt">|$)', ul, re.S):
-                key = re.search(r'data-dlg="([^"]+)"', li)
-                win = ""
-                if key:
-                    inline = re.search(rf'<dialog[^>]*id="{re.escape(key.group(1))}".*?</dialog>', html, re.S)
-                    win = inline.group(0) if inline else wins.get(key.group(1), "")
-                head = re.search(r"<summary.*?</summary>", li, re.S)
-                grp = 1 if set(seller.findall(win)) & paid else 3 if head and "chip chip-ok" in head.group(0) else 2
-                if grp < last:
-                    name_ = re.sub(r"<[^>]+>", "", re.search(r'<span class="name">(.*?)</span>', li, re.S).group(1)) if '<span class="name">' in li else "?"
-                    errs.append(f"{name}: option row {name_} (group {grp}) stands below a row of group {last}")
-                    break
-                last = grp
+            # from 20 Nov 2026 (ODOBRENO PRAVILA, windows.md) the rows stand in two groups, "Peptides" then "Proven
+            # alternative (not a peptide)", each headed by <li class="opt-group">; the 11 Nov order holds inside each group
+            for seg in re.split(r'<li class="opt-group">', ul):
+              last = 1
+              for li in re.findall(r'<li class="opt">.*?(?=<li class="opt">|$)', seg, re.S):
+                  key = re.search(r'data-dlg="([^"]+)"', li)
+                  win = ""
+                  if key:
+                      inline = re.search(rf'<dialog[^>]*id="{re.escape(key.group(1))}".*?</dialog>', html, re.S)
+                      win = inline.group(0) if inline else wins.get(key.group(1), "")
+                  head = re.search(r"<summary.*?</summary>", li, re.S)
+                  grp = 1 if set(seller.findall(win)) & paid else 3 if head and "chip chip-ok" in head.group(0) else 2
+                  if grp < last:
+                      name_ = re.sub(r"<[^>]+>", "", re.search(r'<span class="name">(.*?)</span>', li, re.S).group(1)) if '<span class="name">' in li else "?"
+                      errs.append(f"{name}: option row {name_} (group {grp}) stands below a row of group {last}")
+                      break
+                  last = grp
     return errs
 
 

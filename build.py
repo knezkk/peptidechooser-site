@@ -5349,6 +5349,14 @@ def pep_description(slug):
     # table's own count line, a fact the page shows
     if len(" ".join(parts + ["Checked Sep 30, 2026."])) < 110 and pep_plans(slug):
         parts.append(f'{plural(len(pep_plans(slug)), "plan")} at the online clinics we track.')
+    # still too short with no plan (queue block 57, 21 Nov 2026, after "We compare and never sell." went): the letters
+    # section's own count line, with the name while it fits and "it" when the name would push the date out
+    if len(" ".join(parts + ["Checked Sep 30, 2026."])) < 110 and LETTERS_ALL and LETTER_SUBS_ON:
+        k = len(LETTER_SUBS.get(slug, []))
+        line = lambda who: (f'{plural(k, "FDA warning letter")} name{"s" if k == 1 else ""} {who}.' if k
+                            else f"No FDA warning letter we track names {who}.")
+        fits = len(" ".join(parts + [line(n), "Checked Sep 30, 2026."])) <= 160
+        parts.append(line(n if fits else "it"))
     parts.append(f"Checked {nice_date(pep_checked(slug))}.")
     out = parts[0]
     for x in parts[1:]:
@@ -6856,8 +6864,13 @@ def cmp_sub_page(a, b, goals):
     # the brand table and the questions in their own section, then "What to do next" (SEO round c, queue block 9)
     body += (f'<section class="section" id="more"><div class="wrap">{more}</div></section>\n' if more else "") \
         + (f'<section class="section"><div class="wrap">{nxt}</div></section>\n' if nxt else "")
-    desc = cmp_fit([f"{na} vs {nb}: {cmp_sub_answer(a, b)[0][:-1]}.", *cmp_sub_answer(a, b)[1:2],
-                    f'Both on our {goals[0]["name"].lower()} page.', f"Checked {nice_date(checked)}."])
+    dparts = [f"{na} vs {nb}: {cmp_sub_answer(a, b)[0][:-1]}.", *cmp_sub_answer(a, b)[1:2],
+              f'Both on our {goals[0]["name"].lower()} page.']
+    # too short (queue block 57, 21 Nov 2026): the vardenafil sentence, with the clinic counts "Which to pick" shows
+    nc = [len({r["seller_slug"] for r in pep_plans(x)}) for x in (a, b)]
+    if len(cmp_fit(dparts + ["Checked 30 Sep 2026."])) < 110 and both_ok and all(nc):
+        dparts.append(f"Plans at {nc[0]} and {nc[1]} online clinics we track.")
+    desc = cmp_fit(dparts + [f"Checked {nice_date(checked)}."])
     return cmp_title(f"{na} vs {nb}", "FDA status and prices"), desc, body
 
 
