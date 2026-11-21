@@ -240,7 +240,7 @@ def by_approval(b):
     if not cards:
         return ""
     return f"""
-    <div class="sec-hd grp-hd"><div><h3>By approval</h3><p>The same substances, grouped by what the FDA allows.</p></div></div>
+    <div class="sec-hd"><div><h2>By approval</h2><p>The same substances, grouped by what the FDA allows.</p></div></div>
     <ul class="goal-cards grp-cards">{"".join(cards)}</ul>"""
 
 
@@ -250,15 +250,15 @@ GROUP_NAMES = {"fda-approved": "FDA approved", "prescription": "Prescription and
 
 
 def goals_section(b):
-    """Compare by goal (owner, 20 Nov 2026, point 8; ODOBRENO DIZAJN + SEO + PRAVILA - Karlo - 20.11.2026): the goal card row
-    is gone; the body figure picks a goal above. Every goal page keeps a plain text link from Home in one line of links,
-    then By approval stays."""
-    links = "".join(f'<li><a href="/{g["slug"]}/">{g["label"]}</a></li>' for g in b.CHOOSER_GOALS if g.get("page"))
+    """By approval as its own section (owner, 21 Nov 2026: the whole "Compare by goal" block left Home; the body figure
+    picks a goal above, the header "By goal" menu and the goal list keep a plain link to every goal page). The heading is
+    By approval's own words, now an H2. The section keeps id "compare" for its card grid."""
+    inner = by_approval(b)
+    if not inner:
+        return ""
     return f"""
 <section class="section home-sec" id="compare">
-  <div class="wrap">
-    <div class="sec-hd"><div><h2>Compare by goal</h2><p>{num_word(len(b.CHOOSER_GOALS))} goals, the same rule on each: the FDA-approved option first, then what people buy instead, with its real status.</p></div></div>
-    <ul class="goal-links">{links}</ul>{by_approval(b)}
+  <div class="wrap">{inner}
   </div>
 </section>"""
 
