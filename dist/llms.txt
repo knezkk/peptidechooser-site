@@ -1,6 +1,6 @@
 # Peptide Chooser
 
-> An independent US comparison site: peptide products next to FDA-approved alternatives, with evidence, FDA status and price per month for each goal. We compare; we never sell.
+> An independent US comparison site: peptide products next to FDA-approved alternatives, with evidence, FDA status and price per month for each goal.
 
 
 ## Home and goals (13 pages)

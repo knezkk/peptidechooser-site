@@ -295,6 +295,40 @@ def article_date_errs(name, node):
     return errs
 
 
+# Goal pages that are off Home's goal list and the header menu (build.OFF_MENU_GOALS; queue block 55, point 2): live and in
+# the sitemap, linked from the seller pages they list.
+OFF_MENU_GOALS = {"menopause"}
+
+
+# The owner does not want the "we never sell" phrase anywhere (queue block 56, point 4, 20 Nov 2026), in any page, its
+# description or llms.txt. The newsletter's "We never sell or share the list" (privacy, another meaning) stays.
+NEVER_SELL = re.compile(r"never sell(?! or share the list)|don't sell|we compare, we|sells nothing", re.I)
+
+
+def check_never_sell(P):
+    errs = []
+    for name in P:
+        text = (DIST / name).read_text(encoding="utf-8")
+        for m in NEVER_SELL.finditer(text):
+            errs.append(f"{name}: \"{text[max(0, m.start() - 30):m.end() + 10].strip()}\" (the owner removed this phrase)")
+    llms = DIST / "llms.txt"
+    if llms.exists():
+        for m in NEVER_SELL.finditer(llms.read_text(encoding="utf-8")):
+            errs.append(f"llms.txt: \"{m.group(0)}\" (the owner removed this phrase)")
+    return errs
+
+
+def SITE_COUNTS():
+    """site.counts from data/site.json (spec 0040), {} without it."""
+    return json.loads((ROOT / "data" / "site.json").read_text(encoding="utf-8")).get("counts") or {}
+
+
+def GONE_SELLERS():
+    """The seller pages kept for sellers gone from the data (the live seller archive): built, not in seller_profiles."""
+    have = {r["seller_slug"] for r in json.loads((ROOT / "data" / "site.json").read_text(encoding="utf-8")).get("seller_profiles") or []}
+    return {p.parent.name for p in DIST.glob("sellers/*/index.html")} - have - {"sellers"} if have else set()
+
+
 def check_schema(P):
     errs = []
     for name, p in P.items():
@@ -338,7 +372,21 @@ def check_schema(P):
             except json.JSONDecodeError:
                 continue
             found |= {n.get("@type") for n in data.get("@graph", [data])}
-        need = {"Organization"} if name == "index.html" else set() if name == "404.html" else {"BreadcrumbList"}
+        need = {"Organization", "WebSite"} | ({"ItemList"} if name == "index.html" else set() if name == "404.html" else {"BreadcrumbList"})
+        # one schema block on every page (queue block 55, point 9; out-29 Fix S1): the Organization with the company's legal
+        # name, address and its three policy pages; never a bank or account detail
+        for block in p.jsonld:
+            try:
+                data = json.loads(block)
+            except json.JSONDecodeError:
+                continue
+            for n in data.get("@graph", [data]):
+                if n.get("@type") == "Organization" and n.get("@id") == f"{SITE}/#org":
+                    miss = [k for k in ("legalName", "address", "publishingPrinciples", "correctionsPolicy", "ownershipFundingInfo") if not n.get(k)]
+                    if miss:
+                        errs.append(f"{name}: Organization #org without {', '.join(miss)}")
+            if re.search(r"\b(iban|swift|routing|account number|bank)\b", block, re.I):
+                errs.append(f"{name}: bank or account detail in JSON-LD")
         if re.fullmatch(r"learn/[^/]+/index\.html", name):
             need.add("Article")
         if name in ("sellers/index.html", "fda-warning-letters/index.html"):
@@ -791,11 +839,17 @@ def check_parts(P):
             if cl and sh and html.index('id="clinics-table"') > html.index('id="sellers-table"'):
                 errs.append(f"{name}: the clinics table does not come first")
             lede = re.search(r'<p class="lede">([^<]*)</p>', html)
-            want = ([f"{len(cl)} online clinic"] if cl else []) + [f"{len(sh)} research-use shop"]
+            # the counts come from site.counts when the data has it (queue block 56, point 3: one count source); a seller
+            # page kept for a seller that is gone (a live page, its redirect) is a row there but not a seller the data counts
+            counts = (json.loads((ROOT / "data" / "site.json").read_text(encoding="utf-8")).get("counts") or {})
+            nc, ns = counts.get("clinics", len(cl)), counts.get("shops", len(sh))
+            want = ([f"{nc} online clinic"] if cl else []) + [f"{ns} research-use shop"]
             if not lede or not all(w in lede.group(1) for w in want):
-                errs.append(f"{name}: the lede's counts are not the rows ({len(cl)} clinics, {len(sh)} shops)")
-            if cl and sh and (f"Online clinics ({len(cl)})" not in html or f"Research-use shops ({len(sh)})" not in html):
-                errs.append(f"{name}: a tab label's count is not its rows")
+                errs.append(f"{name}: the lede's counts are not the data's ({nc} clinics, {ns} shops)")
+            if cl and sh and (f"Online clinics ({nc})" not in html or f"Research-use shops ({ns})" not in html):
+                errs.append(f"{name}: a tab label's count is not the data's")
+            if counts and not (len(cl) + len(sh) - nc - ns == len(GONE_SELLERS() & set(cl + sh))):
+                errs.append(f"{name}: the tables hold {len(cl)} clinics and {len(sh)} shops, the data counts {nc} and {ns}")
             for old in ("Lab report in 12 months", "Fresh prices<", "Legal pages <"):
                 if old in re.sub(r"<script.*?</script>", "", html, flags=re.S).split('class="year-chips"', 1)[-1].split("</div>", 1)[0]:
                     errs.append(f"{name}: an old jargon chip label ({old.strip('<').strip()})")
@@ -1131,7 +1185,8 @@ def check_parts(P):
             if re.search(r'class="[^"]*\bwrap\b|width:\s*100%', m.group(0)):
                 errs.append(f"{name}: header panel is a full-width strip (container class or width:100%)")
         for cnt in set(re.findall(r'<p class="nav-count">([^<]*)</p>', html)):
-            want = {"seller": sellers, "substance": peps, "FDA letter": letters}
+            # sellers: the data's one count (site.counts, queue block 56), which leaves out a gone seller's kept page
+            want = {"seller": SITE_COUNTS().get("sellers", sellers), "substance": peps, "FDA letter": letters}
             for num, word in re.findall(r"(\d+) (seller|substance|FDA letter)s?\b", cnt):
                 if int(num) != want[word]:
                     errs.append(f"{name}: header count '{num} {word}' but the build has {want[word]}")
@@ -1240,7 +1295,7 @@ def check_parts(P):
     src = DIST / "sources" / "index.html"
     if src.exists():
         for sec in re.findall(r'<section class="src-group"[^>]*>(.*?)</section>', src.read_text(encoding="utf-8"), re.S):
-            if "<li>" not in sec:
+            if not re.search(r"<li[ >]", sec):
                 errs.append("sources/index.html: a group with no source")
     return errs
 
@@ -1866,7 +1921,9 @@ def check_offers(P):
             errs.append(f"{name}: indexable without a measured search or two of the three things")
         if f"<loc>{SITE}{path}</loc>" not in offer_map or f"<loc>{SITE}{path}</loc>" in other_maps:
             errs.append(f"{name}: an indexable offer page belongs in sitemap-offer.xml and nowhere else")
-        types = set(re.findall(r'"@type":\s*"([A-Za-z]+)"', " ".join(re.findall(r'<script type="application/ld\+json">(.*?)</script>', html, re.S))))
+        # the sitewide block (Organization #org and WebSite #site, queue block 55, point 9) is on every page; the page's own is a breadcrumb
+        own_ld = [x for x in re.findall(r'<script type="application/ld\+json">(.*?)</script>', html, re.S) if f'"@id":"{SITE}/#org"' not in x]
+        types = set(re.findall(r'"@type":\s*"([A-Za-z]+)"', " ".join(own_ld)))
         if types - {"BreadcrumbList", "ListItem"}:
             errs.append(f"{name}: schema other than BreadcrumbList ({', '.join(sorted(types))})")
     return errs
@@ -1936,7 +1993,7 @@ def check_wave_b(P):
     if menu_goals and "send('goal_pick'" not in nav_js:
         errs.append("assets/nav.js: the By goal menu's goal_pick event is missing")
     for g in d["goals"]:
-        if g.get("page") and (DIST / g["slug"] / "index.html").exists() and g["slug"] not in menu_goals:
+        if g.get("page") and (DIST / g["slug"] / "index.html").exists() and g["slug"] not in menu_goals and g["slug"] not in OFF_MENU_GOALS:
             errs.append(f"index.html: the goal page /{g['slug']}/ is missing from the By goal menu (NAV_GOAL_GROUPS)")
     cards = set(re.findall(r'<a class="goal-card" href="/([a-z0-9-]+)/"', home))
     for slug in sorted(menu_goals | cards):
@@ -1987,7 +2044,7 @@ def check_paid_first(P):
     window, a clinic table, /sellers/, Home's seller list, "Where to get it", "Similar sellers", a group page) no seller
     without a paid link stands above one with a paid link; and on every goal page and Home no option row of a later group
     stands above one of an earlier group (1 its window holds a clinic with a paid link, 2 not FDA approved without one,
-    3 FDA approved without one). A paid link is `paid_url` on the seller's profile in data/site.json."""
+    3 FDA approved without one), inside each of the 20 Nov groups. A paid link is `paid_url` on the seller's profile in data/site.json."""
     errs = []
     d = json.loads((ROOT / "data" / "site.json").read_text(encoding="utf-8"))
     paid = {r["seller_slug"] for r in d.get("seller_profiles") or [] if r.get("paid_url")}
@@ -2016,20 +2073,23 @@ def check_paid_first(P):
                     errs.append(f"{name}: {s.group(1)} (paid link) stands below {seen_unpaid} (no paid link)")
                     break
         for ul in re.findall(r'<ul class="opts">(.*?)</ul>(?=\s*(?:<p class="opt-instead"|<a class="btn|<p class="small"|</div>|$))', html, re.S):
-            last = 1
-            for li in re.findall(r'<li class="opt">.*?(?=<li class="opt">|$)', ul, re.S):
-                key = re.search(r'data-dlg="([^"]+)"', li)
-                win = ""
-                if key:
-                    inline = re.search(rf'<dialog[^>]*id="{re.escape(key.group(1))}".*?</dialog>', html, re.S)
-                    win = inline.group(0) if inline else wins.get(key.group(1), "")
-                head = re.search(r"<summary.*?</summary>", li, re.S)
-                grp = 1 if set(seller.findall(win)) & paid else 3 if head and "chip chip-ok" in head.group(0) else 2
-                if grp < last:
-                    name_ = re.sub(r"<[^>]+>", "", re.search(r'<span class="name">(.*?)</span>', li, re.S).group(1)) if '<span class="name">' in li else "?"
-                    errs.append(f"{name}: option row {name_} (group {grp}) stands below a row of group {last}")
-                    break
-                last = grp
+            # from 20 Nov 2026 (ODOBRENO PRAVILA, windows.md) the rows stand in two groups, "Peptides" then "Proven
+            # alternative (not a peptide)", each headed by <li class="opt-group">; the 11 Nov order holds inside each group
+            for seg in re.split(r'<li class="opt-group">', ul):
+              last = 1
+              for li in re.findall(r'<li class="opt">.*?(?=<li class="opt">|$)', seg, re.S):
+                  key = re.search(r'data-dlg="([^"]+)"', li)
+                  win = ""
+                  if key:
+                      inline = re.search(rf'<dialog[^>]*id="{re.escape(key.group(1))}".*?</dialog>', html, re.S)
+                      win = inline.group(0) if inline else wins.get(key.group(1), "")
+                  head = re.search(r"<summary.*?</summary>", li, re.S)
+                  grp = 1 if set(seller.findall(win)) & paid else 3 if head and "chip chip-ok" in head.group(0) else 2
+                  if grp < last:
+                      name_ = re.sub(r"<[^>]+>", "", re.search(r'<span class="name">(.*?)</span>', li, re.S).group(1)) if '<span class="name">' in li else "?"
+                      errs.append(f"{name}: option row {name_} (group {grp}) stands below a row of group {last}")
+                      break
+                  last = grp
     return errs
 
 
@@ -2166,11 +2226,20 @@ def check_goal_prices(P):
             for s in sorted(set(re.findall(r'<tr[^>]* data-s="([^"]*)"', t)) - own):
                 errs.append(f'{g["slug"]}: the clinic table lists {s or "a plan"}, which is not one of the goal\'s options')
         low = (f"{min(clin):g}/mo" if clin else f"{min(cos):g} a" if cos else f"{min(mg):g}/mg" if mg else None)
+        card_low = low
         m = re.search(rf'<a href="/{g["slug"]}/"[^>]*><span class="nav-l">[^<]*</span><span class="nav-sub">([^<]*)</span>', home)
         menu = re.search(r"from \$([\d,.]+(?:/mo|/mg| a))", m.group(1)) if m else None
         c = re.search(rf'href="/{g["slug"]}/"(?:(?!</a>).)*?goal-price">from \$([\d,.]+(?:/mo|/mg| a))', home, re.S)
+        # the menu and Home show the lowest legal price only (queue block 55, point 2): a goal whose page shows only a
+        # research-use price per mg shows none there; a goal off the menu (OFF_MENU_GOALS) is on neither
+        if g["slug"] in OFF_MENU_GOALS:
+            if m or c:
+                errs.append(f'{g["slug"]}: off the goal list and the menu, but Home still links it there')
+            continue
+        legal = None if low and low.endswith("/mg") else low
         got = {"menu": menu and money(menu.group(1)), "Home card": c and money(c.group(1))}
         for where, v in got.items():
+            low = legal if where == "menu" else card_low
             if v is not None and low is not None:
                 num, unit = re.match(r"([\d.]+)(.*)", v).groups()
                 if f"{float(num):g}{unit}" != low:
@@ -2214,7 +2283,7 @@ def check_us_dates(P):
     return [f"{name}: day-first date {m.group()!r} (write it as Nov 13, 2026)" for name, html in files for m in pat.finditer(html)]
 
 
-CHECKS = {"words": check_words, "seo": check_seo, "schema": check_schema, "parts": check_parts, "data": check_data, "book": check_book, "events": check_events, "logic": check_logic, "rules33": check_rules33, "addresses": check_addresses, "arch": check_arch, "arch-switch": check_arch_switch, "offers": check_offers, "kept-sellers": check_kept_sellers, "wave-b": check_wave_b, "paid-first": check_paid_first, "goal-prices": check_goal_prices, "paid-tab": check_paid_tab, "plan-links": check_plan_links, "per-order": check_per_order, "price-kinds": check_price_kinds, "us-dates": check_us_dates}
+CHECKS = {"words": check_words, "seo": check_seo, "schema": check_schema, "parts": check_parts, "data": check_data, "book": check_book, "events": check_events, "logic": check_logic, "rules33": check_rules33, "addresses": check_addresses, "arch": check_arch, "arch-switch": check_arch_switch, "offers": check_offers, "kept-sellers": check_kept_sellers, "wave-b": check_wave_b, "paid-first": check_paid_first, "goal-prices": check_goal_prices, "paid-tab": check_paid_tab, "plan-links": check_plan_links, "per-order": check_per_order, "price-kinds": check_price_kinds, "us-dates": check_us_dates, "never-sell": check_never_sell}
 
 # Plan names against their form (owner task w2, 3 Nov 2026): a clinic's own plan name can name another form than the
 # plan's `dosage_form` ("Ozempic Pill" for a pen). The site cannot change data, so this only warns, never fails, and the
