@@ -60,17 +60,6 @@ try{if(localStorage.getItem('pc-consent')==='yes')pcLoadGA();}catch(e){}
 <h1>How we rate peptide products and sellers</h1>
 <p class="lede">We judge every shop by five checks and every online clinic by four, and build every goal page by the same rule. The checks are facts we hold about a seller, not a safety grade.</p>
 <p class="small meta">Peptide Chooser editorial team. Last updated Oct 30, 2026. Every claim links to its source. Prices checked Oct 30, 2026.</p>
-<h2 id="rating">How we rate sellers</h2>
-<p>Every seller page shows one rating, from our checks on the date shown. It is not a safety grade or medical advice.</p>
-<div class="tbl-wrap"><table class="tbl">
-<thead><tr><th scope="col">Rating</th><th scope="col">When we give it</th></tr></thead>
-<tbody>
-<tr><td>Legit</td><td>Sells for use in people and meets every check.</td></tr>
-<tr><td>Legit, with gaps</td><td>Sells for use in people, misses one check and has no FDA warning letter; or had an FDA warning letter that the FDA has closed out.</td></tr>
-<tr><td>Caution</td><td>Has an FDA warning letter with no close-out letter, or misses two or more checks.</td></tr>
-<tr><td>Lab-use only</td><td>Sells research-use peptides, labeled not for use in people. Every research-use shop gets it, whatever its checks.</td></tr>
-</tbody></table></div>
-<p>Shops are checked on five facts and online clinics on four, so a rating always sits next to the seller's own checks. A seller not found in a state business registry yet is rated on its other checks. A check we could not make is a gap, not a clean record.</p>
 <h2>The seller checks</h2>
 <p>Online clinics prescribe and ship medicines; they publish no lab reports, so a clinic is checked on four facts, not five: no FDA warning letter, registered company, legal pages, fresh prices. A shop is checked on five. A score is never compared across the two kinds.</p>
 <p>Every shop page and every price window shows a line such as "3 of 5 checks", every clinic page "3 of 4 checks". These are the five, in the order the seller page shows them; a clinic has all but the first. We recompute them each time we pull our data, and the seller page shows the date as "Checked" and a date.</p>
@@ -87,6 +76,15 @@ try{if(localStorage.getItem('pc-consent')==='yes')pcLoadGA();}catch(e){}
 <p>Met when our own price crawl saw at least one price per milligram on the seller's site in the last 30 days. A miss means our prices for this seller are older than that, so read them with care.</p>
 <h3>What the score does not tell you</h3>
 <p>A seller with 5 of 5 can still sell a product that is not approved for any use. A seller with 0 of 5 is one where we found none of the five facts, not one where we found five problems; only a missed "No FDA letter" check means we found something against the seller. Read the checks one by one.</p>
+<h2 id="rating">How we rate sellers</h2>
+<p>Every seller page shows one rating at the top, worked out from the checks above; the sellers list, the goal pages and the comparisons show the same one. It is not a safety grade or medical advice.</p>
+<ul>
+<li><span class="chip chip-neutral rating" data-rating="lab">Lab-use only</span>: every research-use shop, also one that meets all five checks. These shops sell for research use only, not for use in people, so none is rated higher. Its page names a legal option for the same goal when one exists.</li>
+<li><span class="chip chip-ok rating" data-rating="legit">Legit</span>: an online clinic, a supplement shop or a cosmetics shop that meets every check it is rated on.</li>
+<li><span class="chip chip-info rating" data-rating="gaps">Legit, with gaps</span>: one check missing, or an FDA warning letter the FDA has closed out with a close-out letter.</li>
+<li><span class="chip chip-warn rating" data-rating="caution">Caution</span>: an FDA warning letter without a close-out letter, or two checks or more missing.</li>
+</ul>
+<p>The state registry check never lowers the rating. We do not search every state's registry yet, so a seller we have not found in one is rated on its other checks, and its page says "Not found in a state business registry yet".</p>
 <h2>How a goal page is built</h2>
 <ul>
 <li>When the FDA has approved a treatment for the goal, it is listed first.</li>

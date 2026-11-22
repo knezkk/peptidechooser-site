@@ -12,6 +12,7 @@ import re
 from html import escape, unescape
 from urllib.parse import urlparse
 import shutil
+import rating as RATING
 import subprocess
 from datetime import date
 
@@ -1766,6 +1767,30 @@ def out_of(r):
     return len(seller_checks(r))
 
 
+# the FDA letters matched by address, for the rating (the same rows as SELLER_LETTERS, which is built later in this file;
+# the price windows draw the rating while the module loads)
+RATING_LETTERS = {}
+for _r in DATA.get("seller_letters") or []:
+    if _r.get("match_kind") == "domain_or_address":
+        RATING_LETTERS.setdefault(_r["seller_slug"], []).append(_r)
+
+
+def seller_rating(r):
+    """The seller's "Legit?" rating (rating.py; queue block 59, owner decisions 21 Nov 2026): the only way a page calls a
+    seller "Legit". None for a seller with no score yet."""
+    if not r or score_of(r) is None:
+        return None
+    return RATING.seller_rating(r, RATING_LETTERS.get(r["seller_slug"], []),
+                                [(k, {"score_registered_company": "State registry"}.get(k, t)) for k, t in seller_checks(r)],
+                                r.get("seller_kind") == "S1_RUO", lambda d: nice_date(d) if d else "")
+
+
+def rating_chip(r):
+    """The rating as one chip (existing book chips until w1 draws the rating part; to-w1.md, block 59)."""
+    x = seller_rating(r)
+    return f'<span class="chip {x["chip"]} rating" data-rating="{x["key"]}">{x["label"]}</span>' if x else ""
+
+
 def score_line(r):
     """"N of 5 checks" with the five checks as small marks in one line: met chip-ok, not met chip-neutral with a dashed
     ink-muted border, so the state never rests on colour alone (owner answer Q1 a, 2 Nov 2026; it is also spoken).
@@ -1775,7 +1800,7 @@ def score_line(r):
         return ""
     marks = "".join(f'<span class="chip chip-{"ok" if s.get(k) else "neutral"} mark-{"yes" if s.get(k) else "no"}">'
                     f'<span class="vh">{t}: {"yes" if s.get(k) else "no"}</span><span aria-hidden="true">{t}</span></span>' for k, t in SCORE_CHECKS)
-    return (f'<span class="score"><span class="score-n"><span class="num">{s["score"]}</span> of {len(SCORE_CHECKS)} checks</span>'
+    return (f'{rating_chip(PROFILES.get(r["seller_slug"]))}<span class="score"><span class="score-n"><span class="num">{s["score"]}</span> of {len(SCORE_CHECKS)} checks</span>'
             f'<span class="score-marks">{marks}</span></span>')
 
 
@@ -2025,7 +2050,7 @@ def clinic_window(g, p):
         fee = r.get("membership_fee_monthly")
         prof = PROFILES.get(r["seller_slug"], {})
         base = seller_base(r["seller_name"])
-        checks = f'{score_of(prof) or 0} of {out_of(prof)}' if prof else "not checked"
+        checks = f'{rating_chip(prof)}{score_of(prof) or 0} of {out_of(prof)}' if prof else "not checked"
         trs.append(f'<tr{state_attrs(r["seller_slug"])}><td><span class="cell-pic">{parts.tile(r["seller_slug"], base, 28, seller=prof)}{clinic_link(r["seller_slug"], base)}</span>{not_in_line(r["seller_slug"])}</td>'
                    f'<td data-l="Plan"><span class="cell-pic">{parts.plan_picture(r)}<span>{explain_brand(r["plan_name"], named)}</span></span></td>'
                    f'<td data-l="What it is">{plan_chip(g, r)}</td>'
@@ -2293,6 +2318,17 @@ def goal_legal_plan(g):
     return min(shown, key=lambda r: (not has_paid(r["seller_slug"]), float(r["price_monthly"]), r["seller_name"], r["plan_name"])) if shown else None
 
 
+def goal_legal_text(g, placement="option row", button=True):
+    """ "Legal option for <goal>: <plan> from $X/mo at <Seller>" with "Visit <Seller>" and "Paid link" when the clinic has
+    one (queue block 58): the goal's plan (goal_legal_plan), not one for the substance; "" when the goal has none."""
+    gp = goal_legal_plan(g)
+    if not gp:
+        return ""
+    btn = clinic_button(gp["seller_slug"], "", placement=placement) if button and has_paid(gp["seller_slug"]) else ""
+    return (f'Legal option for {escape(g["name"].lower())}: {escape(clean(gp["plan_name"]))} from <span class="num">{usd(gp["price_monthly"])}/mo</span> '
+            f'at {clinic_link(gp["seller_slug"], seller_base(gp["seller_name"]), True)}{btn}')
+
+
 def legal_option_line(p, g=None):
     """The research-use row's legal option lines (queue block 56, point 2), one per option, the row's substances that share
     one clinic and price on one line ("BPC-157 and TB-500 from $129/mo at HealthRX", one Visit): "Legal option: <option>
@@ -2324,12 +2360,9 @@ def legal_option_line(p, g=None):
             lines.append(f'Legal option: {name} from <span class="num">{usd(r["lowest_monthly"])}/mo</span> at {who}{btn}')
         else:
             lines.append(f"Legal option: {name} at {who}, priced per order")
-    gp = goal_legal_plan(g) if not lines else None
-    if gp:
-        # "Legal option for <goal>: <plan> from $X/mo at <Seller>" (queue block 58): the goal's plan, not one for the substance
-        btn = clinic_button(gp["seller_slug"], "", placement="option row") if has_paid(gp["seller_slug"]) else ""
-        lines = [f'Legal option for {escape(g["name"].lower())}: {escape(clean(gp["plan_name"]))} from <span class="num">{usd(gp["price_monthly"])}/mo</span> '
-                 f'at {clinic_link(gp["seller_slug"], seller_base(gp["seller_name"]), True)}{btn}']
+    gl = goal_legal_text(g) if not lines else ""
+    if gl:
+        lines = [gl]
     if not lines:
         lines = [NO_LEGAL_OPTION]
     return '<div class="opt-legal-list">' + "".join(f'<p class="small opt-legal">{x}</p>' for x in lines[:3]) + "</div>"
@@ -3061,17 +3094,6 @@ HOW = f"""
 <h1>How we rate peptide products and sellers</h1>
 <p class="lede">We judge every shop by five checks and every online clinic by four, and build every goal page by the same rule. The checks are facts we hold about a seller, not a safety grade.</p>
 <p class="small meta">{AUTHOR}. Last updated {STAMP_CHECKED}. Every claim links to its source. Prices checked {STAMP_CHECKED}.</p>
-<h2 id="rating">How we rate sellers</h2>
-<p>Every seller page shows one rating, from our checks on the date shown. It is not a safety grade or medical advice.</p>
-<div class="tbl-wrap"><table class="tbl">
-<thead><tr><th scope="col">Rating</th><th scope="col">When we give it</th></tr></thead>
-<tbody>
-<tr><td>Legit</td><td>Sells for use in people and meets every check.</td></tr>
-<tr><td>Legit, with gaps</td><td>Sells for use in people, misses one check and has no FDA warning letter; or had an FDA warning letter that the FDA has closed out.</td></tr>
-<tr><td>Caution</td><td>Has an FDA warning letter with no close-out letter, or misses two or more checks.</td></tr>
-<tr><td>Lab-use only</td><td>Sells research-use peptides, labeled not for use in people. Every research-use shop gets it, whatever its checks.</td></tr>
-</tbody></table></div>
-<p>Shops are checked on five facts and online clinics on four, so a rating always sits next to the seller's own checks. A seller not found in a state business registry yet is rated on its other checks. A check we could not make is a gap, not a clean record.</p>
 <h2>The seller checks</h2>
 <p>{CLINIC_RULE}</p>
 <p>{f'We track <a href="/sellers/">{N_SELLERS} shops{f" and {N_CLINIC_PAGES} online clinics" if N_CLINIC_PAGES else ""}</a>. ' if N_SELLERS else ""}Every shop page and every price window shows a line such as "3 of 5 checks", every clinic page "3 of 4 checks". These are the five, in the order the seller page shows them; a clinic has all but the first. We recompute them each time we pull our data, and the seller page shows the date as "Checked" and a date{f"; the last pull was on {PULLED}" if PULLED else ""}.</p>
@@ -3088,6 +3110,15 @@ HOW = f"""
 <p>Met when our own price crawl saw at least one price per milligram on the seller's site in the last 30 days. A miss means our prices for this seller are older than that, so read them with care.</p>
 <h3>What the score does not tell you</h3>
 <p>A seller with 5 of 5 can still sell a product that is not approved for any use. A seller with 0 of 5 is one where we found none of the five facts, not one where we found five problems; only a missed "No FDA letter" check means we found something against the seller. Read the checks one by one.</p>
+<h2 id="rating">How we rate sellers</h2>
+<p>Every seller page shows one rating at the top, worked out from the checks above; the sellers list, the goal pages and the comparisons show the same one. It is not a safety grade or medical advice.</p>
+<ul>
+<li><span class="chip chip-neutral rating" data-rating="lab">Lab-use only</span>: every research-use shop, also one that meets all five checks. These shops sell for research use only, not for use in people, so none is rated higher. Its page names a legal option for the same goal when one exists.</li>
+<li><span class="chip chip-ok rating" data-rating="legit">Legit</span>: an online clinic, a supplement shop or a cosmetics shop that meets every check it is rated on.</li>
+<li><span class="chip chip-info rating" data-rating="gaps">Legit, with gaps</span>: one check missing, or an FDA warning letter the FDA has closed out with a close-out letter.</li>
+<li><span class="chip chip-warn rating" data-rating="caution">Caution</span>: an FDA warning letter without a close-out letter, or two checks or more missing.</li>
+</ul>
+<p>The state registry check never lowers the rating. We do not search every state's registry yet, so a seller we have not found in one is rated on its other checks, and its page says "Not found in a state business registry yet".</p>
 <h2>How a goal page is built</h2>
 <ul>
 <li>When the FDA has approved a treatment for the goal, it is listed first.</li>
@@ -4436,12 +4467,14 @@ def off_menu_links(r):
     return "".join(f'\n  <p class="small seller-note">Compared with other clinics: <a href="/{g["slug"]}/">{g["label"]}</a>.</p>' for g in goals)
 
 
-LEGIT_CLOSE = "These are the facts we hold; we do not call any seller legit or safe, and we never link to the shop."
+# the closing sentence under the checks (queue block 59, point 3): "we do not call any seller legit or safe" went when the
+# rating came; the link sentence stays where it was (owner decision C1, 3 Nov 2026)
+RATING_CLOSE = "The rating at the top of this page comes from these facts. We never link to the shop."
 # a clinic is not a research-use shop: no link until a paid one exists, and then it is marked (owner UX audit, 3 Nov 2026)
-LEGIT_CLOSE_CLINIC = ("These are the facts we hold; we do not call any seller legit or safe. We do not link to the clinic "
-                      "until it has a paid link, and we say so when it does.")
+RATING_CLOSE_CLINIC = ("The rating at the top of this page comes from these facts. We do not link to the clinic "
+                       "until it has a paid link, and we say so when it does.")
 # a clinic with a paid link: the no-link sentence goes and nothing replaces it; "Paid link" under its button says it (owner, 5 Nov 2026)
-LEGIT_CLOSE_PAID = "These are the facts we hold; we do not call any seller legit or safe."
+RATING_CLOSE_PAID = "The rating at the top of this page comes from these facts."
 
 
 def legit_heading(r):
@@ -4582,7 +4615,7 @@ def legit_section(r):
 <section class="seller-sec legit" id="legit" aria-labelledby="legit-h">
   <h2 id="legit-h">{legit_heading(r)}</h2>
   <ul class="check-list legit-list">{items}</ul>{legit_more(r)}
-  <p class="small legit-close">{(LEGIT_CLOSE_PAID if r.get("paid_url") else LEGIT_CLOSE_CLINIC) if is_clinic(r) else LEGIT_CLOSE}</p>
+  <p class="small legit-close">{(RATING_CLOSE_PAID if r.get("paid_url") else RATING_CLOSE_CLINIC) if is_clinic(r) else RATING_CLOSE}</p>
 </section>"""
 
 
@@ -4659,56 +4692,6 @@ def seller_action(r):
     return f'<a class="btn btn-line" href="/compare/?a=s.{r["seller_slug"]}"{ev("compare_pick", kind="seller")}>Compare with another shop</a>'
 
 
-# The "Legit?" rating (owner decisions 21 Nov 2026; w2 queue block 59 computes and shows it, w3 block 38/39 writes its
-# words): four names. Research-use shops are always "Lab-use only", whatever their checks. Clinics, supplement and cosmetic
-# shops share one scale: every check met "Legit"; one check missing and no FDA letter "Legit, with gaps"; an FDA letter
-# (the data holds no close-out letters yet) or two or more missing "Caution". The state registry never lowers a rating.
-# When w2's function lands, it replaces seller_rating; seller_legit_line keeps the words.
-RATINGS = ("Legit", "Legit, with gaps", "Caution", "Lab-use only")
-MISSING_WORDS = {"score_lab_testing": "no lab report from the last 12 months", "score_legal_pages": "no legal pages found",
-                 "score_fresh_prices": "no prices checked this month"}
-
-
-def seller_rating(r):
-    """(rating, reason) for a seller page, from the checks we hold."""
-    if r.get("seller_kind") == "S1_RUO":
-        return "Lab-use only", "it sells research-use peptides, which are not approved for use in people"
-    if not r.get("score_no_fda_letter"):
-        n, d = r.get("fda_letter_count") or 0, r.get("last_fda_letter_date")
-        if n or d:
-            when = f" on {nice_date(d[:10])}" if d else ""
-            return "Caution", (f"the FDA sent it a warning letter{when}" if n <= 1 else
-                               f"the FDA sent it {n} warning letters, the newest{when}")
-    miss = [MISSING_WORDS[k] for k, _ in seller_checks(r) if k in MISSING_WORDS and not r.get(k)]
-    if not r.get("score_no_fda_letter"):
-        miss.insert(0, "the FDA letter check has not run")
-    reg = "" if r.get("score_registered_company") else "; it is not found in a state business registry yet"
-    if not miss:
-        return "Legit", "it meets every check we make" + reg
-    if len(miss) == 1:
-        return "Legit, with gaps", f"one check is not met, {miss[0]}" + reg
-    return "Caution", f"{len(miss)} checks are not met: {and_list(miss)}" + reg
-
-
-def seller_legal_option(r):
-    """For a research-use shop: the legal option for use in people for the first substance it sells that has a clinic
-    plan (site.legal_alternatives), linked to our clinic page; "" when none."""
-    for x in SELLER_SUBS.get(r["seller_slug"], []):
-        la = LEGAL_ALTERNATIVES.get(x.get("substance_slug"))
-        if la and la.get("lowest_monthly") is not None and la.get("seller_slug"):
-            return (f'Legal option for use in people: {escape(clean(la.get("option_name") or ""))} from '
-                    f'{usd(la["lowest_monthly"])}/mo at {clinic_link(la["seller_slug"], seller_base(la.get("seller_name") or ""), True)}.')
-    return ""
-
-
-def seller_legit_line(r):
-    """The first screen's answer to "Is <Name> legit?" (queue block 39, Sheet rows 567 and 579): one sentence with the
-    rating, the date of our checks and the reason; a research-use shop adds its legal option."""
-    rating, why = seller_rating(r)
-    on = (r.get("score_checked_on") or "")[:10]
-    s = f"Is {search_name(r)} legit? {rating}, by our checks{f' on {nice_date(on)}' if on else ''}: {why}. Not a safety grade or medical advice."
-    lo = seller_legal_option(r) if rating == "Lab-use only" else ""
-    return s + (" " + lo if lo else "")
 
 
 def seller_page(r):
@@ -4731,9 +4714,9 @@ def seller_page(r):
         <div class="seller-id-text">
         <h1>{search_name(r)} review</h1>
         <p class="seller-kind"><span class="chip chip-{"info" if clinic else "neutral"}">{kind_words(r)[1]}</span></p>
+        {rating_block(r)}
         {author_line(checked) if checked else ""}
         <p class="small seller-meta">{meta}</p>{not_in_line(r["seller_slug"], "p")}
-        <p class="intro seller-answer seller-legit">{seller_legit_line(r)}</p>
         <p class="intro seller-answer">{answer}</p>
         </div>
       </div>
@@ -4950,7 +4933,10 @@ def check_bar(r):
     Sellers), each spoken."""
     marks = "".join(f'<span class="chip chip-{"ok" if r.get(k) else "neutral"} mark-{"yes" if r.get(k) else "no"}">'
                     f'<span class="vh">{t}: {"yes" if r.get(k) else "no"}</span></span>' for k, t in seller_checks(r))
-    return f'<span class="num">{score_of(r)} of {out_of(r)}</span><span class="check-bar">{marks}</span>{missing_line(r)}'
+    # the chip on its own line, so the narrow checks column of /sellers/ keeps its width (Visit stays in view at 1440)
+    chip = rating_chip(r)
+    chip = f'<span class="sub">{chip}</span>' if chip else ""
+    return f'{chip}<span class="num">{score_of(r)} of {out_of(r)}</span><span class="check-bar">{marks}</span>{missing_line(r)}'
 
 
 MISSING_NAME = {"score_registered_company": "State registry"}
@@ -4977,6 +4963,35 @@ def missing_line(r):
     # under 44px without its CSS, tools/check_layout.js)
     return letter + (f'<span class="sub missing" title="{", ".join(miss)}">Missing: {len(miss)} checks'
             f'<span class="vh">: {", ".join(miss)}</span></span>')
+
+
+def shop_goal(r):
+    """A research-use shop's goal: the goal page most of its substances belong to (SUB_GOAL), for its legal option."""
+    import collections
+    n = collections.Counter(SUB_GOAL[x["substance_slug"]]["slug"] for x in SELLER_SUBS.get(r["seller_slug"], []) if x.get("substance_slug") in SUB_GOAL)
+    return next((g for g in ALL_GOALS if n and g["slug"] == n.most_common(1)[0][0]), None)
+
+
+def rating_block(r):
+    """The rating at the top of a seller page (queue block 59, point 2): the chip, the one-line reason, "Checked <date>",
+    "Not a safety grade or medical advice" and the link to /how-we-rate/#rating. A research-use shop adds its checks
+    count and the legal option for its goal (block 58)."""
+    x = seller_rating(r)
+    if not x:
+        return ""
+    on = (r.get("score_checked_on") or "")[:10]
+    why = x["reason"] + "".join(f" {n}." for n in x["notes"])
+    extra = ""
+    if x["key"] == "lab":
+        why += f" {score_of(r)} of {out_of(r)} checks met."
+        g = shop_goal(r)
+        # no green button on a research-use shop's page (tools/check.py, paid rule): the clinic's name opens our page on it
+        gl = goal_legal_text(g, button=False) if g else ""
+        extra = f'<p class="small opt-legal">{gl or NO_LEGAL_OPTION}</p>'
+    stamp = f' <span class="stamp">Checked {nice_date(on)}</span>' if on else ""
+    return (f'<div class="seller-rating"><p class="seller-kind">{rating_chip(r)}{stamp}</p>'
+            f'<p class="small rating-why">{why}</p>{extra}'
+            f'<p class="small">Not a safety grade or medical advice. <a href="/how-we-rate/#rating">How we rate</a></p></div>')
 
 
 ACT_TH = '<th scope="col"><span class="vh">Our page</span></th>'
@@ -7163,7 +7178,7 @@ def cmp_clinic_cells(c, subs, other=None):
     return [cmp_form_cell(c, other, s) for s in subs] + [
         "Not known" if fee is None else "None, all-in" if float(fee) == 0 else f"{usd(fee)}/mo, included",
         f'<a class="chip chip-warn chip-link" href="{letter_href(p["seller_slug"])}">FDA letter {nice_date(last)}</a>' if n and last else "None",
-        f'<span class="score"><span class="score-n"><span class="num">{score_of(p)}</span> of {out_of(p)} checks</span>'
+        f'{rating_chip(p)}<span class="score"><span class="score-n"><span class="num">{score_of(p)}</span> of {out_of(p)} checks</span>'
         f'<span class="score-marks">{marks}</span></span>',
         company,
         nice_date(max(r["last_seen"] for r in plans)),
