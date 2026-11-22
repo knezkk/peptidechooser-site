@@ -4933,7 +4933,10 @@ def check_bar(r):
     Sellers), each spoken."""
     marks = "".join(f'<span class="chip chip-{"ok" if r.get(k) else "neutral"} mark-{"yes" if r.get(k) else "no"}">'
                     f'<span class="vh">{t}: {"yes" if r.get(k) else "no"}</span></span>' for k, t in seller_checks(r))
-    return f'{rating_chip(r)}<span class="num">{score_of(r)} of {out_of(r)}</span><span class="check-bar">{marks}</span>{missing_line(r)}'
+    # the chip on its own line, so the narrow checks column of /sellers/ keeps its width (Visit stays in view at 1440)
+    chip = rating_chip(r)
+    chip = f'<span class="sub">{chip}</span>' if chip else ""
+    return f'{chip}<span class="num">{score_of(r)} of {out_of(r)}</span><span class="check-bar">{marks}</span>{missing_line(r)}'
 
 
 MISSING_NAME = {"score_registered_company": "State registry"}
