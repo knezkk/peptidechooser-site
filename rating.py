@@ -7,10 +7,13 @@ site already holds. The only place the site may call a seller "Legit"; build.py 
   two gaps or more, is "Caution".
 - The state registry never lowers the rating: a seller not found in one is rated on its other checks and gets the note
   "Not found in a state business registry yet".
+- Fresh prices is never counted (owner, 22 Nov 2026, block 59 fix): it is our data's freshness, not the seller's; the check
+  stays on the page's check list.
 No imports from build.py, so the check can use the same function."""
 
 REGISTRY = "score_registered_company"
 LETTER = "score_no_fda_letter"
+FRESH = "score_fresh_prices"
 REGISTRY_NOTE = "Not found in a state business registry yet"
 
 # label, chip class (existing book chips until w1 draws the rating part), the slug check.py and the page use
@@ -29,7 +32,7 @@ def seller_rating(r, letters, checks, research_use, date=lambda d: d):
         return {"key": LAB[2], "label": LAB[0], "chip": LAB[1],
                 "reason": "Sold for research use only, not for use in people.", "notes": []}
     notes = [REGISTRY_NOTE] if any(k == REGISTRY for k, _ in checks) and not r.get(REGISTRY) else []
-    missing = [name for k, name in checks if k not in (REGISTRY, LETTER) and not r.get(k)]
+    missing = [name for k, name in checks if k not in (REGISTRY, LETTER, FRESH) and not r.get(k)]
     letter, open_letter = "", False
     if any(k == LETTER for k, _ in checks) and not r.get(LETTER):
         newest = max(letters, key=lambda x: x.get("letter_date") or "", default=None)

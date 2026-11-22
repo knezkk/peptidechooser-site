@@ -50,7 +50,13 @@ class Rating(unittest.TestCase):
 
     def test_one_missing_check_is_a_gap_two_are_caution(self):
         self.assertEqual(R.seller_rating(prof(False, True, True, False, True), [], CLINIC, False)["label"], "Legit, with gaps")
-        self.assertEqual(R.seller_rating(prof(False, True, True, False, False), [], CLINIC, False)["label"], "Caution")
+        self.assertEqual(R.seller_rating(prof(False, True, True, False, False, "S4_SUPPLEMENT_COSMETIC"), [], SHOP, False)["label"], "Caution")
+
+    def test_fresh_prices_never_counts(self):
+        """Owner, 22 Nov 2026 (block 59 fix): fresh prices is our data's freshness, not the seller's."""
+        x = R.seller_rating(prof(False, True, True, True, False), [], CLINIC, False)
+        self.assertEqual((x["label"], x["reason"]), ("Legit", "Every check we rate on is met."))
+        self.assertEqual(R.seller_rating(prof(False, True, True, False, False), [], CLINIC, False)["label"], "Legit, with gaps")
 
     def test_supplement_shop_lab_reports_count(self):
         x = R.seller_rating(prof(False, True, True, True, True, "S4_SUPPLEMENT_COSMETIC"), [], SHOP, False)
