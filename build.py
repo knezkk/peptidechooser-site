@@ -3061,6 +3061,17 @@ HOW = f"""
 <h1>How we rate peptide products and sellers</h1>
 <p class="lede">We judge every shop by five checks and every online clinic by four, and build every goal page by the same rule. The checks are facts we hold about a seller, not a safety grade.</p>
 <p class="small meta">{AUTHOR}. Last updated {STAMP_CHECKED}. Every claim links to its source. Prices checked {STAMP_CHECKED}.</p>
+<h2 id="rating">How we rate sellers</h2>
+<p>Every seller page shows one rating, from our checks on the date shown. It is not a safety grade or medical advice.</p>
+<div class="tbl-wrap"><table class="tbl">
+<thead><tr><th scope="col">Rating</th><th scope="col">When we give it</th></tr></thead>
+<tbody>
+<tr><td>Legit</td><td>Sells for use in people and meets every check.</td></tr>
+<tr><td>Legit, with gaps</td><td>Sells for use in people, misses one check and has no FDA warning letter; or had an FDA warning letter that the FDA has closed out.</td></tr>
+<tr><td>Caution</td><td>Has an FDA warning letter with no close-out letter, or misses two or more checks.</td></tr>
+<tr><td>Lab-use only</td><td>Sells research-use peptides, labeled not for use in people. Every research-use shop gets it, whatever its checks.</td></tr>
+</tbody></table></div>
+<p>Shops are checked on five facts and online clinics on four, so a rating always sits next to the seller's own checks. A seller not found in a state business registry yet is rated on its other checks. A check we could not make is a gap, not a clean record.</p>
 <h2>The seller checks</h2>
 <p>{CLINIC_RULE}</p>
 <p>{f'We track <a href="/sellers/">{N_SELLERS} shops{f" and {N_CLINIC_PAGES} online clinics" if N_CLINIC_PAGES else ""}</a>. ' if N_SELLERS else ""}Every shop page and every price window shows a line such as "3 of 5 checks", every clinic page "3 of 4 checks". These are the five, in the order the seller page shows them; a clinic has all but the first. We recompute them each time we pull our data, and the seller page shows the date as "Checked" and a date{f"; the last pull was on {PULLED}" if PULLED else ""}.</p>
@@ -3943,16 +3954,14 @@ def seller_title(r):
     kept = RULE8.get(f'/sellers/{r["seller_slug"]}/')
     if kept:
         return kept["title"]
-    name, end = seller_name(r), " | Peptide Chooser"
-    if r["seller_slug"] in CLINIC_PROFILES:
-        base = re.sub(r"\s*\(.*\)", "", name).strip()
-        tries = [f"{n} review{w}{end}" for n in dict.fromkeys((name, base))
-                 for w in (": plans, prices and checks", ": plans, prices, checks", ": plans and prices", "")]
-        last = f"{base} review"
-    else:
-        tries = [f"{name} review{w}{end}" for w in (": prices, lab reports, FDA letters", ": prices, lab reports", ": lab reports", "")]
-        last = f"{name} review"
-    return next((t for t in tries if len(t) <= 60), last)
+    # one pattern for every seller page (queue block 39; Sheet rows 569 and 582): the name first, then "review <year>: is it
+    # legit?", the middle words dropped first when the title runs over 60 characters, then the year; the brand stays
+    end, n = " | Peptide Chooser", search_name(r)
+    mid = "Prices, FDA check" if r["seller_slug"] in CLINIC_PROFILES else "Prices, lab reports"
+    # "reviews", as the title rule allows it (ODOBRENO PRAVILA - Karlo - 14. 11. 2026 - legit in seller titles; tools/check.py)
+    tries = [f"{n} reviews {SEO_YEAR}: is it legit? {mid}{end}", f"{n} reviews {SEO_YEAR}: is it legit?{end}",
+             f"{n} reviews {SEO_YEAR}: is it legit?", f"{n} review{end}"]
+    return next((t for t in tries if len(t) <= 60), f"{n} review")
 
 
 # Affiliate clinics people search as "<brand> reviews" and "is <brand> legit" (owner, ODOBRENO SEO - Karlo - 14. 11. 2026 -
@@ -4650,6 +4659,58 @@ def seller_action(r):
     return f'<a class="btn btn-line" href="/compare/?a=s.{r["seller_slug"]}"{ev("compare_pick", kind="seller")}>Compare with another shop</a>'
 
 
+# The "Legit?" rating (owner decisions 21 Nov 2026; w2 queue block 59 computes and shows it, w3 block 38/39 writes its
+# words): four names. Research-use shops are always "Lab-use only", whatever their checks. Clinics, supplement and cosmetic
+# shops share one scale: every check met "Legit"; one check missing and no FDA letter "Legit, with gaps"; an FDA letter
+# (the data holds no close-out letters yet) or two or more missing "Caution". The state registry never lowers a rating.
+# When w2's function lands, it replaces seller_rating; seller_legit_line keeps the words.
+RATINGS = ("Legit", "Legit, with gaps", "Caution", "Lab-use only")
+MISSING_WORDS = {"score_lab_testing": "no lab report from the last 12 months", "score_legal_pages": "no legal pages found",
+                 "score_fresh_prices": "no prices checked this month"}
+
+
+def seller_rating(r):
+    """(rating, reason) for a seller page, from the checks we hold."""
+    if r.get("seller_kind") == "S1_RUO":
+        return "Lab-use only", "it sells research-use peptides, which are not approved for use in people"
+    if not r.get("score_no_fda_letter"):
+        n, d = r.get("fda_letter_count") or 0, r.get("last_fda_letter_date")
+        if n or d:
+            when = f" on {nice_date(d[:10])}" if d else ""
+            return "Caution", (f"the FDA sent it a warning letter{when}" if n <= 1 else
+                               f"the FDA sent it {n} warning letters, the newest{when}")
+    miss = [MISSING_WORDS[k] for k, _ in seller_checks(r) if k in MISSING_WORDS and not r.get(k)]
+    if not r.get("score_no_fda_letter"):
+        miss.insert(0, "the FDA letter check has not run")
+    reg = "" if r.get("score_registered_company") else "; it is not found in a state business registry yet"
+    if not miss:
+        return "Legit", "it meets every check we make" + reg
+    if len(miss) == 1:
+        return "Legit, with gaps", f"one check is not met, {miss[0]}" + reg
+    return "Caution", f"{len(miss)} checks are not met: {and_list(miss)}" + reg
+
+
+def seller_legal_option(r):
+    """For a research-use shop: the legal option for use in people for the first substance it sells that has a clinic
+    plan (site.legal_alternatives), linked to our clinic page; "" when none."""
+    for x in SELLER_SUBS.get(r["seller_slug"], []):
+        la = LEGAL_ALTERNATIVES.get(x.get("substance_slug"))
+        if la and la.get("lowest_monthly") is not None and la.get("seller_slug"):
+            return (f'Legal option for use in people: {escape(clean(la.get("option_name") or ""))} from '
+                    f'{usd(la["lowest_monthly"])}/mo at {clinic_link(la["seller_slug"], seller_base(la.get("seller_name") or ""), True)}.')
+    return ""
+
+
+def seller_legit_line(r):
+    """The first screen's answer to "Is <Name> legit?" (queue block 39, Sheet rows 567 and 579): one sentence with the
+    rating, the date of our checks and the reason; a research-use shop adds its legal option."""
+    rating, why = seller_rating(r)
+    on = (r.get("score_checked_on") or "")[:10]
+    s = f"Is {search_name(r)} legit? {rating}, by our checks{f' on {nice_date(on)}' if on else ''}: {why}. Not a safety grade or medical advice."
+    lo = seller_legal_option(r) if rating == "Lab-use only" else ""
+    return s + (" " + lo if lo else "")
+
+
 def seller_page(r):
     clinic = r["seller_slug"] in CLINIC_PROFILES
     answer = " ".join(clinic_answer(r) if clinic else short_answer(r))
@@ -4672,6 +4733,7 @@ def seller_page(r):
         <p class="seller-kind"><span class="chip chip-{"info" if clinic else "neutral"}">{kind_words(r)[1]}</span></p>
         {author_line(checked) if checked else ""}
         <p class="small seller-meta">{meta}</p>{not_in_line(r["seller_slug"], "p")}
+        <p class="intro seller-answer seller-legit">{seller_legit_line(r)}</p>
         <p class="intro seller-answer">{answer}</p>
         </div>
       </div>
