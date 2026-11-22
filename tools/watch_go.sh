@@ -13,11 +13,12 @@ say() { echo "$(date '+%H:%M:%S') $(basename "$PWD"): $1" | tee -a "$LOG"; }
 sum() { cat "$H/next.md" "$H/queue.md" 2>/dev/null | cksum; }
 
 open_task() {
-  # next.md with text that is not "(Empty ...", or a queue whose first block not done is todo (a blocked block stops the queue)
+  # next.md with text that is not "(Empty ...", or a queue with any block at "Status: todo" (the go skill's rule; owner,
+  # 22 Nov 2026: "replaced", "hold" or "done, ..." no longer stop the queue)
   if [ -f "$H/next.md" ] && grep -q '[^[:space:]]' "$H/next.md" && ! grep -m 1 '[^[:space:]]' "$H/next.md" | grep -q '^(Empty'; then
     return 0
   fi
-  [ -f "$H/queue.md" ] && [ "$(awk '/^Status:/ { if ($2 != "done") { print $2; exit } }' "$H/queue.md")" = todo ]
+  [ -f "$H/queue.md" ] && grep -q '^Status: todo' "$H/queue.md"
 }
 
 say "watching, permission mode $MODE"
