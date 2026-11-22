@@ -79,12 +79,13 @@ try{if(localStorage.getItem('pc-consent')==='yes')pcLoadGA();}catch(e){}
 <h2 id="rating">How we rate sellers</h2>
 <p>Every seller page shows one rating at the top, worked out from the checks above; the sellers list, the goal pages and the comparisons show the same one. It is not a safety grade or medical advice.</p>
 <ul>
-<li><span class="chip chip-neutral rating" data-rating="lab">Lab-use only</span>: every research-use shop, also one that meets all five checks. These shops sell for research use only, not for use in people, so none is rated higher. Its page names a legal option for the same goal when one exists.</li>
+<li><span class="chip chip-neutral rating" data-rating="lab">Lab-use only</span>: every research-use shop, also one that meets all five checks. These shops sell for research use only, not for use in people, so none is rated higher. Its page names the legal option for the peptide it lists most, when one exists.</li>
 <li><span class="chip chip-ok rating" data-rating="legit">Legit</span>: an online clinic, a supplement shop or a cosmetics shop that meets every check it is rated on.</li>
 <li><span class="chip chip-info rating" data-rating="gaps">Legit, with gaps</span>: one check missing, or an FDA warning letter the FDA has closed out with a close-out letter.</li>
 <li><span class="chip chip-warn rating" data-rating="caution">Caution</span>: an FDA warning letter without a close-out letter, or two checks or more missing.</li>
 </ul>
 <p>The state registry check never lowers the rating. We do not search every state's registry yet, so a seller we have not found in one is rated on its other checks, and its page says "Not found in a state business registry yet".</p>
+<p>The fresh prices check never counts toward the rating either: it says how recently we saw the seller's prices, not something the seller does. It stays on the seller's list of checks.</p>
 <h2>How a goal page is built</h2>
 <ul>
 <li>When the FDA has approved a treatment for the goal, it is listed first.</li>
