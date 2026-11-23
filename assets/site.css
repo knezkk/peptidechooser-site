@@ -964,7 +964,7 @@ body:has(.home-sec) .site-foot { margin-top: 0; }
 .check-card .check-chips { align-items: stretch; gap: 0; }
 .check-card .check-chips > li { display: flex; justify-content: space-between; align-items: center; gap: 12px; min-height: 36px; border-bottom: 1px solid var(--line); }
 .check-card .check-chips .chip { padding: 0; border: 0; background: none; color: var(--ink); font-size: var(--small-size); font-weight: 400; white-space: normal; }
-.cc-st { font-size: var(--small-size); font-weight: 600; color: var(--ink); white-space: nowrap; }
+.cc-st { font-size: var(--small-size); font-weight: 600; color: var(--ink); white-space: nowrap; text-align: right; } /* a two-line state ("Not met ·<br>not used in the rating") stays right-aligned (seller.md, Aside; w2, 23 Nov 2026) */
 .seller-similar ul { list-style: none; margin: 0; padding: 0 var(--space-4); background: var(--white); border: 1px solid var(--line-strong); border-radius: var(--radius-panel); }
 .seller-similar li { display: flex; align-items: center; gap: 10px; min-height: 52px; border-bottom: 1px solid var(--line); }
 .seller-similar li:last-child { border-bottom: 0; }

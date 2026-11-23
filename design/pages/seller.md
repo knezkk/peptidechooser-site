@@ -38,7 +38,7 @@ Words, facts and section order unchanged; it replaces the entries above where th
 - **Price columns** of Plans and prices: windows.md, Price columns (20 Nov 2026).
 - **Body** on the `paper-2` band from Plans and prices down. Plans and prices: one table as now, "Prices checked <date>" on the heading's line at the right; under 640px each plan a card.
 - **Is <Name> legit?:** the facts as rows in one white bordered box: a tick (met, `action`) or a cross (not met, `ink-2`) drawn in CSS, the check name in 600, then the line ("Met: ..."), then the paragraphs and the closing sentence as now; the FAQ after it.
-- **Aside:** the Background check card with "Background check" and the small "N of 4 checks" on one line, then one row per check: its name, and "Met" or "Not met" right-aligned in 600; Similar sellers as a white card, one row per seller: the 28px tile, the name link, its checks right-aligned.
+- **Aside:** the Background check card with "Background check" and the small "N of 4 checks" on one line, then one row per check: its name, and "Met" or "Not met" right-aligned in 600; Similar sellers as a white card, one row per seller: the 28px tile, the name link, its checks right-aligned. The state column is right-aligned on every line; a missed state registry reads "Not met ·" with "not used in the rating" under it (w2 PR #247, block 59 fix 3, 23 Nov 2026).
 
 ### Seller head at wide sizes (owner, 23 Nov 2026; waits for ODOBRENO DIZAJN)
 The 900px head stays at 1440, 1920 and 2560: tile, name and rating lines on the left filling the column, the checks box with its border on the right. It replaces the 1600px head of 19 Nov 2026. The short answer fills its column (layout.md, Text at the top).
