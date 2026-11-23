@@ -3618,9 +3618,10 @@ def card_slug(key):
     return key.lower().replace(" ", "-")
 
 
-def decide_card(key, name, chips, price, act, pic="", label=None):
-    # Goal page v2 (goal.md): the Best approved card carries the page's ink button, the Cheapest an outline one
-    act = re.sub(r'\bbtn-wait\b', "btn-ink" if key == "Best approved" else "btn-line", act, count=1)
+def decide_card(key, name, chips, price, act, pic="", label=None, ink=False):
+    # Goal page v2 (goal.md): the Best approved card carries the page's ink button, the Cheapest an outline one; the goal
+    # page's first-screen "Peptide" card (`ink`) the same ink button as "Proven alternative" (owner, PR #242, 23 Nov 2026)
+    act = re.sub(r'\bbtn-wait\b', "btn-ink" if ink or key == "Best approved" else "btn-line", act, count=1)
     shown = label or {"Best approved": "On prescription"}.get(key, key)  # no "best" outside title and H1 (owner, queue block 35, 20 Nov 2026)
     return (f'<li class="panel-line decide-card" data-card="{card_slug(key)}">{pic}<p class="decide-k">{shown}</p><h2>{name}</h2>'
             f'{f"<span class=chips>{chips}</span>" if chips else ""}<p class="decide-price">{price}</p>{act}</li>')
@@ -3779,7 +3780,7 @@ def hero_peptide_card(g, key):
     rp = row_plan(g, p)
     if approved_row(p) and rp and rp.get("product_kind") != "compounded":
         return decide_card("Peptide", p["name"], status_chip(p), f'At online clinics{plan_src(g, rp)}', clinic_open(g, p, rp),
-                           option_picture(p, rp))
+                           option_picture(p, rp), ink=True)
     lines, act = [], ""
     if has_window(p) and window_kind(p) in COSMETIC_KINDS:
         low, n = window_low(p)
@@ -3800,7 +3801,7 @@ def hero_peptide_card(g, key):
     elif not (la and (la.get("lowest_monthly") is not None or la.get("option_kind") == "fda_approved_drug")):
         lines.append(f'<span class="ru-none">{NO_LEGAL_OPTION}</span>')
         act = ""
-    return decide_card("Peptide", p["name"], status_chip(p), " · ".join(lines), act, option_picture(p, rp))
+    return decide_card("Peptide", p["name"], status_chip(p), " · ".join(lines), act, option_picture(p, rp), ink=True)
 
 
 def hero_alt_card(g):
