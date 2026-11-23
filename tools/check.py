@@ -135,14 +135,31 @@ def rating_labels(html):
 LEGIT_TITLE = re.compile(r"[^\s:<>][^:<>]{0,79} Reviews 20\d\d: (Is It Legit\?)", re.I)
 
 
-def legit_allowed(name, text, h2s, title="", chips=()):
+# Two exceptions w3 asked for (to-w2.md, block 39 follow-up, 23 Nov 2026; owner, Q1 a, 22 Nov 2026): the words "best
+# place to buy peptides", once, in the first lede of /sellers/; and "Is <Name> legit?" right before the rating chip in the
+# seller page's rating block, <Name> the H1's name ("<Name> review").
+BEST_PLACE = "best place to buy peptides"
+LEDE = re.compile(r'<p class="lede">(.*?)</p>', re.S)
+LEGIT_ASK = re.compile(r'<div class="seller-rating"><p class="seller-kind">Is ([^<>]{1,80}) legit\? ' + RATING_CHIP.pattern)
+H1_NAME = re.compile(r"<h1[^>]*>\s*([^<>]{1,80}?) review\s*</h1>")
+
+
+def legit_allowed(name, text, h2s, title="", chips=(), html=""):
     """`text` with the allowed "legit" uses removed: only on a seller page, only the H2s that match exactly, the
-    closing sentence, and the "Is It Legit?" of a title in the allowed pattern; on any page, the labels of its rating chips
-    (`chips`, rating_labels), each once."""
+    closing sentence, the "Is It Legit?" of a title in the allowed pattern and "Is <Name> legit?" before the rating chip
+    (LEGIT_ASK, `html`); on any page, the labels of its rating chips (`chips`, rating_labels), each once; on /sellers/,
+    BEST_PLACE once when the first lede holds it (`html`)."""
     for label in sorted(chips, key=len, reverse=True):
         text = text.replace(label, " ", 1)
+    if name == "sellers/index.html" and html:
+        lede = LEDE.search(html)
+        if lede and BEST_PLACE in re.sub(r"<[^>]+>", " ", lede.group(1)):
+            text = text.replace(BEST_PLACE, " ", 1)
     if not (name.startswith("sellers/") and name != "sellers/index.html"):
         return text
+    ask, h1 = LEGIT_ASK.search(html), H1_NAME.search(html)
+    if ask and h1 and ask.group(1) == h1.group(1).strip():
+        text = text.replace(f"Is {ask.group(1)} legit?", " ", 1)
     for h in h2s:
         if LEGIT_H2.fullmatch(h.strip()):
             text = text.replace(h.strip(), " ")
@@ -183,14 +200,35 @@ def legit_cases():
             ("hair/index.html", "Legit", chip.replace('data-rating="legit"', 'data-rating="lab"'), True)):  # another key
         if bool(re.search(r"\blegit\b", legit_allowed(name, text, [], "", rating_labels(html)), re.I)) != want:
             errs.append(f"legit exception test failed: {name}: {text!r}")
+    # "Is <Name> legit?" before the rating chip on a seller page (w3, 23 Nov 2026)
+    h1 = "<h1>PeptidePlugs review</h1>"
+    ask = lambda n: f'<div class="seller-rating"><p class="seller-kind">Is {n} legit? {chip}</p></div>'
+    for name, text, html, want in (
+            ("sellers/peptideplugs/index.html", "PeptidePlugs review Is PeptidePlugs legit? Legit", h1 + ask("PeptidePlugs"), False),
+            ("sellers/peptideplugs/index.html", "Is Swiss Chems legit? Legit", h1 + ask("Swiss Chems"), True),   # another name
+            ("sellers/peptideplugs/index.html", "Is PeptidePlugs legit? Legit Is PeptidePlugs legit?", h1 + ask("PeptidePlugs"), True),  # twice
+            ("sellers/peptideplugs/index.html", "Is PeptidePlugs legit?", h1 + "<p>Is PeptidePlugs legit?</p>", True),  # not before the chip
+            ("hair/index.html", "Is PeptidePlugs legit? Legit", h1 + ask("PeptidePlugs"), True)):              # off a seller page
+        if bool(re.search(r"\blegit\b", legit_allowed(name, text, [], "", rating_labels(html), html), re.I)) != want:
+            errs.append(f"legit ask exception test failed: {name}: {text!r}")
+    # "best place to buy peptides" once in the first lede of /sellers/ (w3, 23 Nov 2026)
+    lede = f'<p class="lede">Where is the {BEST_PLACE}? We check every seller.</p>'
+    for name, text, html, want in (
+            ("sellers/index.html", f"Where is the {BEST_PLACE}?", lede, False),
+            ("sellers/index.html", f"Where is the {BEST_PLACE}? The {BEST_PLACE}.", lede, True),               # twice
+            ("sellers/index.html", f"The {BEST_PLACE}.", f"<p>The {BEST_PLACE}.</p>", True),                   # not in the lede
+            ("sellers/index.html", "The best shop.", lede, True),                                              # another "best"
+            ("sellers/peptideplugs/index.html", f"Where is the {BEST_PLACE}?", lede, True)):                   # a seller page
+        if bool(re.search(r"\bbest\b", legit_allowed(name, text, [], "", (), html), re.I)) != want:
+            errs.append(f"best place exception test failed: {name}: {text!r}")
     return errs
 
 
 def check_words(P):
     errs = legit_cases()
     for name, p in P.items():
-        text = legit_allowed(name, " ".join(p.parts), [t for tag, t in p.h if tag == "h2"], p.title,
-                             rating_labels((DIST / name).read_text(encoding="utf-8")))
+        page = (DIST / name).read_text(encoding="utf-8")
+        text = legit_allowed(name, " ".join(p.parts), [t for tag, t in p.h if tag == "h2"], p.title, rating_labels(page), page)
         for pat in BANNED_WORDS:
             for m in re.finditer(pat, text, re.I):
                 errs.append(f"{name}: banned word '{m.group(0)}'")
@@ -810,7 +848,8 @@ def check_parts(P):
                 errs.append(f"{name}: links to a seller ({href})")
         main = re.search(r'<main id="main">(.*?)</main>', html, re.S)
         text = re.sub(r"<[^>]+>", " ", re.sub(r"<script.*?</script>", "", main.group(1) if main else "", flags=re.S))
-        text = legit_allowed(name, text, [t for tag, t in P[name].h if tag == "h2"], chips=rating_labels(main.group(1) if main else ""))
+        text = legit_allowed(name, text, [t for tag, t in P[name].h if tag == "h2"], chips=rating_labels(main.group(1) if main else ""),
+                             html=main.group(1) if main else "")
         for w in re.findall(r"\b(safe|trusted|best|legit)\b", text, re.I):
             errs.append(f"{name}: seller page says '{w}'")
         if name != "sellers/index.html":

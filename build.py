@@ -2329,6 +2329,27 @@ def goal_legal_text(g, placement="option row", button=True):
             f'at {clinic_link(gp["seller_slug"], seller_base(gp["seller_name"]), True)}{btn}')
 
 
+def legal_plan(r):
+    """The plan row (site.plans) a site.legal_alternatives row names, for its current price: the data copies lowest_monthly
+    into legal_alternatives and that copy can lag (block 59 fix, 23 Nov 2026: Hone Health liraglutide $185 there, $160 on
+    the plan). None: no such plan."""
+    return next((x for x in PLANS if x.get("seller_slug") == r.get("seller_slug") and x.get("plan_slug") == r.get("plan_slug")), None)
+
+
+def legal_price(r):
+    """A legal option's monthly price, from its plan row when there is one (the block 54 "from" rule: the cheapest monthly
+    rate, membership included), else the legal_alternatives copy; and the note "on a 12-month plan; $199/mo on the shortest
+    plan" when that rate needs a longer plan (block 59 fix, 23 Nov 2026: HealthRX BPC-157 $129 is its 12-month rate)."""
+    pl = legal_plan(r)
+    if not pl or pl.get("price_monthly") is None:
+        return r.get("lowest_monthly"), ""
+    note = ""
+    if pl.get("price_standard") is not None and pl.get("lowest_commitment_months"):
+        note = (f' on a {int(pl["lowest_commitment_months"])}\u2011month plan; <span class="num">{usd(pl["price_standard"])}/mo</span>'
+                f' on the shortest plan,')
+    return pl["price_monthly"], note
+
+
 def legal_alt_text(rs, label="Legal option", button=True):
     """One legal option line from site.legal_alternatives rows that share one option (legal_option_line): a clinic plan
     "<label>: <option> from $X/mo at <Seller>" with "Visit <Seller>" and "Paid link" when the clinic has one (button), a
@@ -2340,11 +2361,12 @@ def legal_alt_text(rs, label="Legal option", button=True):
     if r.get("option_kind") == "fda_approved_drug":
         return f'{label}: {name} ({escape(r.get("substance_name") or sub_label(r["substance_slug"]))}), FDA approved, on prescription'
     who = clinic_link(r["seller_slug"], seller_base(r.get("seller_name") or ""), True) if r.get("seller_slug") else ""
-    if r.get("lowest_monthly") is None:
+    price, note = legal_price(r)
+    if price is None:
         return f"{label}: {name} at {who}, priced per order"
     btn = (clinic_button(r["seller_slug"], "", placement="option row")
            if button and r.get("has_paid_link") and has_paid(r["seller_slug"]) else "")
-    return f'{label}: {name} from <span class="num">{usd(r["lowest_monthly"])}/mo</span> at {who}{btn}'
+    return f'{label}: {name} from <span class="num">{usd(price)}/mo</span>{note} at {who}{btn}'
 
 
 def legal_option_line(p, g=None):
@@ -2362,7 +2384,7 @@ def legal_option_line(p, g=None):
         if r.get("option_kind") == "fda_approved_drug":
             key = ("drug", r.get("option_name"), s)
         else:
-            key = ("plan", r.get("seller_slug"), r.get("lowest_monthly"))
+            key = ("plan", r.get("seller_slug"), legal_price(r))
         groups.setdefault(key, []).append(r)
     lines = [legal_alt_text(rs) for rs in groups.values()]
     gl = goal_legal_text(g) if not lines else ""
