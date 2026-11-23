@@ -92,6 +92,16 @@ class ShopPage(unittest.TestCase):
         with mock.patch.object(b, "has_paid", lambda s: True):
             self.assertNotIn("btn-action", self.line([alt(has_paid_link=True)]))
 
+    def test_price_from_the_plan_row(self):
+        """Block 59 fix (23 Nov 2026): the plan's current price, and its commitment when the "from" rate needs one."""
+        plan = {"seller_slug": "zz-none", "plan_slug": "p", "price_monthly": 129.0, "price_standard": 199.0, "lowest_commitment_months": 12}
+        with mock.patch.object(b, "PLANS", [plan]):
+            out = self.line([alt(lowest_monthly=150)])
+        self.assertIn("from <span class=\"num\">$129/mo</span> on a 12\u2011month plan; <span class=\"num\">$199/mo</span> on the shortest plan, at", out)
+        with mock.patch.object(b, "PLANS", [dict(plan, price_monthly=160.0, price_standard=None)]):
+            out = self.line([alt(lowest_monthly=185)])
+        self.assertIn("$160/mo</span> at", out)
+
     def test_top_substance_without_option_has_no_line(self):
         self.assertEqual(self.line([alt(substance_slug="ghk-cu", option_name="GHK-Cu")]), "")
 
