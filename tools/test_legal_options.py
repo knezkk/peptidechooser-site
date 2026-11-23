@@ -73,6 +73,39 @@ class SameGoal(unittest.TestCase):
             self.assertIs(b.goal_legal_plan(g), paid)
 
 
+class ShopPage(unittest.TestCase):
+    """A research-use shop's page: the legal option of its most-listed substance, no button; none: no line (block 59 Q2 B)."""
+    SHOP = {"seller_slug": "zz-shop"}
+    SUBS = {"zz-shop": [{"seller_slug": "zz-shop", "substance_slug": "ghk-cu", "listing_count": 3},
+                        {"seller_slug": "zz-shop", "substance_slug": "bpc-157", "listing_count": 9}]}
+
+    def line(self, rows):
+        with mock.patch.object(b, "SELLER_SUBS", self.SUBS), mock.patch.object(b, "LEGAL_ALTERNATIVES", {r["substance_slug"]: r for r in rows}):
+            return b.shop_legal_line(self.SHOP)
+
+    def test_most_listed(self):
+        out = self.line([alt(), alt(substance_slug="ghk-cu", option_name="GHK-Cu")])
+        self.assertIn("Legal option for BPC-157: Compounded BPC-157 from", out)
+        self.assertNotIn("Paid link", out)
+
+    def test_no_button_with_paid_link(self):
+        with mock.patch.object(b, "has_paid", lambda s: True):
+            self.assertNotIn("btn-action", self.line([alt(has_paid_link=True)]))
+
+    def test_price_from_the_plan_row(self):
+        """Block 59 fix (23 Nov 2026): the plan's current price, and its commitment when the "from" rate needs one."""
+        plan = {"seller_slug": "zz-none", "plan_slug": "p", "price_monthly": 129.0, "price_standard": 199.0, "lowest_commitment_months": 12}
+        with mock.patch.object(b, "PLANS", [plan]):
+            out = self.line([alt(lowest_monthly=150)])
+        self.assertIn("from <span class=\"num\">$129/mo</span> on a 12\u2011month plan; <span class=\"num\">$199/mo</span> on the shortest plan, at", out)
+        with mock.patch.object(b, "PLANS", [dict(plan, price_monthly=160.0, price_standard=None)]):
+            out = self.line([alt(lowest_monthly=185)])
+        self.assertIn("$160/mo</span> at", out)
+
+    def test_top_substance_without_option_has_no_line(self):
+        self.assertEqual(self.line([alt(substance_slug="ghk-cu", option_name="GHK-Cu")]), "")
+
+
 class Letter(unittest.TestCase):
     def test_letter_instead_of_missing(self):
         r = {"seller_slug": "zz-none", "score": 3, "score_lab_testing": True, "score_no_fda_letter": False,
