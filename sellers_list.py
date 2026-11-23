@@ -144,7 +144,7 @@ def page(b):
     lede = (f"{b.plural(b.site_count('clinics'), 'online clinic')} that prescribe and ship, then {b.plural(b.site_count('shops'), 'research-use shop')}." if clinics else
             f"{b.plural(b.site_count('shops'), 'research-use shop')}.")
     # queue block 39 (out-02, Fix 2): the first screen answers "where to buy peptides"; counts from data
-    intro = ("If you are looking for a place to buy peptides for use in people, start with an online clinic: it prescribes "
+    intro = ("If you are looking for the best place to buy peptides for use in people, start with an online clinic: it prescribes "
              "and ships. Research-use peptide suppliers sell vials that are not approved for use in people, so we rate every one "
              "of them Lab-use only. "
              f"Below are the {b.plural(b.site_count('clinics'), 'online clinic')} and {b.plural(b.site_count('shops'), 'shop')} we track, "

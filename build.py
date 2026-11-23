@@ -5028,7 +5028,7 @@ def rating_block(r):
         gl = shop_legal_line(r)
         extra = f'<p class="small opt-legal">{gl}</p>' if gl else ""
     stamp = f' <span class="stamp">Checked {nice_date(on)}</span>' if on else ""
-    return (f'<div class="seller-rating"><p class="seller-kind">{rating_chip(r)}{stamp}</p>'
+    return (f'<div class="seller-rating"><p class="seller-kind">Is {search_name(r)} legit? {rating_chip(r)}{stamp}</p>'
             f'<p class="small rating-why">{why}</p>{extra}'
             f'<p class="small">Not a safety grade or medical advice. <a href="/how-we-rate/#rating">How we rate</a></p></div>')
 
