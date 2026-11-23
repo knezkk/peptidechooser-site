@@ -5,7 +5,8 @@
   "pages": {
     "/sellers/": {
       "title": "Peptide sellers and their checks | Peptide Chooser",
-      "h1": "Peptide sellers we track"
+      "h1": "Where to buy peptides",
+      "h1_changed": "Was 'Peptide sellers we track'. Owner decision Q1 a, typed in the terminal 22 Nov 2026 (queue block 39): 'where to buy peptides' 11,367/mo vs 'peptide sellers' 720, read by the owner's assistant 22 Nov 2026. Title unchanged."
     },
     "/sellers/curetonix/": {
       "title": "Curetonix review: prices, lab reports, FDA letters",

@@ -3137,7 +3137,7 @@ HOW = f"""
 <p>Met when our own price crawl saw at least one price per milligram on the seller's site in the last 30 days. A miss means our prices for this seller are older than that, so read them with care.</p>
 <h3>What the score does not tell you</h3>
 <p>A seller with 5 of 5 can still sell a product that is not approved for any use. A seller with 0 of 5 is one where we found none of the five facts, not one where we found five problems; only a missed "No FDA letter" check means we found something against the seller. Read the checks one by one.</p>
-<h2 id="rating">The rating on each seller</h2>
+<h2 id="rating">How we rate sellers</h2>
 <p>Every seller page shows one rating at the top, worked out from the checks above; the sellers list, the goal pages and the comparisons show the same one. It is not a safety grade or medical advice.</p>
 <ul>
 <li><span class="chip chip-neutral rating" data-rating="lab">Lab-use only</span>: every research-use shop, also one that meets all five checks. These shops sell for research use only, not for use in people, so none is rated higher. Its page names the legal option for the peptide it lists most, when one exists.</li>
@@ -4013,16 +4013,14 @@ def seller_title(r):
     kept = RULE8.get(f'/sellers/{r["seller_slug"]}/')
     if kept:
         return kept["title"]
-    name, end = seller_name(r), " | Peptide Chooser"
-    if r["seller_slug"] in CLINIC_PROFILES:
-        base = re.sub(r"\s*\(.*\)", "", name).strip()
-        tries = [f"{n} review{w}{end}" for n in dict.fromkeys((name, base))
-                 for w in (": plans, prices and checks", ": plans, prices, checks", ": plans and prices", "")]
-        last = f"{base} review"
-    else:
-        tries = [f"{name} review{w}{end}" for w in (": prices, lab reports, FDA letters", ": prices, lab reports", ": lab reports", "")]
-        last = f"{name} review"
-    return next((t for t in tries if len(t) <= 60), last)
+    # one pattern for every seller page (queue block 39; Sheet rows 569 and 582): the name first, then "review <year>: is it
+    # legit?", the middle words dropped first when the title runs over 60 characters, then the year; the brand stays
+    end, n = " | Peptide Chooser", search_name(r)
+    mid = "Prices, FDA check" if r["seller_slug"] in CLINIC_PROFILES else "Prices, lab reports"
+    # "reviews", as the title rule allows it (ODOBRENO PRAVILA - Karlo - 14. 11. 2026 - legit in seller titles; tools/check.py)
+    tries = [f"{n} reviews {SEO_YEAR}: is it legit? {mid}{end}", f"{n} reviews {SEO_YEAR}: is it legit?{end}",
+             f"{n} reviews {SEO_YEAR}: is it legit?", f"{n} review{end}"]
+    return next((t for t in tries if len(t) <= 60), f"{n} review")
 
 
 # Affiliate clinics people search as "<brand> reviews" and "is <brand> legit" (owner, ODOBRENO SEO - Karlo - 14. 11. 2026 -
@@ -4722,6 +4720,8 @@ def seller_action(r):
     return f'<a class="btn btn-line" href="/compare/?a=s.{r["seller_slug"]}"{ev("compare_pick", kind="seller")}>Compare with another shop</a>'
 
 
+
+
 def seller_page(r):
     clinic = r["seller_slug"] in CLINIC_PROFILES
     answer = " ".join(clinic_answer(r) if clinic else short_answer(r))
@@ -5028,7 +5028,7 @@ def rating_block(r):
         gl = shop_legal_line(r)
         extra = f'<p class="small opt-legal">{gl}</p>' if gl else ""
     stamp = f' <span class="stamp">Checked {nice_date(on)}</span>' if on else ""
-    return (f'<div class="seller-rating"><p class="seller-kind">{rating_chip(r)}{stamp}</p>'
+    return (f'<div class="seller-rating"><p class="seller-kind">Is {search_name(r)} legit? {rating_chip(r)}{stamp}</p>'
             f'<p class="small rating-why">{why}</p>{extra}'
             f'<p class="small">Not a safety grade or medical advice. <a href="/how-we-rate/#rating">How we rate</a></p></div>')
 
