@@ -547,3 +547,4 @@ ODOBRENO SEO - Karlo - 23. 11. 2026 - PR #246 (block 39: 146 seller titles "<Nam
 /sellers/youtheory-nutrawise-health-beauty/ 806bb77f21ca
 /sellers/zappy-health/ f75f45bf4d43
 /sellers/zealthy/ e9c690c3f0c8
+ODOBRENO SEO - Karlo - 23. 11. 2026 - block 59 fix 3 ("Legal option: <substance> on prescription at <clinic>, from $X/mo on a 12-month plan ($Y/mo month to month)" or "..., from $X/mo" on research-use shop pages; "Not met · not used in the rating" for a missed state registry in the Background check card and the seller page Missing line; no title, description or H1 changes; owner in the terminal)
