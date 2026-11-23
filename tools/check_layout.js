@@ -68,11 +68,43 @@ function pages(dir, base = '') {
             if (b.right > best && b.right > iw + 1 && !el.closest('.nav')) { best = b.right; widest = `${el.tagName.toLowerCase()}.${(el.className || '').toString().split(' ').join('.')} "${(el.textContent || '').trim().slice(0, 40)}" (${Math.round(b.right)}px)`; }
           }
         }
-        return { sw, iw, outside, which, widest };
+        // Top text width (layout.md, Text at the top; owner, 23 Nov 2026): from 1440px the first text block under the H1
+        // fills at least 90% of the content width, unless a photo or the checks box stands beside it.
+        let top = null;
+        const h1 = document.querySelector('main h1');
+        if (iw >= 1440 && h1 && h1.closest('.wrap')) {
+          const wrap = h1.closest('.wrap'), ws = getComputedStyle(wrap), wb = wrap.getBoundingClientRect();
+          const W = wb.width - parseFloat(ws.paddingLeft) - parseFloat(ws.paddingRight);
+          const tw = document.createTreeWalker(document.querySelector('main'), NodeFilter.SHOW_ELEMENT);
+          tw.currentNode = h1;
+          let t = null;
+          while (tw.nextNode()) {
+            const e = tw.currentNode;
+            if (h1.contains(e)) continue;
+            // a sentence block, not the byline, a stamp or a chip line
+            if (e.matches('p, .lede, .intro') && !e.matches('.meta, .small, .seller-kind, .stamp') && !e.closest('.small, .meta, nav') && getComputedStyle(e).display === 'block' && e.textContent.trim().length > 80) { t = e; break; }
+          }
+          if (t) {
+            const tb = t.getBoundingClientRect();
+            // a photo or a box (checks box, Where to get it, the group pad) in a column beside the text or one of its parents
+            let beside = false;
+            for (let a = t; a && a !== wrap && !beside; a = a.parentElement) {
+              const ab = a.getBoundingClientRect();
+              for (const x of a.parentElement.children) {
+                if (x === a) continue;
+                const b = x.getBoundingClientRect();
+                if (b.width > 80 && b.left >= ab.right - 1 && b.top < ab.bottom && b.bottom > ab.top) { beside = true; break; }
+              }
+            }
+            if (!beside && tb.width < 0.9 * W) top = `${t.tagName.toLowerCase()}.${[...t.classList].join('.')} "${t.textContent.trim().slice(0, 40)}" is ${Math.round(tb.width)}px of ${Math.round(W)}px`;
+          }
+        }
+        return { sw, iw, outside, which, widest, top };
       });
       n++;
       if (r.sw > r.iw) problems.push(`${w}px ${p}: page scrolls sideways (${r.sw} > ${r.iw})${r.widest ? ': ' + r.widest : ''}`);
       if (r.outside) problems.push(`${w}px ${p}: ${r.outside} element(s) past the right edge: ${r.which.join(', ')}`);
+      if (r.top) problems.push(`${w}px ${p}: first text under the H1 under 90% of the content width: ${r.top}`);
     }
     await page.close();
   }

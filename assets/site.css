@@ -942,26 +942,7 @@ body:has(.home-sec) .site-foot { margin-top: 0; }
 .seller-score .seller-pair, .seller-score > .btn { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; width: 100%; }
 .seller-score > .btn { display: flex; }
 @media (min-width: 900px) { .seller-head { grid-template-columns: minmax(0, 1fr) 320px; align-items: start; } .seller-score .seller-pair { grid-template-columns: minmax(0, 1fr); width: 100%; } }
-/* Seller head, wide (seller.md, Seller head from 1600px; queue block 15, option A): one row (tile | H1, chip, byline |
-   score and the pair of buttons), a rule, then the intro across the frame. Same DOM and order; below 1600px unchanged. */
-@media (min-width: 1600px) {
-  .seller-head, .seller-head:has(.seller-pair) { grid-template-columns: 72px auto minmax(0, 1fr) auto; column-gap: 20px; row-gap: 0; align-items: center; }
-  .seller-id, .seller-id-text { display: contents; }
-  .seller-id > .tile { grid-column: 1; grid-row: 1 / span 4; align-self: center; }
-  .seller-id h1 { grid-column: 2; grid-row: 1; margin: 0; }
-  .seller-id .seller-kind { grid-column: 3; grid-row: 1; margin: 0; justify-self: start; }
-  .seller-id-text > .meta, .seller-id-text > .seller-meta, .seller-id-text > .not-in { grid-column: 2 / 4; margin: 6px 0 0; }
-  .seller-id-text > .seller-answer { grid-column: 1 / -1; max-width: none; margin: 20px 0 0; padding-top: 18px; border-top: 1px solid var(--line); font-size: 18px; }
-  .seller-head .seller-score, .seller-head:has(.seller-pair) .seller-score { display: grid; grid-template-columns: 150px 240px 240px; grid-template-rows: auto auto; column-gap: 16px; row-gap: 4px; align-items: center; padding: 0; border: 0; background: none; border-radius: 0; grid-column: 4; grid-row: 1 / span 4; align-self: center; }
-  .seller-score .check-n { grid-column: 1; grid-row: 1; margin: 0; }
-  .seller-score .num-xl { font-size: var(--display-2-size); }
-  .seller-score .score-bar { grid-column: 1; grid-row: 2; margin: 0; align-self: start; }
-  .seller-score .seller-pair, .seller-score .seller-pair .pick-act { display: contents; }
-  .seller-score .btn { min-height: 48px; width: 100%; }
-  .seller-score .btn-action { grid-column: 2; grid-row: 1; }
-  .seller-score .pick-act .paid { grid-column: 2; grid-row: 2; text-align: center; margin: 0; align-self: start; }
-  .seller-score .seller-pair > .btn-line, .seller-score > .btn { grid-column: 3; grid-row: 1; }
-}
+/* Seller head: the same layout from 900px up, also at 1920 and 2560 (owner, 23 Nov 2026; the 1600px head of 19 Nov is gone). */
 /* the body on the band, background only (layout.md: full-bleed is background only) */
 .seller-body { position: relative; }
 .seller-top + .seller-body { margin-top: 0; padding-top: var(--space-6); padding-bottom: var(--space-6); box-shadow: 0 0 0 100vmax var(--paper-2); clip-path: inset(0 -100vmax); background: var(--paper-2); }
@@ -1078,3 +1059,11 @@ html:not(.motion) .opts .opt-m::before { transition: none; }
   .opts .opt-body { padding-right: 0; }
 }
 @media (min-width: 900px) { .flow .opt:has(> .opt-more:not([open])) > .pick-act { align-self: center; margin-top: 0; } }
+/* Text at the top (layout.md, Text at the top; owner rule 22 and 23 Nov 2026): from 900px the H1 block and the text under it
+   fill the content width, or their column when a photo or a box stands beside them; trust pages run their body text full
+   width too. tools/check_layout.js fails a first text block under 90% of the width. */
+@media (min-width: 900px) {
+  .letters-hd h1, .letters-hd .lede, .cmp-verdict, .hero-lede, .seller-answer,
+  .prose > h1, .prose > .lede, .prose > .meta, .prose > .short-answer, .prose > .short-answer p { max-width: none; }
+  .page:not(.learn):not(.guide) .prose > *, .page:not(.learn):not(.guide) .prose p, .page:not(.learn):not(.guide) .prose li { max-width: none; }
+}

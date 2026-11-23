@@ -40,11 +40,8 @@ Words, facts and section order unchanged; it replaces the entries above where th
 - **Is <Name> legit?:** the facts as rows in one white bordered box: a tick (met, `action`) or a cross (not met, `ink-2`) drawn in CSS, the check name in 600, then the line ("Met: ..."), then the paragraphs and the closing sentence as now; the FAQ after it.
 - **Aside:** the Background check card with "Background check" and the small "N of 4 checks" on one line, then one row per check: its name, and "Met" or "Not met" right-aligned in 600; Similar sellers as a white card, one row per seller: the 28px tile, the name link, its checks right-aligned.
 
-### Seller head from 1600px (owner chose option A, 19 Nov 2026, queue block 15; mock SellerHead.dc.html; waits for ODOBRENO DIZAJN)
-Only from 1600px; below it the Seller v2 head stays, and 390px is unchanged. Same words, same order of facts, same markup.
-- **Row 1:** the 72px tile | the H1 with the type chip beside it, the byline and the dates line under it | at the right in one line: the score ("N" at the H1's size, "of 4 checks", the check bar under it), `btn-action` "Visit <Name>" and `btn-line` "Compare with another clinic" (a shop: "...shop"), each 240px wide and 48px tall, top edges aligned; "Paid link" under Visit only, so Compare stays level. No card border on the score here.
-- **Fixed slots:** the score, Visit and Compare keep their places on every seller page; a page without Visit (a shop, a clinic with no paid link) leaves Visit's slot empty, so nothing moves from page to page.
-- **Then** a 1px `line` rule and the intro across the full frame at 18px (the one exception to the 80-character measure, owner choice).
+### Seller head at wide sizes (owner, 23 Nov 2026; waits for ODOBRENO DIZAJN)
+The 900px head stays at 1440, 1920 and 2560: tile, name and rating lines on the left filling the column, the checks box with its border on the right. It replaces the 1600px head of 19 Nov 2026. The short answer fills its column (layout.md, Text at the top).
 
 ## Vendor `/vendors/<name>/`
 
