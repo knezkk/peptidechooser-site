@@ -77,8 +77,6 @@ p { margin: 0 0 1em; }
 /* Home hero: intro line, then the evidence rail beside the body figure, then How we rate and the labels (pages.md, Home) */
 /* The first screen is white with no box around the flow; everything after it sits on the grey band (owner, 31 Oct 2026). */
 .hero-clinic { padding: 28px 0 32px; background: var(--white); }
-.hero-more { padding: 32px 0 56px; background: var(--paper-2); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
-.hero-more .hero-after { margin-top: 0; }
 /* "What is a peptide?" (copy doc section 1) opens the grey band, so it costs the first screen nothing. */
 .what-is { margin: 0 0 12px; max-width: 62ch; font-size: var(--ui-size); line-height: 1.5; color: var(--ink-2); }
 .what-is strong { color: var(--ink); }
@@ -550,7 +548,6 @@ body > .crumbs { width: -moz-available; width: -webkit-fill-available; width: st
   .hero { padding: 32px 0 40px; }
   /* Phones: H1 and its counts line, then the rail (pages.md, Home) */
   .hero-clinic { padding: 12px 0 24px; }
-  .hero-more { padding: 24px 0 40px; }
   .hero-clinic .wrap { display: flex; flex-direction: column; }
   .hero-clinic .hero-h1 { order: 1; margin-bottom: 12px; font-size: 22px; line-height: 1.2; }
   .hero-clinic .hero-lede { order: 1; margin-bottom: 14px; } /* under the H1, as in the phone sketch */
@@ -642,7 +639,6 @@ body > .crumbs { width: -moz-available; width: -webkit-fill-available; width: st
 .home-sec.section { padding-top: var(--space-7); }
 .home-sec.section:last-of-type { padding-bottom: var(--space-7); }
 .home-sec.band-2 { padding: var(--space-7) 0; margin-top: var(--space-7); }
-.hero-more { padding-bottom: var(--space-6); }
 body:has(.home-sec) .site-foot { margin-top: 0; }
 .home-sec .sec-hd { padding-bottom: var(--space-3); margin-bottom: var(--space-4); }
 .home-sec .sec-hd > div { width: 100%; }
@@ -770,8 +766,6 @@ body:has(.home-sec) .site-foot { margin-top: 0; }
 
 /* Home, full width (owner video 13 Nov 2026, w4; the book lines are in w1's queue): every section fills the container at
    every size, the hero is shorter and the sellers come sooner. Only the breakpoints in layout.md. */
-.hero-more { padding: var(--space-5) 0; }
-.hero-more .what-is { max-width: none; margin: 0; }
 .home-sec .sec-hd p { max-width: none; }
 /* Home's sellers use the Filter toolbar, layout A, as /sellers/ (owner, 13 Nov 2026, round 2). */
 .where-filter.cf { display: block; margin: 0 0 var(--space-3); }
