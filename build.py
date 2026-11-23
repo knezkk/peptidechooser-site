@@ -4308,11 +4308,22 @@ def card_chip(k, t, r):
     return f'<span class="chip chip-{"ok" if on else "neutral"} mark-{"yes" if on else "no"}">{state}{shown}</span>'
 
 
+# The state registry never counts toward the rating (rating.py); a missed one says so (owner, 23 Nov 2026)
+NOT_RATED = " \u00b7 not used in the rating"
+
+
+def check_state(k, r):
+    """A check's state in the Background check card: "Met", "Not met", a missed state registry "Not met · not used in the
+    rating"."""
+    # its own line (the state column does not wrap: /sellers/zealthy/ at 1024, tools/check_layout.js)
+    return "Met" if r.get(k) else "Not met" + (NOT_RATED.replace(" \u00b7 ", " \u00b7<br>") if k == RATING.REGISTRY else "")
+
+
 def check_card(r):
     """Background check card (pages.md, Seller; owner task 3 Nov 2026): a summary in the right column, sticky from 900px.
     The seller's checks as one chip each (a shop's five, a clinic's four), the name only: their facts and dates live in the
     legit section, once."""
-    rows = "".join(f'<li>{card_chip(k, t, r)}<span class="cc-st" aria-hidden="true">{"Met" if r.get(k) else "Not met"}</span></li>' for k, t in seller_checks(r))
+    rows = "".join(f'<li>{card_chip(k, t, r)}<span class="cc-st" aria-hidden="true">{check_state(k, r)}</span></li>' for k, t in seller_checks(r))
     return f"""
       <div class="board check-card" aria-labelledby="check-h">
         <div class="check-head"><h2 id="check-h">Background check</h2><p class="check-n"><span class="num-xl">{score_of(r)}</span> <span class="num-unit">of {out_of(r)} checks</span></p></div>
@@ -4861,7 +4872,7 @@ def seller_page(r):
         <p class="intro seller-answer">{answer}</p>
         </div>
       </div>
-      <div class="seller-score"><p class="check-n"><span class="num-xl">{score_of(r)}</span> <span class="num-unit">of {out_of(r)} checks</span></p>{score_bar(r)}{missing_line(r)}{seller_action(r)}</div>
+      <div class="seller-score"><p class="check-n"><span class="num-xl">{score_of(r)}</span> <span class="num-unit">of {out_of(r)} checks</span></p>{score_bar(r)}{missing_line(r, page=True)}{seller_action(r)}</div>
     </div>
   </div>
 </section>
@@ -5083,7 +5094,7 @@ def check_bar(r):
 MISSING_NAME = {"score_registered_company": "State registry"}
 
 
-def missing_line(r):
+def missing_line(r, page=False):
     """ "Missing: <check>" under an "x of y" (queue block 55, point 7; ODOBRENO DIZAJN + SEO + PRAVILA - Karlo - 20.11.2026),
     the second line of the same cell: one check by name; two or more as "Missing: N checks", their names in the HTML
     in the HTML (a title on hover, spoken). Nothing when every check is met or the seller has no score."""
@@ -5095,15 +5106,19 @@ def missing_line(r):
         on = newest_letter(r)
         letter = f'<span class="sub missing">FDA letter{", " + nice_date(on[:10]) if on else ""}</span>'
     # short names, so the line stays narrow in the /sellers/ table (owner: no overflow at 1440)
-    miss = [MISSING_NAME.get(k, t) for k, t in seller_checks(r) if not r.get(k) and k != "score_no_fda_letter"]
+    # on the seller page a missed state registry adds "· not used in the rating" (owner, 23 Nov 2026); lists stay short
+    # (its own line, so the score box keeps its width: /sellers/zealthy/ at 1024, tools/check_layout.js)
+    miss = [MISSING_NAME.get(k, t) + (NOT_RATED.replace(" \u00b7 ", " \u00b7<br>") if page and k == RATING.REGISTRY else "")
+            for k, t in seller_checks(r) if not r.get(k) and k != "score_no_fda_letter"]
     if not miss:
         return letter
     if len(miss) == 1:
         return letter + f'<span class="sub missing">Missing: {miss[0]}</span>'
     # the names on hover (title) and for screen readers; a tap target waits for book part 2f (a <details> summary is
     # under 44px without its CSS, tools/check_layout.js)
-    return letter + (f'<span class="sub missing" title="{", ".join(miss)}">Missing: {len(miss)} checks'
-            f'<span class="vh">: {", ".join(miss)}</span></span>')
+    names = ", ".join(x.replace("<br>", " ") for x in miss)
+    return letter + (f'<span class="sub missing" title="{names}">Missing: {len(miss)} checks'
+            f'<span class="vh">: {names}</span></span>')
 
 
 def shop_top_substance(r):
@@ -5117,13 +5132,28 @@ def shop_top_substance(r):
 
 def shop_legal_line(r):
     """The legal option on a research-use shop's page (owner, block 59 Q2 B, 22 Nov 2026): the site.legal_alternatives row
-    of its most-listed substance, "Legal option for <substance>: ...", no button (tools/check.py, paid rule: no green
+    of its most-listed substance, "Legal option: <substance> on prescription at <clinic>, from $X/mo", no button (tools/check.py, paid rule: no green
     button on a research-use shop's page; the clinic's name opens our page on it). "": that substance has none."""
     s = shop_top_substance(r)
     alt = LEGAL_ALTERNATIVES.get(s) if s else None
     if not alt:
         return ""
-    return legal_alt_text([alt], f"Legal option for {escape(alt.get('substance_name') or sub_label(s))}", button=False)
+    if alt.get("option_kind") == "fda_approved_drug":
+        return legal_alt_text([alt], button=False)
+    # owner's words, 23 Nov 2026: "Legal option: <substance> on prescription at <clinic>, from $X/mo on a 12-month plan
+    # ($Y/mo month to month)"; one price only: "..., from $X/mo"
+    sub = escape(alt.get("substance_name") or sub_label(s))
+    who = clinic_link(alt["seller_slug"], seller_base(alt.get("seller_name") or ""), True) if alt.get("seller_slug") else ""
+    head = f"Legal option: {sub} on prescription at {who}"
+    pl = legal_plan(alt)
+    price = pl.get("price_monthly") if pl else alt.get("lowest_monthly")
+    if price is None:
+        return f"{head}, priced per order"
+    num = lambda x: f'<span class="num">{usd(x)}/mo</span>'
+    if pl and pl.get("price_standard") is not None and pl.get("lowest_commitment_months"):
+        return (f'{head}, from {num(price)} on a {int(pl["lowest_commitment_months"])}\u2011month plan '
+                f'({num(pl["price_standard"])} month to month)')
+    return f"{head}, from {num(price)}"
 
 
 def rating_block(r):
