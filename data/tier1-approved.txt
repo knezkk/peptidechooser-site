@@ -551,3 +551,7 @@ ODOBRENO SEO - Karlo - 24. 11. 2026 - peptira, puratek-peptides titles (archive 
 /sellers/peptira/ 3505461612ae
 /sellers/puratek-peptides/ 8deee414afbd
 ODOBRENO PRAVILA - Karlo - 24. 11. 2026 - PR #249 (live pages outside the sitemap stay live: the deploy reads live /pages.json; owner in w1's terminal)
+ODOBRENO SEO - Karlo - 24. 11. 2026 - wave 1 seller pages in the #246 title pattern, descriptions differ only in prices or counts, incl. new shop pages (owner in w1's terminal; owner's Q1 B. On merge day w1 records here, under this line, every such page the guard lists)
+/sellers/aio-peptides/ 456f002cdf00
+/sellers/midwest-compounds/ deddf6b21991
+/sellers/oros-research/ e32b7ebdcd2e
