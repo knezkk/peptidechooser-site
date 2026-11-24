@@ -547,3 +547,7 @@ ODOBRENO SEO - Karlo - 23. 11. 2026 - PR #246 (block 39: 146 seller titles "<Nam
 /sellers/youtheory-nutrawise-health-beauty/ 806bb77f21ca
 /sellers/zappy-health/ f75f45bf4d43
 /sellers/zealthy/ e9c690c3f0c8
+ODOBRENO SEO - Karlo - 24. 11. 2026 - peptira, puratek-peptides titles (archive shop pages in #246's title pattern; owner in w1's terminal)
+/sellers/peptira/ 3505461612ae
+/sellers/puratek-peptides/ 8deee414afbd
+ODOBRENO PRAVILA - Karlo - 24. 11. 2026 - PR #249 (live pages outside the sitemap stay live: the deploy reads live /pages.json; owner in w1's terminal)
