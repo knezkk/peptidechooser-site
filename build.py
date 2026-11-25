@@ -3724,10 +3724,11 @@ def card_slug(key):
     return key.lower().replace(" ", "-")
 
 
-def decide_card(key, name, chips, price, act, pic=""):
-    # Goal page v2 (goal.md): the Best approved card carries the page's ink button, the Cheapest an outline one
-    act = re.sub(r'\bbtn-wait\b', "btn-ink" if key == "Best approved" else "btn-line", act, count=1)
-    shown = {"Best approved": "On prescription"}.get(key, key)  # no "best" outside title and H1 (owner, queue block 35, 20 Nov 2026)
+def decide_card(key, name, chips, price, act, pic="", label=None, ink=False):
+    # Goal page v2 (goal.md): the Best approved card carries the page's ink button, the Cheapest an outline one; the goal
+    # page's first-screen "Peptide" card (`ink`) the same ink button as "Proven alternative" (owner, PR #242, 23 Nov 2026)
+    act = re.sub(r'\bbtn-wait\b', "btn-ink" if ink or key == "Best approved" else "btn-line", act, count=1)
+    shown = label or {"Best approved": "On prescription"}.get(key, key)  # no "best" outside title and H1 (owner, queue block 35, 20 Nov 2026)
     return (f'<li class="panel-line decide-card" data-card="{card_slug(key)}">{pic}<p class="decide-k">{shown}</p><h2>{name}</h2>'
             f'{f"<span class=chips>{chips}</span>" if chips else ""}<p class="decide-price">{price}</p>{act}</li>')
 
@@ -3825,6 +3826,116 @@ def decide_cards(g):
     return f'<ul class="decide">{"".join(cards)}</ul>' if cards else ""
 
 
+# Goal pages, first screen peptide-first (owner chose option B, 21 Nov 2026; queue block 38, wave 1): a lede that answers
+# the search peptide-first, and two cards, "Peptide" and "Proven alternative". Tier 1 text: each lede waits for the owner's
+# ODOBRENO SEO at the PR. The old first two sentences move to "Is it legal today?" (nothing deleted). The second item is the
+# goal's peptide for its card (substance slug or the row's name); None: no peptide card.
+HERO_FIRST = {
+    "hair": ("ghk-cu", "No peptide is FDA approved for hair loss. The peptide with the most evidence is GHK-Cu, a cosmetic copper "
+             "peptide scalp serum, backed by lab studies, not large trials in people. The FDA-approved options are finasteride and "
+             "minoxidil, which are not peptides."),
+    "skin": ("ghk-cu", "No peptide is FDA approved for skin aging. Peptide creams and serums, like GHK-Cu, Matrixyl and Argireline, "
+             "are cosmetics: legal to sell without approval, judged on small studies of their own. The FDA-approved option for fine "
+             "wrinkles is tretinoin, on prescription, which is not a peptide."),
+    "weight-loss": ("semaglutide", "Three peptides are FDA approved for weight management, all on prescription: semaglutide (Wegovy), "
+                    "tirzepatide (Zepbound) and liraglutide (Saxenda). Online clinics also sell compounded copies, cheaper and not "
+                    "checked by the FDA batch by batch. The approved options that are not peptides are pills: orforglipron (Foundayo), "
+                    "naltrexone-bupropion (Contrave) and orlistat (Alli)."),
+    "muscle": ("sermorelin", "No peptide is FDA approved for building muscle. Online clinics prescribe sermorelin, whose approved "
+               "product left the market years ago, and tesamorelin is approved for one use only, belly fat in people with HIV. The "
+               "FDA-approved option is testosterone (TRT), only for men with low testosterone from a medical condition; it is a "
+               "hormone, not a peptide."),
+    "recovery": ("bpc-157", "No peptide is FDA approved for healing or joints. BPC-157 and TB-500 are the peptides sold for it, with "
+                 "animal studies only; in July 2026 the FDA proposed keeping both off the pharmacy compounding list. Since 30 Oct 2026 "
+                 "an HHS policy lets licensed pharmacies compound them under conditions, which is not FDA approval."),
+    "libido": ("bremelanotide", "One peptide is FDA approved for low desire: bremelanotide, sold as Vyleesi, for premenopausal women, "
+               "on prescription. PT-141 and melanotan II sold online are not approved products. For erections, sildenafil and "
+               "tadalafil are FDA-approved pills, and flibanserin (Addyi) is an approved pill for low desire; none of them is a peptide."),
+    "longevity": ("epitalon", "No peptide is FDA approved for longevity or aging. Epitalon and MOTS-c are the peptides sold for it; in "
+                  "July 2026 the FDA proposed keeping both off the pharmacy compounding list, and since 30 Oct 2026 an HHS policy lets "
+                  "licensed pharmacies compound them under conditions. NAD+, sold at clinics as shots and drips, is not a peptide and "
+                  "not FDA approved."),
+    "menopause": (None, "No peptide is FDA approved for menopause symptoms, and none on our lists is sold for them. The FDA-approved "
+                  "options are estradiol, alone or with progesterone, and one non-hormonal pill, fezolinetant (Veozah); none of them "
+                  "is a peptide."),
+    "growth-hormone": ("tesamorelin", "Tesamorelin (Egrifta) is the growth hormone peptide with FDA approval, only to reduce belly fat "
+                       "in adults with HIV and lipodystrophy. CJC-1295, ipamorelin and IGF-1 LR3 sold online are not approved, and "
+                       "sermorelin's approved product left the market years ago, though online clinics prescribe it. Growth hormone "
+                       "itself (somatropin) is FDA approved, mainly for children and adults with growth hormone deficiency."),
+    "sleep": ("dsip", "No peptide is FDA approved for sleep. DSIP (delta sleep-inducing peptide) is the peptide sold for it; its trials "
+              "in people are small and from the 1980s. Its nomination for pharmacy compounding was withdrawn, and the FDA says it lacks "
+              "the safety information to know whether it would cause harm."),
+    "energy": ("mots-c", "No peptide is FDA approved for energy. MOTS-c is the peptide sold for it, tested in animals only; since "
+               "30 Oct 2026 an HHS policy lets licensed pharmacies compound it under conditions, which is not FDA approval. NAD+ and "
+               "sermorelin are sold for energy at clinics without approval for it, and NAD+ is not a peptide."),
+    "testosterone": ("hCG (Pregnyl, Novarel)", "hCG, a peptide hormone sold as Pregnyl and Novarel, is FDA approved for some men whose "
+                     "low testosterone comes from the pituitary. Gonadorelin and kisspeptin-10 sold online to raise testosterone have no "
+                     "approved product on the market. Testosterone itself (TRT) is FDA approved, on prescription, only for men with low "
+                     "testosterone from a medical condition; it is a hormone, not a peptide."),
+}
+
+
+def hero_peptide_card(g, key):
+    """Card 1, "Peptide" (queue block 38): the goal's peptide, its status, then its legal option from data: an approved
+    peptide's clinic plans (its button as today); else a cosmetic product's lowest price and the clinic plan from
+    site.legal_alternatives with its one button ("Visit <clinic>" and "Paid link" when the clinic pays us, else our page);
+    an approved drug with no plan; none: "No legal option for use in people yet" and no button."""
+    p = next((x for x in g["peptides"] if not is_not_peptide(x) and (x.get("substance") == key or x["name"] == key)), None)
+    if not p:
+        return ""
+    rp = row_plan(g, p)
+    if approved_row(p) and rp and rp.get("product_kind") != "compounded":
+        return decide_card("Peptide", p["name"], status_chip(p), f'At online clinics{plan_src(g, rp)}', clinic_open(g, p, rp),
+                           option_picture(p, rp), ink=True)
+    lines, act = [], ""
+    if has_window(p) and window_kind(p) in COSMETIC_KINDS:
+        low, n = window_low(p)
+        if low is not None:
+            lines.append(f'<strong>{cosmetic_word(p).capitalize()} from {usd(low)}</strong> at {plural(n, "shop")}')
+    la = LEGAL_ALTERNATIVES.get(p.get("substance") or "")
+    if la and la.get("option_kind") != "fda_approved_drug" and la.get("lowest_monthly") is not None and la.get("seller_slug"):
+        lines.append(f'On prescription from <strong>{usd(la["lowest_monthly"])}/mo</strong> at '
+                     f'{clinic_link(la["seller_slug"], seller_base(la.get("seller_name") or ""), True)}')
+        act = clinic_button(la["seller_slug"], "See plans", placement="decision card")
+    elif la and la.get("option_kind") == "fda_approved_drug":
+        brand = clean(la.get("option_name") or "")
+        lines.append(f'FDA approved as {escape(brand.title() if brand.isupper() else brand)}, on prescription')
+    if p.get("substance") in PEPTIDE_SLUGS and not act:
+        act = f'<span class="pick-act"><a class="btn btn-wait btn-sm" href="/peptides/{p["substance"]}/">FDA status and sources</a></span>'
+    if approved_row(p) and not lines:  # an approved peptide with no plan in our data (hCG): its own row's text
+        lines.append(no_listing_text(p))
+    elif not (la and (la.get("lowest_monthly") is not None or la.get("option_kind") == "fda_approved_drug")):
+        lines.append(f'<span class="ru-none">{NO_LEGAL_OPTION}</span>')
+        act = ""
+    return decide_card("Peptide", p["name"], status_chip(p), " · ".join(lines), act, option_picture(p, rp), ink=True)
+
+
+def hero_alt_card(g):
+    """Card 2, "Proven alternative" (queue block 38): the FDA-approved option that is not a peptide, the one with the most
+    clinics on its own plan, with the "Not a peptide" pill and today's button."""
+    alts = [p for p in g["peptides"] if approved_row(p) and is_not_peptide(p) and not off_goal(p)]
+    if not alts:
+        return ""
+    def reach(p):
+        rp = row_plan(g, p)
+        return (plan_clinics(g, p, rp) if rp and rp.get("product_kind") != "compounded" else -1)
+    p = max(alts, key=reach)
+    rp = row_plan(g, p)
+    if rp and rp.get("product_kind") != "compounded":
+        return decide_card("Best approved", p["name"], status_chip(p) + np_chip(p), f'At online clinics{plan_src(g, rp)}',
+                           clinic_open(g, p, rp), option_picture(p, rp), label="Proven alternative")
+    on_page = p.get("substance") in PEPTIDE_SLUGS
+    page, label = (f'/peptides/{p["substance"]}/', "FDA status and sources") if on_page else ("/learn/", "Read the guides")
+    return decide_card("Best approved", p["name"], status_chip(p) + np_chip(p), no_listing_text(p),
+                       f'<span class="pick-act"><a class="btn btn-wait btn-sm" href="{page}">{label}</a></span>',
+                       option_picture(p, None), label="Proven alternative")
+
+
+def hero_cards(g):
+    cards = hero_peptide_card(g, HERO_FIRST[g["slug"]][0]) + hero_alt_card(g)
+    return f'<ul class="decide hero-cards">{cards}</ul>' if cards else ""
+
+
 def intro_split(text):
     """The intro's first two sentences for the first screen, the rest for "Is it legal today?" (owner task 3 Nov 2026:
     nothing deleted, only moved)."""
@@ -3848,6 +3959,9 @@ def category_body(g):
     opt_html = grouped_rows(g, option_rows(g))
     instead = approved_instead(g)
     lead, moved = intro_split(g["short_answer"])
+    hero = g["slug"] in HERO_FIRST
+    if hero:  # queue block 38: the new lede on the first screen, the old first sentences move to "Is it legal today?"
+        lead, moved = HERO_FIRST[g["slug"]][1], g["short_answer"].strip()
     subs = {x for p in g["peptides"] for x in subs_of(p)}
     legal, legal_checked = legal_rows(subs) if g.get("legal_section") else ([], "")
     legal_html = f"""
@@ -3866,7 +3980,7 @@ def category_body(g):
   </div>
 </section>{LEGAL_ACC_JS}""" if legal else (f'<section class="section goal-sec"><div class="wrap"><p>{moved}</p></div></section>' if moved else "")
     plans = table_plans(g)
-    cards = decide_cards(g)
+    cards = hero_cards(g) if hero else decide_cards(g)
     own = {f'src-{s["n"]}' for s in g.get("sources", [])}
     srcs += page_sources(opt_html + legal_html + cards, own)
     if plans or goal_plans(g):
@@ -3887,9 +4001,9 @@ def category_body(g):
     <div class="goal-top"><div>
     <h1>{g["h1"]}</h1>
     {author_line(GOAL_CHECKED)}{SOURCE_LINE}
-    <p class="intro">{lead}</p>
+    <p class="intro{" intro-wide" if hero else ""}">{lead}</p>{cards if hero else ""}
     </div><div class="goal-panel goal-c-{g.get("panel", g["slug"])}">{parts.goal_photo(g.get("panel", g["slug"]), 120)}</div></div>
-    {cards}
+    {"" if hero else cards}
   </div>
 </section>
 <section class="goal-sec goal-opts">
