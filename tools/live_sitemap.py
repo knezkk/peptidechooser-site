@@ -4,7 +4,8 @@ python3 tools/live_sitemap.py <dir> writes:
   <dir>/live-sitemap.xml  every live <url> in one urlset: sitemap.xml itself, or, since the sitemap index, each of its files
   <dir>/live-lastmod.json the live dist/lastmod.json (each page's visible-text fingerprint and the date it last changed)
   <dir>/live-seller-archive.json the live seller profiles, so a seller that leaves the data keeps its page
-build.py reads them through LIVE_SITEMAP and LIVE_LASTMOD. A file it cannot read is left out; this never fails the deploy.
+  <dir>/live-pages.json every live page, also a noindex one the sitemap leaves out, so a live comparison stays
+build.py reads them through LIVE_SITEMAP, LIVE_LASTMOD, LIVE_SELLER_ARCHIVE and LIVE_PAGES. A file it cannot read is left out; this never fails the deploy.
 """
 import re
 import sys
@@ -52,6 +53,10 @@ def main(folder):
     if archive and archive.lstrip().startswith("{"):
         (folder / "live-seller-archive.json").write_text(archive, encoding="utf-8")
         print("live_sitemap: live seller profiles read")
+    pages = get(LIVE + "/pages.json")  # every published page, also a noindex one the sitemap leaves out (block 60)
+    if pages and pages.lstrip().startswith("["):
+        (folder / "live-pages.json").write_text(pages, encoding="utf-8")
+        print("live_sitemap: live page list read")
     marks = get(LIVE + "/lastmod.json")
     if marks and marks.lstrip().startswith("{"):
         (folder / "live-lastmod.json").write_text(marks, encoding="utf-8")
