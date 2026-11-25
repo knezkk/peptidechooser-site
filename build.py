@@ -1433,6 +1433,23 @@ SELLERS = {r["seller_slug"]: r for r in DATA.get("sellers") or []}
 PROFILES = {r["seller_slug"]: r for r in DATA.get("seller_profiles") or []}
 
 
+def published_paths():
+    """Every page the live site publishes, also one that is not in the sitemap (a noindex,follow comparison of two sellers,
+    queue block 60): the live /pages.json the deploy fetches into LIVE_PAGES (tools/live_sitemap.py), else the last build's
+    dist/pages.json (read before dist is cleared). Without it a live pair that left the sitemap lost its protection and its
+    page left the build with no redirect (23 Nov 2026, w1 report: 32 comparisons on the deploy after block 60)."""
+    for f in (os.environ.get("LIVE_PAGES"), DIST / "pages.json"):
+        if f and Path(f).is_file():
+            try:
+                return {x["path"] for x in json.loads(Path(f).read_text(encoding="utf-8")) if str(x.get("path", "")).endswith("/")}
+            except (ValueError, TypeError, AttributeError):
+                return set()
+    return set()
+
+
+_PUBLISHED = published_paths()
+
+
 def _live_seller_pages():
     """The seller pages already published: the live sitemap the deploy fetches into LIVE_SITEMAP, else the last build's own
     sitemap files (read before dist is cleared)."""
@@ -1451,7 +1468,7 @@ def _read_live_paths():
     f = os.environ.get("LIVE_SITEMAP")
     files = [Path(f)] if f and Path(f).is_file() else [DIST / "sitemap.xml"] + sorted(DIST.glob("sitemap-*.xml"))
     text = "".join(x.read_text(encoding="utf-8") for x in files if x.is_file())
-    return {re.sub(r"^https?://[^/]+", "", u) or "/" for u in re.findall(r"<loc>([^<]+)</loc>", text)}
+    return {re.sub(r"^https?://[^/]+", "", u) or "/" for u in re.findall(r"<loc>([^<]+)</loc>", text)} | _PUBLISHED
 
 
 _LIVE_PATHS = _read_live_paths() if SUCCESSORS else set()
@@ -6820,14 +6837,14 @@ def write_sitemaps():
 
 def live_paths():
     """The paths already published: the live sitemap the deploy fetches into LIVE_SITEMAP, else the last build's
-    dist/sitemap.xml (read before dist is cleared), else none."""
+    dist/sitemap.xml (read before dist is cleared), else none; plus every page of the live pages.json (published_paths)."""
     for f in (os.environ.get("LIVE_SITEMAP"), DIST / "sitemap.xml"):
         if f and Path(f).is_file():
             # the sitemap index (task 23): the last build's own files; the deploy's live copy is flat (tools/live_sitemap.py)
             files = [Path(f)] + (sorted(DIST.glob("sitemap-*.xml")) if Path(f) == DIST / "sitemap.xml" else [])
             text = "".join(x.read_text(encoding="utf-8") for x in files)
-            return {x for x in re.findall(re.escape(SITE) + r"(/[^<]*)</loc>", text) if not x.endswith(".xml")}
-    return set()
+            return {x for x in re.findall(re.escape(SITE) + r"(/[^<]*)</loc>", text) if not x.endswith(".xml")} | _PUBLISHED
+    return set(_PUBLISHED)
 
 
 LIVE_PATHS = live_paths()
