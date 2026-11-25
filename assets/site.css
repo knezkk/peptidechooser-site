@@ -1063,3 +1063,40 @@ html:not(.motion) .opts .opt-m::before { transition: none; }
   .prose > h1, .prose > .lede, .prose > .meta, .prose > .short-answer, .prose > .short-answer p { max-width: none; }
   .page:not(.learn):not(.guide) .prose > *, .page:not(.learn):not(.guide) .prose p, .page:not(.learn):not(.guide) .prose li { max-width: none; }
 }
+
+/* Seller head D (wave1.md, Seller head D; ODOBRENO DIZAJN - Karlo - 25. 11. 2026 - seller head D): left the H1, one line
+   (kind chip and author line, the dates as its Tooltip) and the short answer; the rating in the checks box. */
+.seller-id { display: grid; grid-template-columns: 72px minmax(0, 1fr); column-gap: 20px; align-items: center; }
+.seller-id > h1 { margin: 0; }
+.seller-id-text { grid-column: 2; margin-top: 10px; }
+.seller-line { position: relative; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; margin: 0 0 14px; }
+.seller-line .seller-kind, .seller-line .meta { margin: 0; }
+.seller-line .meta { cursor: help; }
+.seller-answer { margin-top: 0; font-size: calc(var(--ui-size) + 1px); }
+.seller-line .seller-meta[role="tooltip"], .rating-note { position: absolute; z-index: 60; margin: 0; max-width: min(38ch, calc(100vw - 32px)); padding: 10px 12px; background: var(--ink); color: var(--white); border-radius: var(--radius-control); box-shadow: var(--shadow-card); font-size: var(--small-size); line-height: 1.45; }
+.seller-line .seller-meta[role="tooltip"] { top: calc(100% + 8px); left: 0; width: max-content; }
+.rating-note a { color: var(--white); }
+.seller-line .seller-meta[role="tooltip"]::before, .rating-note::before { content: ""; position: absolute; left: 0; right: 0; top: -12px; height: 12px; }
+/* hidden but in the HTML: read in place, its link reachable by keyboard */
+.seller-line .seller-meta[role="tooltip"]:not(:hover), .rating-note:not(:hover):not(:focus-within) { clip-path: inset(50%); width: 1px; height: 1px; overflow: hidden; padding: 0; }
+.seller-line .meta:hover ~ .seller-meta[role="tooltip"], .seller-rating .seller-kind:hover ~ .rating-note { clip-path: none; width: max-content; height: auto; overflow: visible; white-space: normal; padding: 10px 12px; }
+.seller-head .seller-score, .seller-head:has(.seller-pair) .seller-score { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 12px; align-items: end; }
+.seller-score > *, .seller-rating > * { grid-column: 1 / -1; }
+.seller-rating { display: contents; }
+.seller-rating .seller-kind { grid-row: 1; grid-column: 1 / -1; display: grid; grid-template-rows: auto 56px; justify-items: start; align-items: center; gap: 4px; margin: 0 0 10px; font-weight: 600; font-size: calc(var(--ui-size) + 1px); line-height: 1.3; cursor: pointer; }
+.seller-rating .rating { font-size: var(--ui-size); padding: 6px 12px; }
+.seller-score .check-n { grid-row: 1; grid-column: 2; align-self: end; margin-bottom: 10px; }
+.seller-score:not(:has(.seller-rating)) .check-n { grid-column: 1 / -1; }
+.rating-note { grid-row: 2; grid-column: 1 / -1; top: 0; left: 0; }
+.seller-score .score-bar { order: 1; }
+.seller-score .missing { order: 2; }
+.seller-rating .rating-why { order: 3; margin: 0 0 14px; }
+.seller-rating .opt-legal { order: 4; margin: 0 0 14px; padding: 12px 14px; background: var(--paper-2); border-radius: var(--radius-control); color: var(--ink); }
+.seller-score .seller-pair, .seller-score > .btn { order: 5; }
+.seller-score .paid { display: block; text-align: center; }
+@media (max-width: 640px) {
+  .seller-id { grid-template-columns: 48px minmax(0, 1fr); column-gap: 14px; }
+  .seller-id > .tile { width: 48px; height: 48px; }
+  .seller-id > .tile img { width: 48px; height: 48px; }
+  .seller-id-text { grid-column: 1 / -1; }
+}

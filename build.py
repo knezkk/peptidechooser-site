@@ -4877,16 +4877,13 @@ def seller_page(r):
     <div class="seller-head">
       <div class="seller-id">
         {parts.tile(r["seller_slug"], seller_base(seller_name(r)), 72, shop=not clinic, seller=r)}
-        <div class="seller-id-text">
         <h1>{search_name(r)} review</h1>
-        <p class="seller-kind"><span class="chip chip-{"info" if clinic else "neutral"}">{kind_words(r)[1]}</span></p>
-        {rating_block(r)}
-        {author_line(checked) if checked else ""}
-        <p class="small seller-meta">{meta}</p>{not_in_line(r["seller_slug"], "p")}
+        <div class="seller-id-text">
+        <div class="seller-line"><p class="seller-kind"><span class="chip chip-{"info" if clinic else "neutral"}">{kind_words(r)[1]}</span></p>{author_line(checked) if checked else ""}<p class="small seller-meta"{' role="tooltip"' if checked else ""}>{meta}</p></div>{not_in_line(r["seller_slug"], "p")}
         <p class="intro seller-answer">{answer}</p>
         </div>
       </div>
-      <div class="seller-score"><p class="check-n"><span class="num-xl">{score_of(r)}</span> <span class="num-unit">of {out_of(r)} checks</span></p>{score_bar(r)}{missing_line(r, page=True)}{seller_action(r)}</div>
+      <div class="seller-score">{rating_block(r)}<p class="check-n"><span class="num-xl">{score_of(r)}</span> <span class="num-unit">of {out_of(r)} checks</span></p>{score_bar(r)}{missing_line(r, page=True)}{seller_action(r)}</div>
     </div>
   </div>
 </section>
@@ -5177,17 +5174,17 @@ def rating_block(r):
     x = seller_rating(r)
     if not x:
         return ""
-    on = (r.get("score_checked_on") or "")[:10]
     why = x["reason"] + "".join(f" {n}." for n in x["notes"])
     extra = ""
     if x["key"] == "lab":
         why += f" {score_of(r)} of {out_of(r)} checks met."
         gl = shop_legal_line(r)
         extra = f'<p class="small opt-legal">{gl}</p>' if gl else ""
-    stamp = f' <span class="stamp">Checked {nice_date(on)}</span>' if on else ""
-    return (f'<div class="seller-rating"><p class="seller-kind">Is {search_name(r)} legit? {rating_chip(r)}{stamp}</p>'
-            f'<p class="small rating-why">{why}</p>{extra}'
-            f'<p class="small">Not a safety grade or medical advice. <a href="/how-we-rate/#rating">How we rate</a></p></div>')
+    # Seller head D (wave1.md; ODOBRENO DIZAJN - Karlo - 25. 11. 2026 - seller head D): the block sits in the checks box;
+    # the note is the chip's Tooltip, kept in the HTML; the author line on the left carries the date
+    return (f'<div class="seller-rating"><p class="seller-kind">Is {search_name(r)} legit? {rating_chip(r)}</p>'
+            f'<p class="small rating-note" role="tooltip">Not a safety grade or medical advice. <a href="/how-we-rate/#rating">How we rate</a></p>'
+            f'<p class="small rating-why">{why}</p>{extra}</div>')
 
 
 ACT_TH = '<th scope="col"><span class="vh">Our page</span></th>'
