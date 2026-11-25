@@ -13,9 +13,7 @@ ODOBRENO SEO - Karlo - 7. 11. 2026
 /sellers/ivim-health/ 5ca8ea29ec98
 /sellers/oak-weight-loss/ 74380be5a479
 /sellers/henry-meds-adonis-health-inc/ 96a296d224f2
-ODOBRENO SEO - Karlo - 7. 11. 2026
 /sellers/braverx/ ae647ce937e0
-ODOBRENO SEO - Karlo - 7. 11. 2026
 /learn/ a5b93958396c
 ODOBRENO SEO - Karlo - 7. 11. 2026 - PR #119
 /longevity/ cf12026d74e9
@@ -399,6 +397,8 @@ ODOBRENO SEO - Karlo - 21. 11. 2026 - block 57 prices (data of 21 Nov 2026: TB-5
 ODOBRENO SEO - Karlo - 21. 11. 2026 - block 58 ("Legal option for <goal>: <plan> from $X/mo at <Seller>" + Visit + Paid link on 13 research-use rows: growth-hormone 3, libido 1, muscle 2, testosterone 2, weight-loss 2, weight-loss/new-drugs 2; no title, description or H1 changes; owner in the terminal)
 ODOBRENO SEO - Karlo - 23. 11. 2026 - block 59 (the "Legit?" rating chip, reason, "Not a safety grade or medical advice" and the How we rate link on every seller page and list; the /how-we-rate/#rating section; "Legal option for <substance>: ..." on research-use shop pages with the 12-month note; no title, description or H1 changes; owner in the terminal)
 ODOBRENO PRAVILA - Karlo - 23. 11. 2026 - block 59 rating (rating.py rules: research-use shops Lab-use only; registry and fresh prices never count; one gap Legit, with gaps; open FDA letter or two gaps Caution)
+ODOBRENO SEO - Karlo - 22. 11. 2026 - block 60 (T4: 40 comparisons of two sellers get noindex,follow and leave the sitemap and llms.txt, incl. the 6 with Search Console impressions; no title, description or H1 changes; owner in the terminal)
+ODOBRENO SEO - Karlo - 23. 11. 2026 - block 59 fix 3 ("Legal option: <substance> on prescription at <clinic>, from $X/mo on a 12-month plan ($Y/mo month to month)" or "..., from $X/mo" on research-use shop pages; "Not met · not used in the rating" for a missed state registry in the Background check card and the seller page Missing line; no title, description or H1 changes; owner in the terminal)
 ODOBRENO SEO - Karlo - 23. 11. 2026 - PR #246 (block 39: 146 seller titles "<Name> reviews 2026: is it legit? ... | Peptide Chooser", rule-8 pages and block-30 clinics unchanged; /sellers/ H1 "Where to buy peptides" (rule 8 entry updated, owner Q1 a) and its intro with "best place to buy peptides" and "peptide suppliers"; "Is <Name> legit?" before the rating chip on every seller page; /how-we-rate/ heading "How we rate sellers"; typed in the w3 terminal)
 /sellers/ 450491636187
 /sellers/ageless-humans/ 19f0dde01b77
@@ -547,8 +547,6 @@ ODOBRENO SEO - Karlo - 23. 11. 2026 - PR #246 (block 39: 146 seller titles "<Nam
 /sellers/youtheory-nutrawise-health-beauty/ 806bb77f21ca
 /sellers/zappy-health/ f75f45bf4d43
 /sellers/zealthy/ e9c690c3f0c8
-ODOBRENO SEO - Karlo - 23. 11. 2026 - block 59 fix 3 ("Legal option: <substance> on prescription at <clinic>, from $X/mo on a 12-month plan ($Y/mo month to month)" or "..., from $X/mo" on research-use shop pages; "Not met · not used in the rating" for a missed state registry in the Background check card and the seller page Missing line; no title, description or H1 changes; owner in the terminal)
-ODOBRENO SEO - Karlo - 22. 11. 2026 - block 60 (T4: 40 comparisons of two sellers get noindex,follow and leave the sitemap and llms.txt, incl. the 6 with Search Console impressions; no title, description or H1 changes; owner in the terminal)
 ODOBRENO SEO - Karlo - 24. 11. 2026 - peptira, puratek-peptides titles (archive shop pages in #246's title pattern; owner in w1's terminal)
 /sellers/peptira/ 3505461612ae
 /sellers/puratek-peptides/ 8deee414afbd

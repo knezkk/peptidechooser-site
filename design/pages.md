@@ -18,7 +18,8 @@ One file per page type (split 5 Nov 2026). An older note saying "pages.md, <sect
 - [trust.md](pages/trust.md): Trust pages, Sources `/sources/`, Paid link redirect page `/out/<slug>/`
 - [search.md](pages/search.md): Search `/search/`
 - [windows.md](pages/windows.md): Seller window, Clinic window, Price columns (plan and clinic tables)
-- [parts.md](pages/parts.md): Buttons, Option rows, Pictures, Seller tile, Product drawings, Goal drawings, Goal photos, Logo, Medical cues (figure, chips, price pad), FAQ (the parts of 20 Nov 2026 are in nov20.md)
+- [parts.md](pages/parts.md): Buttons, Option rows, Pictures, Seller tile, Product drawings, Goal drawings, Goal photos, Logo, Medical cues (figure, chips, price pad), FAQ (the parts of 20 Nov 2026 are in nov20.md, the rating chip in wave1.md)
+- [wave1.md](pages/wave1.md): Wave 1 (22 and 23 Nov 2026): the "Legit?" rating chip and the seller first screen
 - [nov20.md](pages/nov20.md): The 20 Nov 2026 set: the new parts (What is a peptide box, Not a peptide pill, group heading, research-use row, goal filter, Source link, Missing line) and the Home, seller, schema and facts rules of points 1 to 10
 - [group.md](pages/group.md): Group page `/<group>/` (list and guide layouts), Goal subpage `/<goal>/<topic>/`
 - [new-types.md](pages/new-types.md): Brand, Seller offer, Lab, Company FDA letters, Tool (templates; none built yet)

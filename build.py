@@ -3057,10 +3057,6 @@ HOME = f"""
       <div class="flow-hd fh-compare"><span class="step-n" aria-hidden="true">2</span><h2>Compare the options{GOAL_TITLES}</h2><a class="step-legal" href="#legal"><strong>Is it legal today?</strong></a></div>
       <div class="flow-compare">{STEP_COMPARE}</div>
     </div>
-  </div>
-</section>
-<section class="hero-more">
-  <div class="wrap">
     <div class="tip-defs" hidden>{TIP_DEFS}</div>
   </div>
 </section>

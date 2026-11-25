@@ -77,8 +77,6 @@ p { margin: 0 0 1em; }
 /* Home hero: intro line, then the evidence rail beside the body figure, then How we rate and the labels (pages.md, Home) */
 /* The first screen is white with no box around the flow; everything after it sits on the grey band (owner, 31 Oct 2026). */
 .hero-clinic { padding: 28px 0 32px; background: var(--white); }
-.hero-more { padding: 32px 0 56px; background: var(--paper-2); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
-.hero-more .hero-after { margin-top: 0; }
 /* "What is a peptide?" (copy doc section 1) opens the grey band, so it costs the first screen nothing. */
 .what-is { margin: 0 0 12px; max-width: 62ch; font-size: var(--ui-size); line-height: 1.5; color: var(--ink-2); }
 .what-is strong { color: var(--ink); }
@@ -550,7 +548,6 @@ body > .crumbs { width: -moz-available; width: -webkit-fill-available; width: st
   .hero { padding: 32px 0 40px; }
   /* Phones: H1 and its counts line, then the rail (pages.md, Home) */
   .hero-clinic { padding: 12px 0 24px; }
-  .hero-more { padding: 24px 0 40px; }
   .hero-clinic .wrap { display: flex; flex-direction: column; }
   .hero-clinic .hero-h1 { order: 1; margin-bottom: 12px; font-size: 22px; line-height: 1.2; }
   .hero-clinic .hero-lede { order: 1; margin-bottom: 14px; } /* under the H1, as in the phone sketch */
@@ -642,7 +639,6 @@ body > .crumbs { width: -moz-available; width: -webkit-fill-available; width: st
 .home-sec.section { padding-top: var(--space-7); }
 .home-sec.section:last-of-type { padding-bottom: var(--space-7); }
 .home-sec.band-2 { padding: var(--space-7) 0; margin-top: var(--space-7); }
-.hero-more { padding-bottom: var(--space-6); }
 body:has(.home-sec) .site-foot { margin-top: 0; }
 .home-sec .sec-hd { padding-bottom: var(--space-3); margin-bottom: var(--space-4); }
 .home-sec .sec-hd > div { width: 100%; }
@@ -770,8 +766,6 @@ body:has(.home-sec) .site-foot { margin-top: 0; }
 
 /* Home, full width (owner video 13 Nov 2026, w4; the book lines are in w1's queue): every section fills the container at
    every size, the hero is shorter and the sellers come sooner. Only the breakpoints in layout.md. */
-.hero-more { padding: var(--space-5) 0; }
-.hero-more .what-is { max-width: none; margin: 0; }
 .home-sec .sec-hd p { max-width: none; }
 /* Home's sellers use the Filter toolbar, layout A, as /sellers/ (owner, 13 Nov 2026, round 2). */
 .where-filter.cf { display: block; margin: 0 0 var(--space-3); }
@@ -942,26 +936,7 @@ body:has(.home-sec) .site-foot { margin-top: 0; }
 .seller-score .seller-pair, .seller-score > .btn { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; width: 100%; }
 .seller-score > .btn { display: flex; }
 @media (min-width: 900px) { .seller-head { grid-template-columns: minmax(0, 1fr) 320px; align-items: start; } .seller-score .seller-pair { grid-template-columns: minmax(0, 1fr); width: 100%; } }
-/* Seller head, wide (seller.md, Seller head from 1600px; queue block 15, option A): one row (tile | H1, chip, byline |
-   score and the pair of buttons), a rule, then the intro across the frame. Same DOM and order; below 1600px unchanged. */
-@media (min-width: 1600px) {
-  .seller-head, .seller-head:has(.seller-pair) { grid-template-columns: 72px auto minmax(0, 1fr) auto; column-gap: 20px; row-gap: 0; align-items: center; }
-  .seller-id, .seller-id-text { display: contents; }
-  .seller-id > .tile { grid-column: 1; grid-row: 1 / span 4; align-self: center; }
-  .seller-id h1 { grid-column: 2; grid-row: 1; margin: 0; }
-  .seller-id .seller-kind { grid-column: 3; grid-row: 1; margin: 0; justify-self: start; }
-  .seller-id-text > .meta, .seller-id-text > .seller-meta, .seller-id-text > .not-in { grid-column: 2 / 4; margin: 6px 0 0; }
-  .seller-id-text > .seller-answer { grid-column: 1 / -1; max-width: none; margin: 20px 0 0; padding-top: 18px; border-top: 1px solid var(--line); font-size: 18px; }
-  .seller-head .seller-score, .seller-head:has(.seller-pair) .seller-score { display: grid; grid-template-columns: 150px 240px 240px; grid-template-rows: auto auto; column-gap: 16px; row-gap: 4px; align-items: center; padding: 0; border: 0; background: none; border-radius: 0; grid-column: 4; grid-row: 1 / span 4; align-self: center; }
-  .seller-score .check-n { grid-column: 1; grid-row: 1; margin: 0; }
-  .seller-score .num-xl { font-size: var(--display-2-size); }
-  .seller-score .score-bar { grid-column: 1; grid-row: 2; margin: 0; align-self: start; }
-  .seller-score .seller-pair, .seller-score .seller-pair .pick-act { display: contents; }
-  .seller-score .btn { min-height: 48px; width: 100%; }
-  .seller-score .btn-action { grid-column: 2; grid-row: 1; }
-  .seller-score .pick-act .paid { grid-column: 2; grid-row: 2; text-align: center; margin: 0; align-self: start; }
-  .seller-score .seller-pair > .btn-line, .seller-score > .btn { grid-column: 3; grid-row: 1; }
-}
+/* Seller head: the same layout from 900px up, also at 1920 and 2560 (owner, 23 Nov 2026; the 1600px head of 19 Nov is gone). */
 /* the body on the band, background only (layout.md: full-bleed is background only) */
 .seller-body { position: relative; }
 .seller-top + .seller-body { margin-top: 0; padding-top: var(--space-6); padding-bottom: var(--space-6); box-shadow: 0 0 0 100vmax var(--paper-2); clip-path: inset(0 -100vmax); background: var(--paper-2); }
@@ -983,7 +958,7 @@ body:has(.home-sec) .site-foot { margin-top: 0; }
 .check-card .check-chips { align-items: stretch; gap: 0; }
 .check-card .check-chips > li { display: flex; justify-content: space-between; align-items: center; gap: 12px; min-height: 36px; border-bottom: 1px solid var(--line); }
 .check-card .check-chips .chip { padding: 0; border: 0; background: none; color: var(--ink); font-size: var(--small-size); font-weight: 400; white-space: normal; }
-.cc-st { font-size: var(--small-size); font-weight: 600; color: var(--ink); white-space: nowrap; }
+.cc-st { font-size: var(--small-size); font-weight: 600; color: var(--ink); white-space: nowrap; text-align: right; } /* a two-line state ("Not met ·<br>not used in the rating") stays right-aligned (seller.md, Aside; w2, 23 Nov 2026) */
 .seller-similar ul { list-style: none; margin: 0; padding: 0 var(--space-4); background: var(--white); border: 1px solid var(--line-strong); border-radius: var(--radius-panel); }
 .seller-similar li { display: flex; align-items: center; gap: 10px; min-height: 52px; border-bottom: 1px solid var(--line); }
 .seller-similar li:last-child { border-bottom: 0; }
@@ -1080,3 +1055,11 @@ html:not(.motion) .opts .opt-m::before { transition: none; }
   .opts .opt-body { padding-right: 0; }
 }
 @media (min-width: 900px) { .flow .opt:has(> .opt-more:not([open])) > .pick-act { align-self: center; margin-top: 0; } }
+/* Text at the top (layout.md, Text at the top; owner rule 22 and 23 Nov 2026): from 900px the H1 block and the text under it
+   fill the content width, or their column when a photo or a box stands beside them; trust pages run their body text full
+   width too. tools/check_layout.js fails a first text block under 90% of the width. */
+@media (min-width: 900px) {
+  .letters-hd h1, .letters-hd .lede, .cmp-verdict, .hero-lede, .seller-answer,
+  .prose > h1, .prose > .lede, .prose > .meta, .prose > .short-answer, .prose > .short-answer p { max-width: none; }
+  .page:not(.learn):not(.guide) .prose > *, .page:not(.learn):not(.guide) .prose p, .page:not(.learn):not(.guide) .prose li { max-width: none; }
+}
