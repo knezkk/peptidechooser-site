@@ -549,3 +549,12 @@ ODOBRENO SEO - Karlo - 23. 11. 2026 - PR #246 (block 39: 146 seller titles "<Nam
 /sellers/zealthy/ e9c690c3f0c8
 ODOBRENO SEO - Karlo - 23. 11. 2026 - block 59 fix 3 ("Legal option: <substance> on prescription at <clinic>, from $X/mo on a 12-month plan ($Y/mo month to month)" or "..., from $X/mo" on research-use shop pages; "Not met · not used in the rating" for a missed state registry in the Background check card and the seller page Missing line; no title, description or H1 changes; owner in the terminal)
 ODOBRENO SEO - Karlo - 22. 11. 2026 - block 60 (T4: 40 comparisons of two sellers get noindex,follow and leave the sitemap and llms.txt, incl. the 6 with Search Console impressions; no title, description or H1 changes; owner in the terminal)
+ODOBRENO SEO - Karlo - 24. 11. 2026 - peptira, puratek-peptides titles (archive shop pages in #246's title pattern; owner in w1's terminal)
+/sellers/peptira/ 3505461612ae
+/sellers/puratek-peptides/ 8deee414afbd
+ODOBRENO PRAVILA - Karlo - 24. 11. 2026 - PR #249 (live pages outside the sitemap stay live: the deploy reads live /pages.json; owner in w1's terminal)
+ODOBRENO SEO - Karlo - 24. 11. 2026 - wave 1 seller pages in the #246 title pattern, descriptions differ only in prices or counts, incl. new shop pages (owner in w1's terminal; owner's Q1 B. On merge day w1 records here, under this line, every such page the guard lists)
+/sellers/aio-peptides/ 456f002cdf00
+/sellers/midwest-compounds/ deddf6b21991
+/sellers/oros-research/ e32b7ebdcd2e
+/sellers/onyx-biolabs/ dc4f37e7c70b
