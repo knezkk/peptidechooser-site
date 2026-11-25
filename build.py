@@ -725,7 +725,7 @@ def page(path, title, description, body, schema="", crumb=None):
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{title}</title>
-<meta name="description" content="{description}">{'<meta name="robots" content="noindex">' if path in NOINDEX else ""}
+<meta name="description" content="{description}">{'<meta name="robots" content="noindex,follow">' if path in NOINDEX_FOLLOW else '<meta name="robots" content="noindex">' if path in NOINDEX else ""}
 <link rel="canonical" href="{canonical}">{FEED_LINK if LETTERS_ALL and path in ("/", "/fda-warning-letters/") else ""}
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Peptide Chooser">
@@ -5189,6 +5189,11 @@ if PROFILES:
 # /search-index.json holds one entry per page, substance with a database status and seller; the header field and /search/
 # filter it in the page. /compare/ puts two clinic plans or two sellers side by side from data embedded in the page.
 NOINDEX = {"/search/"}
+# T4 (queue block 60, owner 22 Nov 2026, wave 1 quality fix after the core update): every comparison of two sellers
+# (/compare/<seller>-vs-<seller>/) carries noindex,follow and leaves sitemap.xml and llms.txt; the page stays live, linked and
+# in the site search. False puts them back in Google's index.
+T4_NOINDEX = True
+NOINDEX_FOLLOW = set()
 # a comparison before a guide of the same name (owner UX audit, 3 Nov 2026: "BPC-157 vs TB-500" listed twice alike)
 TYPE_ORDER = {"Goal": 0, "Peptide": 1, "Seller": 2, "Clinic": 3, "Comparison": 4, "Guide": 5, "Page": 6}
 
@@ -6816,7 +6821,7 @@ def write_sitemaps():
             prev = {}
     marks, files = {}, {t: [] for t in SITEMAP_TYPES}
     for path, out, *_ in PAGES:
-        if path in NOINDEX or path in CANON:
+        if path in NOINDEX or path in NOINDEX_FOLLOW or path in CANON:
             continue
         h = visible_print((DIST / out).read_text(encoding="utf-8"))
         old = prev.get(path) or {}
@@ -7394,6 +7399,8 @@ if CLINIC_PROFILES and HAS_COMPARE:
         _t, _d, _body = cmp_clinic_page(_a, _b, _subs)
         _w = len(clinic_plan_rows(PROFILES[_a])) + len(clinic_plan_rows(PROFILES[_b]))
         _p = cmp_path(_a, _b, clinic=True)
+        if T4_NOINDEX:
+            NOINDEX_FOLLOW.add(_p)
         CMP_PAGES.append((_p, f"{cmp_clinic_name(_a)} vs {cmp_clinic_name(_b)}", "clinic", _w, _a, _b))
         PAGES.append((_p, _p.strip("/") + "/index.html", _t, _d, _body, "",
                       [("/compare/", "Compare any two"), (_p, f"{cmp_clinic_name(_a)} vs {cmp_clinic_name(_b)}")]))
@@ -7527,7 +7534,7 @@ def llms_sections():
     goal_paths = {goal_href(g) for g in ALL_GOALS if g.get("page")}
     groups = {"Home and goals": [], **{name: [] for _, name in LLMS_SECTIONS}, "About the site": []}
     for p, _, t, d, *_ in PAGES:
-        if p in NOINDEX or p in CANON:
+        if p in NOINDEX or p in NOINDEX_FOLLOW or p in CANON:
             continue
         name = ("Home and goals" if p in goal_paths or p == "/" else
                 next((n for pre, n in LLMS_SECTIONS if p.startswith(pre)), "About the site"))

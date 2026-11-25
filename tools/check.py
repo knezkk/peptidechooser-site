@@ -2389,7 +2389,33 @@ def check_rating(P):
     return errs
 
 
-CHECKS = {"words": check_words, "seo": check_seo, "schema": check_schema, "parts": check_parts, "data": check_data, "book": check_book, "events": check_events, "logic": check_logic, "rules33": check_rules33, "addresses": check_addresses, "arch": check_arch, "arch-switch": check_arch_switch, "offers": check_offers, "kept-sellers": check_kept_sellers, "wave-b": check_wave_b, "paid-first": check_paid_first, "goal-prices": check_goal_prices, "paid-tab": check_paid_tab, "plan-links": check_plan_links, "per-order": check_per_order, "price-kinds": check_price_kinds, "us-dates": check_us_dates, "never-sell": check_never_sell, "rating": check_rating}
+def check_t4(P):
+    """T4 (queue block 60, owner 22 Nov 2026): a comparison of two sellers (both table heads link to /sellers/) carries
+    noindex,follow and is out of sitemap.xml and llms.txt; a comparison of substances or drugs and /compare/ itself stay
+    indexable. build.py's T4_NOINDEX switches it off; then no page may carry noindex,follow."""
+    errs = []
+    on = re.search(r"^T4_NOINDEX = True", (ROOT / "build.py").read_text(encoding="utf-8"), re.M) is not None
+    sitemap = "".join(f.read_text(encoding="utf-8") for f in DIST.glob("sitemap*.xml"))
+    llms = (DIST / "llms.txt").read_text(encoding="utf-8") if (DIST / "llms.txt").exists() else ""
+    for name in P:
+        if not re.fullmatch(r"compare/[^/]+/index\.html", name):
+            continue
+        html = (DIST / name).read_text(encoding="utf-8")
+        head = re.search(r"<thead>(.*?)</thead>", html, re.S)
+        sellers = bool(head) and head.group(1).count('href="/sellers/') == 2
+        robots = P[name].meta.get("robots", "")
+        url = f"{SITE}/{name[:-len('index.html')]}"
+        if sellers and on:
+            if robots != "noindex,follow":
+                errs.append(f"{name}: two sellers compared without noindex,follow (T4)")
+            if f"<loc>{url}</loc>" in sitemap or url in llms:
+                errs.append(f"{name}: T4 page in the sitemap or llms.txt")
+        elif "noindex,follow" in robots:
+            errs.append(f"{name}: noindex,follow on a page T4 does not cover")
+    return errs
+
+
+CHECKS = {"words": check_words, "seo": check_seo, "schema": check_schema, "parts": check_parts, "data": check_data, "book": check_book, "events": check_events, "logic": check_logic, "rules33": check_rules33, "addresses": check_addresses, "arch": check_arch, "arch-switch": check_arch_switch, "offers": check_offers, "kept-sellers": check_kept_sellers, "wave-b": check_wave_b, "paid-first": check_paid_first, "goal-prices": check_goal_prices, "paid-tab": check_paid_tab, "plan-links": check_plan_links, "per-order": check_per_order, "price-kinds": check_price_kinds, "us-dates": check_us_dates, "never-sell": check_never_sell, "rating": check_rating, "t4": check_t4}
 
 # Plan names against their form (owner task w2, 3 Nov 2026): a clinic's own plan name can name another form than the
 # plan's `dosage_form` ("Ozempic Pill" for a pen). The site cannot change data, so this only warns, never fails, and the
