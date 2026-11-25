@@ -1677,6 +1677,12 @@ def clinic_button(seller_slug, label, small="Our clinic page", plan=None, paid_o
             f'{"" if in_table else f"""<span class="paid">{small}</span>"""}</span>')
 
 
+def end_dot(text):
+    """A sentence ending in a company name gets one full stop: "Found Health, Inc." stays as it is, never "Inc.." (owner,
+    ODOBRENO SEO - Karlo - 25. 11. 2026 - Inc dot fix)."""
+    return text if text.endswith(".") else text + "."
+
+
 def clinic_link(seller_slug, name, inline=False):
     """A clinic's name as a link to its page on our site when it has one, else plain text; never the clinic's own site.
     `inline` for a name inside a line of text (no name style)."""
@@ -2409,7 +2415,10 @@ def legal_option_line(p, g=None):
         lines = [gl]
     if not lines:
         lines = [NO_LEGAL_OPTION]
-    return '<div class="opt-legal-list">' + "".join(f'<p class="small opt-legal">{x}</p>' for x in lines[:3]) + "</div>"
+    def one(x):  # the sentence in one span, its button beside it (the line is a two-column grid, site.css)
+        t, sep, act = x.partition('<span class="pick-act">')
+        return f'<p class="small opt-legal"><span class="opt-legal-t">{t}</span>{sep}{act}</p>'
+    return '<div class="opt-legal-list">' + "".join(one(x) for x in lines[:3]) + "</div>"
 
 
 def research_row(p):
@@ -4118,9 +4127,9 @@ def short_answer(r):
     # pages is not shown (owner answer Q4 a, 2 Nov 2026)
     state = STATES.get(r.get("entity_state") or "")
     if shown_company(r) and r.get("entity_evidence") == "registry":
-        out.append(f"Registered company: {clean(r['entity_name'])}{' (' + state + ')' if state else ''}.")
+        out.append(end_dot(f"Registered company: {clean(r['entity_name'])}{' (' + state + ')' if state else ''}"))
     elif shown_company(r) and r.get("entity_evidence") == "fda_letter":
-        out.append(f"Company named in an FDA letter: {clean(r['entity_name'])}.")
+        out.append(end_dot(f"Company named in an FDA letter: {clean(r['entity_name'])}"))
     else:
         out.append("No registered company found.")
     return out
@@ -4336,11 +4345,12 @@ def check_state(k, r):
 def check_card(r):
     """Background check card (pages.md, Seller; owner task 3 Nov 2026): a summary in the right column, sticky from 900px.
     The seller's checks as one chip each (a shop's five, a clinic's four), the name only: their facts and dates live in the
-    legit section, once."""
+    legit section, once. The count "N of M checks" stands once, in the checks box at the top (owner, ODOBRENO DIZAJN - Karlo -
+    25. 11. 2026 - background check count once)."""
     rows = "".join(f'<li>{card_chip(k, t, r)}<span class="cc-st" aria-hidden="true">{check_state(k, r)}</span></li>' for k, t in seller_checks(r))
     return f"""
       <div class="board check-card" aria-labelledby="check-h">
-        <div class="check-head"><h2 id="check-h">Background check</h2><p class="check-n"><span class="num-xl">{score_of(r)}</span> <span class="num-unit">of {out_of(r)} checks</span></p></div>
+        <div class="check-head"><h2 id="check-h">Background check</h2></div>
         <ul class="check-chips">{rows}</ul>{CLINIC_LAB_LINE if r["seller_slug"] in CLINIC_PROFILES else ""}
         <div class="rx-foot"><span class="stamp">Checked {nice_date(r["score_checked_on"])}</span><span class="fine">Checks are facts we hold about the seller, not a safety or quality grade.</span></div>
         <p class="check-how"><a href="/how-we-rate/">How we rate</a></p>
@@ -4532,9 +4542,9 @@ def clinic_answer(r):
     elif n:
         out.append(f"{plural(n, 'FDA warning letter')}, the newest on {nice_date(newest_letter(r))}.")
     if shown_company(r) and r.get("entity_evidence") == "registry":
-        out.append(f"Registered company: {clean(r['entity_name'])}.")
+        out.append(end_dot(f"Registered company: {clean(r['entity_name'])}"))
     elif shown_company(r) and r.get("entity_evidence") == "fda_letter":
-        out.append(f"Company named in an FDA letter: {clean(r['entity_name'])}.")
+        out.append(end_dot(f"Company named in an FDA letter: {clean(r['entity_name'])}"))
     else:
         out.append("No registered company found.")
     if BRAND_NOW.get(r["seller_slug"]):

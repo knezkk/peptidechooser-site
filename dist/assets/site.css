@@ -953,8 +953,6 @@ body:has(.home-sec) .site-foot { margin-top: 0; }
 .legit-list .check-key { font-weight: 600; color: var(--ink); }
 /* aside: the card's checks as rows, Similar sellers as a card */
 .check-card .check-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding-bottom: 10px; border-bottom: 2px solid var(--ink); }
-.check-card .check-head .num-xl { font-size: 32px; line-height: 1; }
-.check-card .check-head .num-unit { font-size: var(--small-size); }
 .check-card .check-chips { align-items: stretch; gap: 0; }
 .check-card .check-chips > li { display: flex; justify-content: space-between; align-items: center; gap: 12px; min-height: 36px; border-bottom: 1px solid var(--line); }
 .check-card .check-chips .chip { padding: 0; border: 0; background: none; color: var(--ink); font-size: var(--small-size); font-weight: 400; white-space: normal; }
@@ -1099,4 +1097,18 @@ html:not(.motion) .opts .opt-m::before { transition: none; }
   .seller-id > .tile { width: 48px; height: 48px; }
   .seller-id > .tile img { width: 48px; height: 48px; }
   .seller-id-text { grid-column: 1 / -1; }
+}
+
+/* Legal option lines under a research-use row (nov20.md, c; queue block 56): one block under the whole row, a thin line
+   above it, each line its text in the row's text column and its one button at cta-width in the action column, "Paid link"
+   centred under it; on phones the button runs the full width under its text. */
+.flow .opt > .opt-legal-list { grid-column: 1 / -1; display: grid; gap: 8px; margin: 4px 0 0; padding: 10px 0 2px calc(var(--thumb-row) + 8px); border-top: 1px solid var(--line); }
+.opt-legal-list .opt-legal { display: grid; grid-template-columns: minmax(0, 1fr) var(--cta-width); gap: 4px 16px; align-items: center; margin: 0; color: var(--ink-2); }
+.opt-legal-list .opt-legal > .pick-act { grid-column: 2; margin: 0; padding: 0; align-items: stretch; width: var(--cta-width); }
+.opt-legal-list .opt-legal > .pick-act .btn { width: 100%; padding: 0 8px; white-space: nowrap; }
+.opt-legal-list .opt-legal > .pick-act .paid { text-align: center; }
+@media (max-width: 640px) {
+  .flow .opt > .opt-legal-list { padding-left: 0; gap: 14px; }
+  .opt-legal-list .opt-legal { grid-template-columns: minmax(0, 1fr); }
+  .opt-legal-list .opt-legal > .pick-act { grid-column: 1; width: 100%; }
 }
