@@ -2409,7 +2409,10 @@ def legal_option_line(p, g=None):
         lines = [gl]
     if not lines:
         lines = [NO_LEGAL_OPTION]
-    return '<div class="opt-legal-list">' + "".join(f'<p class="small opt-legal">{x}</p>' for x in lines[:3]) + "</div>"
+    def one(x):  # the sentence in one span, its button beside it (the line is a two-column grid, site.css)
+        t, sep, act = x.partition('<span class="pick-act">')
+        return f'<p class="small opt-legal"><span class="opt-legal-t">{t}</span>{sep}{act}</p>'
+    return '<div class="opt-legal-list">' + "".join(one(x) for x in lines[:3]) + "</div>"
 
 
 def research_row(p):
